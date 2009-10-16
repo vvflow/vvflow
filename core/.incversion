@@ -1,0 +1,15 @@
+#!/bin/bash
+
+major=`cat .version | cut -d. -f1`
+minor=`cat .version | cut -d. -f2`
+build=`cat .version | cut -d. -f3`
+buildok=`cat .version | cut -d. -f4`
+
+case "$1" in
+	major) major=`expr $major + 1` ;;
+	minor) minor=`expr $minor + 1` ;;
+	build) build=`expr $build + 1` ;;
+	buildok) buildok=`expr $buildok + 1` ;;
+esac
+
+echo $major.$minor.$build.$buildok | cat > .version
