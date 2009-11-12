@@ -88,7 +88,10 @@ int MoveAndClean(bool remove)
 		{
 			Obj->rx += Obj->vx*FlowMove_dt_2PI; Obj->vx = 0;
 			Obj->ry += Obj->vy*FlowMove_dt_2PI; Obj->vy = 0;
-			if ( remove && ((Obj->rx*Obj->rx + Obj->ry*Obj->ry) < 1) )
+			
+			bool inbody = remove  && ( FlowMove_S->BodyList && ((Obj->rx*Obj->rx + Obj->ry*Obj->ry) < 1) );
+			bool toosmall = ( (Obj->g < FlowMove_RemoveEps) && (Obj->g > FlowMove_minusRemoveEps) );
+			if ( (Obj->flag & 1) ||  inbody || toosmall )
 			{
 				FlowMove_S->ForceX += Obj->ry* Obj->g;
 				FlowMove_S->ForceY -= Obj->rx* Obj->g;
@@ -131,6 +134,7 @@ int MoveAndClean(bool remove)
 	//MoveList(VortexList,  FlowMove_CleanedV)
 	//MoveList(HeatList, FlowMove_CleanedH)
 
+	if ( FlowMove_S->RotationV) FlowMove_S->Angle+= FlowMove_S->RotationV(FlowMove_S->Time)*FlowMove_dt;
 	FlowMove_S->Time+= FlowMove_dt;
 
 	return 0;
@@ -159,6 +163,7 @@ int Move()
 	MoveList(VortexList,  FlowMove_CleanedV)
 	MoveList(HeatList, FlowMove_CleanedH)
 
+	if ( FlowMove_S->RotationV) FlowMove_S->Angle+= FlowMove_S->RotationV(FlowMove_S->Time)*FlowMove_dt;
 	FlowMove_S->Time+= FlowMove_dt;
 
 	return 0;
@@ -193,7 +198,9 @@ int Clean()
 		Obj = list->Elements;
 		for ( i=0; i<lsize; i++)
 		{
-			if ( (Obj->flag & 1) || ( FlowMove_S->BodyList && ((Obj->rx*Obj->rx + Obj->ry*Obj->ry) < 1) ) )
+			bool inbody = ( FlowMove_S->BodyList && ((Obj->rx*Obj->rx + Obj->ry*Obj->ry) < 1) );
+			bool toosmall = ( (Obj->g < FlowMove_RemoveEps) && (Obj->g > FlowMove_minusRemoveEps) );
+			if ( (Obj->flag & 1) ||  inbody || toosmall )
 			{
 				FlowMove_CleanedV++;
 				list->Remove(Obj);

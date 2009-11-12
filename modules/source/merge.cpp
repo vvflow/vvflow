@@ -50,7 +50,7 @@ int MergeList(TList *list)
 				NearestV = Vortj;
 			}
 
-			if ( drabs2 < Merge_SqEps )
+			if ( drabs2 < Merge_SqEps*(Vorti->rx*Vorti->rx+Vorti->ry*Vorti->ry) )
 			{
 				res++;
 				//cout << Vorti->rx << "\t" << Vorti->ry << "\t" <<  Vorti->g << "\t" <<  

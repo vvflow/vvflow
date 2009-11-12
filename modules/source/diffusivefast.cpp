@@ -323,8 +323,10 @@ int CalcVortexDiffusiveFast()
 			double ResPX, ResPY, ResD;
 			Division_vortex(BNode, Vort->rx, Vort->ry, eps1, ResPX, ResPY, ResD);
 
-			if ( ( (ResD < 0) && (Vort->g > 0) ) || ( (ResD > 0) && (Vort->g < 0) ) ) { ResD = Vort->g; } else 
-			if ( fabs(ResD) > 1E-7 )
+//FIXME
+			if ( ( (ResD < 0) && (Vort->g > 0) ) || ( (ResD > 0) && (Vort->g < 0) ) ) { ResD = 0; } //else
+			//if ( fabs(ResD) < fabs(Vort->g) ) { ResD = Vort->g; } 
+			if ( fabs(ResD) > 1E-6 )
 			{
 				multiplier = DiffusiveFast_NyuR/ResD*eps1*M_2PI;
 				Vort->vx += ResPX * multiplier;
