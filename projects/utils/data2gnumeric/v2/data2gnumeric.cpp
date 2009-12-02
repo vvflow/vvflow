@@ -11,7 +11,6 @@ using namespace std;
 int main(int argc, char **argv)
 {
 	if (argc < 2) {cerr << "Error! Please use: \ndata2gnumeric -f file [-t template] [-o output]" << endl; return -1; }
-	FILE * fin;
 	fstream fout;
 	char temple[256]="", output[256]="";
 	char exec[1024];
@@ -28,11 +27,11 @@ int main(int argc, char **argv)
 	{
 		switch (rez)
 		{
-			case 't': sscanf(optarg, "%s", temple); break;
-			case 'f': files[filecount] = new char[256]; sscanf(optarg, "%s", files[filecount]); filecount++; break;
-			case 'o': sscanf(optarg, "%s", output); break;
 			case 'd': dbg=1; dbgout << "DEBUG mode ON\n\n"; break;
-			case 'h': cerr << "Usage: \ndata2gnumeric -f file [-t template] [-o output]" << endl; return 0;
+			case 'f': files[filecount] = new char[256]; sscanf(optarg, "%s", files[filecount]); filecount++; break;
+			case 'h': cerr << "Usage: \ndata2gnumeric -f file [-t template] [-o output]\nVersion: 2.0 beta" << endl; return 0;
+			case 'o': sscanf(optarg, "%s", output); break;
+			case 't': sscanf(optarg, "%s", temple); break;
 			case '?': printf("Unknown partameter '%s'. Ignoring\n", optarg); break;
 		}
 	}
@@ -75,15 +74,18 @@ int main(int argc, char **argv)
 	fprintf(pipe, "<gnm:Version Epoch=\"1\" Major=\"9\" Minor=\"9\" Full=\"1.9.9\"/>\n");
 
 	fprintf(pipe, "<gnm:SheetNameIndex>\n");
-	for (int i=0; i<filescount; i++)
+	for (int i=0; i<filecount; i++)
 	{
 		fprintf(pipe, "<gnm:SheetName gnm:Cols=\"256\" gnm:Rows=\"%d\">%s</gnm:SheetName>\n", linesmax, files[i]);
 	}
 	fprintf(pipe, "</gnm:SheetNameIndex>\n");
 
 	fprintf(pipe, "<gnm:Sheets>\n");
-	for (int i=0; i<filescount; i++)
+	for (int i=0; i<filecount; i++)
 	{
+		fin = fopen(files[i], "r");
+		if (dbg) {dbgout << "\nProcessing file \"" << files[i] << "\":\n"; if (!fin) dbgout << "No such file" << endl;}
+		if (!fin) continue;
 		fprintf(pipe, "<gnm:Sheet>\n");
 		fprintf(pipe, "<gnm:Name>%s</gnm:Name>\n", files[i]);
 		fprintf(pipe, "<gnm:MaxCol>-1</gnm:MaxCol>\n");
@@ -91,20 +93,39 @@ int main(int argc, char **argv)
 
 		fprintf(pipe, "<gnm:Cells>\n");
 		int col=0, row=0;
-		char tmpline[255], value[32];
-		fin = fopen(file[i], "r");
+		int tmppos, valuepos;
+		char string[32000], value[64];
+		void* getserr;
+
 		while ( !feof(fin) )
 		{
-			fgets(tmpline, 255, fin);
-			int ch=0;
-			while(tmplime[ch]) if (tmpline[ch] == '.') { tmpline[ch]=','; ch++; }
-			ch=0;
-			while(tmpline[ch]) if (tmpline[ch] == ''
-			sscanf(tmpline, "%s", value);
-			VortexList->Copy(&Vort);
-		}
-		fclose(fin);
+			getserr = fgets(string, 32000, fin);
+			if (!getserr) continue;
+			if (dbg) {dbgout << "Row " << row << ": " << getserr << "\n\tParsing:\n";}
+			col=0;
+			int scanerr=1;
+			do
+			{
+//				scanerr=1;
+				char scantmp[2000]="", tmp[2000];
+				char perc = '%';
+
+				for (int i=0; i<col; i++) { strcpy(tmp, scantmp); sprintf(scantmp, "%s %c*s", tmp, perc); }
+				strcpy(tmp, scantmp); sprintf(scantmp, "%s %cs", tmp, perc);
+				scanerr = sscanf(string, scantmp, value);
+				if (scanerr>0) 
+				{
+					fprintf(pipe, "<gnm:Cell Row=\"%d\" Col=\"%d\" ValueType=\"40\">%s</gnm:Cell>", row, col, value);
+					if (dbg) {dbgout << "\tCol " << col << ": \"" << value << "\"\n";}
+				}
+				col++;
+			} while (scanerr>0);
+			row++;
+		} ;
+
 		fprintf(pipe, "</gnm:Cells>\n");
+		fprintf(pipe, "</gnm:Sheet>\n");
+		fclose(fin);
 	}
 	fprintf(pipe, "</gnm:Sheets>\n");
 
