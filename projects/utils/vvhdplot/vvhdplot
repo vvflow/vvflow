@@ -44,7 +44,49 @@ case "$1" in
 		e" | gnuplot
 		;;
 
-	--heat) ;;
+	--heat) 
+		defxmin=-1.5
+		defxmax=2.5
+		defdotsize=1
+		defstyle="dots"
+		if test -n "$5"; then defdotsize=$5; defstyle="points pt 7"; fi
+		if test -n "$3"; then defxmin=$3; fi
+		if test -n "$4"; then defxmax=$4; fi
+		ymax=`echo "scale=5; (($defxmax) - ($defxmin)) *0.375" | bc`
+
+		rotvec=`grep -e rotvec $2 | cut -d "/" -f 1`
+		if test -n "$rotvec"
+		then
+			vecx=$rotvec
+			vecy=""
+		else
+			angle=`grep -e angle $2 | cut -c5- | cut -d "/" -f 1`
+			if test -z "$angle"; then angle=0; fi
+			vecx=`echo "c($angle)" | bc -l`
+			vecy=`echo "s($angle)" | bc -l`
+		fi
+
+		echo "unset key
+		set xrange [$defxmin: $defxmax]
+		set yrange [-$ymax: $ymax]
+		set size ratio -1
+
+		set terminal png truecolor enhanced size 1024, 768
+		set output '$2.png'
+
+		#set lmargin 0; set rmargin 0; set bmargin 0; set tmargin 0;
+		#set zeroaxis; set border 0; set xtics axis nomirror; set ytics axis nomirror;
+		#set tics scale 0.5; set format xy \"\"
+
+		rgb(r,g,b) = 65536 * int(r) + 256 * int(g) + int(b)
+		color(x) = (x>0) ? rgb(255,0,0) : rgb(0,0,255)
+		set pointsize $defdotsize
+		#plot sin(x) w lines
+		plot '$2' using 1:2 with $defstyle lc rgb \"black\", \"-\" w vectors lc rgb \"black\"
+		0 0 $vecx $vecy
+		e" | gnuplot
+		;;
+	
 
 	--tree) 
 		defxmin=-1.5
