@@ -86,6 +86,7 @@ case "$1" in
 		0 0 $vecx $vecy
 		e" | gnuplot
 		;;
+
 	--tree) 
 		defxmin=-1.5
 		defxmax=2.5

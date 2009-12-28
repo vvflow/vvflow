@@ -200,8 +200,10 @@ int main(int argc, char *argv[])
 {
 	if ( argc != 5) { cout << "Error! Please use: \nheatplot filename xmin xmax precision\n"; return -1; }
 
-	Space *S = new Space(0, 0, 1);
+	Space *S = new Space(0, 0, 1, NULL, NULL, NULL);
 	S->LoadHeatFromFile(argv[1]);
+	cout << S->HeatList->size << endl;
+	//S->LoadHeatFromStupidFile(argv[1], 0.15791367E-03);
 
 	double xmin, xmax, ymin, ymax, precision;
 	sscanf(argv[2], "%lf", &xmin);
@@ -241,8 +243,9 @@ int main(int argc, char *argv[])
 			if (x*x+y*y > 1)
 			{
 				double t= Temperature(S, x, y, precision);
-				if ( t>1) t=1;
+				//if ( t>1) t=1;
 				fprintf(pipe, "%lf\t%lf\t%lf\n", x, y, t);
+				//cout << x << " " << y << " " << t << endl;
 //				fout << x << "\t" << y << "\t" << Color(S, x, y, precision) << endl;
 			}
 			else
