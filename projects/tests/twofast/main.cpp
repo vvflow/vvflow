@@ -9,9 +9,9 @@ using namespace std;
 
 int main()
 {
-	Space *S = new Space(1E6, 0, 0);
-	InitTree(S, 5, 10, 1E-4);
-	InitConvectiveFast(S, 1E-8, 0);
+	Space *S = new Space(1, 0, 0, NULL, NULL, NULL);
+	InitTree(S, 10, 1E-4);
+	InitConvectiveFast(S, 1E-8);
 	InitFlowMove(S, 1E-1, 1E-7);
 	TVortex V;
 	fstream fout;
@@ -26,7 +26,7 @@ int main()
 	S->VortexList->Add(V);
 	
 	fout.open("result", ios::out);
-	for ( int k=0; k<100; k++ )
+	for ( int k=0; k<3; k++ )
 	{
 		BuildTree(1, 0, 0);
 		//cout << GetAverageNearNodesPercent()*100 << endl;

@@ -57,6 +57,7 @@ void EpsilonV(TNode *Node, double px, double py, double &res)
 	nnlsize = Node->NearNodes->size;
 	
 	res = 1E10; // = inf //DiffusiveFast_DefaultEpsilon * DiffusiveFast_DefaultEpsilon;
+	double res2 = res;
 	for ( i=0; i<nnlsize; i++ )
 	{
 		NNode = *lNNode;
@@ -71,12 +72,13 @@ void EpsilonV(TNode *Node, double px, double py, double &res)
 			drx = px - Vort->rx;
 			dry = py - Vort->ry;
 			drabs2 = drx*drx + dry*dry;
-			if ( (res > drabs2) && drabs2 )	res = drabs2;
+			if ( (res > drabs2) && drabs2 ) { res2 = res; res = drabs2; } 
+			else if ( (res2 > drabs2) && drabs2 ) { res2 = drabs2; }
 			lVort++;
 		}
 		lNNode++;
 	}
-	res = sqrt(res);
+	res = sqrt(res2);
 	if (res < DiffusiveFast_dfi) res = DiffusiveFast_dfi;
 }}
 
@@ -90,10 +92,7 @@ void EpsilonV_faster(TNode *Node, double px, double py, double &res)
 	nnlsize = Node->NearNodes->size;
 	
 	res = 1E10; // = inf //DiffusiveFast_DefaultEpsilon * DiffusiveFast_DefaultEpsilon;
-	if (nnlsize < 1)
-	{
-		
-	}
+	double res2 = res;
 	for ( i=0; i<nnlsize; i++ )
 	{
 		NNode = *lNNode;
@@ -108,11 +107,13 @@ void EpsilonV_faster(TNode *Node, double px, double py, double &res)
 			drx = px - Vort->rx;
 			dry = py - Vort->ry;
 			drabs2 = fabs(drx) + fabs(dry);
-			if ( (res > drabs2) && drabs2 )	res = drabs2;
+			if ( (res > drabs2) && drabs2 ) { res2 = res; res = drabs2; } 
+			else if ( (res2 > drabs2) && drabs2 ) { res2 = drabs2; }
 			lVort++;
 		}
 		lNNode++;
 	}
+	res = res2;
 	if (res < DiffusiveFast_dfi) res = DiffusiveFast_dfi;
 }}
 
@@ -150,6 +151,7 @@ void EpsilonH(TNode *Node, double px, double py, double &res)
 	nnlsize = Node->NearNodes->size;
 	
 	res = 1E10; // = inf //DiffusiveFast_DefaultEpsilon * DiffusiveFast_DefaultEpsilon;
+	double res2 = res;
 	for ( i=0; i<nnlsize; i++ )
 	{
 		NNode = *lNNode;
@@ -164,12 +166,13 @@ void EpsilonH(TNode *Node, double px, double py, double &res)
 			drx = px - Vort->rx;
 			dry = py - Vort->ry;
 			drabs2 = drx*drx + dry*dry;
-			if ( (res > drabs2) && drabs2 )	res = drabs2;
+			if ( (res > drabs2) && drabs2 ) { res2 = res; res = drabs2; } 
+			else if ( (res2 > drabs2) && drabs2 ) { res2 = drabs2; }
 			lVort++;
 		}
 		lNNode++;
 	}
-	res = sqrt(res);
+	res = sqrt(res2);
 }}
 
 namespace {
@@ -182,6 +185,7 @@ void EpsilonH_faster(TNode *Node, double px, double py, double &res)
 	nnlsize = Node->NearNodes->size;
 	
 	res = 1E10; // = inf //DiffusiveFast_DefaultEpsilon * DiffusiveFast_DefaultEpsilon;
+	double res2 = res;
 	for ( i=0; i<nnlsize; i++ )
 	{
 		NNode = *lNNode;
@@ -196,11 +200,13 @@ void EpsilonH_faster(TNode *Node, double px, double py, double &res)
 			drx = px - Vort->rx;
 			dry = py - Vort->ry;
 			drabs2 = fabs(drx) + fabs(dry);
-			if ( (res > drabs2) && drabs2 )	res = drabs2;
+			if ( (res > drabs2) && drabs2 ) { res2 = res; res = drabs2; } 
+			else if ( (res2 > drabs2) && drabs2 ) { res2 = drabs2; }
 			lVort++;
 		}
 		lNNode++;
 	}
+	res = res2;
 	if (res < DiffusiveFast_dfi) res = DiffusiveFast_dfi;
 }}
 

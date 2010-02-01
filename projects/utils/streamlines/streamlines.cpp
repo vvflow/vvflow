@@ -38,6 +38,7 @@ double NearestTrack(TlList *StreamLines, double x, double y)
 			dy = Obj->ry-y;
 			dr2 = dx*dx+dy*dy;
 			if (dr2 < nearest) nearest = dr2; 
+			Obj++;
 		}
 		StreamLineL++;
 	}
@@ -60,6 +61,7 @@ double NearestTrack_faster(TlList *StreamLines, double x, double y)
 			dy = fabs(Obj->ry-y);
 			dr2 = dx+dy;
 			if (dr2 < nearest) nearest = dr2; 
+			Obj++;
 		}
 		StreamLineL++;
 	}
@@ -78,6 +80,7 @@ double NearestDot(TList *StreamLine, double x, double y)
 		dy = Obj->ry-y;
 		dr2 = dx*dx+dy*dy;
 		if (dr2 < nearest) nearest = dr2; 
+		Obj++;
 	}
 
 	return sqrt(nearest);
@@ -95,6 +98,7 @@ double NearestDot_faster(TList *StreamLine, double x, double y)
 		dy = fabs(Obj->ry-y);
 		dr2 = dx+dy;
 		if (dr2 < nearest) nearest = dr2; 
+		Obj++;
 	}
 
 	return nearest;
@@ -119,7 +123,7 @@ int CalculateStreamLine(Space *S, boundary* bnd, TList *StreamLine, double sx, d
 		vabs = fabs(dot.vx)+fabs(dot.vy);
 		drabs = fabs(dot.rx-sx)+fabs(dot.ry-sy);
 		if (vabs < 0.01) interrupt = 1;
-		//if (drabs < vabs*dt*0.5) interrupt = 1;
+		if ( (dot.g > 100) && (drabs < dt*0.5)) interrupt = 1;
 
 		dot.rx+= dot.vx*dt;
 		dot.ry+= dot.vy*dt;
@@ -148,7 +152,7 @@ int CalculateStreamLine(Space *S, boundary* bnd, TList *StreamLine, double sx, d
 
 int main(int argc, char **argv)
 {
-	if ( argc != 8) { cout << "Error! Please use: \n\tvelgrid filename xmin xmax ymin ymax step lines_density\n"; return -1; }   
+	if ( argc != 8) { cout << "Error! Please use: \n\tstreamlines filename xmin xmax ymin ymax step lines_density\n"; return -1; }   
 	Space *S = new Space(1, 0, 0, NULL, NULL, NULL);
 	S->LoadVorticityFromFile(argv[1]);
 	InitConvective(S, 1E-4);
@@ -204,6 +208,13 @@ int main(int argc, char **argv)
 			TVortex* Obj;
 
 			Obj = StreamLine->Elements;
+			for (int j=0; j<StreamLine->size; j++)
+			{
+				fout << Obj->rx << "\t" << Obj->ry << endl; 
+				Obj++;
+			} fout << endl;
+
+/*			Obj = StreamLine->Elements;
 			fout << "x\t";
 			for (int j=0; j<StreamLine->size; j++)
 			{
@@ -218,7 +229,7 @@ int main(int argc, char **argv)
 				fout << Obj->ry << "\t"; 
 				Obj++;
 			} fout << endl;
-/*
+
 			Obj = StreamLine->Elements;
 			fout << "n\t";
 			for (int j=0; j<StreamLine->size; j++)

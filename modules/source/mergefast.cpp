@@ -10,6 +10,7 @@ double MergeFast_SqEps;
 int MergeFast_MergedV;
 
 int MergeVortexList(TNode *Node);
+int MergeVortexList_NodeOnly(TNode *Node);
 int MergeHeatList(TNode *Node);
 
 } //end of namespace
@@ -89,6 +90,64 @@ int MergeVortexList(TNode *Node)
 	return res;
 }}
 
+namespace {
+int MergeVortexList_NodeOnly(TNode *Node)
+{
+	if ( !Node->VortexLList ) return 0;
+	int res=0;
+
+	TVortex** liVort = (TVortex**)Node->VortexLList->Elements;
+	TVortex* iVort;
+	int lsize = Node->VortexLList->size;
+
+	for (int i=0; i<lsize; i++)
+	{
+		iVort = *liVort;
+
+		TVortex** ljVort = liVort+1;
+		TVortex* jVort;
+
+		for (int j=i+1; j<lsize; j++)
+		{
+			jVort = *ljVort;
+
+			double drx, dry, drabs2;
+			drx = iVort->rx - jVort->rx;
+			dry = iVort->ry - jVort->ry;
+			drabs2 = drx*drx+dry*dry;
+
+			if ( drabs2 < MergeFast_SqEps )
+			{
+				res++;
+
+				if ( ((iVort->g > 0) && (jVort->g > 0)) || ((iVort->g < 0) && (jVort->g < 0)) )
+				{
+					iVort->g += jVort->g;
+					double g1sum = 1/(iVort->g + jVort->g);
+					iVort->rx = (iVort->g*iVort->rx + jVort->g*jVort->rx)*g1sum;
+					iVort->ry = (iVort->g*iVort->ry + jVort->g*jVort->ry)*g1sum;
+				}
+				else
+				{
+					iVort->g += jVort->g;
+					if ( fabs(iVort->g) < fabs(jVort->g) )
+					{
+						iVort->rx = jVort->rx;
+						iVort->ry = jVort->ry;
+					}
+				}
+				MergeFast_S->VortexList->Remove(jVort); Node->VortexLList->Remove(j); j--; lsize--;
+			}
+
+			ljVort++;
+		}
+
+		liVort++;
+	}
+
+	return res;
+}}
+
 int MergeFast()
 {
 	MergeFast_MergedV = 0;
@@ -100,7 +159,7 @@ int MergeFast()
 
 	for ( int i=0; i<bnlsize; i++ )
 	{
-		MergeFast_MergedV+= MergeVortexList(*lBNode);
+		MergeFast_MergedV+= MergeVortexList_NodeOnly(*lBNode);
 
 		lBNode++;
 	}
