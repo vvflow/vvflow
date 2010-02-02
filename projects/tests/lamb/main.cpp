@@ -11,7 +11,7 @@
 using namespace std;
 
 //#define HEAT //else vortexes
-//#define FAST
+#define FAST
 #define RE 10
 #define DT 1E-3
 #define STEPS 50
@@ -89,7 +89,7 @@ double NyuH(Space* S)
 
 int main()
 {
-	Space *S = new Space(1, 0, 1);
+	Space *S = new Space(1, 0, 1, NULL, NULL, NULL);
 	char fname[16] = "steady1253";
 	#ifdef HEAT
 		S->LoadHeatFromFile(fname);
@@ -97,7 +97,7 @@ int main()
 		S->LoadVorticityFromFile(fname);
 	#endif
 	InitTree(S, 10, 1E-8);
-	InitConvectiveDef(S, 1E-4, 0);
+	InitConvectiveDef(S, 1E-4);
 	InitDiffusiveDef(S, RE);
 	InitFlowMove(S, DT, 0);
 	
@@ -113,15 +113,15 @@ int main()
 	Nyu1 = Nyu(S);
 	for ( int k=0; k<STEPS; k++ )
 	{
-//		BuildTree(1, 0, 0);
-//		CalcConvectiveDef();
+		BuildTree(1, 0, 0);
+		CalcConvectiveDef();
 		CalcDiffusiveDef();
 			sprintf(fname, "treedata");
 			fout.open(fname, ios::out);
 //			PrintBottomNodes(fout);
 			//fout << *S->VortexList << endl;
 			fout.close();
-//		DestroyTree();
+		DestroyTree();
 
 		MoveAndClean(0);
 //		cout << "step " << k << " done. Vorticity size = " << S->VortexList->size << endl;

@@ -136,9 +136,9 @@ int MergeVortexList_NodeOnly(TNode *Node)
 						iVort->ry = jVort->ry;
 					}
 				}
-				MergeFast_S->VortexList->Remove(jVort); Node->VortexLList->Remove(j); j--; lsize--;
+				jVort->g = 0; Node->VortexLList->Remove(j); lsize--;
+				break;
 			}
-
 			ljVort++;
 		}
 

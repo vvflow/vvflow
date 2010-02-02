@@ -2,11 +2,11 @@
 
 make && ./exe
 
-vvhdplot --vorticity input -2 7
-vvhdplot --vorticity output -2 7
+vvhdplot --vorticity input -2 7 && mv input.png v_input.png
+vvhdplot --vorticity output -2 7 && mv output.png v_output.png
 
-streamlines input -2 7 -5 5 0.1 0.1 > /dev/null
-streamlines output -2 7 -5 5 0.1 0.1 > /dev/null
+streamlines input -2 7 -5 5 0.1 0.2 > /dev/null
+streamlines output -2 7 -5 5 0.1 0.2 > /dev/null
 
 defxmin=-2
 defxmax=7

@@ -6,7 +6,7 @@ CXX 			= g++
 INCLUDE 		= -I headers/
 
 COBJECTS 		= convective.o flowmove.o utils.o diffusive.o merge.o convectivefast.o diffusivefast.o mergefast.o
-COBJFLAGS 		= -c -pg -O3
+COBJFLAGS 		= -c -g -O3
 FOBJECTS 		= 
 
 all: incbuild bin/ $(LIBFILENAME) 
