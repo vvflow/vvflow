@@ -1,9 +1,10 @@
 #!/bin/bash
 
-case "$1" in 
-	--vorticity) 
 		defxmin=-1.5
 		defxmax=2.5
+
+case "$1" in 
+	--vorticity) 
 		defdotsize=1
 		defstyle="dots"
 		if test -n "$5"; then defdotsize=$5; defstyle="points pt 7"; fi
@@ -50,9 +51,7 @@ case "$1" in
 		plot '$2' using 1:2:(color(\$3)) with $defstyle lc rgb variable $vectorplotcommand" | gnuplot
 		;;
 
-	--heat) 
-		defxmin=-1.5
-		defxmax=2.5
+	--heat)
 		defdotsize=1
 		defstyle="dots"
 		if test -n "$5"; then defdotsize=$5; defstyle="points pt 7"; fi
@@ -93,9 +92,7 @@ case "$1" in
 		e" | gnuplot
 		;;
 
-	--tree) 
-		defxmin=-1.5
-		defxmax=2.5
+	--tree)
 		if test -n "$3"; then defxmin=$3; fi
 		if test -n "$4"; then defxmax=$4; fi
 		ymax=`echo "scale=5; (($defxmax) - ($defxmin)) *0.375" | bc`
@@ -110,11 +107,28 @@ case "$1" in
 		plot '$2' using 1:2:(\$3/2):(\$4/2) with boxxy fill empty" | gnuplot
 		;;
 
+	--streamlines)
+		if test -n "$3"; then defxmin=$3; fi
+		if test -n "$4"; then defxmax=$4; fi
+		ymax=`echo "scale=5; (($defxmax) - ($defxmin)) *0.375" | bc`
+
+		echo "unset key
+		set xrange [$defxmin: $defxmax]
+		set yrange [-$ymax: $ymax]
+		set size ratio -1
+
+		set terminal png truecolor enhanced size 1024, 768
+		set output '$2.png'
+
+		plot '$2' using 1:2 with lines lc rgb \"black\"" | gnuplot
+		;;
+
 	*)
-		echo "Usage: vvhdplot { --vorticity | --tree } filename [xmin, xmax, [dotsize]]"
+		echo "Usage: vvhdplot { --vorticity | --heat | --tree | --streamlines } filename [xmin, xmax, [dotsize]]"
 		echo "Vortexplot plots file filename into picture filename.png"
 		exit -1 
 		;;
+	
 esac
 exit 0
 

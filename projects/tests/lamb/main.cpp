@@ -139,7 +139,7 @@ int main()
 	fout.close();
 
 	cout << "Doing " << OBJ << " " << SPEED << endl;
-	cout << "InitRE=" << RE << "; RealRE=" << 2./ ((Nyu2-Nyu1)/(STEPS*DT)) << endl;
+	cout << "InitRE=" << RE << "; RealRE=" << 4./ ((Nyu2-Nyu1)/(STEPS*DT)) << endl;
 
 	return 0;
 }

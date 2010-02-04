@@ -3,7 +3,7 @@
 #include <math.h>
 #include "libVVHD/core.h"
 
-int InitDiffusiveFast(Space *sS, double sReD);
+int InitDiffusiveFast(Space *sS, double sRe);
 int CalcVortexDiffusiveFast();
 int CalcHeatDiffusiveFast();
 

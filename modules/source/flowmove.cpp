@@ -17,7 +17,7 @@ double FlowMove_minusRemoveEps; // = -RemoveEps
 
 double FlowMove_Fx, FlowMove_Fy; //Forces
 
-int FlowMove_CleanedV;
+int FlowMove_CleanedV_inbody, FlowMove_CleanedV_toosmall;
 int FlowMove_CleanedH;
 
 double FlowMove_dfi;
@@ -36,7 +36,7 @@ int InitFlowMove(Space *sS, double sdt, double sRemoveEps/*, Statistic *sstatist
 	FlowMove_dt_2PI = sdt*M_1_2PI;
 	FlowMove_RemoveEps = sRemoveEps;
 	FlowMove_minusRemoveEps = -sRemoveEps;
-	if (sS->BodyList && sS->HeatList) 
+	if (sS->BodyList )//&& sS->HeatList) 
 		FlowMove_ControlLayerHeight = M_2PI/sS->BodyList->size;
 	else
 		FlowMove_ControlLayerHeight=0;
@@ -61,7 +61,7 @@ int MoveAndClean(bool remove)
 	TVortex *Obj;
 	TList *list;
 
-	FlowMove_CleanedV = 0;
+	FlowMove_CleanedV_inbody = FlowMove_CleanedV_toosmall = 0;
 	FlowMove_CleanedH = 0;
 
 	//for (i=0; i<countfi; i++) { blarray[i] = NULL; }
@@ -91,11 +91,18 @@ int MoveAndClean(bool remove)
 			
 			bool inbody = remove  && ( FlowMove_S->BodyList && ((Obj->rx*Obj->rx + Obj->ry*Obj->ry) < 1) );
 			bool toosmall = ( (Obj->g < FlowMove_RemoveEps) && (Obj->g > FlowMove_minusRemoveEps) );
-			if ( (Obj->flag & 1) ||  inbody || toosmall )
+			if ( inbody )
 			{
 				FlowMove_S->ForceX += Obj->ry* Obj->g;
 				FlowMove_S->ForceY -= Obj->rx* Obj->g;
-				FlowMove_CleanedV++;
+				FlowMove_CleanedV_inbody++;
+				list->Remove(Obj);
+			}
+			if ( toosmall )
+			{
+				FlowMove_S->ForceX += Obj->ry* Obj->g;
+				FlowMove_S->ForceY -= Obj->rx* Obj->g;
+				FlowMove_CleanedV_toosmall++;
 				list->Remove(Obj);
 			}
 			else { Obj++; }
@@ -175,7 +182,7 @@ int Clean()
 	TVortex *Obj;
 	TList *list;
 
-	FlowMove_CleanedV = 0;
+	FlowMove_CleanedV_inbody = FlowMove_CleanedV_toosmall = 0;
 	FlowMove_CleanedH = 0;
 
 	//cleaning control layer
@@ -200,9 +207,14 @@ int Clean()
 		{
 			bool inbody = ( FlowMove_S->BodyList && ((Obj->rx*Obj->rx + Obj->ry*Obj->ry) < 1) );
 			bool toosmall = ( (Obj->g < FlowMove_RemoveEps) && (Obj->g > FlowMove_minusRemoveEps) );
-			if ( (Obj->flag & 1) ||  inbody || toosmall )
+			if ( inbody )
 			{
-				FlowMove_CleanedV++;
+				FlowMove_CleanedV_inbody++;
+				list->Remove(Obj);
+			}
+			if ( toosmall )
+			{
+				FlowMove_CleanedV_toosmall++;
 				list->Remove(Obj);
 			}
 			else { Obj++; }
@@ -239,7 +251,7 @@ int Clean()
 	return 0;
 }
 
-int VortexFlight()
+int VortexShed()
 {
 	if ( !FlowMove_S->BodyList ) return -1;
 
@@ -253,7 +265,7 @@ int VortexFlight()
 	TVortex *Vort;
 	TVortex *BVort; */
 
-	FlowMove_CleanedV = 0;
+	FlowMove_CleanedV_inbody = FlowMove_CleanedV_toosmall = 0;
 	if ( FlowMove_S->VortexList )
 	{
 		vlist = FlowMove_S->VortexList;
@@ -262,12 +274,20 @@ int VortexFlight()
 		for ( i=0; i<bsize; i++)
 		{
 			if ( (Vort->g < FlowMove_RemoveEps) && (Vort->g > FlowMove_minusRemoveEps) ) 
-				{ FlowMove_CleanedV++; }
+				{ FlowMove_CleanedV_toosmall++; }
 			else
 			{
 				FlowMove_S->ForceX -= Vort->ry* Vort->g;
 				FlowMove_S->ForceY += Vort->rx* Vort->g;
-				vlist->Copy(Vort);
+
+				TVortex VortCopy = *Vort;
+				double r = 1. + double(rand())*FlowMove_ControlLayerHeight/RAND_MAX;
+				double fi= FlowMove_dfi * (i + double(rand())/RAND_MAX); // don't use += here, cuz it causes systematic error;
+				VortCopy.rx = r*cos(fi);
+				VortCopy.ry = r*sin(fi);
+				VortCopy.g = Vort->g;
+				VortCopy.vx = VortCopy.vy = 0;
+				vlist->Add(VortCopy);
 			}
 
 			Vort++;
@@ -296,7 +316,7 @@ int VortexFlight()
 	}*/
 }
 
-int HeatFlight()
+int HeatShed()
 {
 	if ( !FlowMove_S->BodyList ) return -1;
 
@@ -316,5 +336,6 @@ int HeatFlight()
 	return 0;
 }
 
-int CleanedV() { return FlowMove_CleanedV; }
+int CleanedV_inbody() { return FlowMove_CleanedV_inbody; }
+int CleanedV_toosmall() { return FlowMove_CleanedV_toosmall; }
 int CleanedH() { return FlowMove_CleanedH; }

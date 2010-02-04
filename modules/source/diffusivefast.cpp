@@ -13,8 +13,8 @@ using namespace std;
 namespace {
 
 Space *DiffusiveFast_S;
-double DiffusiveFast_ReD, DiffusiveFast_ReR;
-double DiffusiveFast_NyuD, DiffusiveFast_NyuR;
+double DiffusiveFast_Re;
+double DiffusiveFast_Nyu;
 double DiffusiveFast_DefaultEpsilon;
 double DiffusiveFast_dfi;
 
@@ -33,14 +33,12 @@ void Division_vortex(TNode *Node, double px, double py, double eps1, double &Res
 
 /********************* SOURCE *****************************/
 
-int InitDiffusiveFast(Space *sS, double sReD)
+int InitDiffusiveFast(Space *sS, double sRe)
 {
 	DiffusiveFast_S = sS;
-	DiffusiveFast_ReD = sReD;
-	DiffusiveFast_ReR = sReD*0.5;
-	DiffusiveFast_NyuD = 1/sReD;
-	DiffusiveFast_NyuR = 2/sReD;
-	DiffusiveFast_DefaultEpsilon = DiffusiveFast_NyuR * M_2PI;
+	DiffusiveFast_Re = sRe;
+	DiffusiveFast_Nyu = 1/sRe;
+	DiffusiveFast_DefaultEpsilon = DiffusiveFast_Nyu * M_2PI;
 	if (sS->BodyList) DiffusiveFast_dfi = M_2PI/sS->BodyList->size; else DiffusiveFast_dfi = 0;
 	return 0;
 }
@@ -56,8 +54,8 @@ void EpsilonV(TNode *Node, double px, double py, double &res)
 	TNode *NNode;
 	nnlsize = Node->NearNodes->size;
 	
-	res = 1E10; // = inf //DiffusiveFast_DefaultEpsilon * DiffusiveFast_DefaultEpsilon;
-	double res2 = res;
+	double res1, res2;
+	res2 = res1 = 1E10;
 	for ( i=0; i<nnlsize; i++ )
 	{
 		NNode = *lNNode;
@@ -72,7 +70,7 @@ void EpsilonV(TNode *Node, double px, double py, double &res)
 			drx = px - Vort->rx;
 			dry = py - Vort->ry;
 			drabs2 = drx*drx + dry*dry;
-			if ( (res > drabs2) && drabs2 ) { res2 = res; res = drabs2; } 
+			if ( (res1 > drabs2) && drabs2 ) { res2 = res1; res1 = drabs2; } 
 			else if ( (res2 > drabs2) && drabs2 ) { res2 = drabs2; }
 			lVort++;
 		}
@@ -334,7 +332,7 @@ int CalcVortexDiffusiveFast()
 			//if ( fabs(ResD) < fabs(Vort->g) ) { ResD = Vort->g; } 
 			if ( fabs(ResD) > 1E-6 )
 			{
-				multiplier = DiffusiveFast_NyuR/ResD*eps1*M_2PI;
+				multiplier = DiffusiveFast_Nyu/ResD*eps1*M_2PI;
 				Vort->vx += ResPX * multiplier;
 				Vort->vy += ResPY * multiplier;
 			}
@@ -350,7 +348,7 @@ int CalcVortexDiffusiveFast()
 				exparg = (1-rabs)*eps1;
 				if (exparg > -8)
 				{
-					multiplier = 4 * DiffusiveFast_NyuR * eps1 * expdef(exparg);
+					multiplier = 4 * DiffusiveFast_Nyu * eps1 * expdef(exparg);
 					Vort->vx += multiplier * erx; 
 					Vort->vy += multiplier * ery;
 				}

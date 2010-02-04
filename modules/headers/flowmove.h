@@ -7,9 +7,10 @@ int InitFlowMove(Space *sS, double sdt, double sRemoveEps/*, Statistic *sStatist
 int MoveAndClean(bool remove = false);
 int Move();
 int Clean();
-int VortexFlight();
-int HeatFlight();
-int CleanedV(); // Returns ammount of Vortex items removed after MoveAndClean() call
+int VortexShed();
+int HeatShed();
+int CleanedV_inbody(); // Returns ammount of Vortex items removed after MoveAndClean() call
+int CleanedV_toosmall();
 int CleanedH(); // Returns ammount of Heat   items removed after MoveAndClean() call
 
 #endif

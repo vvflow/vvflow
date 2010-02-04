@@ -5,7 +5,7 @@ CPP 			= gcc
 CXX 			= g++
 INCLUDE 		= -I headers/
 
-COBJECTS 		= convective.o flowmove.o utils.o diffusive.o merge.o convectivefast.o diffusivefast.o mergefast.o
+COBJECTS 		= convective.o flowmove.o utils.o diffusive.o merge.o convectivefast.o diffusivefast.o mergefast.o diffmerge.o
 COBJFLAGS 		= -c -g -O3
 FOBJECTS 		= 
 
