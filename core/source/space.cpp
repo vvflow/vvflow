@@ -57,7 +57,7 @@ int Space::LoadVorticityFromFile(char* filename)
 	TVortex Vort; ZeroVortex(Vort);
 	while ( !feof(fin) )
 	{
-		fgets(line, 255, fin);
+		char* err = fgets(line, 255, fin);
 		sscanf(line, "%lf\t%lf\t%lf\n", &Vort.rx, &Vort.ry, &Vort.g);
 		VortexList->Copy(&Vort);
 	}
@@ -76,7 +76,7 @@ int Space::LoadHeatFromStupidFile(char* filename, double g)
 	TVortex Vort; InitVortex(Vort, 0, 0, g);
 	while ( !feof(fin) )
 	{
-		fgets(line, 255, fin);
+		char* err = fgets(line, 255, fin);
 		sscanf(line, "%lf\t%lf\n", &Vort.rx, &Vort.ry);
 		HeatList->Copy(&Vort);
 	}
@@ -95,7 +95,7 @@ int Space::LoadHeatFromFile(char* filename)
 	TVortex Vort; ZeroVortex(Vort);
 	while ( !feof(fin) )
 	{
-		fgets(line, 255, fin);
+		char* err = fgets(line, 255, fin);
 		sscanf(line, "%lf\t%lf\t%lf\n", &Vort.rx, &Vort.ry, &Vort.g);
 		HeatList->Copy(&Vort);
 	}
@@ -137,8 +137,9 @@ int Space::Load(char *filename)
 	pFile = fopen(filename, "r");
 	if (!pFile) return -1;
 
+	size_t err;
 	#define LoadList(List) 													\
-		fread(&size, sizeof(long), 1, pFile); 								\
+		err = fread(&size, sizeof(long), 1, pFile); 								\
 		printf("%ld ", size); 												\
 		if (size) 															\
 		{ 																	\
@@ -146,7 +147,7 @@ int Space::Load(char *filename)
 			List->maxsize = size; 											\
 			List->size = size; 												\
 			List->Elements = (TVortex*)malloc(size*sizeof(TVortex)); 		\
-			fread(List->Elements, sizeof(TVortex), size, pFile); 			\
+			err = fread(List->Elements, sizeof(TVortex), size, pFile); 			\
 		}
 
 	LoadList(VortexList)

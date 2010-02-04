@@ -321,8 +321,8 @@ int CalcVortexDiffusiveFast()
 
 			double epsilon, eps1;
 			EpsilonV_faster(BNode, Vort->rx, Vort->ry, epsilon);
-			//double rnd = (1. + double(rand())/RAND_MAX);
-			//epsilon*= rnd;
+			double rnd = (0.9 + double(rand())/RAND_MAX/5.);
+			epsilon*= rnd;
 			//EpsilonV_faster(BNode, Vort->rx, Vort->ry, epsilon);
 			eps1 = 1/epsilon;
 
@@ -330,7 +330,7 @@ int CalcVortexDiffusiveFast()
 			Division_vortex(BNode, Vort->rx, Vort->ry, eps1, ResPX, ResPY, ResD);
 
 //FIXME
-			if ( ( (ResD < 0) && (Vort->g > 0) ) || ( (ResD > 0) && (Vort->g < 0) ) ) { ResD = 0; } //else
+			if ( ( (ResD < 0) && (Vort->g > 0) ) || ( (ResD > 0) && (Vort->g < 0) ) ) { ResD = Vort->g; } //else
 			//if ( fabs(ResD) < fabs(Vort->g) ) { ResD = Vort->g; } 
 			if ( fabs(ResD) > 1E-6 )
 			{

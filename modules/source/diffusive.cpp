@@ -66,12 +66,12 @@ void Epsilon(TList *List, double px, double py, double &res)
 				drx = px - Vort->rx;
 				dry = py - Vort->ry;
 				drabs2 = drx*drx + dry*dry;
-				if ( (drabs2 < eps) && drabs2 )	eps = drabs2; 
+				if ( (drabs2 < eps) && (drabs2 > 1E-14) )	eps = drabs2; 
 				Vort++;
 		}
 		res = sqrt(eps);
 	}
-	if (res < Diffusive_dfi) res = Diffusive_dfi;
+	//if (res < Diffusive_dfi) res = Diffusive_dfi;
 }}
 
 namespace {
@@ -130,37 +130,22 @@ void Division(TList *List, double px, double py, double eps1, double &ResPX, dou
 	{
 		drx = px - Vort->rx;
 		dry = py - Vort->ry;
-		drx2 = drx*drx;
-		dry2 = dry*dry;
-		if ( (drx2 > 1E-12) || (dry2 > 1E-12) )
+		if ( (drx < 1E-6) && (dry2 < 1E-6) ) { Vort++; continue; }
+		drabs = sqrt(drx*drx + dry*dry);
+		dr1abs = 1/drabs;
+
+		double exparg = -drabs*eps1;
+		if ( exparg > -10 )
 		{
-			drabs = sqrt(drx2 + dry2);
-			dr1abs = 1/drabs;
-			//cout << px << "\t" << py << "\t" << drx*dr1abs << "\t" << dry*dr1abs << endl;
-			double exparg = -drabs*eps1;
-			if ( exparg > -8 )
-			{
-			//	cout << Vort->rx << "\t" << Vort->ry << "\t" << Vort->g << endl;
-				xx = Vort->g * expdef(exparg); //look for define
-				dxx = dr1abs * xx;
-				ResPX += drx * dxx;
-				ResPY += dry * dxx;
-				ResD += xx;
-			}
+			xx = Vort->g * expdef(exparg); //look for define
+			dxx = dr1abs * xx;
+			ResPX += drx * dxx;
+			ResPY += dry * dxx;
+			ResD += xx;
 		}
-		//else { ResD += Vort->g; } // dont include self vortex
+
 		Vort++;
 	}
-
-	//ResPX *= eps1; //it is in multiplier
-	//ResPY *= eps1;
-	//ResAbs2 = ResPX*ResPX + ResPY*ResPY;
-	/*if ( ResAbs2 > (ResD*ResD) ) 
-	{
-		if (ResD < 0) 	ResD = -sqrt(ResAbs2);
-		else 			ResD =  sqrt(ResAbs2);
-	}*/
-//FIXME strange 
 }}
 
 
@@ -181,12 +166,11 @@ int CalcVortexDiffusive()
 	for( i=0; i<lsize; i++ )
 	{
 		double epsilon, eps1;
-		Epsilon_faster(vlist, Vort->rx, Vort->ry, epsilon);
+		Epsilon(vlist, Vort->rx, Vort->ry, epsilon);
 		//double rnd = (1. + double(rand())/RAND_MAX);
-		//epsilon*= rnd;
+		epsilon*= 1.5;
 		eps1= 1/epsilon;
 		double ResPX, ResPY, ResD;
-	//cout << "DOING DIVISION for " << Vort->rx << " " << Vort->ry << " " << Vort->g << endl;
 		Division(vlist, Vort->rx, Vort->ry, eps1, ResPX, ResPY, ResD);
 
 
@@ -199,11 +183,9 @@ int CalcVortexDiffusive()
 			Vort->vy += ResPY*multiplier;
 		}
 
-//cout << Vort->rx << "\t" << Vort->ry << "\t" << Vort->g << "\t" << Vort->vx << 
-//			"\t" << Vort->vy << "\t" << epsilon << "\t" << sqrt(ResPX*ResPX+ResPY*ResPY) << "\t" <<  ResD << endl;
-
 		if ( Diffusive_S->BodyList )
 		{
+			cout << "Body diff" << endl;
 			double rabs, r1abs, erx, ery, exparg;
 			rabs = sqrt(Vort->rx*Vort->rx + Vort->ry*Vort->ry);
 			r1abs = 1/rabs;

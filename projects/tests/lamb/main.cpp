@@ -11,10 +11,10 @@
 using namespace std;
 
 //#define HEAT //else vortexes
-#define FAST
-#define RE 10
+//#define FAST
+#define RE 1000
 #define DT 1E-3
-#define STEPS 50
+#define STEPS 1
 
 #ifdef HEAT
 	#define OBJ "HEAT"
@@ -113,8 +113,8 @@ int main()
 	Nyu1 = Nyu(S);
 	for ( int k=0; k<STEPS; k++ )
 	{
-		BuildTree(1, 0, 0);
-		CalcConvectiveDef();
+		BuildTree(1, 0, 1);
+		//CalcConvectiveDef();
 		CalcDiffusiveDef();
 			sprintf(fname, "treedata");
 			fout.open(fname, ios::out);
@@ -139,7 +139,7 @@ int main()
 	fout.close();
 
 	cout << "Doing " << OBJ << " " << SPEED << endl;
-	cout << "InitRE=" << RE << "; RealRE=" << 4./ ((Nyu2-Nyu1)/(STEPS*DT)) << endl;
+	cout << "InitRE=" << RE << "; RealRE=" << 2./ ((Nyu2-Nyu1)/(STEPS*DT)) << endl;
 
 	return 0;
 }

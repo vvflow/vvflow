@@ -12,15 +12,23 @@ case "$1" in
 		ymax=`echo "scale=5; (($defxmax) - ($defxmin)) *0.375" | bc`
 
 		rotvec=`grep -e rotvec $2 | cut -d "/" -f 1`
+		angle=`grep -e angle $2 | cut -c5- | cut -d "/" -f 1`
 		if test -n "$rotvec"
 		then
-			vecx=$rotvec
-			vecy=""
-		else
-			angle=`grep -e angle $2 | cut -c5- | cut -d "/" -f 1`
-			if test -z "$angle"; then angle=0; fi
-			vecx=`echo "c($angle)" | bc -l`
-			vecy=`echo "s($angle)" | bc -l`
+			vectorplotcommand=", \"-\" w vectors lc rgb \"black\"
+			0 0 $rotvec
+			e"
+		else 
+			if test -n "$angle"
+			then
+				vecx=`echo "c($angle)" | bc -l`
+				vecy=`echo "s($angle)" | bc -l`
+				vectorplotcommand=", \"-\" w vectors lc rgb \"black\"
+				0 0 $vecx $vecy
+				e"
+			else 
+				vectorplotcommand=""
+			fi
 		fi
 
 		echo "unset key
@@ -39,9 +47,7 @@ case "$1" in
 		color(x) = (x>0) ? rgb(255,0,0) : rgb(0,0,255)
 		set pointsize $defdotsize
 		#plot sin(x) w lines
-		plot '$2' using 1:2:(color(\$3)) with $defstyle lc rgb variable, \"-\" w vectors lc rgb \"black\"
-		0 0 $vecx $vecy
-		e" | gnuplot
+		plot '$2' using 1:2:(color(\$3)) with $defstyle lc rgb variable $vectorplotcommand" | gnuplot
 		;;
 
 	--heat) 
