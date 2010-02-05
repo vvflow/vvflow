@@ -54,7 +54,8 @@ int InitDiffMerge(Space *sS, double sRe, double sMergeSqEps)
 namespace {
 int MergeVortexes(TList *List, TVortex* v1, TVortex* v2)
 {
-	if (!v1 || !v2) return -1;
+	DiffMerge_MergedV++;
+	if (!v1 || !v2 || (v1==v2)) return -1;
 	if ( ((v1->g > 0) && (v2->g > 0)) || ((v1 < 0) && (v2 < 0)) )
 	{
 		v1->g+= v2->g;
@@ -105,14 +106,12 @@ void Epsilon(TList *List, TVortex* v, double &res)
 		Vort++;
 	}
 
-	if ( (res1 < DiffMerge_MergeSqEps) && (v1<v2) )
+	if ( (res1 < DiffMerge_MergeSqEps) && (v<v1) )
 	{
-		DiffMerge_MergedV++;
 		MergeVortexes(List, v, v1);
 	} else if ( ( (v->g<0)&&(v1->g>0)&&(v2->g>0) ) || ( (v->g>0)&&(v1->g<0)&&(v2->g<0) ) )
 	{
-		DiffMerge_MergedV++;
-		MergeVortexes(List, v, v1);
+		//MergeVortexes(List, v, v1);
 	}
 
 	res = Const*sqrt(res2);
@@ -188,7 +187,7 @@ void Division(TList *List, TVortex* Vort, double eps1, double &ResPX, double &Re
 int DiffMerge()
 {
 
-	int i, lsize;
+	int i; long int *lsize;
 	TVortex *Vort;
 	double multiplier;
 
@@ -196,9 +195,9 @@ int DiffMerge()
 	if ( !vlist) return -1;
 
 	DiffMerge_MergedV=0;
-	lsize = DiffMerge_S->VortexList->size;
+	lsize = &(DiffMerge_S->VortexList->size);
 	Vort = DiffMerge_S->VortexList->Elements;
-	for( i=0; i<lsize; i++ )
+	for( i=0; i<DiffMerge_S->VortexList->size; i++ )
 	{
 		double epsilon, eps1;
 		Epsilon(vlist, Vort, epsilon);

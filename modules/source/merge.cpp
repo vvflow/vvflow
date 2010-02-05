@@ -44,13 +44,13 @@ int MergeList(TList *list)
 			drx = Vorti->rx - Vortj->rx;
 			dry = Vorti->ry - Vortj->ry;
 			drabs2 = drx*drx + dry*dry;
-			if ( drabs2 < NearestDr )
+			/*if ( drabs2 < NearestDr )
 			{
 				NearestDr = drabs2;
 				NearestV = Vortj;
-			}
+			}*/
 
-			if ( drabs2 < Merge_SqEps*(Vorti->rx*Vorti->rx+Vorti->ry*Vorti->ry) )
+			if ( drabs2 < Merge_SqEps )
 			{
 				res++;
 				//cout << Vorti->rx << "\t" << Vorti->ry << "\t" <<  Vorti->g << "\t" <<  
@@ -76,7 +76,7 @@ int MergeList(TList *list)
 					//list->Remove(j); j--; lsize--;
 				}
 				//cout << Vorti->rx << "\t" << Vorti->ry << "\t" <<  Vorti->g << endl;
-				list->Remove(j); j--; lsize--;
+				list->Remove(j); lsize--;
 				break;
 			} else Vortj++;
 

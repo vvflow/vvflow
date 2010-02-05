@@ -1,4 +1,5 @@
 #include "libVVHD/core.h"
+#include "libVVHD/diffmerge.h"
 #include "libVVHD/merge.h"
 #include "libVVHD/mergefast.h"
 #include "libVVHD/flowmove.h"
@@ -11,7 +12,7 @@
 
 using namespace std;
 
-#define BodyVortexes 100
+#define BodyVortexes 500
 #define DFI 6.28/BodyVortexes
 
 double NyuV(Space* S)
@@ -38,16 +39,18 @@ int main()
 
 	InitTree(S, 10, 4*DFI);
 	InitFlowMove(S, 1E-1, 1E-7);
+	InitDiffMerge(S, 100, DFI*DFI*0.09);
 	InitMerge(S, DFI*DFI*0.09);
 	InitMergeFast(S, DFI*DFI*0.09);
 
 	double A1 = NyuV(S);
 	cout << "A1 = " << A1 << endl;
 	BuildTree(1, 0, 0);
-	MergeFast();
-	Clean();
-	cout << "Merged " << MergedFastV() << endl;
-	cout << "Cleaned " << CleanedV() << endl;
+	DiffMerge();
+	//Merge();
+	//Clean();
+	cout << "Merged " << DiffMergedV()  << " " << MergedV() << endl;
+	//cout << "Cleaned " << CleanedV() << endl;
 	DestroyTree();
 	double A2 = NyuV(S); 
 	cout << "A2 = " << A2 << endl;
