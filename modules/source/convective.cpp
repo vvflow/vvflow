@@ -1,4 +1,6 @@
 #include "convective.h"
+#include "iostream"
+using namespace std;
 
 #define M_1_2PI 0.159154943 	// = 1/(2*PI)
 #define M_2PI 6.283185308 		// = 2*PI
@@ -110,7 +112,7 @@ int CalcConvective(bool IncludeBody)
 		{
 			SpeedSum(vlist, Vort->rx, Vort->ry, 1, 0, SpeedSumResX, SpeedSumResY);
 			Vort->vx += Convective_InfSpeedX + SpeedSumResX;
-			Vort->vy += Convective_InfSpeedX + SpeedSumResY;
+			Vort->vy += Convective_InfSpeedY + SpeedSumResY;
 			Vort++;
 		}
 		
@@ -174,7 +176,6 @@ int CalcCirculation()
 	lsize = Convective_S->BodyList->size;
 	
 	double dfi = M_2PI/lsize; // angle between wto neighbor attached vortexes
-	double fi = 0;
 	
 	Vort = Convective_S->BodyList->Elements;
 	for( i=0; i<lsize; i++ )

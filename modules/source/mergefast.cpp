@@ -9,7 +9,7 @@ Space *MergeFast_S;
 double MergeFast_SqEps;
 int MergeFast_MergedV;
 
-int MergeVortexList(TNode *Node);
+//int MergeVortexList(TNode *Node);
 int MergeVortexList_NodeOnly(TNode *Node);
 int MergeHeatList(TNode *Node);
 
@@ -23,6 +23,7 @@ int InitMergeFast(Space *sS, double sSqEps)
 	MergeFast_SqEps = sSqEps;
 }
 
+/*
 namespace {
 int MergeVortexList(TNode *Node)
 {
@@ -63,22 +64,20 @@ int MergeVortexList(TNode *Node)
 					res++;
 					if ( ((Vort->g > 0) && (NVort->g > 0)) || ((Vort->g < 0) && (NVort->g < 0)) )
 					{
-						Vort->g+= NVort->g;
 						double g1sum = 1/(Vort->g + NVort->g);
 						Vort->rx = (Vort->g*Vort->rx + NVort->g*NVort->rx)*g1sum;
 						Vort->ry = (Vort->g*Vort->ry + NVort->g*NVort->ry)*g1sum;
-						NNode->VortexLList->Remove(j); j--; lsize--;
 					}
 					else
 					{
-						Vort->g += NVort->g;
 						if ( fabs(Vort->g) < fabs(NVort->g) )
 						{
 							Vort->rx = NVort->rx;
 							Vort->ry = NVort->ry;
 						}
-						NNode->VortexLList->Remove(j); j--; lsize--;
 					}
+					Vort->g+= NVort->g;
+					NNode->VortexLList->Remove(j); j--; lsize--;
 				}
 				lVort++;
 			}
@@ -89,6 +88,7 @@ int MergeVortexList(TNode *Node)
 
 	return res;
 }}
+*/
 
 namespace {
 int MergeVortexList_NodeOnly(TNode *Node)
@@ -122,20 +122,19 @@ int MergeVortexList_NodeOnly(TNode *Node)
 
 				if ( ((iVort->g > 0) && (jVort->g > 0)) || ((iVort->g < 0) && (jVort->g < 0)) )
 				{
-					iVort->g += jVort->g;
 					double g1sum = 1/(iVort->g + jVort->g);
 					iVort->rx = (iVort->g*iVort->rx + jVort->g*jVort->rx)*g1sum;
 					iVort->ry = (iVort->g*iVort->ry + jVort->g*jVort->ry)*g1sum;
 				}
 				else
 				{
-					iVort->g += jVort->g;
 					if ( fabs(iVort->g) < fabs(jVort->g) )
 					{
 						iVort->rx = jVort->rx;
 						iVort->ry = jVort->ry;
 					}
 				}
+				iVort->g += jVort->g;
 				jVort->g = 0; Node->VortexLList->Remove(j); lsize--;
 				break;
 			}

@@ -32,6 +32,8 @@ class Space
 		int LoadHeatFromFile(char* filename);
 		int Save(char *filename);
 		int Load(char *filename);
+
+		double Integral();
 };
 
 #endif /*SPACE_H_*/

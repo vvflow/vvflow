@@ -117,7 +117,7 @@ int CalculateStreamLine(Space *S, boundary* bnd, TList *StreamLine, double sx, d
 	while (Inside(bnd, dot.rx, dot.ry) && !interrupt)
 	{
 		SpeedSum(S->VortexList, dot.rx, dot.ry, ResX1, ResY1);
-		SpeedSum(S->VortexList, dot.rx+(ResX1+1)*dt, dot.ry+ResY1*dt, ResX2, ResY2);
+		SpeedSum(S->VortexList, dot.rx+(ResX1+1)*dt, dot.ry+(ResY1)*dt, ResX2, ResY2);
 		dot.vx = (ResX1+ResX2+2)*0.5;
 		dot.vy = (ResY1+ResY2)*0.5;
 		vabs = fabs(dot.vx)+fabs(dot.vy);

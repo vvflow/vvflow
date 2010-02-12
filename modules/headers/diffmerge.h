@@ -4,9 +4,9 @@
 #include "libVVHD/core.h"
 
 int InitDiffMerge(Space *sS, double sRe, double sMergeSqEps);
-int DiffMerge();
+int CalcVortexDiffMerge();
+int CalcHeatDiffMerge();
 int DiffMergedV();
-//int CalcHeatDiffusive();
 
 #endif
 

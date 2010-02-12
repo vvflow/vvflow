@@ -211,7 +211,7 @@ int Clean()
 			{
 				FlowMove_CleanedV_inbody++;
 				list->Remove(Obj);
-			}
+			} else
 			if ( toosmall )
 			{
 				FlowMove_CleanedV_toosmall++;

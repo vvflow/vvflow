@@ -114,6 +114,13 @@ int TlList::Remove(long i)
 	return 0;	
 }
 
+int TlList::Remove(Pointer *p)
+{
+	size--;
+	*p = Elements[size];
+	return 0; 
+}
+
 int TlList::Clear()
 {
 	size=0;

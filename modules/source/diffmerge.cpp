@@ -11,7 +11,7 @@
 	#define M_2_PI 0.636619772 		// = 2/PI
 #endif
 
-#define Const 0.287
+//#define Const 0.287
 
 #include "iostream"
 using namespace std;
@@ -31,10 +31,13 @@ int DiffMerge_MergedV;
 
 int MergeVortexes(TList *List, TVortex* v1, TVortex* v2);
 
-void Epsilon(TList *List, double px, double py, double &res);
-void Epsilon_faster(TList *List, double px, double py, double &res);
+void EpsilonV(TList *List, TVortex* v, double &res);
+void EpsilonV_faster(TList *List, TVortex* v, double &res);
+void EpsilonH_(TList *List, double px, double py, double &res);
+void EpsilonH_faster(TList *List, double px, double py, double &res);
 
-void Division(TList *List, double px, double py, double eps1, double &ResPX, double &ResPY, double &ResD );
+void Division_vortex(TList *List, TVortex* v, double eps1, double &ResPX, double &ResPY, double &ResD );
+void Division_heat(TList *List, double px, double py, double eps1, double &ResPX, double &ResPY, double &ResD );
 
 } //end of namespce
 
@@ -58,7 +61,6 @@ int MergeVortexes(TList *List, TVortex* v1, TVortex* v2)
 	if (!v1 || !v2 || (v1==v2)) return -1;
 	if ( ((v1->g > 0) && (v2->g > 0)) || ((v1 < 0) && (v2 < 0)) )
 	{
-		v1->g+= v2->g;
 		double g1sum = 1/(v1->g + v2->g);
 		v1->rx = (v1->g*v1->rx + v2->g*v2->rx)*g1sum;
 		v1->ry = (v1->g*v1->ry + v2->g*v2->ry)*g1sum;
@@ -70,8 +72,8 @@ int MergeVortexes(TList *List, TVortex* v1, TVortex* v2)
 			v1->rx = v2->rx;
 			v1->ry = v2->ry;
 		}
-		v1->g += v2->g;
 	}
+	v1->g+= v2->g;
 	List->Remove(v2);
 	return 0;
 }}
@@ -82,28 +84,26 @@ int DiffMergedV()
 }
 
 namespace {
-void Epsilon(TList *List, TVortex* v, double &res)
+void EpsilonV(TList *List, TVortex* v, double &res)
 {
-	int i, lsize;
-	TVortex *Vort;
 	double px=v->rx, py=v->ry, drx, dry, drabs2;
 
-	lsize = List->size;
-	Vort = List->Elements;
+	int lsize = List->size;
+	TVortex *Obj = List->Elements;
 
 	double res1, res2;
 	TVortex *v1, *v2;
 	res2 = res1 = 1E10;
 	v1 = v2 = NULL;
 
-	for ( i=0; i<lsize; i++ )
+	for ( int i=0; i<lsize; i++ )
 	{
-		drx = px - Vort->rx;
-		dry = py - Vort->ry;
+		drx = px - Obj->rx;
+		dry = py - Obj->ry;
 		drabs2 = drx*drx + dry*dry;
-		if ( (res1 > drabs2) && drabs2 ) { res2=res1; v2=v1; res1=drabs2; v1=Vort; }
-		else if ( (res2 > drabs2) && drabs2 ) { res2=drabs2; v2=Vort; }
-		Vort++;
+		if ( (res1 > drabs2) && drabs2 ) { res2=res1; v2=v1; res1=drabs2; v1=Obj; }
+		else if ( (res2 > drabs2) && drabs2 ) { res2=drabs2; v2=Obj; }
+		Obj++;
 	}
 
 	if ( (res1 < DiffMerge_MergeSqEps) && (v<v1) )
@@ -111,68 +111,127 @@ void Epsilon(TList *List, TVortex* v, double &res)
 		MergeVortexes(List, v, v1);
 	} else if ( ( (v->g<0)&&(v1->g>0)&&(v2->g>0) ) || ( (v->g>0)&&(v1->g<0)&&(v2->g<0) ) )
 	{
-		//MergeVortexes(List, v, v1);
+		MergeVortexes(List, v, v1);
 	}
 
-	res = Const*sqrt(res2);
+	res = sqrt(res2);
 	//if (res < DiffMerge_dfi) res = DiffMerge_dfi;
 }}
 
 namespace {
-void Epsilon_faster(TList *List, double px, double py, double &res)
+void EpsilonV_faster(TList *List, TVortex* v, double &res)
 {
-	int i, lsize;
-	TVortex *Vort;
+	double eps; 
+	double px=v->rx, py=v->ry, drx, dry, drabs2;
+
+	int lsize = List->size;
+	TVortex *Obj = List->Elements;
+
+	double res1, res2;
+	TVortex *v1, *v2;
+	res2 = res1 = 1E10;
+	v1 = v2 = NULL;
+
+	for ( int i=0; i<lsize; i++ )
+	{
+		drx = px - Obj->rx;
+		dry = py - Obj->ry;
+		drabs2 = fabs(drx) + fabs(dry);
+		if ( (res1 > drabs2) && drabs2 ) { res2 = res1; v2=v1; res1=drabs2; v1=Obj; }
+		else if ( (res2 > drabs2) && drabs2 ) { res2 = drabs2; v2=Obj; }
+		Obj++;
+	}
+
+	if ( (res1 < DiffMerge_MergeSqEps) && (v<v1) )
+	{
+		MergeVortexes(List, v, v1);
+	} else if ( ( (v->g<0)&&(v1->g>0)&&(v2->g>0) ) || ( (v->g>0)&&(v1->g<0)&&(v2->g<0) ) )
+	{
+		MergeVortexes(List, v, v1);
+	}
+
+	res = res2;
+	//if (res < DiffMerge_dfi) res = DiffMerge_dfi;
+}}
+
+namespace {
+void EpsilonH(TList *List, double px, double py, double &res)
+{
+	double drx, dry, drabs2;
+
+	int lsize = List->size;
+	TVortex *Obj = List->Elements;
+
+	double res1, res2;
+	TVortex *v1, *v2;
+	res2 = res1 = 1E10;
+	v1 = v2 = NULL;
+
+	for ( int i=0; i<lsize; i++ )
+	{
+		drx = px - Obj->rx;
+		dry = py - Obj->ry;
+		drabs2 = drx*drx + dry*dry;
+		if ( (res1 > drabs2) && drabs2 ) { res2=res1; v2=v1; res1=drabs2; v1=Obj; }
+		else if ( (res2 > drabs2) && drabs2 ) { res2=drabs2; v2=Obj; }
+		Obj++;
+	}
+
+	res = sqrt(res2);
+	//if (res < DiffMerge_dfi) res = DiffMerge_dfi;
+}}
+
+namespace {
+void EpsilonH_faster(TList *List, double px, double py, double &res)
+{
 	double eps; 
 	double drx, dry, drabs2;
 
-	lsize = List->size;
-	Vort = List->Elements;
+	int lsize = List->size;
+	TVortex *Obj = List->Elements;
 
 	double res1, res2;
 	res2 = res1 = 1E10;
-	for ( i=0; i<lsize; i++ )
+	for ( int i=0; i<lsize; i++ )
 	{
-		drx = px - Vort->rx;
-		dry = py - Vort->ry;
+		drx = px - Obj->rx;
+		dry = py - Obj->ry;
 		drabs2 = fabs(drx) + fabs(dry);
 		if ( (res1 > drabs2) && drabs2 ) { res2 = res1; res1 = drabs2;}
 		else if ( (res2 > drabs2) && drabs2 ) { res2 = drabs2; }
-		Vort++;
+		Obj++;
 	}
-	res = Const*res2;
+
+	res = res2;
 	//if (res < DiffMerge_dfi) res = DiffMerge_dfi;
 }}
 
 namespace {
-void Division(TList *List, TVortex* Vort, double eps1, double &ResPX, double &ResPY, double &ResD )
+void Division_vortex(TList *List, TVortex* v, double eps1, double &ResPX, double &ResPY, double &ResD )
 {
-	int i, lsize;
-	double drx, dry, drabs, dr1abs, drx2, dry2;
+	double drx, dry, drabs;
+	double px=v->rx, py=v->ry;
 	double xx, dxx;
-	double ResAbs2;
-	TVortex *Obj;
 
-	lsize = List->size;
-	Obj = List->Elements;
+	int lsize = List->size;
+	TVortex *Obj = List->Elements;
 
 	ResPX = 0;
 	ResPY = 0;
 	ResD = 0;
 
-	for ( i=0 ; i<lsize; i++)
+	for ( int i=0 ; i<lsize; i++)
 	{
-		drx = Vort->rx - Obj->rx;
-		dry = Vort->ry - Obj->ry;
-		if ( (drx < 1E-6) && (dry2 < 1E-6) ) { Obj++; continue; }
+		drx = px - Obj->rx;
+		dry = py - Obj->ry;
+		if ( (fabs(drx) < 1E-6) && (fabs(dry) < 1E-6) ) { Obj++; continue; }
 		drabs = sqrt(drx*drx + dry*dry);
-		dr1abs = 1/drabs;
 
 		double exparg = -drabs*eps1;
 		if ( exparg > -10 )
 		{
 			xx = Obj->g * expdef(exparg); //look for define
-			dxx = dr1abs * xx;
+			dxx = xx / drabs;
 			ResPX += drx * dxx;
 			ResPY += dry * dxx;
 			ResD += xx;
@@ -181,112 +240,134 @@ void Division(TList *List, TVortex* Vort, double eps1, double &ResPX, double &Re
 		Obj++;
 	}
 
-	if ( ((ResD <= 0) && (Vort->g > 0)) || ((ResD >= 0) && (Vort->g < 0)) ) { ResD = Vort->g; }
+	if ( ((ResD <= 0) && (v->g > 0)) || ((ResD >= 0) && (v->g < 0)) ) { ResD = v->g; }
 }}
 
-int DiffMerge()
+namespace {
+void Division_vortex(TList *List, double px, double py, double eps1, double &ResPX, double &ResPY, double &ResD )
 {
+	double drx, dry, drabs;
+	double xx, dxx;
 
-	int i; long int *lsize;
-	TVortex *Vort;
+	int lsize = List->size;
+	TVortex *Obj = List->Elements;
+
+	ResPX = 0;
+	ResPY = 0;
+	ResD = 0;
+
+	for ( int i=0 ; i<lsize; i++)
+	{
+		drx = px - Obj->rx;
+		dry = py - Obj->ry;
+		if ( (fabs(drx) < 1E-6) && (fabs(dry) < 1E-6) ) { Obj++; continue; }
+		drabs = sqrt(drx*drx + dry*dry);
+
+		double exparg = -drabs*eps1;
+		if ( exparg > -10 )
+		{
+			xx = Obj->g * expdef(exparg); //look for define
+			dxx = xx / drabs;
+			ResPX += drx * dxx;
+			ResPY += dry * dxx;
+			ResD += xx;
+		}
+
+		Obj++;
+	}
+}}
+
+int CalcVortexDiffMerge()
+{
 	double multiplier;
+	double Four_Nyu = 4 *DiffMerge_Nyu;
+	double M_2PINyu = DiffMerge_Nyu * M_2PI;
+	TList *S_BodyList = DiffMerge_S->BodyList;
 
 	TList *vlist = DiffMerge_S->VortexList;
 	if ( !vlist) return -1;
 
 	DiffMerge_MergedV=0;
-	lsize = &(DiffMerge_S->VortexList->size);
-	Vort = DiffMerge_S->VortexList->Elements;
-	for( i=0; i<DiffMerge_S->VortexList->size; i++ )
+	TVortex *Obj = vlist->Elements;
+	long int *lsize = &(vlist->size);
+	for( long int i=0; i<*lsize; i++ )
 	{
-		double epsilon, eps1;
-		Epsilon(vlist, Vort, epsilon);
-		eps1= 1/epsilon;
+		double epsilon; EpsilonV_faster(vlist, Obj, epsilon);
+		double eps1= 1/epsilon;
 		double ResPX, ResPY, ResD;
-		Division(vlist, Vort, eps1, ResPX, ResPY, ResD);
+		Division_vortex(vlist, Obj, eps1, ResPX, ResPY, ResD);
 
 		if ( fabs(ResD) > 1E-12 )
 		{
-			multiplier = DiffMerge_Nyu/ResD*eps1*M_2PI;
-			Vort->vx += ResPX*multiplier;
-			Vort->vy += ResPY*multiplier;
+			multiplier = M_2PINyu/ResD*eps1;
+			Obj->vx += ResPX*multiplier;
+			Obj->vy += ResPY*multiplier;
 		}
 
-		if ( DiffMerge_S->BodyList )
+		if ( S_BodyList )
 		{
-			//cout << "Body diff" << endl;
-			double rabs, r1abs, erx, ery, exparg;
-			rabs = sqrt(Vort->rx*Vort->rx + Vort->ry*Vort->ry);
-			r1abs = 1/rabs;
-			erx = Vort->rx*r1abs;
-			ery = Vort->ry*r1abs;
+			double rabs, exparg;
+			rabs = sqrt(Obj->rx*Obj->rx + Obj->ry*Obj->ry);
 			
 			exparg = (1-rabs)*eps1;
 			if (exparg > -8)
 			{
-				multiplier = 4 *DiffMerge_Nyu*eps1*expdef(exparg);
-				Vort->vx += multiplier*erx; 
-				Vort->vy += multiplier*ery;
+				multiplier = Four_Nyu*eps1*expdef(exparg)/rabs;
+				Obj->vx += Obj->rx * multiplier; 
+				Obj->vy += Obj->ry * multiplier;
 			}
 		}
 
-		Vort++;
+		Obj++;
 	}
 
 	return 0;
 }
 
-/*int CalcHeatDiffusive()
+int CalcHeatDiffMerge()
 {
-	int i, lsize;
-	TVortex *Vort;
-	
-	double multiplier1, multiplier2, dfi2 = Diffusive_dfi * Diffusive_dfi;
+	double multiplier1, multiplier2;
+	double M_7PIdfi2 = 21.9911485752 * DiffMerge_dfi * DiffMerge_dfi;
+	double M_2PINyu = DiffMerge_Nyu * M_2PI;
+	TList *S_BodyList = DiffMerge_S->BodyList;
 
-	TList *vlist = Diffusive_S->HeatList;
+	TList *hlist = DiffMerge_S->HeatList;
+	if ( !hlist) return -1;
 
-	if ( !Diffusive_S->HeatList) return -1;
-
-	lsize = Diffusive_S->HeatList->size;
-	Vort = Diffusive_S->HeatList->Elements;
-	for( i=0; i<lsize; i++ )
+	int lsize = hlist->size;
+	TVortex *Obj = hlist->Elements;
+	for( int i=0; i<lsize; i++ )
 	{
-		double epsilon, eps1;
-		Epsilon_faster(vlist, Vort->rx, Vort->ry, epsilon);
-		//cout << Vort->rx << "\t" << Vort->ry << "\t" << epsilon << endl;
-		eps1= 1/epsilon;
+		double epsilon; EpsilonH_faster(hlist, Obj->rx, Obj->ry, epsilon);
+		double eps1= 1/epsilon;
 		double ResPX, ResPY, ResD;
-		Division(vlist, Vort, eps1, ResPX, ResPY, ResD);
+		Division_heat(hlist, Obj->rx, Obj->ry, eps1, ResPX, ResPY, ResD);
 
 		if ( fabs(ResD) > 1E-12 )
 		{
-			multiplier1 = Diffusive_Nyu/ResD*M_2PI;
-			Vort->vx += ResPX*multiplier1;
-			Vort->vy += ResPY*multiplier1;
+			multiplier1 = M_2PINyu/ResD;
+			Obj->vx += ResPX*multiplier1;
+			Obj->vy += ResPY*multiplier1;
 		}
 
-		if ( Diffusive_S->BodyList )
+		if ( S_BodyList )
 		{
-			double rabs, r1abs, erx, ery, exparg;
-			rabs = sqrt(Vort->rx*Vort->rx + Vort->ry*Vort->ry);
-			r1abs = 1/rabs;
-			erx = Vort->rx*r1abs;
-			ery = Vort->ry*r1abs;
+			double rabs, exparg;
+			rabs = sqrt(Obj->rx*Obj->rx + Obj->ry*Obj->ry);
+
 			exparg = (1-rabs)*eps1; //look for define
 			if ( exparg > -8 )
 			{
-				#define M_7PI 21.9911485752
-				multiplier1 = M_7PI*dfi2*expdef(exparg);
-				multiplier2 = Diffusive_Nyu*eps1*multiplier1/(ResD+multiplier1);
-				//printf ("%lf\n", multiplier2);
-				Vort->vx += multiplier2*erx; 
-				Vort->vy += multiplier2*ery;
+				multiplier1 = M_7PIdfi2*expdef(exparg);
+				multiplier2 = DiffMerge_Nyu*eps1*multiplier1/(ResD+multiplier1)/rabs;
+				Obj->vx += Obj->rx * multiplier2; 
+				Obj->vy += Obj->ry * multiplier2;
 			}
 		}
 
-		Vort++;
+		Obj++;
 	}
 
 	return 0;
-}*/
+}
 

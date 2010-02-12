@@ -14,7 +14,7 @@ using namespace std;
 //#define FAST
 #define RE 1000
 #define DT 1E-3
-#define STEPS 1
+#define STEPS 100
 
 #ifdef HEAT
 	#define OBJ "HEAT"
@@ -55,6 +55,11 @@ using namespace std;
 #endif
 
 
+double InfSpeedX(double t)
+{
+	return 0.5;
+}
+
 double NyuV(Space* S)
 {
 	if (!S->VortexList) return 0;
@@ -89,8 +94,8 @@ double NyuH(Space* S)
 
 int main()
 {
-	Space *S = new Space(1, 0, 1, NULL, NULL, NULL);
-	char fname[16] = "steady1253";
+	Space *S = new Space(1, 0, 1, NULL, InfSpeedX, NULL);
+	char fname[16] = "lamb1253";
 	#ifdef HEAT
 		S->LoadHeatFromFile(fname);
 	#else
@@ -116,7 +121,7 @@ int main()
 		BuildTree(1, 0, 1);
 		//CalcConvectiveDef();
 		CalcDiffusiveDef();
-			sprintf(fname, "treedata");
+			sprintf(fname, "results/res%04d", k);
 			fout.open(fname, ios::out);
 //			PrintBottomNodes(fout);
 			//fout << *S->VortexList << endl;

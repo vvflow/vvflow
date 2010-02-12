@@ -29,7 +29,7 @@ double Diffusive_dfi;
 void Epsilon(TList *List, double px, double py, double &res);
 void Epsilon_faster(TList *List, double px, double py, double &res);
 
-void Division(TList *List, double px, double py, double eps1, double &ResPX, double &ResPY, double &ResD );
+void Division(TList *List, TVortex *v, double eps1, double &ResPX, double &ResPY, double &ResD );
 
 } //end of namespce
 
@@ -49,25 +49,25 @@ namespace {
 void Epsilon(TList *List, double px, double py, double &res)
 {
 	int i, lsize;
-	TVortex *Vort;
+	TVortex *Obj;
 	double drx, dry, drabs2;
 
 	lsize = List->size;
-	Vort = List->Elements;
+	Obj = List->Elements;
 
 	double res1, res2;
 	res2 = res1 = 1E10;
 
 	for ( i=0; i<lsize; i++ )
 	{
-		drx = px - Vort->rx;
-		dry = py - Vort->ry;
+		drx = px - Obj->rx;
+		dry = py - Obj->ry;
 		drabs2 = drx*drx + dry*dry;
 		if ( (res1 > drabs2) && drabs2 ) { res2 = res1; res1 = drabs2;}
 		else if ( (res2 > drabs2) && drabs2 ) { res2 = drabs2; }
-		Vort++;
+		Obj++;
 	}
-	res = Const*sqrt(res2);
+	res = sqrt(res2);
 	//if (res < Diffusive_dfi) res = Diffusive_dfi;
 }}
 
@@ -75,33 +75,33 @@ namespace {
 void Epsilon_faster(TList *List, double px, double py, double &res)
 {
 	int i, lsize;
-	TVortex *Vort;
+	TVortex *Obj;
 	double eps; 
 	double drx, dry, drabs2;
 
 	lsize = List->size;
-	Vort = List->Elements;
+	Obj = List->Elements;
 
 	double res1, res2;
 	res2 = res1 = 1E10;
 	for ( i=0; i<lsize; i++ )
 	{
-		drx = px - Vort->rx;
-		dry = py - Vort->ry;
+		drx = px - Obj->rx;
+		dry = py - Obj->ry;
 		drabs2 = fabs(drx) + fabs(dry);
 		if ( (res1 > drabs2) && drabs2 ) { res2 = res1; res1 = drabs2;}
 		else if ( (res2 > drabs2) && drabs2 ) { res2 = drabs2; }
-		Vort++;
+		Obj++;
 	}
-	res = Const*res2;
+	res = res2;
 	//if (res < Diffusive_dfi) res = Diffusive_dfi;
 }}
 
 namespace {
-void Division(TList *List, TVortex* Vort, double eps1, double &ResPX, double &ResPY, double &ResD )
+void Division(TList *List, TVortex* v, double eps1, double &ResPX, double &ResPY, double &ResD )
 {
 	int i, lsize;
-	double drx, dry, drabs, dr1abs, drx2, dry2;
+	double drx, dry, drabs;
 	double xx, dxx;
 	double ResAbs2;
 	TVortex *Obj;
@@ -115,17 +115,16 @@ void Division(TList *List, TVortex* Vort, double eps1, double &ResPX, double &Re
 
 	for ( i=0 ; i<lsize; i++)
 	{
-		drx = Vort->rx - Obj->rx;
-		dry = Vort->ry - Obj->ry;
-		if ( (drx < 1E-6) && (dry2 < 1E-6) ) { Obj++; continue; }
+		drx = v->rx - Obj->rx;
+		dry = v->ry - Obj->ry;
+		if ( (fabs(drx) < 1E-6) && (fabs(dry) < 1E-6) ) { Obj++; continue; }
 		drabs = sqrt(drx*drx + dry*dry);
-		dr1abs = 1/drabs;
 
 		double exparg = -drabs*eps1;
 		if ( exparg > -10 )
 		{
 			xx = Obj->g * expdef(exparg); //look for define
-			dxx = dr1abs * xx;
+			dxx = xx/drabs;
 			ResPX += drx * dxx;
 			ResPY += dry * dxx;
 			ResD += xx;
@@ -134,56 +133,53 @@ void Division(TList *List, TVortex* Vort, double eps1, double &ResPX, double &Re
 		Obj++;
 	}
 
-	if ( ((ResD <= 0) && (Vort->g > 0)) || ((ResD >= 0) && (Vort->g < 0)) ) { ResD = Vort->g; }
+	if ( ((ResD <= 0) && (v->g > 0)) || ((ResD >= 0) && (v->g < 0)) ) { ResD = v->g; }
 }}
 
 int CalcVortexDiffusive()
 {
-
-	int i, lsize;
-	TVortex *Vort;
 	double multiplier;
+	double Four_Nyu = 4 *Diffusive_Nyu;
+	double M_2PINyu = Diffusive_Nyu * M_2PI;
+	TList* S_BodyList = Diffusive_S->BodyList;
 
 	TList *vlist = Diffusive_S->VortexList;
 	if ( !vlist) return -1;
 
-	lsize = Diffusive_S->VortexList->size;
-	Vort = Diffusive_S->VortexList->Elements;
-	for( i=0; i<lsize; i++ )
+	int lsize = vlist->size;
+	TVortex *Obj = vlist->Elements;
+	for( int i=0; i<lsize; i++ )
 	{
 		double epsilon, eps1;
-		Epsilon_faster(vlist, Vort->rx, Vort->ry, epsilon);
-		//double rnd = (1. + double(rand())/RAND_MAX);
+		Epsilon(vlist, Obj->rx, Obj->ry, epsilon);
 		eps1= 1/epsilon;
 		double ResPX, ResPY, ResD;
-		Division(vlist, Vort, eps1, ResPX, ResPY, ResD);
+		Division(vlist, Obj, eps1, ResPX, ResPY, ResD);
 
-		if ( fabs(ResD) > 1E-12 )
+
+		if ( fabs(ResD) > 1E-6 )
 		{
-			multiplier = Diffusive_Nyu/ResD*eps1*M_2PI;
-			Vort->vx += ResPX*multiplier;
-			Vort->vy += ResPY*multiplier;
+			multiplier = M_2PINyu/ResD*eps1;
+			Obj->vx += ResPX*multiplier;
+			Obj->vy += ResPY*multiplier;
 		}
 
-		if ( Diffusive_S->BodyList )
+		if ( S_BodyList )
 		{
 			//cout << "Body diff" << endl;
-			double rabs, r1abs, erx, ery, exparg;
-			rabs = sqrt(Vort->rx*Vort->rx + Vort->ry*Vort->ry);
-			r1abs = 1/rabs;
-			erx = Vort->rx*r1abs;
-			ery = Vort->ry*r1abs;
+			double rabs, exparg;
+			rabs = sqrt(Obj->rx*Obj->rx + Obj->ry*Obj->ry);
 			
 			exparg = (1-rabs)*eps1;
 			if (exparg > -8)
 			{
-				multiplier = 4 *Diffusive_Nyu*eps1*expdef(exparg);
-				Vort->vx += multiplier*erx; 
-				Vort->vy += multiplier*ery;
+				multiplier = Four_Nyu*eps1*expdef(exparg)/rabs;
+				Obj->vx += Obj->rx * multiplier; 
+				Obj->vy += Obj->ry * multiplier;
 			}
 		}
 
-		Vort++;
+		Obj++;
 	}
 
 	return 0;
@@ -192,52 +188,51 @@ int CalcVortexDiffusive()
 int CalcHeatDiffusive()
 {
 	int i, lsize;
-	TVortex *Vort;
+	TVortex *Obj;
 	
-	double multiplier1, multiplier2, dfi2 = Diffusive_dfi * Diffusive_dfi;
+	double multiplier1, multiplier2;
+	double M_7PIdfi2 = 21.9911485752 * Diffusive_dfi * Diffusive_dfi;
+	double M_2PINyu = Diffusive_Nyu * M_2PI;
+	TList* S_BodyList = Diffusive_S->BodyList;
 
-	TList *vlist = Diffusive_S->HeatList;
+	TList *hlist = Diffusive_S->HeatList;
 
-	if ( !Diffusive_S->HeatList) return -1;
+	if ( !hlist) return -1;
 
-	lsize = Diffusive_S->HeatList->size;
-	Vort = Diffusive_S->HeatList->Elements;
+	lsize = hlist->size;
+	Obj = hlist->Elements;
 	for( i=0; i<lsize; i++ )
 	{
 		double epsilon, eps1;
-		Epsilon_faster(vlist, Vort->rx, Vort->ry, epsilon);
-		//cout << Vort->rx << "\t" << Vort->ry << "\t" << epsilon << endl;
+		Epsilon_faster(hlist, Obj->rx, Obj->ry, epsilon);
+		//cout << Obj->rx << "\t" << Obj->ry << "\t" << epsilon << endl;
 		eps1= 1/epsilon;
 		double ResPX, ResPY, ResD;
-		Division(vlist, Vort, eps1, ResPX, ResPY, ResD);
+		Division(hlist, Obj, eps1, ResPX, ResPY, ResD);
 
 		if ( fabs(ResD) > 1E-12 )
 		{
-			multiplier1 = Diffusive_Nyu/ResD*M_2PI;
-			Vort->vx += ResPX*multiplier1;
-			Vort->vy += ResPY*multiplier1;
+			multiplier1 = M_2PINyu/ResD;
+			Obj->vx += ResPX*multiplier1;
+			Obj->vy += ResPY*multiplier1;
 		}
 
-		if ( Diffusive_S->BodyList )
+		if ( S_BodyList )
 		{
-			double rabs, r1abs, erx, ery, exparg;
-			rabs = sqrt(Vort->rx*Vort->rx + Vort->ry*Vort->ry);
-			r1abs = 1/rabs;
-			erx = Vort->rx*r1abs;
-			ery = Vort->ry*r1abs;
+			double rabs, exparg;
+			rabs = sqrt(Obj->rx*Obj->rx + Obj->ry*Obj->ry);
+
 			exparg = (1-rabs)*eps1; //look for define
 			if ( exparg > -8 )
 			{
-				#define M_7PI 21.9911485752
-				multiplier1 = M_7PI*dfi2*expdef(exparg);
-				multiplier2 = Diffusive_Nyu*eps1*multiplier1/(ResD+multiplier1);
-				//printf ("%lf\n", multiplier2);
-				Vort->vx += multiplier2*erx; 
-				Vort->vy += multiplier2*ery;
+				multiplier1 = M_7PIdfi2*expdef(exparg);
+				multiplier2 = Diffusive_Nyu*eps1*multiplier1/(ResD+multiplier1)/rabs;
+				Obj->vx += Obj->rx * multiplier2; 
+				Obj->vy += Obj->ry * multiplier2;
 			}
 		}
 
-		Vort++;
+		Obj++;
 	}
 
 	return 0;

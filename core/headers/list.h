@@ -31,6 +31,7 @@ class TlList
 		long maxsize;
 		int Add(Pointer link);
 		int Remove(long i);
+		int Remove(Pointer *p);
 		int Clear();
 		Pointer Item(long i);
 
