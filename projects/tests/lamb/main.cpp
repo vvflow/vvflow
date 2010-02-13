@@ -11,7 +11,7 @@
 using namespace std;
 
 //#define HEAT //else vortexes
-//#define FAST
+#define FAST
 #define RE 1000
 #define DT 1E-3
 #define STEPS 100
@@ -57,7 +57,7 @@ using namespace std;
 
 double InfSpeedX(double t)
 {
-	return 0.5;
+	return 0;
 }
 
 double NyuV(Space* S)

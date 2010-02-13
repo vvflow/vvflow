@@ -244,7 +244,7 @@ void Division_vortex(TList *List, TVortex* v, double eps1, double &ResPX, double
 }}
 
 namespace {
-void Division_vortex(TList *List, double px, double py, double eps1, double &ResPX, double &ResPY, double &ResD )
+void Division_heat(TList *List, double px, double py, double eps1, double &ResPX, double &ResPY, double &ResD )
 {
 	double drx, dry, drabs;
 	double xx, dxx;
