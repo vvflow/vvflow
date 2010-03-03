@@ -47,6 +47,7 @@ struct vortex
 {
 	double rx, ry;
 	double vx, vy;
+	double vxtmp, vytmp;
 	double g;
 	char flag;
 	// flags:
@@ -55,7 +56,7 @@ struct vortex
 };
 typedef struct vortex TVortex;
 
-#define InitVortex(v, sx, sy, sg) v.rx=sx; v.ry=sy; v.vx=0; v.vy=0; v.g=sg; v.flag=0;
+#define InitVortex(v, sx, sy, sg) v.rx=sx; v.ry=sy; v.vx=v.vxtmp=0; v.vy=v.vytmp=0; v.g=sg; v.flag=0;
 #define ZeroVortex(v) InitVortex(v, 0, 0, 0);
 
 std::ostream& operator<< (std::ostream& os, const TVortex &v);

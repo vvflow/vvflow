@@ -173,6 +173,7 @@ int Move()
 	if ( FlowMove_S->RotationV) FlowMove_S->Angle+= FlowMove_S->RotationV(FlowMove_S->Time)*FlowMove_dt;
 	FlowMove_S->Time+= FlowMove_dt;
 
+	#undef MoveList
 	return 0;
 }
 

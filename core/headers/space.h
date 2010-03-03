@@ -34,6 +34,7 @@ class Space
 		int Load(char *filename);
 
 		double Integral();
+		double gsumm();
 };
 
 #endif /*SPACE_H_*/

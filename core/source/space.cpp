@@ -176,3 +176,19 @@ double Space::Integral()
 	return Summ;
 }
 
+double Space::gsumm()
+{
+	if (!VortexList) return 0;
+	double Summ = 0;
+	int lsize = VortexList->size;
+	TVortex* Vort = VortexList->Elements;
+
+	for ( int i=0; i<lsize; i++ )
+	{
+		Summ += Vort->g;
+		Vort++;
+	}
+
+	return Summ;
+}
+

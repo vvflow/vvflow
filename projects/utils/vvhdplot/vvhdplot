@@ -13,7 +13,7 @@ case "$1" in
 		ymax=`echo "scale=5; (($defxmax) - ($defxmin)) *0.375" | bc`
 
 		rotvec=`grep -e rotvec $2 | cut -d "/" -f 1`
-		angle=`grep -e angle $2 | cut -c5- | cut -d "/" -f 1`
+		angle=`grep -e angle $2 | cut -d "/" -f 1`
 		if test -n "$rotvec"
 		then
 			vectorplotcommand=", \"-\" w vectors lc rgb \"black\"
