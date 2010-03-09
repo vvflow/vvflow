@@ -104,10 +104,10 @@ int CalcConvective(bool IncludeBody)
 	if (Convective_S->RotationV) { Convective_RotationG = M_2PI*Convective_S->RotationV(Convective_S->Time); } 
 	else { Convective_RotationG = 0; }
 
-	if (Convective_S->VortexList)
+	if (vlist)
 	{
-		lsize = Convective_S->VortexList->size;
-		Vort = Convective_S->VortexList->Elements;
+		lsize = vlist->size;
+		Vort = vlist->Elements;
 		for( i=0; i<lsize; i++ )
 		{
 			SpeedSum(vlist, Vort->rx, Vort->ry, 1, 0, SpeedSumResX, SpeedSumResY);
@@ -116,7 +116,7 @@ int CalcConvective(bool IncludeBody)
 			Vort++;
 		}
 		
-		Vort = Convective_S->VortexList->Elements;
+		Vort = vlist->Elements;
 		if ( IncludeBody && blist )
 		{
 			for( i=0; i<lsize; i++ )

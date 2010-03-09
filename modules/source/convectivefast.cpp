@@ -220,6 +220,38 @@ int CalcConvectiveFast()
 	return 0;
 }
 
+int CalcBodyConvectiveFast() //was cut from slow module
+{
+	int i, lsize;
+	TVortex *Vort;
+	TList *vlist = ConvectiveFast_S->VortexList;
+	TList *blist = ConvectiveFast_S->BodyList;
+	double SpeedSumResX, SpeedSumResY;
+
+	//initialization of InfSpeed & Rotation
+	if (ConvectiveFast_S->InfSpeedX) { ConvectiveFast_InfSpeedX = M_2PI*ConvectiveFast_S->InfSpeedX(ConvectiveFast_S->Time); } 
+	else { ConvectiveFast_InfSpeedX = 0; }
+	if (ConvectiveFast_S->InfSpeedY) { ConvectiveFast_InfSpeedY = M_2PI*ConvectiveFast_S->InfSpeedY(ConvectiveFast_S->Time); } 
+	else { ConvectiveFast_InfSpeedY = 0; }
+	if (ConvectiveFast_S->RotationV) { ConvectiveFast_RotationG = M_2PI*ConvectiveFast_S->RotationV(ConvectiveFast_S->Time); } 
+	else { ConvectiveFast_RotationG = 0; }
+
+	if (vlist && blist)
+	{
+		lsize = vlist->size;
+		Vort = vlist->Elements;
+
+		for( i=0; i<lsize; i++ )
+		{
+			SpeedSum(blist, Vort->rx, Vort->ry, SpeedSumResX, SpeedSumResY);
+			Vort->vx += SpeedSumResX;
+			Vort->vy += SpeedSumResY;
+			Vort++;
+		}
+
+	}
+}
+
 int CalcCirculationFast()
 {
 	if ( !ConvectiveFast_S->BodyList ) return -1;
