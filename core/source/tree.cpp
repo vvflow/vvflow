@@ -5,7 +5,7 @@
 using namespace std;
 
 #define M_2PI 6.283185308 		// = 2*PI
-#define Tree_MaxListSize 4
+#define Tree_MaxListSize 16
 
 /********************* HEADER ****************************/
 namespace {

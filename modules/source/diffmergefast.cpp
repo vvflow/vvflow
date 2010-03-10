@@ -24,8 +24,8 @@ int DiffMergeFast_MergedV;
 int MergeVortexes(TVortex **lv1, TVortex **lv2, TlList *LList2);
 
 // Eps for vortexes
-void EpsilonV(TNode *Node, TVortex **lv, double &res);
-void EpsilonV_faster(TNode *Node, TVortex **lv, double &res);
+void EpsilonV(TNode *Node, TVortex **lv, double &res, bool merge=true);
+void EpsilonV_faster(TNode *Node, TVortex **lv, double &res, bool merge=true);
 //Eps for Heat
 void EpsilonH(TNode *Node, double px, double py, double &res);
 void EpsilonH_faster(TNode *Node, double px, double py, double &res);
@@ -83,7 +83,7 @@ int DiffMergedFastV()
 // EPSILON FUNCTIONS FOR VORTEXES
 
 namespace {
-void EpsilonV(TNode *Node, TVortex **lv, double &res)
+void EpsilonV(TNode *Node, TVortex **lv, double &res, bool merge)
 {
 	double drx, dry, drabs2;
 	double px=(**lv).rx, py=(**lv).ry; 
@@ -119,19 +119,25 @@ void EpsilonV(TNode *Node, TVortex **lv, double &res)
 	}
 
 	res = sqrt(res2);
+	if ( !lv || !lv1 ) { res=1E-10; return; }
+	if ( !lv2 ) { res = sqrt(res1); return; }
 
-	if ( !lv || !lv1 || !lv2 ) { res=1E-10; return; }
-	if ( (*lv<*lv1) && (res1 < (DiffMergeFast_MergeSqEps*( (*lv)->rx*(*lv)->rx + (*lv)->ry*(*lv)->ry + 3)*0.25 ) ) )
+	if (merge)
 	{
-		MergeVortexes(lv, lv1, n1->VortexLList);
-	} else if ( ( ((*lv)->g<0)&&((*lv1)->g>0)&&((*lv2)->g>0) ) || ( ((*lv)->g>0)&&((*lv1)->g<0)&&((*lv2)->g<0) ) )
-	{
-		MergeVortexes(lv, lv1, n1->VortexLList);
+		if ( (*lv<*lv1) && (res1 < (DiffMergeFast_MergeSqEps*( (*lv)->rx*(*lv)->rx + (*lv)->ry*(*lv)->ry + 3)*0.25 ) ) )
+		{
+			MergeVortexes(lv, lv1, n1->VortexLList);
+			EpsilonV(Node, lv, res, false);
+		} else if ( ( ((*lv)->g<0)&&((*lv1)->g>0)&&((*lv2)->g>0) ) || ( ((*lv)->g>0)&&((*lv1)->g<0)&&((*lv2)->g<0) ) )
+		{
+			MergeVortexes(lv, lv1, n1->VortexLList);
+			EpsilonV(Node, lv, res, false);
+		}
 	}
 }}
 
 namespace {
-void EpsilonV_faster(TNode *Node, TVortex **lv, double &res)
+void EpsilonV_faster(TNode *Node, TVortex **lv, double &res, bool merge)
 {
 	double drx, dry, drabs2;
 	double px=(**lv).rx, py=(**lv).ry; 
@@ -168,14 +174,20 @@ void EpsilonV_faster(TNode *Node, TVortex **lv, double &res)
 	}
 
 	res = res2;
+	if ( !lv || !lv1 ) { res=1E-10; return; }
+	if ( !lv2 ) { res=sqrt(res1); return; }
 
-	if ( !lv || !lv1 || !lv2 ) { res=1E-10; return; }
-	if ( (*lv<*lv1) && (res1 < (DiffMergeFast_MergeSqEps*( (*lv)->rx*(*lv)->rx + (*lv)->ry*(*lv)->ry + 3)*0.25 )) )
+	if (merge)
 	{
-		MergeVortexes(lv, lv1, n1->VortexLList);
-	} else if ( ( ((*lv)->g<0)&&((*lv1)->g>0)&&((*lv2)->g>0) ) || ( ((*lv)->g>0)&&((*lv1)->g<0)&&((*lv2)->g<0) ) )
-	{
-		MergeVortexes(lv, lv1, n1->VortexLList);
+		if ( (*lv<*lv1) && (res1 < (DiffMergeFast_MergeSqEps*( (*lv)->rx*(*lv)->rx + (*lv)->ry*(*lv)->ry + 3)*0.25 )) )
+		{
+			MergeVortexes(lv, lv1, n1->VortexLList);
+			EpsilonV_faster(Node, lv, res, false);
+		} else if ( ( ((*lv)->g<0)&&((*lv1)->g>0)&&((*lv2)->g>0) ) || ( ((*lv)->g>0)&&((*lv1)->g<0)&&((*lv2)->g<0) ) )
+		{
+			MergeVortexes(lv, lv1, n1->VortexLList);
+			EpsilonV_faster(Node, lv, res, false);
+		}
 	}
 }}
 

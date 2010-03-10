@@ -9,7 +9,10 @@
 #include "fstream"
 #include <stdio.h>
 #include <unistd.h>
+#include "malloc.h"
+#include "string.h"
 //#include <pthread.h>
+
 
 #define BodyVortexes 500 //число присоединенных вихрей
 #define RE 300 //Рейнольдс по радиусу!!!! не путать! во всех статьях принято указывать по диаметру
@@ -19,9 +22,50 @@
 
 using namespace std;
 
-double InfSpeedX(double t) //функция скорости на бесконечности
+char *InfSpeedXsh; //команда на баше, вычисляющая скорость набегающего потока //пример: "echo 1", либо "echo s($t)+1 | bc -l"
+char *InfSpeedYsh; //аналогично для Vy
+char *Rotationsh; //аналогично для вращения цилиндра (скорость поверхности)
+
+double InfSpeedX(double t) 
 {
-	return 1;
+	if (!InfSpeedXsh) return 0;
+	double result;
+	char *exec; exec = (char*)(malloc(strlen(InfSpeedXsh)+32));
+	sprintf(exec, "t=%lf; %s", t, InfSpeedXsh);
+
+	FILE *pipe = popen(exec,"r");
+	fscanf(pipe, "%lf", &result);
+	pclose(pipe);
+
+	return result;
+}
+
+double InfSpeedY(double t)
+{
+	if (!InfSpeedYsh) return 0;
+	double result;
+	char *exec; exec = (char*)(malloc(strlen(InfSpeedYsh)+32));
+	sprintf(exec, "t=%lf; %s", t, InfSpeedYsh);
+
+	FILE *pipe = popen(exec,"r");
+	fscanf(pipe, "%lf", &result);
+	pclose(pipe);
+
+	return result;
+}
+
+double Rotation(double t) //функция вращения цилиндра
+{
+	if (!Rotationsh) return 0;
+	double result;
+	char *exec; exec = (char*)(malloc(strlen(Rotationsh)+32));
+	sprintf(exec, "t=%lf; %s", t, Rotationsh);
+
+	FILE *pipe = popen(exec,"r");
+	fscanf(pipe, "%lf", &result);
+	pclose(pipe);
+
+	return result;
 }
 
 void * diff (void* args) // параллельная нить для диффузии
@@ -32,7 +76,7 @@ void * diff (void* args) // параллельная нить для диффу�
 
 int main()
 {
-	Space *S = new Space(true, true, false, InfSpeedX, NULL, NULL); //создаем вселенную. Аргументы: есть ли в ней вихри, тело, тепло; ссылки на функции: скорость X,Y на бесконечности, скорость вращения цилиндра
+	Space *S = new Space(true, true, false, InfSpeedX, InfSpeedY, Rotation); //создаем вселенную. Аргументы: есть ли в ней вихри, тело, тепло; ссылки на функции: скорость X,Y на бесконечности, скорость вращения (поверхности) цилиндра
 	S->ConstructCircle(BodyVortexes); //создаем во вселенной круг
 	InitTree(S, 10, 4*DFI); //инициализируем дерево. Аргументы: ссылка на вселенную, критерий дальности ячеек (это отдельный разговор), минимальный размер ячейки
 	InitFlowMove(S, DT, 1E-6); //инициализируем модуль перемещения. Аргументы: о5 вселенная, шаг по времени, критерий циркуляции (если модуль циркуляции вихря меньше - удаляем)
