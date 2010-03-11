@@ -75,7 +75,9 @@ int PrintHeat(std::ostream& os, Space *S, bool PrintSpeed)
 
 /************************ XML PART **************************************/
 
+namespace {
 static const char *base64_alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+}
 
 namespace {
 void three2four(char *src, char *dst)
