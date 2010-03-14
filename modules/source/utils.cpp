@@ -80,7 +80,7 @@ static const char *base64_alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnop
 }
 
 namespace {
-void three2four(char *src, char *dst)
+void three2four(const char *src, char *dst)
 {
 	dst[0] = base64_alphabet[(src[0]&0xfc) >> 2];
 	dst[1] = base64_alphabet[((src[0]&0x03) << 4) | ((src[1]&0xf0) >> 4)];
@@ -89,11 +89,11 @@ void three2four(char *src, char *dst)
 	return;
 }}
 
-char* BinToBase64(char *src, int srclen)
+char* BinToBase64(const char *src, int srclen)
 {
 	if (srclen%3) return NULL;
 	char *result = (char*)malloc(srclen/3*4*sizeof(char)+1);
-	char *l3 = src;
+	const char *l3 = src;
 	char *l4 = result;
 	for (int i=0; i<srclen/3; i++)
 	{
@@ -117,7 +117,7 @@ char index(char A)
 }}
 
 namespace {
-void four2three(char *src, char *dst)
+void four2three(const char *src, char *dst)
 {
 	char c0=index(src[0]), c1=index(src[1]), c2=index(src[2]), c3=index(src[3]);
 	dst[0] = (c0 << 2) | ((c1&0x30) >> 4);
@@ -125,11 +125,11 @@ void four2three(char *src, char *dst)
 	dst[2] = ((c2&0x3)<<6) | c3;
 }}
 
-char* Base64ToBin(char *src, int srclen)
+char* Base64ToBin(const char *src, int srclen)
 {
 	if (srclen%4) return NULL;
 	char *result = (char*)malloc(srclen/4*3*sizeof(char));
-	char *l4 = src; 
+	const char *l4 = src; 
 	char *l3 = result;
 	for (int i=0; i<srclen/4; i++)
 	{
@@ -137,7 +137,6 @@ char* Base64ToBin(char *src, int srclen)
 		l3+= 3;
 		l4+= 4;
 	}
-	*l4 = 0;
 	return result;
 }
 
