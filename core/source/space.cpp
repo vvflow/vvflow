@@ -46,7 +46,7 @@ int Space::ConstructCircle(long BodyListSize)
 	return 0;
 }
 
-int Space::LoadVorticityFromFile(char* filename)
+int Space::LoadVorticityFromFile(const char* filename)
 {
 	if ( !VortexList ) return -1;
 	FILE *fin;
@@ -65,7 +65,7 @@ int Space::LoadVorticityFromFile(char* filename)
 	return 0;
 }
 
-int Space::LoadHeatFromStupidFile(char* filename, double g)
+int Space::LoadHeatFromStupidFile(const char* filename, double g)
 {
 	if ( !HeatList ) return -1;
 	FILE *fin;
@@ -84,7 +84,7 @@ int Space::LoadHeatFromStupidFile(char* filename, double g)
 	return 0;
 }
 
-int Space::LoadHeatFromFile(char* filename)
+int Space::LoadHeatFromFile(const char* filename)
 {
 	if ( !HeatList ) return -1;
 	FILE *fin;
@@ -103,7 +103,7 @@ int Space::LoadHeatFromFile(char* filename)
 	return 0;
 }
 
-int Space::Save(char *filename)
+int Space::Save(const char *filename)
 {
 	long zero = 0;
 	FILE * pFile;
@@ -125,7 +125,7 @@ int Space::Save(char *filename)
 	return 0;
 }
 
-int Space::Load(char *filename)
+int Space::Load(const char *filename)
 {
 	long size;
 	if (VortexList) delete VortexList;

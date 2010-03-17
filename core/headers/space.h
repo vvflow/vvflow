@@ -27,11 +27,11 @@ class Space
 		double Angle;
 
 
-		int LoadVorticityFromFile(char* filename);
-		int LoadHeatFromStupidFile(char* filename, double g);
-		int LoadHeatFromFile(char* filename);
-		int Save(char *filename);
-		int Load(char *filename);
+		int LoadVorticityFromFile(const char* filename);
+		int LoadHeatFromStupidFile(const char* filename, double g);
+		int LoadHeatFromFile(const char* filename);
+		int Save(const char *filename);
+		int Load(const char *filename);
 
 		double Integral();
 		double gsumm();
