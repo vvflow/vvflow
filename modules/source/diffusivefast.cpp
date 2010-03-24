@@ -75,7 +75,10 @@ void EpsilonV(TNode *Node, double px, double py, double &res)
 		}
 		lNNode++;
 	}
-	res = sqrt(res2);
+	if (res2 < 1E9)
+		res = sqrt(res2);
+	else
+		res = 1E-20;
 	//f (res < DiffusiveFast_dfi) res = DiffusiveFast_dfi;
 }}
 
@@ -109,7 +112,10 @@ void EpsilonV_faster(TNode *Node, double px, double py, double &res)
 		}
 		lNNode++;
 	}
-	res = res2;
+	if (res2 < 1E9)
+		res = res2;
+	else
+		res = 1E-20;
 	//if (res < DiffusiveFast_dfi) res = DiffusiveFast_dfi;
 }}
 

@@ -3,6 +3,11 @@
 		defxmin=-1.5
 		defxmax=2.5
 
+if test "$2" = "-"
+then
+	cin=$(cat - )
+fi
+
 case "$1" in 
 	--vorticity) 
 		defdotsize=1
@@ -32,13 +37,23 @@ case "$1" in
 			fi
 		fi
 
+		if test "$2" = "-"
+		then
+			e="e"
+			setoutput=""
+		else
+			cin=""
+			e=""
+			setoutput="set output '$2.png'"
+		fi
+
 		echo "unset key
 		set xrange [$defxmin: $defxmax]
 		set yrange [-$ymax: $ymax]
 		set size ratio -1
 
 		set terminal png truecolor enhanced size 1024, 768
-		set output '$2.png'
+		$setoutput
 
 		#set lmargin 0; set rmargin 0; set bmargin 0; set tmargin 0;
 		#set zeroaxis; set border 0; set xtics axis nomirror; set ytics axis nomirror;
@@ -48,7 +63,9 @@ case "$1" in
 		color(x) = (x>0) ? rgb(255,0,0) : rgb(0,0,255)
 		set pointsize $defdotsize
 		#plot sin(x) w lines
-		plot '$2' using 1:2:(color(\$3)) with $defstyle lc rgb variable $vectorplotcommand" | gnuplot
+		plot '$2' using 1:2:(color(\$3)) with $defstyle lc rgb variable $vectorplotcommand
+		$cin
+		$e" | gnuplot
 		;;
 
 	--heat)

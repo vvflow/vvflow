@@ -1,5 +1,6 @@
 all: streamlines
 	g++ streamlines.cpp -o streamlines -lVVHDcore -lVVHDmodules
+	g++ streamlines_cuda.cpp -o streamlines_cuda -lVVHDcore -lVVHDmodules
 
 install: streamlines
 	cp streamlines /usr/local/bin

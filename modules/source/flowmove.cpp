@@ -142,7 +142,7 @@ int MoveAndClean(bool remove)
 	//MoveList(HeatList, FlowMove_CleanedH)
 
 	if ( FlowMove_S->RotationV) FlowMove_S->Angle+= FlowMove_S->RotationV(FlowMove_S->Time)*FlowMove_dt;
-	FlowMove_S->Time+= FlowMove_dt;
+	//FlowMove_S->Time+= FlowMove_dt;
 
 	return 0;
 }
@@ -171,7 +171,7 @@ int Move()
 	MoveList(HeatList, FlowMove_CleanedH)
 
 	if ( FlowMove_S->RotationV) FlowMove_S->Angle+= FlowMove_S->RotationV(FlowMove_S->Time)*FlowMove_dt;
-	FlowMove_S->Time+= FlowMove_dt;
+	//FlowMove_S->Time+= FlowMove_dt;
 
 	#undef MoveList
 	return 0;
@@ -258,6 +258,7 @@ int VortexShed()
 
 	int i, bsize;
 	TVortex *Vort;
+	TVortex VortCopy = *Vort; ZeroVortex(VortCopy);
 	TList *blist = FlowMove_S->BodyList;
 	TList *vlist;
 
@@ -265,6 +266,8 @@ int VortexShed()
 	TVortex *HVort;
 	TVortex *Vort;
 	TVortex *BVort; */
+
+	double RiseHeight = 1.+FlowMove_dfi*0.05;
 
 	FlowMove_CleanedV_inbody = FlowMove_CleanedV_toosmall = 0;
 	if ( FlowMove_S->VortexList )
@@ -281,13 +284,16 @@ int VortexShed()
 				FlowMove_S->ForceX -= Vort->ry* Vort->g;
 				FlowMove_S->ForceY += Vort->rx* Vort->g;
 
-				TVortex VortCopy = *Vort;
+				
+/*
 				double r = 1. + double(rand())*FlowMove_ControlLayerHeight/RAND_MAX;
 				double fi= FlowMove_dfi * (i + double(rand())/RAND_MAX); // don't use += here, cuz it causes systematic error;
 				VortCopy.rx = r*cos(fi);
 				VortCopy.ry = r*sin(fi);
+*/
+				VortCopy.rx = Vort->rx*RiseHeight;
+				VortCopy.ry = Vort->ry*RiseHeight;
 				VortCopy.g = Vort->g;
-				VortCopy.vx = VortCopy.vy = 0;
 				vlist->Add(VortCopy);
 			}
 
@@ -295,7 +301,7 @@ int VortexShed()
 		}
 	}
 	
-	
+	FlowMove_S->Time+= FlowMove_dt;
 	
 	return 0;
 /*

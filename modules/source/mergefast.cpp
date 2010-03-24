@@ -106,6 +106,8 @@ int MergeVortexList_NodeOnly(TNode *Node)
 
 		TVortex** ljVort = liVort+1;
 		TVortex* jVort;
+		double n1, n2; n1=n2=1E10; //distance to two nearest vortexes
+		TVortex **ln1, **ln2; ln1=ln2=NULL; //their links
 
 		for (int j=i+1; j<lsize; j++)
 		{
@@ -138,7 +140,23 @@ int MergeVortexList_NodeOnly(TNode *Node)
 				jVort->g = 0; Node->VortexLList->Remove(j); lsize--;
 				break;
 			}
+			if ( drabs2 < n1 ) { n2=n1; n1=drabs2; ln2=ln1; ln1=ljVort; } else
+			if ( drabs2 < n2 ) { n2=drabs2; ln2=ljVort; }
 			ljVort++;
+		}
+
+		if (ln1 && ln2)
+		if ( ((iVort->g<0)&&((**ln1).g>0)&&((**ln2).g>0)) || ((iVort->g>0)&&((**ln1).g<0)&&((**ln2).g<0)) )
+		{
+			res++;
+
+			if ( fabs(iVort->g) < fabs((**ln1).g) )
+			{
+				iVort->rx = (**ln1).rx;
+				iVort->ry = (**ln1).ry;
+			}
+			iVort->g += (**ln1).g;
+			(**ln1).g = 0; Node->VortexLList->Remove((void**)ln1); lsize--;
 		}
 
 		liVort++;

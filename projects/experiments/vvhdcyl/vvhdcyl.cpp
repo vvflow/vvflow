@@ -1,9 +1,12 @@
 #include "libVVHD/core.h" //ядро комплекса. Содержит базовые типы, в тч и дерево для быстрых модулей
 
 #include "libVVHD/convectivefast.h" //модуль быстрой конвекции
-#include "libVVHD/diffmergefast.h" //модуль, объединяющий диффузию и объединение вихрей
+#include "libVVHD/diffusivefast.h"
+#include "libVVHD/mergefast.h"
+//#include "libVVHD/diffmergefast.h" //модуль, объединяющий диффузию и объединение вихрей
 #define XML_ENABLE // вкрючаем xmlные фичи в utils.h
 #include "libVVHD/utils.h" //утилиты для печати
+#include "libVVHD/utils_xml.h" //утилиты для печати
 #include "libVVHD/flowmove.h" //модуль перемещения вихрей
 
 #include "iostream"
@@ -35,6 +38,7 @@ using namespace std;
 char *InfSpeedXsh; //команда на баше, вычисляющая скорость набегающего потока //пример: "echo 1", либо "echo s($t)+1 | bc -l"
 char *InfSpeedYsh; //аналогично для Vy
 char *Rotationsh; //аналогично для вращения цилиндра (скорость поверхности)
+char *ExecOnStepFinishSh; // команда которая будет выполняться в конце каждого шага. Удобно для автоматического построения картинок
 
 double InfSpeedX(double t) 
 {
@@ -81,11 +85,54 @@ double Rotation(double t) //функция вращения цилиндра
 	return result;
 }
 
+void ExecOnStepFinish(double Time, double InfSpeedX, double InfSpeedY, 
+					double BodyRotation, double BodyAngle, int VortexListSize, double ForceX, double ForceY,
+					int cleaned, int merged, double GSumm, double Integral)
+{
+	if (!ExecOnStepFinishSh) return;
+	char *c = ExecOnStepFinishSh;
+	char VarName[64], tmp[128];
+	char exec[512]="";
+	while (c)
+	{
+		if (*c=='$')
+		{
+			int i=0;
+			while (*c!=' ')
+			{
+				VarName[i] = *c;
+				i++; c++;
+			}
+			VarName[i] = 0;
+			if (!strcmp(VarName, "Time")) { sprintf(tmp, "Time=%lf; ", Time); strcat(exec, tmp); } else
+			if (!strcmp(VarName, "BodyAngle")) { sprintf(tmp, "BodyAngle=%lf; ", BodyAngle); strcat(exec, tmp); } else
+			if (!strcmp(VarName, "InfSpeedX")) { sprintf(tmp, "InfSpeedX=%lf; ", InfSpeedX); strcat(exec, tmp); } else
+			if (!strcmp(VarName, "InfSpeedY")) { sprintf(tmp, "InfSpeedY=%lf; ", InfSpeedY); strcat(exec, tmp); } else
+			if (!strcmp(VarName, "BodyRotation")) { sprintf(tmp, "BodyRotation=%lf; ", BodyRotation); strcat(exec, tmp); } else
+			if (!strcmp(VarName, "BodyAngle")) { sprintf(tmp, "BodyAngle=%lf; ", BodyAngle); strcat(exec, tmp); } else
+			if (!strcmp(VarName, "VortexListSize")) { sprintf(tmp, "VortexListSize=%d; ", VortexListSize); strcat(exec, tmp); } else
+			if (!strcmp(VarName, "ForceX")) { sprintf(tmp, "ForceX=%lf; ", ForceX); strcat(exec, tmp); } else
+			if (!strcmp(VarName, "ForceY")) { sprintf(tmp, "ForceY=%lf; ", ForceY); strcat(exec, tmp); } else
+			if (!strcmp(VarName, "cleaned")) { sprintf(tmp, "cleaned=%d; ", cleaned); strcat(exec, tmp); } else
+			if (!strcmp(VarName, "merged")) { sprintf(tmp, "merged=%d; ", merged); strcat(exec, tmp); } else
+			if (!strcmp(VarName, "GSumm")) { sprintf(tmp, "GSumm=%lf; ", GSumm); strcat(exec, tmp); } else
+			if (!strcmp(VarName, "Integral")) { sprintf(tmp, "Integral=%lf; ", Integral); strcat(exec, tmp); }
+		}
+		c++;
+	}
+	strcat(exec, ExecOnStepFinishSh);
+	FILE *pipe = popen(exec,"r"); 
+	if (!pipe) return;
+	pclose(pipe);
+	return;
+}
+
 /***************************************************************/
 
 void * diff (void* args) // параллельная нить для диффузии
 {
-	CalcVortexDiffMergeFast();
+	//CalcVortexDiffMergeFast();
+	CalcVortexDiffusiveFast();
 	return NULL;
 }
 
@@ -93,6 +140,7 @@ int main(int argc, char **argv)
 {
 	//заводим переменные
 	double DFI, DT, RE, TreeFarCriteria=10, TreeMinNodeSize, MinG=1E-8, ConvEps=1E-6, MergeSqEps, HeatEnabled=0;
+	double InfSpeedXVal, InfSpeedYVal, RotationVal;
 	int PrintFrequency=10, BodyVortexes;
 	fstream fout;
 	char fname[64];
@@ -113,6 +161,7 @@ int main(int argc, char **argv)
 		InfSpeedXsh = NULL; GetHeaderString(head, "InfSpeedXsh", &InfSpeedXsh);
 		InfSpeedYsh = NULL; GetHeaderString(head, "InfSpeedYsh", &InfSpeedYsh);
 		Rotationsh = NULL; GetHeaderString(head, "Rotationsh", &Rotationsh);
+		ExecOnStepFinishSh = NULL; GetHeaderString(head, "ExecOnStepFinish", &ExecOnStepFinishSh);
 		if (GetHeaderInt(head, "BodyVortexes", &BodyVortexes)) { cout << "Variable \"BodyVortexes\" isn't initialized\n"; return -1; }
 		DFI = 6.283185308/BodyVortexes;
 		if (GetHeaderDouble(head, "DT", &DT)) { cout << "Variable \"DT\" isn't initialized\n"; return -1; }
@@ -131,7 +180,10 @@ int main(int argc, char **argv)
 	InitTree(S, TreeFarCriteria, TreeMinNodeSize); //инициализируем дерево. Аргументы: ссылка на вселенную, критерий дальности ячеек (это отдельный разговор), минимальный размер ячейки
 	InitFlowMove(S, DT, MinG); //инициализируем модуль перемещения. Аргументы: о5 вселенная, шаг по времени, критерий циркуляции (если модуль циркуляции вихря меньше - удаляем)
 	InitConvectiveFast(S, ConvEps); //инициализируем модуль конвекции. Аргументы: вселенная, радиус дискретности
-	InitDiffMergeFast(S, RE, MergeSqEps); // инициализируем диффузию и объединение. Аргументы: вселенная, Рейнольдс, критерий объединения (если вихри сближаются - объединяем)
+	//InitDiffMergeFast(S, RE, MergeSqEps); // инициализируем диффузию и объединение. Аргументы: вселенная, Рейнольдс, критерий объединения (если вихри сближаются - объединяем)
+	InitDiffusiveFast(S, RE);
+	InitMergeFast(S, MergeSqEps);
+
 
 	//затираем файл с силами
 	/*sprintf(fname, "Forces");
@@ -145,7 +197,7 @@ int main(int argc, char **argv)
 
 	cout << "loading vorticity... " << flush;
 	LoadVorticityFromLastStep(S, doc);
-	cout << S->VortexList->size << " loaded.\n";
+	cout << S->VortexList->size << " loaded from T=" << S->Time << endl;
 
 	xmlSaveFormatFileEnc(argv[1], doc, "UTF-8", 1);
 	CloseStorage(doc);
@@ -153,8 +205,13 @@ int main(int argc, char **argv)
 	//запускаем основной цикл
 	for (int i=1; ; i++)
 	{
+		InfSpeedXVal = InfSpeedX(S->Time);
+		InfSpeedYVal = InfSpeedY(S->Time);
+		RotationVal = Rotation(S->Time);
+
 		//считаем скорости
 		BuildTree(true, false, false); //строим дерево. Аргументы - вносить ли в дерево информацию о: вихрях, теле, тепле
+		MergeFast();
 		pthread_create(&thread, NULL, &diff, NULL); //запускаем нить диффузии
 		CalcConvectiveFast(); //параллельно вычисляем конвективную скорость
 		pthread_join(thread, NULL); //присоединяем нить диффузии
@@ -180,15 +237,16 @@ int main(int argc, char **argv)
 			if (Rotationsh) AppendNodeDouble(step, "BodyAngle", S->Angle);
 //			if (InfSpeedXsh) AppendNodeDouble(step, "BodyX", S->BodyX);
 //			if (InfSpeedYsh) AppendNodeDouble(step, "BodyY", S->BodyY);
-			if (InfSpeedXsh) AppendNodeDouble(step, "InfSpeedX", InfSpeedX(S->Time));
-			if (InfSpeedYsh) AppendNodeDouble(step, "InfSpeedY", InfSpeedY(S->Time));
-			if (Rotationsh) AppendNodeDouble(step, "BodyRotation", Rotation(S->Time));
+			if (InfSpeedXsh) AppendNodeDouble(step, "InfSpeedX", InfSpeedXVal);
+			if (InfSpeedYsh) AppendNodeDouble(step, "InfSpeedY", InfSpeedYVal);
+			if (Rotationsh) AppendNodeDouble(step, "BodyRotation", RotationVal);
 			AppendNodeInt(step, "VortexListSize", S->VortexList->size);
 			AppendNodeDouble(step, "ForceX", S->ForceX/DT);
 			AppendNodeDouble(step, "ForceY", S->ForceY/DT);
 			S->ForceX = S->ForceY = 0; //зануляем силы, что бы старая информация не накапливалась
 			AppendNodeInt(step, "cleaned", cleaned);
-			AppendNodeInt(step, "merged", DiffMergedFastV());
+			//AppendNodeInt(step, "merged", DiffMergedFastV());
+			AppendNodeInt(step, "merged", MergedFastV());
 			AppendNodeDouble(step, "GSumm", S->gsumm()); //сумма всех вихрей в пространстве. Для невращающегося цилиндра должна мало отличаться от 0
 			AppendNodeDouble(step, "Integral", S->Integral()); //функция пространства: сумма((r^2)*g)
 
@@ -198,6 +256,8 @@ int main(int argc, char **argv)
 		xmlSaveFormatFileEnc(argv[1], doc, "UTF-8", 1);
 		CloseStorage(doc);
 
+		ExecOnStepFinish(S->Time, InfSpeedXVal, InfSpeedYVal, RotationVal, S->Angle, S->VortexList->size, 0, 0,
+					cleaned, MergedFastV(), 0, 0);
 		cout << "step " <<  i << " done. \t" << S->VortexList->size << "\n" ;
 
 		/*
