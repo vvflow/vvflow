@@ -47,16 +47,23 @@ struct vortex
 {
 	double rx, ry;
 	double vx, vy;
+#ifdef __FLOWMOVE_SECOND_H__
 	double vxtmp, vytmp;
+#endif
 	double g;
-	char flag;
+	//char flag;
 	// flags:
 	//	1 - to be removed;
 	//	2 - to be merged;
 };
 typedef struct vortex TVortex;
 
-#define InitVortex(v, sx, sy, sg) v.rx=sx; v.ry=sy; v.vx=v.vxtmp=0; v.vy=v.vytmp=0; v.g=sg; v.flag=0;
+#ifdef __FLOWMOVE_SECOND_H__
+#define InitVortex(v, sx, sy, sg) v.rx=sx; v.ry=sy; v.vx=v.vy=v.vxtmp=v.vytmp=0; v.g=sg; //v.flag=0;
+#else
+#define InitVortex(v, sx, sy, sg) v.rx=sx; v.ry=sy; v.vx=v.vy=0; v.g=sg; //v.flag=0;
+#endif
+
 #define ZeroVortex(v) InitVortex(v, 0, 0, 0);
 
 std::ostream& operator<< (std::ostream& os, const TVortex &v);

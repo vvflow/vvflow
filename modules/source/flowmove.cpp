@@ -233,7 +233,7 @@ int Clean()
 		for ( i=0; i<lsize; i++)
 		{
 			double rabs2 = Obj->rx*Obj->rx + Obj->ry*Obj->ry;
-			if ( (Obj->flag & 1) || ( FlowMove_S->BodyList && (rabs2 < 1) ) )
+			if ( FlowMove_S->BodyList && (rabs2 < 1) )
 			{
 				FlowMove_CleanedH++;
 				list->Remove(Obj);
