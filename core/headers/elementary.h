@@ -47,9 +47,7 @@ struct vortex
 {
 	double rx, ry;
 	double vx, vy;
-#ifdef __FLOWMOVE_SECOND_H__
-	double vxtmp, vytmp;
-#endif
+	//double vxtmp, vytmp;
 	double g;
 	//char flag;
 	// flags:
@@ -58,12 +56,8 @@ struct vortex
 };
 typedef struct vortex TVortex;
 
-#ifdef __FLOWMOVE_SECOND_H__
-#define InitVortex(v, sx, sy, sg) v.rx=sx; v.ry=sy; v.vx=v.vy=v.vxtmp=v.vytmp=0; v.g=sg; //v.flag=0;
-#else
-#define InitVortex(v, sx, sy, sg) v.rx=sx; v.ry=sy; v.vx=v.vy=0; v.g=sg; //v.flag=0;
-#endif
 
+#define InitVortex(v, sx, sy, sg) v.rx=sx; v.ry=sy; v.vx=v.vy=0; v.g=sg; //v.flag=0;
 #define ZeroVortex(v) InitVortex(v, 0, 0, 0);
 
 std::ostream& operator<< (std::ostream& os, const TVortex &v);
