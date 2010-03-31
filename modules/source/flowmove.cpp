@@ -97,7 +97,7 @@ int MoveAndClean(bool remove)
 				FlowMove_S->ForceY -= Obj->rx* Obj->g;
 				FlowMove_CleanedV_inbody++;
 				list->Remove(Obj);
-			}
+			} else
 			if ( toosmall )
 			{
 				FlowMove_S->ForceX += Obj->ry* Obj->g;
@@ -267,13 +267,16 @@ int VortexShed()
 	TVortex *Vort;
 	TVortex *BVort; */
 
-	double RiseHeight = 1.+FlowMove_dfi*0.05;
+	double RiseHeight = 1.+FlowMove_dfi*1E-6;
 
 	FlowMove_CleanedV_inbody = FlowMove_CleanedV_toosmall = 0;
 	if ( FlowMove_S->VortexList )
 	{
 		vlist = FlowMove_S->VortexList;
 		bsize = blist->size;
+		//double gsumm = FlowMove_S->gsumm();
+		//double CirculationAddition = -gsumm/bsize;
+		//FlowMove_S->Angle+= M_2PI*gsumm*FlowMove_dt;
 		Vort = blist->Elements;
 		for ( i=0; i<bsize; i++)
 		{
@@ -281,9 +284,6 @@ int VortexShed()
 				{ FlowMove_CleanedV_toosmall++; }
 			else
 			{
-				FlowMove_S->ForceX -= Vort->ry* Vort->g;
-				FlowMove_S->ForceY += Vort->rx* Vort->g;
-
 				
 /*
 				double r = 1. + double(rand())*FlowMove_ControlLayerHeight/RAND_MAX;
@@ -293,7 +293,9 @@ int VortexShed()
 */
 				VortCopy.rx = Vort->rx*RiseHeight;
 				VortCopy.ry = Vort->ry*RiseHeight;
-				VortCopy.g = Vort->g;
+				VortCopy.g = Vort->g;// + CirculationAddition;
+				FlowMove_S->ForceX -= VortCopy.ry* VortCopy.g;
+				FlowMove_S->ForceY += VortCopy.rx* VortCopy.g;
 				vlist->Add(VortCopy);
 			}
 

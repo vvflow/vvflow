@@ -192,3 +192,17 @@ double Space::gsumm()
 	return Summ;
 }
 
+void Space::HydroDynamicMomentum(double &ResX, double &ResY)
+{
+	ResX=ResY=0;
+	if (!VortexList) return;
+	int lsize = VortexList->size;
+	TVortex* Vort = VortexList->Elements;
+
+	for ( int i=0; i<lsize; i++ )
+	{
+		ResX += Vort->g * Vort->rx;
+		ResY += Vort->g * Vort->ry;
+		Vort++;
+	}
+}

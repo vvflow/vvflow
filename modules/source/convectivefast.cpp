@@ -208,6 +208,10 @@ int CalcConvectiveFast()
 							SpeedSumResX + ConvectiveFast_InfSpeedX - obj->ry*multiplier; 	\
 				obj->vy += Teilor2 + Teilor4*LocaldRx - Teilor3*LocaldRy + 					\
 							SpeedSumResY + ConvectiveFast_InfSpeedY + obj->rx*multiplier; 	\
+				/*cout << "c " << obj->rx << " " << obj->ry << " " << obj->g << " " <<  Teilor1 + Teilor3*LocaldRx + Teilor4*LocaldRy + 					\
+							SpeedSumResX + ConvectiveFast_InfSpeedX - obj->ry*multiplier << " " <<  	\
+Teilor2 + Teilor4*LocaldRx - Teilor3*LocaldRy + 					\
+							SpeedSumResY + ConvectiveFast_InfSpeedY + obj->rx*multiplier << endl; */	\
 				lobj++; 																	\
 			} 																				
 		

@@ -12,8 +12,8 @@ using namespace std;
 
 //#define HEAT //else vortexes
 #define FAST
-#define RE 1000
-#define DT 1E-3
+#define RE 600
+#define DT 1E-2
 #define STEPS 100
 
 #ifdef HEAT
@@ -95,7 +95,8 @@ double NyuH(Space* S)
 int main()
 {
 	Space *S = new Space(1, 0, 1, NULL, InfSpeedX, NULL);
-	char fname[16] = "lamb1253";
+	double hdmx, hdmy;
+	char fname[16] = "lv"; //"steady1253";
 	#ifdef HEAT
 		S->LoadHeatFromFile(fname);
 	#else
@@ -116,10 +117,12 @@ int main()
 
 	double Nyu1, Nyu2;
 	Nyu1 = Nyu(S);
+	S->HydroDynamicMomentum(hdmx, hdmy);
+	cout << "HDM " << hdmx << " " << hdmy << endl;
 	for ( int k=0; k<STEPS; k++ )
 	{
 		BuildTree(1, 0, 1);
-		//CalcConvectiveDef();
+		CalcConvectiveDef();
 		CalcDiffusiveDef();
 			sprintf(fname, "results/res%04d", k);
 			fout.open(fname, ios::out);
@@ -129,9 +132,12 @@ int main()
 		DestroyTree();
 
 		MoveAndClean(0);
+		printf("%d\r", k); cout << flush;
 //		cout << "step " << k << " done. Vorticity size = " << S->VortexList->size << endl;
 	}
 	Nyu2 = Nyu(S);
+	S->HydroDynamicMomentum(hdmx, hdmy);
+	cout << "HDM " << hdmx << " " << hdmy << endl;
 
 	sprintf(fname, OUTFILE);
 	fout.open(fname, ios::out);

@@ -13,6 +13,7 @@
 #include "fstream"
 #include <stdio.h>
 #include <unistd.h>
+#include <signal.h>
 #include "malloc.h"
 #include "string.h"
 //#include <pthread.h>
@@ -31,7 +32,14 @@
 
 using namespace std;
 
+int interruptable;
+int quit;
 
+void sig_handler(int sig)
+{
+	if (interruptable) exit(0);
+	else { cout << "\nCannot be interrupted right now. Will quit asap.\n"; quit=1; }
+}
 
 /****************************************************************/
 
@@ -146,6 +154,17 @@ int main(int argc, char **argv)
 	char fname[64];
 	pthread_t thread;
 
+	/**** SIGINT part ******/
+	struct sigaction act;
+	sigemptyset (&act.sa_mask);
+	act.sa_handler = &sig_handler;
+	act.sa_flags = 0;
+
+	quit = 0;
+	interruptable = 1;
+	sigaction(SIGINT, &act, NULL);
+	/***********************/
+
 	if (argc<2) { cout << "No file specified. Use ./exe file.xml\n"; return -1; } //проверяем синтаксис запуска
 
 	xmlDoc *doc = OpenStorage(argv[1], VERSION);
@@ -170,7 +189,7 @@ int main(int argc, char **argv)
 		if (GetHeaderDouble(head, "TreeMinNodeSize", &TreeMinNodeSize)) TreeMinNodeSize=6*DFI;
 		GetHeaderDouble(head, "MinG", &MinG);
 		GetHeaderDouble(head, "ConvEps", &ConvEps);
-		if (GetHeaderDouble(head, "MergeSqEps", &MergeSqEps)) MergeSqEps = DFI*DFI*0.09;
+		if (GetHeaderDouble(head, "MergeSqEps", &MergeSqEps)) MergeSqEps = DFI*DFI*0.16;
 		GetHeaderDouble(head, "HeatEnabled", &HeatEnabled);
 		GetHeaderInt(head, "PrintFrequency", &PrintFrequency);
 	} 
@@ -214,6 +233,7 @@ int main(int argc, char **argv)
 		MergeFast();
 		pthread_create(&thread, NULL, &diff, NULL); //запускаем нить диффузии
 		CalcConvectiveFast(); //параллельно вычисляем конвективную скорость
+//		CalcVortexDiffusiveFast();
 		pthread_join(thread, NULL); //присоединяем нить диффузии
 		DestroyTree(); //убиваем дерево
 
@@ -229,6 +249,7 @@ int main(int argc, char **argv)
 
 		//шаг завершен
 
+		interruptable = 0;
 		doc = OpenStorage(argv[1], VERSION);
 		if (doc)
 		{
@@ -243,6 +264,9 @@ int main(int argc, char **argv)
 			AppendNodeInt(step, "VortexListSize", S->VortexList->size);
 			AppendNodeDouble(step, "ForceX", S->ForceX/DT);
 			AppendNodeDouble(step, "ForceY", S->ForceY/DT);
+			double hdmx, hdmy; S->HydroDynamicMomentum(hdmx, hdmy);
+			AppendNodeDouble(step, "HydroDynamicMomentumX", hdmx);
+			AppendNodeDouble(step, "HydroDynamicMomentumY", hdmy);
 			S->ForceX = S->ForceY = 0; //зануляем силы, что бы старая информация не накапливалась
 			AppendNodeInt(step, "cleaned", cleaned);
 			//AppendNodeInt(step, "merged", DiffMergedFastV());
@@ -259,6 +283,11 @@ int main(int argc, char **argv)
 		ExecOnStepFinish(S->Time, InfSpeedXVal, InfSpeedYVal, RotationVal, S->Angle, S->VortexList->size, 0, 0,
 					cleaned, MergedFastV(), 0, 0);
 		cout << "step " <<  i << " done. \t" << S->VortexList->size << "\n" ;
+
+		if (quit) return 0;
+		interruptable = 1;
+
+
 
 		/*
 		//раз в print шагов печатаем вихри

@@ -75,11 +75,41 @@ void EpsilonV(TNode *Node, double px, double py, double &res)
 		}
 		lNNode++;
 	}
-	if (res2 < 1E9)
-		res = sqrt(res2);
-	else
-		res = 1E-20;
-	//f (res < DiffusiveFast_dfi) res = DiffusiveFast_dfi;
+
+	if (res2 > 1E9)
+	{
+		TNode **lFNode = (TNode**)Node->FarNodes->Elements;
+		TNode *FNode;
+		int fnlsize = Node->FarNodes->size;
+
+		for ( int i=0; i<fnlsize; i++)
+		{
+			FNode = *lFNode;
+			if ( !FNode->VortexLList ) { lFNode++; continue; }
+			drx = px - FNode->x;
+			dry = py - FNode->y;
+			drabs2 = drx*drx + dry*dry;
+			if ( (res2+FNode->h+FNode->w) > drabs2 ) { lFNode++; continue; }
+
+			TVortex** lObj = (TVortex**)FNode->VortexLList->Elements;
+			TVortex* Obj;
+			int lsize = FNode->VortexLList->size;
+
+			for ( int j=0; j<lsize; j++ )
+			{
+				Obj = *lObj;
+				drx = px - Obj->rx;
+				dry = py - Obj->ry;
+				drabs2 = drx*drx + dry*dry;
+				if ( (res1 > drabs2) && drabs2 ) { res2 = res1; res1 = drabs2; } 
+				else if ( (res2 > drabs2) && drabs2 ) { res2 = drabs2; }
+				lObj++;
+			}
+
+			lFNode++;
+		}
+	}
+	res = sqrt(res2);
 }}
 
 namespace {
@@ -112,11 +142,41 @@ void EpsilonV_faster(TNode *Node, double px, double py, double &res)
 		}
 		lNNode++;
 	}
-	if (res2 < 1E9)
-		res = res2;
-	else
-		res = 1E-20;
-	//if (res < DiffusiveFast_dfi) res = DiffusiveFast_dfi;
+
+	if (res2 > 1E9)
+	{
+		TNode **lFNode = (TNode**)Node->FarNodes->Elements;
+		TNode *FNode;
+		int fnlsize = Node->FarNodes->size;
+
+		for ( int i=0; i<fnlsize; i++)
+		{
+			FNode = *lFNode;
+			if ( !FNode->VortexLList ) { lFNode++; continue; }
+			drx = px - FNode->x;
+			dry = py - FNode->y;
+			drabs2 = drx*drx + dry*dry;
+			if ( (res2+FNode->h+FNode->w) > drabs2 ) { lFNode++; continue; }
+
+			TVortex** lObj = (TVortex**)FNode->VortexLList->Elements;
+			TVortex* Obj;
+			int lsize = FNode->VortexLList->size;
+
+			for ( int j=0; j<lsize; j++ )
+			{
+				Obj = *lObj;
+				drx = px - Obj->rx;
+				dry = py - Obj->ry;
+				drabs2 = fabs(drx) + fabs(dry);
+				if ( (res1 > drabs2) && drabs2 ) { res2 = res1; res1 = drabs2; } 
+				else if ( (res2 > drabs2) && drabs2 ) { res2 = drabs2; }
+				lObj++;
+			}
+
+			lFNode++;
+		}
+	}
+	res = res2;
 }}
 
 namespace {
@@ -173,6 +233,40 @@ void EpsilonH(TNode *Node, double px, double py, double &res)
 		}
 		lNNode++;
 	}
+
+	if (res2 > 1E9)
+	{
+		TNode **lFNode = (TNode**)Node->FarNodes->Elements;
+		TNode *FNode;
+		int fnlsize = Node->FarNodes->size;
+
+		for ( int i=0; i<fnlsize; i++)
+		{
+			FNode = *lFNode;
+			if ( !FNode->HeatLList ) { lFNode++; continue; }
+			drx = px - FNode->x;
+			dry = py - FNode->y;
+			drabs2 = drx*drx + dry*dry;
+			if ( (res2+FNode->h+FNode->w) > drabs2 ) { lFNode++; continue; }
+
+			TVortex** lObj = (TVortex**)FNode->HeatLList->Elements;
+			TVortex* Obj;
+			int lsize = FNode->HeatLList->size;
+
+			for ( int j=0; j<lsize; j++ )
+			{
+				Obj = *lObj;
+				drx = px - Obj->rx;
+				dry = py - Obj->ry;
+				drabs2 = drx*drx + dry*dry;
+				if ( (res1 > drabs2) && drabs2 ) { res2 = res1; res1 = drabs2; } 
+				else if ( (res2 > drabs2) && drabs2 ) { res2 = drabs2; }
+				lObj++;
+			}
+
+			lFNode++;
+		}
+	}
 	res = sqrt(res2);
 }}
 
@@ -205,6 +299,40 @@ void EpsilonH_faster(TNode *Node, double px, double py, double &res)
 			lObj++;
 		}
 		lNNode++;
+	}
+
+	if (res2 > 1E9)
+	{
+		TNode **lFNode = (TNode**)Node->FarNodes->Elements;
+		TNode *FNode;
+		int fnlsize = Node->FarNodes->size;
+
+		for ( int i=0; i<fnlsize; i++)
+		{
+			FNode = *lFNode;
+			if ( !FNode->HeatLList ) { lFNode++; continue; }
+			drx = px - FNode->x;
+			dry = py - FNode->y;
+			drabs2 = drx*drx + dry*dry;
+			if ( (res2+FNode->h+FNode->w) > drabs2 ) { lFNode++; continue; }
+
+			TVortex** lObj = (TVortex**)FNode->HeatLList->Elements;
+			TVortex* Obj;
+			int lsize = FNode->HeatLList->size;
+
+			for ( int j=0; j<lsize; j++ )
+			{
+				Obj = *lObj;
+				drx = px - Obj->rx;
+				dry = py - Obj->ry;
+				drabs2 = fabs(drx) + fabs(dry);
+				if ( (res1 > drabs2) && drabs2 ) { res2 = res1; res1 = drabs2; } 
+				else if ( (res2 > drabs2) && drabs2 ) { res2 = drabs2; }
+				lObj++;
+			}
+
+			lFNode++;
+		}
 	}
 	res = res2;
 }}
@@ -363,14 +491,19 @@ int CalcVortexDiffusiveFast()
 			EpsilonV_faster(BNode, Obj->rx, Obj->ry, epsilon);
 			eps1 = 1/epsilon;
 
-			double ResPX, ResPY, ResD;
+			double ResPX, ResPY, ResD, ResVx, ResVy, ResAbs2;
 			Division_vortex(BNode, Obj, eps1, ResPX, ResPY, ResD);
 
 			if ( fabs(ResD) > 1E-6 )
 			{
 				multiplier = M_2PINyu/ResD*eps1;
+				ResVx = ResPX * multiplier;
+				ResVy = ResPY * multiplier;
+				ResAbs2 = ResVx*ResVx+ResVy*ResVy;
+				if (ResAbs2 > 10000) { multiplier*=100/sqrt(ResAbs2); }
 				Obj->vx += ResPX * multiplier;
 				Obj->vy += ResPY * multiplier;
+//cout << "d " << Obj->rx << " " << Obj->ry << " " << Obj->g << " " << ResPX * multiplier << " " << ResPY * multiplier << " " << epsilon << endl;
 			}
 
 			if ( S_BodyList ) // diffusion from cylinder only
@@ -384,6 +517,7 @@ int CalcVortexDiffusiveFast()
 					multiplier = Four_Nyu * eps1 * expdef(exparg)/rabs;
 					Obj->vx += Obj->rx * multiplier;
 					Obj->vy += Obj->ry * multiplier;
+//cout << "db " << Obj->rx << " " << Obj->ry << " " << Obj->g << " " << Obj->rx * multiplier << " " << Obj->ry * multiplier << " " << epsilon << endl;
 				}
 			}
 

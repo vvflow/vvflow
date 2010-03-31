@@ -35,6 +35,7 @@ class Space
 
 		double Integral();
 		double gsumm();
+		void HydroDynamicMomentum(double &ResX, double &ResY);
 };
 
 #endif /*SPACE_H_*/
