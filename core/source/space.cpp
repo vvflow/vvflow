@@ -23,7 +23,7 @@ Space::Space(bool CreateVortexes,
 	InfSpeedY = sInfSpeedY;
 	RotationV = sRotationV;
 	ForceX = ForceY = 0;
-	Time = Angle = 0;
+	Time = Angle = BodyY = 0;
 }
 
 int Space::ConstructCircle(long BodyListSize)

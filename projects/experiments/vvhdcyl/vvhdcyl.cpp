@@ -257,7 +257,7 @@ int main(int argc, char **argv)
 			AppendNodeDouble(step, "Time", S->Time);
 			if (Rotationsh) AppendNodeDouble(step, "BodyAngle", S->Angle);
 //			if (InfSpeedXsh) AppendNodeDouble(step, "BodyX", S->BodyX);
-//			if (InfSpeedYsh) AppendNodeDouble(step, "BodyY", S->BodyY);
+			if (InfSpeedYsh) AppendNodeDouble(step, "BodyY", S->BodyY);
 			if (InfSpeedXsh) AppendNodeDouble(step, "InfSpeedX", InfSpeedXVal);
 			if (InfSpeedYsh) AppendNodeDouble(step, "InfSpeedY", InfSpeedYVal);
 			if (Rotationsh) AppendNodeDouble(step, "BodyRotation", RotationVal);

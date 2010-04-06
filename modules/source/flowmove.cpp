@@ -142,6 +142,7 @@ int MoveAndClean(bool remove)
 	//MoveList(HeatList, FlowMove_CleanedH)
 
 	if ( FlowMove_S->RotationV) FlowMove_S->Angle+= FlowMove_S->RotationV(FlowMove_S->Time)*FlowMove_dt;
+	if ( FlowMove_S->InfSpeedY) FlowMove_S->BodyY-= FlowMove_S->InfSpeedY(FlowMove_S->Time)*FlowMove_dt;
 	//FlowMove_S->Time+= FlowMove_dt;
 
 	return 0;
@@ -171,6 +172,7 @@ int Move()
 	MoveList(HeatList, FlowMove_CleanedH)
 
 	if ( FlowMove_S->RotationV) FlowMove_S->Angle+= FlowMove_S->RotationV(FlowMove_S->Time)*FlowMove_dt;
+	if ( FlowMove_S->InfSpeedY) FlowMove_S->BodyY-= FlowMove_S->InfSpeedY(FlowMove_S->Time)*FlowMove_dt;
 	//FlowMove_S->Time+= FlowMove_dt;
 
 	#undef MoveList
