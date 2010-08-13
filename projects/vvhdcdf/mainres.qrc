@@ -1,0 +1,11 @@
+<RCC>
+  <qresource prefix="ava">
+    <file alias="avatar50x50.png">icons/ava50.png</file>
+  </qresource>
+  <qresource prefix="icons">
+    <file alias="auto16.png">icons/auto16.png</file>
+    <file alias="bulb16.png">icons/bulb16.png</file>
+    <file alias="star16.png">icons/star16.png</file>
+    <file alias="edit16.png">icons/edit16.png</file>
+  </qresource>
+</RCC>
