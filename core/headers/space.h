@@ -24,7 +24,7 @@ class Space
 		double (*InfSpeedY)(double Time);
 		double (*RotationV)(double Time);
 		double Time;
-		double Angle, BodyY;
+		double Angle, BodyX, BodyY;
 
 
 		int LoadVorticityFromFile(const char* filename);

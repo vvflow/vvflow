@@ -138,12 +138,10 @@ int MoveAndClean(bool remove)
 		}
 	}
 
-	//MoveList(VortexList,  FlowMove_CleanedV)
-	//MoveList(HeatList, FlowMove_CleanedH)
-
 	if ( FlowMove_S->RotationV) FlowMove_S->Angle+= FlowMove_S->RotationV(FlowMove_S->Time)*FlowMove_dt;
+	if ( FlowMove_S->InfSpeedX) FlowMove_S->BodyX-= FlowMove_S->InfSpeedX(FlowMove_S->Time)*FlowMove_dt;
 	if ( FlowMove_S->InfSpeedY) FlowMove_S->BodyY-= FlowMove_S->InfSpeedY(FlowMove_S->Time)*FlowMove_dt;
-	//FlowMove_S->Time+= FlowMove_dt;
+	//FlowMove_S->Time+= FlowMove_dt; //in VortexShed
 
 	return 0;
 }
@@ -172,8 +170,8 @@ int Move()
 	MoveList(HeatList, FlowMove_CleanedH)
 
 	if ( FlowMove_S->RotationV) FlowMove_S->Angle+= FlowMove_S->RotationV(FlowMove_S->Time)*FlowMove_dt;
+	if ( FlowMove_S->InfSpeedX) FlowMove_S->BodyX-= FlowMove_S->InfSpeedX(FlowMove_S->Time)*FlowMove_dt;
 	if ( FlowMove_S->InfSpeedY) FlowMove_S->BodyY-= FlowMove_S->InfSpeedY(FlowMove_S->Time)*FlowMove_dt;
-	//FlowMove_S->Time+= FlowMove_dt;
 
 	#undef MoveList
 	return 0;
@@ -264,11 +262,6 @@ int VortexShed()
 	TList *blist = FlowMove_S->BodyList;
 	TList *vlist;
 
-/*	double x,g;
-	TVortex *HVort;
-	TVortex *Vort;
-	TVortex *BVort; */
-
 	double RiseHeight = 1.+FlowMove_dfi*1E-6;
 
 	FlowMove_CleanedV_inbody = FlowMove_CleanedV_toosmall = 0;
@@ -308,23 +301,6 @@ int VortexShed()
 	FlowMove_S->Time+= FlowMove_dt;
 	
 	return 0;
-/*
-	for (i=0; i<BodyList->size(); i++)
-	{
-		BVort = (TVortex*)BodyList->Item(i);
-		if( fabs(BVort->g) < RemoveEps) { BVort->g =0; cleaned++; continue; }
-		Vort = new TVortex(BVort->r, BVort->g, Free);
-		VortexField->Add(Vort);
-		statistic->BornCount[i/statistic->Step]++;
-		statistic->BornSum += Vort->g*rotl(Vort->r);
-	}*/
-	/*x = 2*M_PI/HeatCount;
-	g = dt*x;
-	for (i = 0; i< HeatCount; i++)
-	{
-		HVort = new TVortex(Point( cos(x*i), sin(x*i) ), g, Heat);
-		HeatList->Add(HVort);
-	}*/
 }
 
 int HeatShed()
