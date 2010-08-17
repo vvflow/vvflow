@@ -12,6 +12,7 @@ class MainWindowImpl : public QMainWindow, public Ui::MainWindow
 	Q_OBJECT
 	public:
 		MainWindowImpl( QWidget * parent = 0, Qt::WFlags f = 0 );
+		void SendArgs(int argc, char** argv);
 		int SaveEditFields(TFileData* link);
 		int LoadEditFields(TFileData* link);
 		//int SaveNcFile(const TFileData *FileData, const QString FileName);

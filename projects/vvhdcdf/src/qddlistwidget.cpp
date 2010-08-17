@@ -21,7 +21,7 @@ void QDDListWidget::updateList()
 	
 	foreach(TFileData *file, *fileList)
 	{
-		item = new QListWidgetItem(QIcon(":ava/avatar50x50.png"), file->FileName, this);
+		item = new QListWidgetItem(QIcon(":icons/file.svg"), file->FileName, this);
 		item->setData(Qt::UserRole, qVariantFromValue((void*)file));
 	}
 }
@@ -30,7 +30,7 @@ void QDDListWidget::updateList()
 QListWidgetItem* QDDListWidget::add(TFileData* file)
 {
 	QListWidgetItem *item;
-	item = new QListWidgetItem(QIcon(":ava/avatar50x50.png"), file->FileName, this);
+	item = new QListWidgetItem(QIcon(":icons/file.svg"), file->FileName, this);
 	item->setData(Qt::UserRole, qVariantFromValue((void*)file));
 	fileList->append(file);
 	
@@ -73,7 +73,10 @@ void QDDListWidget::startDrag( Qt::DropActions supportedActions)
 	mimeData->setUrls(UrlList);
 	QDrag *drag = new QDrag(this);
 	drag->setMimeData(mimeData);
-	drag->setPixmap(QPixmap(":ava/avatar50x50.png"));
+	if (Files.size() > 1)
+		drag->setPixmap(QPixmap(":icons/files.svg"));
+	else
+		drag->setPixmap(QPixmap(":icons/file.svg"));
 	
 	drag->exec(supportedActions);
 }

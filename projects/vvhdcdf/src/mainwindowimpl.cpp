@@ -39,6 +39,25 @@ MainWindowImpl::MainWindowImpl( QWidget * parent, Qt::WFlags f)
 	connect(PrintFreqEdit, SIGNAL(valueChanged(int)), this, SLOT(setPrintFreq(int)));
 }
 
+void MainWindowImpl::SendArgs(int argc, char** argv)
+{
+	if (argc<2)
+	{
+		AddPushButton->click();
+	} else
+	for (int i=1; i<argc; i++)
+	{
+		TFileData *NewFile = new TFileData();
+
+		if (NewFile->LoadFromFile(argv[i]))
+			delete NewFile;
+		else
+		{
+			listWidget->add(NewFile);
+		}
+	}
+}
+
 void MainWindowImpl::updateEditFields()
 {
 	QList<TFileData*> Selection = listWidget->selected();
