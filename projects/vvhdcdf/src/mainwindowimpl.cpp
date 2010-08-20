@@ -12,7 +12,7 @@ MainWindowImpl::MainWindowImpl( QWidget * parent, Qt::WFlags f)
 	textFields << FileNameEdit << ReEdit << dtEdit <<
 		InfSpeedXEdit << InfSpeedYEdit << RotationEdit << 
 		BodyVortsEdit << TreeFarEdit << MinNodeSizeEdit <<
-		MinGEdit << ConvEpsEdit << MergeSqEpsEdit;
+		MinGEdit << ConvEpsEdit << MergeEpsEdit;
 	
 	updateEditFields();
 	
@@ -100,7 +100,7 @@ void MainWindowImpl::updateEditFields()
 		MinNodeSizeEdit->setText(S.setNum(file->MinNodeSize));
 		MinGEdit->setText(S.setNum(file->MinG));
 		ConvEpsEdit->setText(S.setNum(file->ConvEps));
-		MergeSqEpsEdit->setText(S.setNum(file->MergeSqEps));
+		MergeEpsEdit->setText(S.setNum(file->MergeEps));
 		PrintFreqEdit->setValue(file->PrintFreq);
 	}
 }
@@ -205,8 +205,8 @@ void MainWindowImpl::editFinished(QSuperEdit* widget, bool ok)
 			file->MinG = MinGEdit->text().toDouble(&converted);
 		else if (widget == ConvEpsEdit)
 			file->ConvEps = ConvEpsEdit->text().toDouble(&converted);
-		else if (widget == MergeSqEpsEdit)
-			file->MergeSqEps = MergeSqEpsEdit->text().toDouble(&converted);
+		else if (widget == MergeEpsEdit)
+			file->MergeEps = MergeEpsEdit->text().toDouble(&converted);
 		
 		
 		if (!converted) widget->setText("0");
@@ -219,7 +219,9 @@ void MainWindowImpl::spareButtonClicked(QSuperEdit* widget)
 	{
 		bool ok;
 		double x = QInputDialog::getDouble(this, tr("dfi multiplier"), 
-								tr("multiplier = "), 2., 0., 100., 2, &ok);
+								tr("multiplier = "), 
+					widget->text().toDouble() * file->BodyVorts/6.283185308,
+								0., 100., 2, &ok);
 		
 		if (ok) 
 		{
@@ -227,17 +229,19 @@ void MainWindowImpl::spareButtonClicked(QSuperEdit* widget)
 			QString S; 
 			widget->setText(S.setNum(MinNodeSize));
 		}
-	} else if (widget == MergeSqEpsEdit)
+	} else if (widget == MergeEpsEdit)
 	{
 		bool ok;
 		double x = QInputDialog::getDouble(this, tr("dfi multiplier"), 
-								tr("multiplier = "), 0, 0.3, 1, 2, &ok);
+								tr("multiplier = "), 
+					widget->text().toDouble() * file->BodyVorts/6.283185308,
+								0.3, 1, 2, &ok);
 		
 		if (ok) 
 		{
 			double MergeEps = x * 6.283185308/file->BodyVorts;
 			QString S; 
-			widget->setText(S.setNum(MergeEps*MergeEps));
+			widget->setText(S.setNum(MergeEps));
 		}
 	}
 }

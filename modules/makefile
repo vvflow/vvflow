@@ -6,7 +6,7 @@ CXX 			= g++
 INCLUDE 		= -I headers/
 
 COBJECTS 		= convective.o convectivefast.o diffusive.o diffusivefast.o merge.o mergefast.o diffmerge.o diffmergefast.o flowmove.o utils.o utils_xml.o
-COBJFLAGS 		= -c -g -O3 `xml2-config --cflags --libs`
+COBJFLAGS 		= -c -g -O2 -Wall
 FOBJECTS 		= 
 
 all: incbuild bin/ $(LIBFILENAME) 

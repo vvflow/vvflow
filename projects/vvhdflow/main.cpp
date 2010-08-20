@@ -88,7 +88,7 @@ int main(int argc, char **argv)
 	double MinNodeSize;
 	double MinG;
 	double ConvEps;
-	double MergeSqEps;
+	double MergeEps;
 
 	int PrintFreq;
 
@@ -112,7 +112,7 @@ int main(int argc, char **argv)
 	att = dataFile.get_att("MinNodeSize"); 		if (att) MinNodeSize = att->as_double(0);
 	att = dataFile.get_att("MinG"); 			if (att) MinG = att->as_double(0);
 	att = dataFile.get_att("ConvEps"); 			if (att) ConvEps = att->as_double(0);
-	att = dataFile.get_att("MergeSqEps"); 		if (att) MergeSqEps = att->as_double(0);
+	att = dataFile.get_att("MergeEps"); 		if (att) MergeEps = att->as_double(0);
 	att = dataFile.get_att("PrintFreq"); 		if (att) PrintFreq = att->as_int(0);
 
 	cout << "LOAD SUCCESSFULL " << endl;
@@ -129,7 +129,7 @@ int main(int argc, char **argv)
 	cout << "\tMinNodeSize = " << MinNodeSize << endl;
 	cout << "\tMinG = " << MinG << endl;
 	cout << "\tConvEps = " << ConvEps << endl;
-	cout << "\tMergeSqEps = " << MergeSqEps << endl;
+	cout << "\tMergeEps = " << MergeEps << endl;
 	cout << "\tPrintFreq = " << PrintFreq << endl;
 
 	/* initializing *********************/
@@ -138,7 +138,7 @@ int main(int argc, char **argv)
 	InitTree(S, TreeFarCriteria, MinNodeSize);
 	InitFlowMove(S, dt, MinG);
 	InitConvectiveFast(S, ConvEps);
-	InitDiffMergeFast(S, Re, MergeSqEps);
+	InitDiffMergeFast(S, Re, MergeEps*MergeEps);
 
 	/* SIGINT part **********************/
 	struct sigaction act;
@@ -247,7 +247,7 @@ int main(int argc, char **argv)
 		//ncCleanedVar->put_rec(, i);
 		//ncMergedVar->put_rec(, i);
 
-		cout << "step " << i << "finished\n";
+		cout << "step " << i << " finished. \t\t " << S->VortexList->size << " vortexes.\t\t " << DiffMergedFastV() << " merged\n";
 
 	}
 

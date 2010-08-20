@@ -14,10 +14,10 @@ class Space
 				double (*sRotationV)(double Time));
 		int ConstructCircle(long BodyListSize);
 
-		TList *VortexList;
-		TList *BodyList;
+		TList<TObject> *VortexList;
+		TList<TObject> *BodyList;
+		TList<TObject> *HeatList;
 		int *BodyControlLayer; //its filled by flowmove
-		TList *HeatList;
 		double ForceX, ForceY; //dont forget to zero it when u want
 
 		double (*InfSpeedX)(double Time);

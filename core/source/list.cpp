@@ -4,130 +4,70 @@
 
 using namespace std;
 
-/**************** VortexList *********************/
-
-TList::TList()
+template <class T>
+TList<T>::TList()
 {
 	maxsize = 4;
-	Elements = (TVortex*)malloc(maxsize*sizeof(TVortex));
+	Elements = (T*)malloc(maxsize*sizeof(T));
 	size = 0;
 }
 
-TList::~TList()
+template <class T>
+TList<T>::~TList()
 {
 	free(Elements);
 }
 
-int TList::Add(TVortex vort)
+template <class T>
+void TList<T>::Add(T item)
+{
+	if ( size == maxsize ) 
+	{
+		maxsize = maxsize << 1;
+		Elements = (T*)realloc(Elements, maxsize*sizeof(T));
+	}
+	Elements[size] = item;
+	size++;
+}
+
+template <class T>
+void TList<T>::Copy(T *item)
 {
 	if ( size == maxsize ) 
 	{
 		maxsize = maxsize << 1;
 		Elements = (TVortex*)realloc(Elements, maxsize*sizeof(TVortex));
 	}
-	Elements[size] = vort;
+	Elements[size] = *item;
 	size++;
-	return 0;
 }
 
-int TList::Copy(TVortex *vort)
+template <class T>
+void TList<T>::Remove(long i)
 {
-	if ( size == maxsize ) 
-	{
-		maxsize = maxsize << 1;
-		Elements = (TVortex*)realloc(Elements, maxsize*sizeof(TVortex));
-	}
-	Elements[size] = *vort;
-	size++;
-	return 0;
-}
-
-int TList::Remove(long i)
-{
-	if ((i<0)||(i>=size)) return -1;
+	if ((i<0)||(i>=size)) return;
 	size--;
 	Elements[i] = Elements[size];
 	return 0;
 }
 
-int TList::Remove(TVortex* vort)
+template <class T>
+void TList<T>::Remove(T* item)
 {
 	size--;
-	*vort = Elements[size];
-	return 0; 
+	*item = Elements[size];
+	return;
 }
 
-int TList::Clear()
+template <class T>
+void TList<T>::Clear()
 {
 	size=0;
-	return 0;
+	return;
 }
 
-TVortex TList::Item(long i)
-{
-	return Elements[i];
-}
-
-std::ostream& operator<< (std::ostream& os, const TList &l)
-{
-	TVortex *Vort = l.Elements;
-	int lsize = l.size;
-	for ( int i=0; i<lsize; i++)
-	{
-		os << *Vort << endl;
-		Vort++;
-	}
-	return os;
-}
-
-/********************* Link List ***********************************************/
-
-TlList::TlList()
-{
-	maxsize = 4;
-	Elements = (void**)malloc(maxsize*sizeof(Pointer));
-	size = 0;
-}
-
-TlList::~TlList()
-{
-	free(Elements);
-}
-
-int TlList::Add(Pointer link)
-{
-	if ( size == maxsize ) 
-	{
-		maxsize = maxsize << 1;
-		Elements = (void**)realloc(Elements, maxsize*sizeof(Pointer));
-	}
-	Elements[size] = link;
-	size++;
-	return 0;
-}
-
-int TlList::Remove(long i)
-{
-	if ((i<0)||(i>=size)) return -1;
-	size--;
-	Elements[i] = Elements[size];
-	return 0;	
-}
-
-int TlList::Remove(Pointer *p)
-{
-	size--;
-	*p = Elements[size];
-	return 0; 
-}
-
-int TlList::Clear()
-{
-	size=0;
-	return 0;
-}
-
-Pointer TlList::Item(long i)
+template <class T>
+T TList<T>::item(long i)
 {
 	return Elements[i];
 }

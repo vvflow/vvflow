@@ -8,29 +8,29 @@ struct node
 	int i, j; //debug
 	TVortex CMp, CMm;
 	
-	TlList *VortexLList;
-	TlList *BodyLList;
-	TlList *HeatLList;
+	TList<TObject*> *VortexLList;
+	TList<TObject*> *BodyLList;
+	TList<TObject*> *HeatLList;
 
-	TlList *NearNodes;
-	TlList *FarNodes;
+	TList<struct node*> *NearNodes;
+	TList<struct node*> *FarNodes;
 
 	struct node *Child1;
 	struct node *Child2;
 };
 typedef struct node TNode; 
 
-int InitTree(Space *sS, int sFarCriteria, double sMinNodeSize);
-int BuildTree(bool IncludeVortexes, bool IncludeBody, bool IncludeHeat);
-int DestroyTree();
+void InitTree(Space *sS, int sFarCriteria, double sMinNodeSize);
+void BuildTree(bool IncludeVortexes, bool IncludeBody, bool IncludeHeat);
+void DestroyTree();
 
 double GetAverageNearNodesPercent();
 double GetAverageNearNodesCount();
-TlList* GetTreeBottomNodes();
+TList<TNode*>* GetTreeBottomNodes();
 
 TNode* FindNode(double px, double py); // doesnt work
 int GetMaxDepth();
 int PrintBottomNodes(std::ostream& os, bool PrintDepth = false); // prints lines such "x y w h [i]" 
-int PrintLevel(std::ostream& os, int level);
+void PrintLevel(std::ostream& os, int level);
 
 #endif /*TREE_H_*/

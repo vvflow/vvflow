@@ -27,7 +27,7 @@ class TFileData
 		double MinNodeSize;
 		double MinG;
 		double ConvEps;
-		double MergeSqEps;
+		double MergeEps;
 		
 		int PrintFreq;
 		QBitArray ValuesToSave;

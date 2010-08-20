@@ -17,7 +17,7 @@ TFileData::TFileData(const QString sFileName)
 	MinNodeSize = 0;
 	MinG = 1E-7;
 	ConvEps = 1E-8;
-	MergeSqEps = 0.156;
+	MergeEps = 0.156;
 	
 	PrintFreq = 10;
 }
@@ -38,7 +38,7 @@ TFileData::TFileData(const TFileData *sFileData)
 	MinNodeSize = sFileData->MinNodeSize;
 	MinG = sFileData->MinG;
 	ConvEps = sFileData->ConvEps;
-	MergeSqEps = sFileData->MergeSqEps;
+	MergeEps = sFileData->MergeEps;
 	
 	PrintFreq = sFileData->PrintFreq;
 }
@@ -67,7 +67,7 @@ int TFileData::SaveToFile(const QString FileUrl)
 	dataFile.add_att("MinNodeSize", MinNodeSize);
 	dataFile.add_att("MinG", MinG);
 	dataFile.add_att("ConvEps", ConvEps);
-	dataFile.add_att("MergeSqEps", MergeSqEps);
+	dataFile.add_att("MergeEps", MergeEps);
 	dataFile.add_att("PrintFreq", PrintFreq);
 
 	return 0;
@@ -99,7 +99,7 @@ int TFileData::LoadFromFile(const QString FileUrl)
 	att = dataFile.get_att("MinNodeSize"); if (att) MinNodeSize = att->as_double(0);
 	att = dataFile.get_att("MinG"); if (att) MinG = att->as_double(0);
 	att = dataFile.get_att("ConvEps"); if (att) ConvEps = att->as_double(0);
-	att = dataFile.get_att("MergeSqEps"); if (att) MergeSqEps = att->as_double(0);
+	att = dataFile.get_att("MergeEps"); if (att) MergeEps = att->as_double(0);
 	att = dataFile.get_att("PrintFreq"); if (att) PrintFreq = att->as_int(0);
 
 	return 0;

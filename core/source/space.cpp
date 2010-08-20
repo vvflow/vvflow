@@ -5,8 +5,6 @@
 #include "iostream"
 using namespace std;
 
-#define M_2PI 6.283185308 		// = 2*PI
-
 Space::Space(bool CreateVortexes,
 				bool CreateBody, 
 				bool CreateHeat,
@@ -14,9 +12,9 @@ Space::Space(bool CreateVortexes,
 				double (*sInfSpeedY)(double Time),
 				double (*sRotationV)(double Time))
 {
-	if ( CreateVortexes ) VortexList = new TList(); else VortexList = NULL;
-	if ( CreateBody ) BodyList = new TList(); else BodyList = NULL;
-	if ( CreateHeat ) HeatList = new TList(); else HeatList = NULL;
+	if ( CreateVortexes ) VortexList = new TList<TObject>(); else VortexList = NULL;
+	if ( CreateBody ) BodyList = new TList<TObject>(); else BodyList = NULL;
+	if ( CreateHeat ) HeatList = new TList<TObject>(); else HeatList = NULL;
 	BodyControlLayer = NULL;
 
 	InfSpeedX = sInfSpeedX;
@@ -30,14 +28,13 @@ int Space::ConstructCircle(long BodyListSize)
 {
 	if (!BodyList) return -1;
 	
-	TVortex Vort; ZeroVortex(Vort);
-	double dfi = M_2PI/BodyListSize;
-	double fi = 0;
+	TObject Vort; ZeroVortex(Vort);
+	double dfi = C_2PI/BodyListSize;
 	BodyControlLayer = new int[BodyListSize];
 
-	for ( int i=0; i<BodyListSize; i++ )
+	for ( long i=0; i<BodyListSize; i++ )
 	{
-		fi= dfi*i; // don't use += here, cuz it causes systematic error;
+		double fi= dfi*i; // don't use += here, cuz it causes systematic error;
 		Vort.rx = cos(fi);
 		Vort.ry = sin(fi);
 		BodyList->Copy(&Vort);
@@ -143,10 +140,10 @@ int Space::Load(const char *filename)
 		printf("%ld ", size); 												\
 		if (size) 															\
 		{ 																	\
-			List = (TList*)malloc(sizeof(TList)); 							\
+			List = (TList<TObject>*)malloc(sizeof(TList<TObject>)); 							\
 			List->maxsize = size; 											\
 			List->size = size; 												\
-			List->Elements = (TVortex*)malloc(size*sizeof(TVortex)); 		\
+			List->Elements = (TObject*)malloc(size*sizeof(TObject)); 		\
 			err = fread(List->Elements, sizeof(TVortex), size, pFile); 			\
 		}
 
@@ -164,13 +161,13 @@ double Space::Integral()
 {
 	if (!VortexList) return 0;
 	double Summ = 0;
-	int lsize = VortexList->size;
-	TVortex* Vort = VortexList->Elements;
 
-	for ( int i=0; i<lsize; i++ )
+	long lsize = VortexList->size;
+	TVortex *Vort, *FirstVort = VortexList->Elements;
+	for ( long i=0; i<lsize; i++ )
 	{
+		Vort = FirstVort+i;
 		Summ += Vort->g * (Vort->rx*Vort->rx + Vort->ry*Vort->ry);
-		Vort++;
 	}
 
 	return Summ;
@@ -180,13 +177,13 @@ double Space::gsumm()
 {
 	if (!VortexList) return 0;
 	double Summ = 0;
-	int lsize = VortexList->size;
-	TVortex* Vort = VortexList->Elements;
 
-	for ( int i=0; i<lsize; i++ )
+	long lsize = VortexList->size;
+	TVortex *Vort, *FirstVort = VortexList->Elements;
+	for ( long i=0; i<lsize; i++ )
 	{
+		Vort = FirstVort+i;
 		Summ += Vort->g;
-		Vort++;
 	}
 
 	return Summ;
@@ -196,13 +193,13 @@ void Space::HydroDynamicMomentum(double &ResX, double &ResY)
 {
 	ResX=ResY=0;
 	if (!VortexList) return;
-	int lsize = VortexList->size;
-	TVortex* Vort = VortexList->Elements;
 
-	for ( int i=0; i<lsize; i++ )
+	long lsize = VortexList->size;
+	TVortex *Vort, *FirstVort = VortexList->Elements;
+	for ( long i=0; i<lsize; i++ )
 	{
+		Vort = FirstVort+i;
 		ResX += Vort->g * Vort->rx;
 		ResY += Vort->g * Vort->ry;
-		Vort++;
 	}
 }

@@ -271,9 +271,9 @@
            </widget>
           </item>
           <item row="6" column="0">
-           <widget class="QLabel" name="MergeSqEpsLabel">
+           <widget class="QLabel" name="MergeEpsLabel">
             <property name="text">
-             <string>Merge epsilon^2</string>
+             <string>Merge epsilon</string>
             </property>
            </widget>
           </item>
@@ -354,9 +354,9 @@
            </layout>
           </item>
           <item row="6" column="1">
-           <layout class="QGridLayout" name="MergeSqEpsLayout">
+           <layout class="QGridLayout" name="MergeEpsLayout">
             <item row="0" column="0">
-             <widget class="QSuperEdit" name="MergeSqEpsEdit">
+             <widget class="QSuperEdit" name="MergeEpsEdit">
               <property name="spareButtonEnabled" stdset="0">
                <bool>true</bool>
               </property>
@@ -657,7 +657,7 @@
   <tabstop>MinNodeSizeEdit</tabstop>
   <tabstop>MinGEdit</tabstop>
   <tabstop>ConvEpsEdit</tabstop>
-  <tabstop>MergeSqEpsEdit</tabstop>
+  <tabstop>MergeEpsEdit</tabstop>
   <tabstop>InvisibleEdit</tabstop>
   <tabstop>PrintFreqEdit</tabstop>
   <tabstop>ValuesToSaveEdit</tabstop>

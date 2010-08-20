@@ -3,6 +3,8 @@
 
 #include <iostream>
 
+#define C_PI 	3.14159265358979323846 	//= PI
+#define C_2PI 	6.28318530717958647692 	//= 2*PI
 /******************* Vectors *******************/
 
 struct vector
@@ -55,6 +57,7 @@ struct vortex
 	//	2 - to be merged;
 };
 typedef struct vortex TVortex;
+typedef struct vortex TObject;
 
 
 #define InitVortex(v, sx, sy, sg) v.rx=sx; v.ry=sy; v.vx=v.vy=0; v.g=sg; //v.flag=0;

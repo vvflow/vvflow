@@ -2,6 +2,7 @@
 #define LIST_H_
 #include "elementary.h"
 
+template <class T>
 class TList
 {
 	public:
@@ -9,35 +10,14 @@ class TList
 		~TList();
 		long size;
 		long maxsize;
-		int Add(TVortex vort);
-		int Copy(TVortex *vort);
-		int Remove(long i);
-		int Remove(TVortex* vort);
-		int Clear();
-		TVortex Item(long i);
+		void Add(T item);
+		void Copy(T *item);
+		void Remove(long i);
+		void Remove(T* item);
+		void Clear();
+		T item(long i);
 
-		TVortex *Elements;
-};
-
-std::ostream& operator<< (std::ostream& os, const TList &l);
-
-typedef void* Pointer;
-class TlList
-{
-	public:
-		TlList();
-		~TlList();
-		long size;
-		long maxsize;
-		int Add(Pointer link);
-		int Remove(long i);
-		int Remove(Pointer *p);
-		int Clear();
-		Pointer Item(long i);
-
-		Pointer *Elements;
-
-
+		T *Elements;
 };
 
 #endif /*LIST_H_*/
