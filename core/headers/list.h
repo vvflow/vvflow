@@ -17,7 +17,8 @@ class TList
 		void Clear();
 		T item(long i);
 
-		T *Elements;
+		T *First;
+		T *Last;
 };
 
 #endif /*LIST_H_*/

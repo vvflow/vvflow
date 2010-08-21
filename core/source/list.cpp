@@ -8,14 +8,15 @@ template <class T>
 TList<T>::TList()
 {
 	maxsize = 4;
-	Elements = (T*)malloc(maxsize*sizeof(T));
+	First = (T*)malloc(maxsize*sizeof(T));
 	size = 0;
+	Last = First;
 }
 
 template <class T>
 TList<T>::~TList()
 {
-	free(Elements);
+	free(First);
 }
 
 template <class T>
@@ -24,10 +25,12 @@ void TList<T>::Add(T item)
 	if ( size == maxsize ) 
 	{
 		maxsize = maxsize << 1;
-		Elements = (T*)realloc(Elements, maxsize*sizeof(T));
+		First = (T*)realloc(First, maxsize*sizeof(T));
+		Last = First + size;
 	}
-	Elements[size] = item;
+	First[size] = item;
 	size++;
+	Last++;
 }
 
 template <class T>
@@ -36,10 +39,12 @@ void TList<T>::Copy(T *item)
 	if ( size == maxsize ) 
 	{
 		maxsize = maxsize << 1;
-		Elements = (TVortex*)realloc(Elements, maxsize*sizeof(TVortex));
+		First = (T*)realloc(First, maxsize*sizeof(TVortex));
+		Last = First + size;
 	}
-	Elements[size] = *item;
+	First[size] = *item;
 	size++;
+	Last++;
 }
 
 template <class T>
@@ -47,15 +52,17 @@ void TList<T>::Remove(long i)
 {
 	if ((i<0)||(i>=size)) return;
 	size--;
-	Elements[i] = Elements[size];
-	return 0;
+	Last--;
+	First[i] = First[size];
+	return;
 }
 
 template <class T>
 void TList<T>::Remove(T* item)
 {
 	size--;
-	*item = Elements[size];
+	Last--;
+	*item = First[size];
 	return;
 }
 
@@ -63,11 +70,17 @@ template <class T>
 void TList<T>::Clear()
 {
 	size=0;
+	Last = First;
 	return;
 }
 
 template <class T>
 T TList<T>::item(long i)
 {
-	return Elements[i];
+	return First[i];
 }
+
+template class TList<TObject>;
+template class TList<TObject*>;
+#include "tree.h"
+template class TList<TNode*>;

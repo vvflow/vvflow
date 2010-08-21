@@ -48,18 +48,19 @@ int Space::LoadVorticityFromFile(const char* filename)
 	if ( !VortexList ) return -1;
 	FILE *fin;
 	char line[255];
+	char* err;
 
 	fin = fopen(filename, "r");
 	if (!fin) { cerr << "No file called " << filename << endl; return -1; } 
 	TVortex Vort; ZeroVortex(Vort);
 	while ( !feof(fin) )
 	{
-		char* err = fgets(line, 255, fin);
+		err = fgets(line, 255, fin);
 		sscanf(line, "%lf\t%lf\t%lf\n", &Vort.rx, &Vort.ry, &Vort.g);
 		VortexList->Copy(&Vort);
 	}
 	fclose(fin);
-	return 0;
+	return (err<0);
 }
 
 int Space::LoadHeatFromStupidFile(const char* filename, double g)
@@ -67,13 +68,14 @@ int Space::LoadHeatFromStupidFile(const char* filename, double g)
 	if ( !HeatList ) return -1;
 	FILE *fin;
 	char line[255];
+	char* err;
 
 	fin = fopen(filename, "r");
 	if (!fin) { cerr << "No file called " << filename << endl; return -1; }
 	TVortex Vort; InitVortex(Vort, 0, 0, g);
 	while ( !feof(fin) )
 	{
-		char* err = fgets(line, 255, fin);
+		err = fgets(line, 255, fin);
 		sscanf(line, "%lf\t%lf\n", &Vort.rx, &Vort.ry);
 		HeatList->Copy(&Vort);
 	}
@@ -86,18 +88,19 @@ int Space::LoadHeatFromFile(const char* filename)
 	if ( !HeatList ) return -1;
 	FILE *fin;
 	char line[255];
+	char* err;
 
 	fin = fopen(filename, "r");
 	if (!fin) { cerr << "No file called " << filename << endl; return -1; }
 	TVortex Vort; ZeroVortex(Vort);
 	while ( !feof(fin) )
 	{
-		char* err = fgets(line, 255, fin);
+		err = fgets(line, 255, fin);
 		sscanf(line, "%lf\t%lf\t%lf\n", &Vort.rx, &Vort.ry, &Vort.g);
 		HeatList->Copy(&Vort);
 	}
 	fclose(fin);
-	return 0;
+	return (err<0);
 }
 
 int Space::Save(const char *filename)
@@ -111,7 +114,7 @@ int Space::Save(const char *filename)
 		if (List) 																		\
 		{ 																				\
 			fwrite(&(List->size), sizeof(long), 1, pFile); 								\
-			fwrite(List->Elements, sizeof(TVortex), List->size, pFile); 				\
+			fwrite(List->First, sizeof(TVortex), List->size, pFile); 				\
 		} else { fwrite(&zero, sizeof(long), 1, pFile); } 								\
 
 	SaveList(VortexList)
@@ -143,8 +146,8 @@ int Space::Load(const char *filename)
 			List = (TList<TObject>*)malloc(sizeof(TList<TObject>)); 							\
 			List->maxsize = size; 											\
 			List->size = size; 												\
-			List->Elements = (TObject*)malloc(size*sizeof(TObject)); 		\
-			err = fread(List->Elements, sizeof(TVortex), size, pFile); 			\
+			List->First = (TObject*)malloc(size*sizeof(TObject)); 		\
+			err = fread(List->First, sizeof(TVortex), size, pFile); 			\
 		}
 
 	LoadList(VortexList)
@@ -162,11 +165,10 @@ double Space::Integral()
 	if (!VortexList) return 0;
 	double Summ = 0;
 
-	long lsize = VortexList->size;
-	TVortex *Vort, *FirstVort = VortexList->Elements;
-	for ( long i=0; i<lsize; i++ )
+	TVortex *Vort = VortexList->First;
+	TVortex *&Last = VortexList->Last;
+	for ( ; Vort<Last; Vort++ )
 	{
-		Vort = FirstVort+i;
 		Summ += Vort->g * (Vort->rx*Vort->rx + Vort->ry*Vort->ry);
 	}
 
@@ -178,11 +180,10 @@ double Space::gsumm()
 	if (!VortexList) return 0;
 	double Summ = 0;
 
-	long lsize = VortexList->size;
-	TVortex *Vort, *FirstVort = VortexList->Elements;
-	for ( long i=0; i<lsize; i++ )
+	TVortex *Vort = VortexList->First;
+	TVortex *&Last = VortexList->Last;
+	for ( ; Vort<Last; Vort++ )
 	{
-		Vort = FirstVort+i;
 		Summ += Vort->g;
 	}
 
@@ -194,11 +195,10 @@ void Space::HydroDynamicMomentum(double &ResX, double &ResY)
 	ResX=ResY=0;
 	if (!VortexList) return;
 
-	long lsize = VortexList->size;
-	TVortex *Vort, *FirstVort = VortexList->Elements;
-	for ( long i=0; i<lsize; i++ )
+	TVortex *Vort = VortexList->First;
+	TVortex *&Last = VortexList->Last;
+	for ( ; Vort<Last; Vort++ )
 	{
-		Vort = FirstVort+i;
 		ResX += Vort->g * Vort->rx;
 		ResY += Vort->g * Vort->ry;
 	}

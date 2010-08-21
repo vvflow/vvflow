@@ -59,6 +59,11 @@ struct vortex
 typedef struct vortex TVortex;
 typedef struct vortex TObject;
 
+inline void InitObject(TObject &v, double x, double y, double g)
+{ v.rx = x; v.ry = y; v.g = g; v.vx = v.vy = 0; }
+
+inline void ZeroObject(TObject &v)
+{ v.rx = v.ry = v.g = v.vx = v.vy = 0; } 
 
 #define InitVortex(v, sx, sy, sg) v.rx=sx; v.ry=sy; v.vx=v.vy=0; v.g=sg; //v.flag=0;
 #define ZeroVortex(v) InitVortex(v, 0, 0, 0);

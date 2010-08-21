@@ -1,2 +1,2 @@
 all:
-	g++ main.cpp -o exe -lVVHDcore -lVVHDmodules -g
+	g++ main.cpp -o exe -lVVHDcore -g

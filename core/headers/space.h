@@ -9,9 +9,9 @@ class Space
 		Space(bool CreateVortexes,
 				bool CreateBody,
 				bool CreateHeat, 
-				double (*sInfSpeedX)(double Time),
-				double (*sInfSpeedY)(double Time),
-				double (*sRotationV)(double Time));
+				double (*sInfSpeedX)(double Time) = NULL,
+				double (*sInfSpeedY)(double Time) = NULL,
+				double (*sRotationV)(double Time) = NULL);
 		int ConstructCircle(long BodyListSize);
 
 		TList<TObject> *VortexList;
