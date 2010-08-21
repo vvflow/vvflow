@@ -295,7 +295,7 @@ void CalculateCMass(TNode* Node)
 			Node->CMSign.rx = (Ch1->CMSign.rx * Ch1->CMSign.g + Ch2->CMSign.rx * Ch2->CMSign.g) * sumg1; \
 			Node->CMSign.ry = (Ch1->CMSign.ry * Ch1->CMSign.g + Ch2->CMSign.ry * Ch2->CMSign.g) * sumg1; \
 			Node->CMSign.g = sumg; 														\
-		} else { ZeroVortex(Node->CMSign) }													\
+		} else { ZeroObject(Node->CMSign) }													\
 
 	CalculateCMassFromChilds(CMp);
 	CalculateCMassFromChilds(CMm);
@@ -306,8 +306,8 @@ namespace {
 void CalculateCMassFromScratch(TNode* Node)
 {
 	if ( !Node ) return;
-	ZeroVortex(Node->CMp);
-	ZeroVortex(Node->CMm);
+	ZeroObject(Node->CMp);
+	ZeroObject(Node->CMm);
 	if ( !Node->VortexLList ) return;
 
 	TObject** lObj = Node->VortexLList->First;
@@ -452,4 +452,3 @@ void PrintLevel(std::ostream& os, int level)
 	PrintNode(os, level, Tree_RootNode);
 }
 
-template class TList<TNode*>;

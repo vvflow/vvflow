@@ -28,7 +28,7 @@ int Space::ConstructCircle(long BodyListSize)
 {
 	if (!BodyList) return -1;
 	
-	TObject Vort; ZeroVortex(Vort);
+	TObject Vort; ZeroObject(Vort);
 	double dfi = C_2PI/BodyListSize;
 	BodyControlLayer = new int[BodyListSize];
 
@@ -52,7 +52,7 @@ int Space::LoadVorticityFromFile(const char* filename)
 
 	fin = fopen(filename, "r");
 	if (!fin) { cerr << "No file called " << filename << endl; return -1; } 
-	TVortex Vort; ZeroVortex(Vort);
+	TVortex Vort; ZeroObject(Vort);
 	while ( !feof(fin) )
 	{
 		err = fgets(line, 255, fin);
@@ -92,7 +92,7 @@ int Space::LoadHeatFromFile(const char* filename)
 
 	fin = fopen(filename, "r");
 	if (!fin) { cerr << "No file called " << filename << endl; return -1; }
-	TVortex Vort; ZeroVortex(Vort);
+	TVortex Vort; ZeroObject(Vort);
 	while ( !feof(fin) )
 	{
 		err = fgets(line, 255, fin);
