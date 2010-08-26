@@ -60,18 +60,30 @@ int main(int argc, char** argv)
 {
 	//заводим переменные
 
+	int xgrid, ygrid, xspan, yspan;
+	char* filename;
+
 	if (argc != 6)
 	{
-		cout << "Usage: filtr3d filename xgrid ygrid xspan yspan. \n" << 
-		"You can use \"-\" instead of filename to read from cin\n";
-		return -1;
+		cout << "Enter input filename: ";
+		filename = new char[64];
+		scanf("%s", filename);
+		cout << "Enter X grid size: ";
+		cin >> xgrid;
+		cout << "Enter Y grid size: ";
+		cin >> ygrid;
+		cout << "Enter X span: ";
+		cin >> xspan;
+		cout << "Enter Y span: ";
+		cin >> yspan;
+	} else 
+	{
+		filename = argv[1];
+		sscanf(argv[2], "%d", &xgrid);
+		sscanf(argv[3], "%d", &ygrid);
+		sscanf(argv[4], "%d", &xspan);
+		sscanf(argv[5], "%d", &yspan);
 	}
-
-	int xgrid, ygrid, xspan, yspan;
-	sscanf(argv[2], "%d", &xgrid);
-	sscanf(argv[3], "%d", &ygrid);
-	sscanf(argv[4], "%d", &xspan);
-	sscanf(argv[5], "%d", &yspan);
 
 	double **inputdata;
 	double **outputdata;
@@ -92,15 +104,15 @@ int main(int argc, char** argv)
 
 	//открываем файл для чтения
 	FILE *fin, *fout;
-	if (!strcmp(argv[1], "-"))
+	if (!strcmp(filename, "-"))
 	{
 		fin = stdin;
 		fout = stdout;
 	} else
 	{
-		fin = fopen(argv[1], "r");
-		char output[strlen(argv[1])+10];
-		sprintf(output, "%s.f3d", argv[1]);
+		fin = fopen(filename, "r");
+		char output[strlen(filename)+10];
+		sprintf(output, "%s.f3d", filename);
 		fout = fopen(output, "w");
 	}
 	if (!fin) { cout << "Error opening input file." << endl; return -1;}
