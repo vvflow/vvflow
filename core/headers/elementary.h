@@ -3,8 +3,10 @@
 
 #include <iostream>
 
-#define C_PI 	3.14159265358979323846 	//= PI
-#define C_2PI 	6.28318530717958647692 	//= 2*PI
+const double C_PI =		3.14159265358979323846; 	// = PI
+const double C_2PI =	6.28318530717958647692; 	// = 2*PI
+const double C_1_2PI =	0.15915494309189533577;		// = 1/(2*PI)
+const double C_1_PI = 	0.31830988618379067154; 	// = 1/PI
 /******************* Vectors *******************/
 
 struct vector

@@ -21,7 +21,7 @@ Space::Space(bool CreateVortexes,
 	InfSpeedY = sInfSpeedY;
 	RotationV = sRotationV;
 	ForceX = ForceY = 0;
-	Time = Angle = BodyY = 0;
+	Time = dt = Angle = BodyX = BodyY = 0;
 }
 
 int Space::ConstructCircle(long BodyListSize)
@@ -42,6 +42,7 @@ int Space::ConstructCircle(long BodyListSize)
 
 	return 0;
 }
+
 
 int Space::LoadVorticityFromFile(const char* filename)
 {

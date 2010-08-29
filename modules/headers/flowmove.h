@@ -3,10 +3,8 @@
 #include <math.h>
 #include "libVVHD/core.h"
 
-int InitFlowMove(Space *sS, double sdt, double sRemoveEps/*, Statistic *sStatistic, double sBoundaryLayerHeight/*, int scountfi*/);
+int InitFlowMove(Space *sS, double sdt, double sRemoveEps);
 int MoveAndClean(bool remove = false);
-int Move();
-int Clean();
 int VortexShed();
 int HeatShed();
 int CleanedV_inbody(); // Returns ammount of Vortex items removed after MoveAndClean() call

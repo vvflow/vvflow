@@ -295,7 +295,7 @@ void CalculateCMass(TNode* Node)
 			Node->CMSign.rx = (Ch1->CMSign.rx * Ch1->CMSign.g + Ch2->CMSign.rx * Ch2->CMSign.g) * sumg1; \
 			Node->CMSign.ry = (Ch1->CMSign.ry * Ch1->CMSign.g + Ch2->CMSign.ry * Ch2->CMSign.g) * sumg1; \
 			Node->CMSign.g = sumg; 														\
-		} else { ZeroObject(Node->CMSign) }													\
+		} else { ZeroObject(Node->CMSign); }													\
 
 	CalculateCMassFromChilds(CMp);
 	CalculateCMassFromChilds(CMm);
@@ -311,7 +311,7 @@ void CalculateCMassFromScratch(TNode* Node)
 	if ( !Node->VortexLList ) return;
 
 	TObject** lObj = Node->VortexLList->First;
-	TObject** Last = Node->VortexLList->Last;
+	TObject** &Last = Node->VortexLList->Last;
 	for ( ; lObj<Last; lObj++ )
 	{
 		TObject *&Obj = *lObj;

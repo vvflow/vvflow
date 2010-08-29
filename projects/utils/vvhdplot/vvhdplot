@@ -52,7 +52,7 @@ case "$1" in
 		set yrange [-$ymax: $ymax]
 		set size ratio -1
 
-		set terminal png truecolor enhanced size 1024, 768
+		set terminal pngcairo truecolor enhanced size 1024, 768
 		$setoutput
 
 		#set lmargin 0; set rmargin 0; set bmargin 0; set tmargin 0;

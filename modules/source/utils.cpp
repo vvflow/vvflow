@@ -6,59 +6,42 @@ using namespace std;
 
 int PrintBody(std::ostream& os, Space *S)
 {
-	int i, lsize;
-	TList *list = S->BodyList;
-	if (!list) return -1;
-	lsize = list->size;
-	TVortex *Vort = list->Elements;
-	for ( i=0; i<lsize; i++ )
+	if (!S->BodyList) return -1;
+	TObject *Obj = S->BodyList->First;
+	TObject *&LastObj = S->BodyList->Last;
+	for ( ; Obj<LastObj; Obj++ )
 	{
-		os << (*Vort) << endl;
-		Vort++;
+		os << (*Obj) << endl;
 	}
 	return 0;
 }
 
 int PrintVorticity(std::ostream& os, Space *S, bool PrintSpeed)
 {
-	int i, lsize;
-	TList *list = S->VortexList;
-	if (!list) return -1;
-	lsize = list->size;
-	TVortex *Vort = list->Elements;
-	if ( !PrintSpeed )
-		for ( i=0; i<lsize; i++ )
-		{
-			os << *Vort << endl;
-			Vort++;
-		}
-	else
-		for ( i=0; i<lsize; i++ )
-		{
-			os << *Vort << "\t" << Vort->vx << "\t" << Vort->vy << endl;
-			Vort++;
-		}
+	if (!S->VortexList) return -1;
+	TObject *Obj = S->VortexList->First;
+	TObject *&LastObj = S->VortexList->Last;
+	for ( ; Obj<LastObj; Obj++ )
+	{
+		if (PrintSpeed)
+			os << *Obj << "\t" << Obj->vx << "\t" << Obj->vy << endl;
+		else
+			os << *Obj << endl;
+	}
 	return 0;
 }
 
 int PrintHeat(std::ostream& os, Space *S, bool PrintSpeed)
 {
-	int i, lsize;
-	TList *list = S->HeatList;
-	if (!list) return -1;
-	lsize = list->size;
-	TVortex *Vort = list->Elements;
-	if ( !PrintSpeed )
-		for ( i=0; i<lsize; i++ )
-		{
-			os << *Vort << endl;
-			Vort++;
-		}
-	else
-		for ( i=0; i<lsize; i++ )
-		{
-			os << *Vort << "\t" << Vort->vx << "\t" << Vort->vy << endl;
-			Vort++;
-		}
+	if (!S->HeatList) return -1;
+	TObject *Obj = S->HeatList->First;
+	TObject *&LastObj = S->HeatList->Last;
+	for ( ; Obj<LastObj; Obj++ )
+	{
+		if (PrintSpeed)
+			os << *Obj << "\t" << Obj->vx << "\t" << Obj->vy << endl;
+		else
+			os << *Obj << endl;
+	}
 	return 0;
 }

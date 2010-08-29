@@ -5,7 +5,6 @@
 
 int InitConvectiveFast(Space *sS, double sEps);
 int CalcConvectiveFast();
-int CalcBodyConvectiveFast();
 int CalcCirculationFast();
 //int SpeedSum(TList *List, double px, double py, double &resx, double &resy);
 

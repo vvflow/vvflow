@@ -2,8 +2,6 @@
 #include "math.h"
 #include <cstdlib>
 #include <time.h>
-#define M_1_2PI 0.159154943 	// = 1/(2*PI)
-#define M_2PI 6.283185308 // = 2*PI
 
 /********************* HEADER ****************************/
 
@@ -11,11 +9,7 @@ namespace {
 
 Space *FlowMove_S;
 double FlowMove_dt;
-double FlowMove_dt_2PI;
 double FlowMove_RemoveEps;
-double FlowMove_minusRemoveEps; // = -RemoveEps
-
-double FlowMove_Fx, FlowMove_Fy; //Forces
 
 int FlowMove_CleanedV_inbody, FlowMove_CleanedV_toosmall;
 int FlowMove_CleanedH;
@@ -28,50 +22,30 @@ double FlowMove_ControlLayerHeight; //height of boundaru layer(not square)
 
 /********************* SOURCE *****************************/
 
-int InitFlowMove(Space *sS, double sdt, double sRemoveEps/*, Statistic *sstatistic, double sblheight, int scountfi*/)
+int InitFlowMove(Space *sS, double sdt, double sRemoveEps)
 {
 	srand (time(NULL));
 	FlowMove_S = sS;
-	FlowMove_dt = sdt;
-	FlowMove_dt_2PI = sdt*M_1_2PI;
+	FlowMove_dt = FlowMove_S->dt = sdt;
 	FlowMove_RemoveEps = sRemoveEps;
-	FlowMove_minusRemoveEps = -sRemoveEps;
-	if (sS->BodyList )//&& sS->HeatList) 
-		FlowMove_ControlLayerHeight = M_2PI/sS->BodyList->size;
-	else
-		FlowMove_ControlLayerHeight=0;
+	FlowMove_ControlLayerHeight = (sS->BodyList) ? C_2PI/sS->BodyList->size : 0;
 
-	if (sS->BodyList)
-		FlowMove_dfi = M_2PI/sS->BodyList->size;
-	else
-		FlowMove_dfi = 0;
-
-	//printf("%lf\n", FlowMove_ControlLayerHeight);
-	//statistic = sstatistic;
-	//blheight = sblheight;
-	//countfi = scountfi;
-	//blarray = new TVortex*[countfi];
+	FlowMove_dfi = (sS->BodyList) ? C_2PI/sS->BodyList->size : 0;
 
 	return 0;
 }
 
 int MoveAndClean(bool remove)
 {
-	int i, j, lsize;
-	TVortex *Obj;
-	TList *list;
-
 	FlowMove_CleanedV_inbody = FlowMove_CleanedV_toosmall = 0;
 	FlowMove_CleanedH = 0;
-
-	//for (i=0; i<countfi; i++) { blarray[i] = NULL; }
 
 	//cleaning control layer
 	if ( FlowMove_S->BodyList )
 	{
 		int *field = FlowMove_S->BodyControlLayer;
-		lsize = FlowMove_S->BodyList->size;
-		for ( i=0; i<lsize; i++ )
+		long lsize = FlowMove_S->BodyList->size;
+		for ( long i=0; i<lsize; i++ )
 		{
 			*field = 0;
 			field++;
@@ -81,171 +55,61 @@ int MoveAndClean(bool remove)
 	//MOVING VORTEXES
 	if ( FlowMove_S->VortexList )
 	{
-		list = FlowMove_S->VortexList;
-		lsize = list->size;
-		Obj = list->Elements;
-		for ( i=0; i<lsize; i++)
+		TList<TObject> &VList = *FlowMove_S->VortexList;
+		TObject *Obj = VList.First;
+		TObject *&LastObj = VList.Last;
+		for ( ; Obj<LastObj; Obj++)
 		{
-			Obj->rx += Obj->vx*FlowMove_dt_2PI; Obj->vx = 0;
-			Obj->ry += Obj->vy*FlowMove_dt_2PI; Obj->vy = 0;
+			Obj->rx += Obj->vx*FlowMove_dt; Obj->vx = 0;
+			Obj->ry += Obj->vy*FlowMove_dt; Obj->vy = 0;
 			
-			bool inbody = remove  && ( FlowMove_S->BodyList && ((Obj->rx*Obj->rx + Obj->ry*Obj->ry) < 1) );
-			bool toosmall = ( (Obj->g < FlowMove_RemoveEps) && (Obj->g > FlowMove_minusRemoveEps) );
+			bool inbody = remove  && ( FlowMove_S->BodyList && ((Obj->rx*Obj->rx + Obj->ry*Obj->ry) < 1.) );
+			bool toosmall = ( (Obj->g < FlowMove_RemoveEps) && (Obj->g > -FlowMove_RemoveEps) );
 			if ( inbody )
 			{
 				FlowMove_S->ForceX += Obj->ry* Obj->g;
 				FlowMove_S->ForceY -= Obj->rx* Obj->g;
 				FlowMove_CleanedV_inbody++;
-				list->Remove(Obj);
+				VList.Remove(Obj);
+				Obj--;
 			} else
 			if ( toosmall )
 			{
 				FlowMove_S->ForceX += Obj->ry* Obj->g;
 				FlowMove_S->ForceY -= Obj->rx* Obj->g;
 				FlowMove_CleanedV_toosmall++;
-				list->Remove(Obj);
+				VList.Remove(Obj);
+				Obj--;
 			}
-			else { Obj++; }
 		}
 	}
 
 	//MOVING HEAT PARTICLES
 	if ( FlowMove_S->HeatList )
 	{
-		list = FlowMove_S->HeatList;
-		lsize = list->size;
-		Obj = list->Elements;
-
+		TList<TObject> &HList = *FlowMove_S->HeatList;
+		TObject *Obj = HList.First;
+		TObject *&LastObj = HList.Last;
 		double compare = (1 + FlowMove_ControlLayerHeight); compare*= compare;
-		for ( i=0; i<lsize; i++)
+		for ( ; Obj<LastObj; Obj++)
 		{
-			Obj->rx += Obj->vx*FlowMove_dt_2PI; Obj->vx = 0;
-			Obj->ry += Obj->vy*FlowMove_dt_2PI; Obj->vy = 0;
+			Obj->rx += Obj->vx*FlowMove_dt; Obj->vx = 0;
+			Obj->ry += Obj->vy*FlowMove_dt; Obj->vy = 0;
 			double rabs2 = Obj->rx*Obj->rx + Obj->ry*Obj->ry;
 			if ( remove && (rabs2 < 1) )
 			{
 				FlowMove_CleanedH++;
-				list->Remove(Obj);
+				HList.Remove(Obj);
+				Obj--;
 			} else if (remove && FlowMove_S->BodyControlLayer && (rabs2 < compare) )
 			{
 				FlowMove_CleanedH++;
-				double fi = atan2(Obj->ry, Obj->rx); if (fi < 0) fi+= M_2PI;
+				double fi = atan2(Obj->ry, Obj->rx); if (fi < 0) fi+= C_2PI;
 				int field = floor(fi/FlowMove_dfi);
 				FlowMove_S->BodyControlLayer[field]++;
-				list->Remove(Obj);
+				HList.Remove(Obj);
+				Obj--;
 			}
-			else { Obj++; }
-		}
-	}
-
-	if ( FlowMove_S->RotationV) FlowMove_S->Angle+= FlowMove_S->RotationV(FlowMove_S->Time)*FlowMove_dt;
-	if ( FlowMove_S->InfSpeedX) FlowMove_S->BodyX-= FlowMove_S->InfSpeedX(FlowMove_S->Time)*FlowMove_dt;
-	if ( FlowMove_S->InfSpeedY) FlowMove_S->BodyY-= FlowMove_S->InfSpeedY(FlowMove_S->Time)*FlowMove_dt;
-	//FlowMove_S->Time+= FlowMove_dt; //in VortexShed
-
-	return 0;
-}
-
-int Move()
-{
-	int i, j, lsize;
-	TVortex *Vort;
-	TList *list;
-
-	#define MoveList(List, ListType) 										\
-		if ( FlowMove_S->List ) 											\
-		{ 																	\
-			list = FlowMove_S->List; 										\
-			lsize = list->size; 											\
-			Vort = list->Elements; 											\
-			for ( i=0; i<lsize; i++) 										\
-			{ 																\
-				Vort->rx += Vort->vx*FlowMove_dt_2PI; Vort->vx = 0; 			\
-				Vort->ry += Vort->vy*FlowMove_dt_2PI; Vort->vy = 0; 			\
-				Vort++; 													\
-			} 																\
-		}
-
-	MoveList(VortexList,  FlowMove_CleanedV)
-	MoveList(HeatList, FlowMove_CleanedH)
-
-	if ( FlowMove_S->RotationV) FlowMove_S->Angle+= FlowMove_S->RotationV(FlowMove_S->Time)*FlowMove_dt;
-	if ( FlowMove_S->InfSpeedX) FlowMove_S->BodyX-= FlowMove_S->InfSpeedX(FlowMove_S->Time)*FlowMove_dt;
-	if ( FlowMove_S->InfSpeedY) FlowMove_S->BodyY-= FlowMove_S->InfSpeedY(FlowMove_S->Time)*FlowMove_dt;
-
-	#undef MoveList
-	return 0;
-}
-
-int Clean()
-{
-	int i, j, lsize;
-	TVortex *Obj;
-	TList *list;
-
-	FlowMove_CleanedV_inbody = FlowMove_CleanedV_toosmall = 0;
-	FlowMove_CleanedH = 0;
-
-	//cleaning control layer
-	if ( FlowMove_S->BodyList )
-	{
-		int *field = FlowMove_S->BodyControlLayer;
-		lsize = FlowMove_S->BodyList->size;
-		for ( i=0; i<lsize; i++ )
-		{
-			*field = 0;
-			field++;
-		}
-	}
-
-	//CLEANING VORTEXES
-	if ( FlowMove_S->VortexList )
-	{
-		list = FlowMove_S->VortexList;
-		lsize = list->size;
-		Obj = list->Elements;
-		for ( i=0; i<lsize; i++)
-		{
-			bool inbody = ( FlowMove_S->BodyList && ((Obj->rx*Obj->rx + Obj->ry*Obj->ry) < 1) );
-			bool toosmall = ( (Obj->g < FlowMove_RemoveEps) && (Obj->g > FlowMove_minusRemoveEps) );
-			if ( inbody )
-			{
-				FlowMove_CleanedV_inbody++;
-				list->Remove(Obj);
-			} else
-			if ( toosmall )
-			{
-				FlowMove_CleanedV_toosmall++;
-				list->Remove(Obj);
-			}
-			else { Obj++; }
-		}
-	}
-
-	//CLEANING HEAT PARTICLES
-	if ( FlowMove_S->HeatList )
-	{
-		list = FlowMove_S->HeatList;
-		lsize = list->size;
-		Obj = list->Elements;
-
-		double compare = (1 + FlowMove_ControlLayerHeight); compare*= compare;
-		for ( i=0; i<lsize; i++)
-		{
-			double rabs2 = Obj->rx*Obj->rx + Obj->ry*Obj->ry;
-			if ( FlowMove_S->BodyList && (rabs2 < 1) )
-			{
-				FlowMove_CleanedH++;
-				list->Remove(Obj);
-			} else if (FlowMove_S->BodyControlLayer && (rabs2 < compare) )
-			{
-				FlowMove_CleanedH++;
-				double fi = atan2(Obj->ry, Obj->rx); if (fi < 0) fi+= M_2PI;
-				int field = floor(fi/FlowMove_dfi);
-				FlowMove_S->BodyControlLayer[field]++;
-				list->Remove(Obj);
-			}
-			else { Obj++; }
 		}
 	}
 
@@ -254,70 +118,48 @@ int Clean()
 
 int VortexShed()
 {
-	if ( !FlowMove_S->BodyList ) return -1;
-
-	int i, bsize;
-	TVortex *Vort;
-	TVortex VortCopy = *Vort; ZeroVortex(VortCopy);
-	TList *blist = FlowMove_S->BodyList;
-	TList *vlist;
-
+	if ( !FlowMove_S->BodyList || !FlowMove_S->VortexList ) return -1;
 	double RiseHeight = 1.+FlowMove_dfi*1E-6;
+	TVortex VortCopy; ZeroObject(VortCopy);
 
 	FlowMove_CleanedV_inbody = FlowMove_CleanedV_toosmall = 0;
-	if ( FlowMove_S->VortexList )
-	{
-		vlist = FlowMove_S->VortexList;
-		bsize = blist->size;
-		//double gsumm = FlowMove_S->gsumm();
-		//double CirculationAddition = -gsumm/bsize;
-		//FlowMove_S->Angle+= M_2PI*gsumm*FlowMove_dt;
-		Vort = blist->Elements;
-		for ( i=0; i<bsize; i++)
-		{
-			if ( (Vort->g < FlowMove_RemoveEps) && (Vort->g > FlowMove_minusRemoveEps) ) 
-				{ FlowMove_CleanedV_toosmall++; }
-			else
-			{
-				
-/*
-				double r = 1. + double(rand())*FlowMove_ControlLayerHeight/RAND_MAX;
-				double fi= FlowMove_dfi * (i + double(rand())/RAND_MAX); // don't use += here, cuz it causes systematic error;
-				VortCopy.rx = r*cos(fi);
-				VortCopy.ry = r*sin(fi);
-*/
-				VortCopy.rx = Vort->rx*RiseHeight;
-				VortCopy.ry = Vort->ry*RiseHeight;
-				VortCopy.g = Vort->g;// + CirculationAddition;
-				FlowMove_S->ForceX -= VortCopy.ry* VortCopy.g;
-				FlowMove_S->ForceY += VortCopy.rx* VortCopy.g;
-				vlist->Add(VortCopy);
-			}
 
-			Vort++;
+	TObject *BVort = FlowMove_S->BodyList->First;
+	TObject *&LastBVort = FlowMove_S->BodyList->Last;
+	TList<TVortex> &VList = *FlowMove_S->VortexList;
+	for ( ; BVort<LastBVort; BVort++)
+	{
+		if ( (BVort->g < FlowMove_RemoveEps) && (BVort->g > -FlowMove_RemoveEps) ) 
+			{ FlowMove_CleanedV_toosmall++; }
+		else
+		{
+			VortCopy.rx = BVort->rx*RiseHeight;
+			VortCopy.ry = BVort->ry*RiseHeight;
+			VortCopy.g = BVort->g;
+			FlowMove_S->ForceX -= VortCopy.ry* VortCopy.g;
+			FlowMove_S->ForceY += VortCopy.rx* VortCopy.g;
+			VList.Add(VortCopy);
 		}
 	}
-	
-	FlowMove_S->Time+= FlowMove_dt;
-	
+
 	return 0;
 }
 
 int HeatShed()
 {
-	if ( !FlowMove_S->BodyList ) return -1;
+	if ( !FlowMove_S->BodyList || !FlowMove_S->HeatList) return -1;
 
-	int BodyListSize = FlowMove_S->BodyList->size;
-	double dfi = M_2PI/BodyListSize;
-	TVortex Vort; ZeroVortex(Vort); Vort.g = dfi * dfi;
+	long BodyListSize = FlowMove_S->BodyList->size;
+	double dfi = C_2PI/BodyListSize;
+	TObject ObjCopy; ZeroVortex(ObjCopy); ObjCopy.g = dfi * dfi;
 
-	for ( int i=0; i<BodyListSize; i++ )
+	for ( long i=0; i<BodyListSize; i++ )
 	{
 		double r = 1. + double(rand())*FlowMove_ControlLayerHeight/RAND_MAX;
-		double fi= dfi * (i + double(rand())/RAND_MAX); // don't use += here, cuz it causes systematic error;
-		Vort.rx = r*cos(fi);
-		Vort.ry = r*sin(fi);
-		FlowMove_S->HeatList->Copy(&Vort);
+		double fi= dfi * (i + double(rand())/RAND_MAX);
+		ObjCopy.rx = r*cos(fi);
+		ObjCopy.ry = r*sin(fi);
+		FlowMove_S->HeatList->Copy(&ObjCopy);
 	}
 
 	return 0;
