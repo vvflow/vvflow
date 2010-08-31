@@ -11,7 +11,7 @@ namespace {
 Space *Merge_S;
 double Merge_SqEps;
 int Merge_MergedV;
-int MergeList(TList *list);
+int MergeList(TList<TObject> *List);
 
 } //end of namespace
 
@@ -21,24 +21,21 @@ int InitMerge(Space *sS, double sSqEps)
 {
 	Merge_S = sS;
 	Merge_SqEps = sSqEps;
+	return 0;
 }
 
 namespace {
-int MergeList(TList *list)
+int MergeList(TList<TObject> *List)
 {
-	TVortex *Vorti, *Vortj;
 	int res=0;
-
-	int lsize = list->size;
-	Vorti = list->Elements;
 	double drx, dry, drabs2;
 
-	for ( int i=0; i<lsize; i++ )
+	TObject *Vorti = List->First;
+	TObject *&LastVort = List->Last;
+	for ( ; Vorti<LastVort; Vorti++ )
 	{
-		Vortj = Vorti+1;
-		double NearestDr = 1E10;
-		TVortex* NearestV = Vortj;
-		for ( int j=i+1; j<lsize; j++ )
+		TObject *Vortj = Vorti+1;
+		for ( ; Vortj<LastVort; Vortj++ )
 		{
 			drx = Vorti->rx - Vortj->rx;
 			dry = Vorti->ry - Vortj->ry;
@@ -62,14 +59,11 @@ int MergeList(TList *list)
 					}
 				}
 				Vorti->g+= Vortj->g;
-				list->Remove(j); lsize--;
+				List->Remove(Vortj);
+				Vortj--;
 				break;
-			} 
-
-			Vortj++;
+			}
 		}
-
-		Vorti++;
 	}
 
 	return res;
@@ -77,9 +71,7 @@ int MergeList(TList *list)
 
 int Merge()
 {
-	if ( Merge_S->VortexList )
-		Merge_MergedV = MergeList(Merge_S->VortexList);
-
+	Merge_MergedV = (Merge_S->VortexList) ? MergeList(Merge_S->VortexList):0;
 	return 0;
 }
 

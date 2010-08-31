@@ -91,6 +91,7 @@ int CalcConvective()
 	double RotationG = Convective_S->RotationVVar * C_2PI;
 
 	TList<TObject> *&vlist = Convective_S->VortexList;
+	double multiplier;
 	#define SpeedCycle(List) 												\
 	if (List) 																\
 	{ 																		\
@@ -98,13 +99,12 @@ int CalcConvective()
 		TObject *&Last = List->Last; 										\
 		for( ; Obj<Last; Obj++ ) 											\
 		{ 																	\
+			multiplier = RotationG ? RotationG/(Obj->rx*Obj->rx + Obj->ry*Obj->ry) : 0; \
 			SpeedSum(vlist, Obj->rx, Obj->ry, 1, 0, SpeedSumResX, SpeedSumResY); \
-			Obj->vx += InfX + SpeedSumResX; 								\
-			Obj->vy += InfY + SpeedSumResY; 								\
+			Obj->vx += InfX + SpeedSumResX - Obj->ry*multiplier; 			\
+			Obj->vy += InfY + SpeedSumResY - Obj->rx*multiplier; 			\
 		} 																	\
-	} 
-
-	//FIXME Convective_RotationG must be used
+	}
 
 	SpeedCycle(Convective_S->VortexList)
 	SpeedCycle(Convective_S->HeatList)

@@ -2,16 +2,9 @@
 #include <cstdlib>
 #include "diffusive.h"
 #define expdef(x) exp(x)
-#define M_1_2PI 0.159154943 	// = 1/(2*PI)
-#ifndef M_1_PI 
-	#define M_1_PI 0.318309886 	// = 1/PI 
-#endif
-#define M_2PI 6.283185308 		// = 2*PI
-#ifndef M_2_PI 
-	#define M_2_PI 0.636619772 		// = 2/PI
-#endif
 
-#define Const 0.287
+const double ResDRestriction = 1E-6;
+const double ExpArgRestriction = -8;
 
 #include "iostream"
 using namespace std;
@@ -23,13 +16,12 @@ namespace {
 Space *Diffusive_S;
 double Diffusive_Re;
 double Diffusive_Nyu;
-double Diffusive_DefaultEpsilon;
 double Diffusive_dfi;
 
-void Epsilon(TList *List, double px, double py, double &res);
-void Epsilon_faster(TList *List, double px, double py, double &res);
+inline void Epsilon(TList<TObject> *List, double px, double py, double &res);
+inline void Epsilon_faster(TList<TObject> *List, double px, double py, double &res);
 
-void Division(TList *List, TVortex *v, double eps1, double &ResPX, double &ResPY, double &ResD );
+void Division(TList<TObject> *List, TObject &v, double eps1, double &ResPX, double &ResPY, double &ResD );
 
 } //end of namespce
 
@@ -40,88 +32,73 @@ int InitDiffusive(Space *sS, double sRe)
 	Diffusive_S = sS;
 	Diffusive_Re = sRe;
 	Diffusive_Nyu = 1/sRe;
-	Diffusive_DefaultEpsilon = Diffusive_Nyu * M_2PI;
-	if (sS->BodyList) Diffusive_dfi = M_2PI/sS->BodyList->size; else Diffusive_dfi = 0;
+	Diffusive_dfi = (sS->BodyList) ? C_2PI/sS->BodyList->size : 0;
 	return 0;
 }
 
 namespace {
-void Epsilon(TList *List, double px, double py, double &res)
+inline
+void Epsilon(TList<TObject> *List, double px, double py, double &res)
 {
-	int i, lsize;
-	TVortex *Obj;
 	double drx, dry, drabs2;
-
-	lsize = List->size;
-	Obj = List->Elements;
-
 	double res1, res2;
 	res2 = res1 = 1E10;
 
-	for ( i=0; i<lsize; i++ )
+	TObject *Obj = List->First;
+	TObject *&LastObj = List->Last;
+	for ( ; Obj<LastObj; Obj++ )
 	{
 		drx = px - Obj->rx;
 		dry = py - Obj->ry;
 		drabs2 = drx*drx + dry*dry;
-		if ( (res1 > drabs2) && drabs2 ) { res2 = res1; res1 = drabs2;}
-		else if ( (res2 > drabs2) && drabs2 ) { res2 = drabs2; }
-		Obj++;
+		if ( !drabs2 ) continue;
+		if ( res1 > drabs2 ) { res2 = res1; res1 = drabs2;}
+		else if ( res2 > drabs2 ) { res2 = drabs2; }
 	}
 	res = sqrt(res2);
-	//if (res < Diffusive_dfi) res = Diffusive_dfi;
 }}
 
 namespace {
-void Epsilon_faster(TList *List, double px, double py, double &res)
+inline
+void Epsilon_faster(TList<TObject> *List, double px, double py, double &res)
 {
-	int i, lsize;
-	TVortex *Obj;
-	double eps; 
 	double drx, dry, drabs2;
-
-	lsize = List->size;
-	Obj = List->Elements;
-
 	double res1, res2;
 	res2 = res1 = 1E10;
-	for ( i=0; i<lsize; i++ )
+
+	TObject *Obj = List->First;
+	TObject *&LastObj = List->Last;
+	for ( ; Obj<LastObj; Obj++ )
 	{
 		drx = px - Obj->rx;
 		dry = py - Obj->ry;
 		drabs2 = fabs(drx) + fabs(dry);
-		if ( (res1 > drabs2) && drabs2 ) { res2 = res1; res1 = drabs2;}
-		else if ( (res2 > drabs2) && drabs2 ) { res2 = drabs2; }
-		Obj++;
+		if ( !drabs2 ) continue;
+		if ( res1 > drabs2 ) { res2 = res1; res1 = drabs2;}
+		else if ( res2 > drabs2 ) { res2 = drabs2; }
 	}
 	res = res2;
-	//if (res < Diffusive_dfi) res = Diffusive_dfi;
 }}
 
 namespace {
-void Division(TList *List, TVortex* v, double eps1, double &ResPX, double &ResPY, double &ResD )
+void Division(TList<TObject> *List, TObject &v, double eps1, double &ResPX, double &ResPY, double &ResD )
 {
-	int i, lsize;
 	double drx, dry, drabs;
 	double xx, dxx;
-	double ResAbs2;
-	TVortex *Obj;
 
-	lsize = List->size;
-	Obj = List->Elements;
+	ResPX = ResPY =	ResD = 0;
 
-	ResPX = 0;
-	ResPY = 0;
-	ResD = 0;
-
-	for ( i=0 ; i<lsize; i++)
+	TObject *Obj = List->First;
+	TObject *&LastObj = List->Last;
+	for ( ; Obj<LastObj; Obj++)
 	{
-		drx = v->rx - Obj->rx;
-		dry = v->ry - Obj->ry;
-		if ( (fabs(drx) < 1E-6) && (fabs(dry) < 1E-6) ) { Obj++; continue; }
+		drx = v.rx - Obj->rx;
+		dry = v.ry - Obj->ry;
+		if ( (fabs(drx) < 1E-6) && (fabs(dry) < 1E-6) ) { continue; }
 		drabs = sqrt(drx*drx + dry*dry);
 
 		double exparg = -drabs*eps1;
-		if ( exparg > -10 )
+		if ( exparg > ExpArgRestriction )
 		{
 			xx = Obj->g * expdef(exparg); //look for define
 			dxx = xx/drabs;
@@ -129,57 +106,49 @@ void Division(TList *List, TVortex* v, double eps1, double &ResPX, double &ResPY
 			ResPY += dry * dxx;
 			ResD += xx;
 		}
-
-		Obj++;
 	}
 
-	if ( ((ResD <= 0) && (v->g > 0)) || ((ResD >= 0) && (v->g < 0)) ) { ResD = v->g; }
+	if ( ((ResD <= 0) && (v.g > 0)) || ((ResD >= 0) && (v.g < 0)) ) { ResD = v.g; }
 }}
 
 int CalcVortexDiffusive()
 {
 	double multiplier;
-	double Four_Nyu = 4 *Diffusive_Nyu;
-	double M_2PINyu = Diffusive_Nyu * M_2PI;
-	TList* S_BodyList = Diffusive_S->BodyList;
+	double C_2Nyu_PI = Diffusive_Nyu * C_2_PI; // 2*Nyu/PI
 
-	TList *vlist = Diffusive_S->VortexList;
-	if ( !vlist) return -1;
+	TList<TObject> *BList = Diffusive_S->BodyList;
+	TList<TObject> *VList = Diffusive_S->VortexList;
+	if ( !VList ) return -1;
 
-	int lsize = vlist->size;
-	TVortex *Obj = vlist->Elements;
-	for( int i=0; i<lsize; i++ )
+	TObject *Obj = VList->First;
+	TObject *&LastObj = VList->Last;
+	for( ; Obj<LastObj; Obj++ )
 	{
 		double epsilon, eps1;
-		Epsilon(vlist, Obj->rx, Obj->ry, epsilon);
+		Epsilon_faster(VList, Obj->rx, Obj->ry, epsilon);
 		eps1= 1/epsilon;
 		double ResPX, ResPY, ResD;
-		Division(vlist, Obj, eps1, ResPX, ResPY, ResD);
+		Division(VList, *Obj, eps1, ResPX, ResPY, ResD);
 
 
-		if ( fabs(ResD) > 1E-6 )
+		if ( fabs(ResD) > ResDRestriction )
 		{
-			multiplier = M_2PINyu/ResD*eps1;
+			multiplier = Diffusive_Nyu/ResD*eps1;
 			Obj->vx += ResPX*multiplier;
 			Obj->vy += ResPY*multiplier;
 		}
 
-		if ( S_BodyList )
+		if ( BList )
 		{
-			//cout << "Body diff" << endl;
-			double rabs, exparg;
-			rabs = sqrt(Obj->rx*Obj->rx + Obj->ry*Obj->ry);
-			
-			exparg = (1-rabs)*eps1;
-			if (exparg > -8)
+			double rabs = sqrt(Obj->rx*Obj->rx + Obj->ry*Obj->ry);
+			double exparg = (1-rabs)*eps1;
+			if (exparg > ExpArgRestriction)
 			{
-				multiplier = Four_Nyu*eps1*expdef(exparg)/rabs;
+				multiplier = C_2Nyu_PI*eps1*expdef(exparg)/rabs;
 				Obj->vx += Obj->rx * multiplier; 
 				Obj->vy += Obj->ry * multiplier;
 			}
 		}
-
-		Obj++;
 	}
 
 	return 0;
@@ -187,52 +156,42 @@ int CalcVortexDiffusive()
 
 int CalcHeatDiffusive()
 {
-	int i, lsize;
-	TVortex *Obj;
-	
 	double multiplier1, multiplier2;
-	double M_7PIdfi2 = 21.9911485752 * Diffusive_dfi * Diffusive_dfi;
-	double M_2PINyu = Diffusive_Nyu * M_2PI;
-	TList* S_BodyList = Diffusive_S->BodyList;
+	double M_35dfi2 = 3.5 * Diffusive_dfi * Diffusive_dfi; //hope it's clear
 
-	TList *hlist = Diffusive_S->HeatList;
+	TList<TObject> *BList = Diffusive_S->BodyList;
+	TList<TObject> *HList = Diffusive_S->HeatList;
+	if ( !HList ) return -1;
 
-	if ( !hlist) return -1;
-
-	lsize = hlist->size;
-	Obj = hlist->Elements;
-	for( i=0; i<lsize; i++ )
+	TObject *Obj = HList->First;
+	TObject *&LastObj = HList->Last;
+	for( ; Obj<LastObj; Obj++ )
 	{
 		double epsilon, eps1;
-		Epsilon_faster(hlist, Obj->rx, Obj->ry, epsilon);
-		//cout << Obj->rx << "\t" << Obj->ry << "\t" << epsilon << endl;
+		Epsilon_faster(HList, Obj->rx, Obj->ry, epsilon);
 		eps1= 1/epsilon;
 		double ResPX, ResPY, ResD;
-		Division(hlist, Obj, eps1, ResPX, ResPY, ResD);
+		Division(HList, *Obj, eps1, ResPX, ResPY, ResD);
 
-		if ( fabs(ResD) > 1E-12 )
+		if ( fabs(ResD) > ResDRestriction )
 		{
-			multiplier1 = M_2PINyu/ResD;
+			multiplier1 = Diffusive_Nyu/ResD;
 			Obj->vx += ResPX*multiplier1;
 			Obj->vy += ResPY*multiplier1;
 		}
 
-		if ( S_BodyList )
+		if ( BList )
 		{
-			double rabs, exparg;
-			rabs = sqrt(Obj->rx*Obj->rx + Obj->ry*Obj->ry);
-
-			exparg = (1-rabs)*eps1; //look for define
-			if ( exparg > -8 )
+			double rabs = sqrt(Obj->rx*Obj->rx + Obj->ry*Obj->ry);
+			double exparg = (1-rabs)*eps1;
+			if ( exparg > ExpArgRestriction )
 			{
-				multiplier1 = M_7PIdfi2*expdef(exparg);
+				multiplier1 = M_35dfi2*expdef(exparg); //look for define
 				multiplier2 = Diffusive_Nyu*eps1*multiplier1/(ResD+multiplier1)/rabs;
 				Obj->vx += Obj->rx * multiplier2; 
 				Obj->vy += Obj->ry * multiplier2;
 			}
 		}
-
-		Obj++;
 	}
 
 	return 0;
