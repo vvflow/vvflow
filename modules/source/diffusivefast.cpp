@@ -4,7 +4,7 @@
 #define expdef(x) exp(x)
 
 const double ResDRestriction = 1E-6;
-const double ExpArgRestriction = -8;
+const double ExpArgRestriction = -8.;
 
 #include "iostream"
 using namespace std;
@@ -76,9 +76,9 @@ void Epsilon(TNode &Node, double px, double py, double &res)
 			dry = py - Obj.ry;
 			if (Faster) drabs2 = fabs(drx) + fabs(dry);
 			else drabs2 = drx*drx + dry*dry;
-
-			if ( (res1 > drabs2) && drabs2 ) { res2 = res1; res1 = drabs2; } 
-			else if ( (res2 > drabs2) && drabs2 ) { res2 = drabs2; }
+			if (!drabs2) continue;
+			if ( res1 > drabs2 ) { res2 = res1; res1 = drabs2; } 
+			else if ( res2 > drabs2 ) { res2 = drabs2; }
 		}
 	}
 
@@ -148,7 +148,7 @@ void Division(TNode &Node, TObject &v, double eps1, double &ResPX, double &ResPY
 
 	TNode **lNNode = Node.NearNodes->First;
 	TNode **&LastNNode = Node.NearNodes->Last;
-	for ( ; lNNode<LastNNode; lNNode++)
+	for ( ; lNNode<LastNNode; lNNode++ )
 	{
 		TNode &NNode = **lNNode;
 
@@ -180,7 +180,7 @@ void Division(TNode &Node, TObject &v, double eps1, double &ResPX, double &ResPY
 			double exparg = -drabs*eps1;
 			if ( exparg > ExpArgRestriction )
 			{
-				xx = Obj.g * expdef(-drabs*eps1); // look for define
+				xx = Obj.g * expdef(exparg); // look for define
 				dxx = xx/drabs;
 				ResPX += drx * dxx;
 				ResPY += dry * dxx;
@@ -235,7 +235,7 @@ int CalcVortexDiffusiveFast()
 				Obj.vy += ResPY * multiplier;
 			}
 
-			if ( BList ) // diffusion from cylinder only
+			if ( BList )
 			{
 				double rabs = sqrt(Obj.rx*Obj.rx + Obj.ry*Obj.ry);
 				double exparg = (1-rabs)*eps1;
@@ -270,8 +270,8 @@ int CalcHeatDiffusiveFast()
 		TNode &BNode = **lBNode;
 		if ( !BNode.HeatLList ) { continue; }
 
-		TObject **lObj = BNode.VortexLList->First;
-		TObject **&LastObj = BNode.VortexLList->Last;
+		TObject **lObj = BNode.HeatLList->First;
+		TObject **&LastObj = BNode.HeatLList->Last;
 		for ( ; lObj<LastObj; lObj++ )
 		{
 			TObject &Obj = **lObj;

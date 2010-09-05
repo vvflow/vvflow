@@ -2,6 +2,7 @@
 
 #include "libVVHD/convectivefast.h"
 #include "libVVHD/diffmergefast.h"
+#include "libVVHD/diffusivefast.h"
 #include "libVVHD/utils.h"
 #include "libVVHD/flowmove.h"
 
@@ -11,6 +12,8 @@
 #include "string.h"
 #include <signal.h>
 #include <netcdfcpp.h>
+
+#include "time.h"
 using namespace std;
 
 /******************************************************************************/
@@ -121,9 +124,9 @@ int main(int argc, char **argv)
 	cout << "\tBodyVorts = " << BodyVorts << endl;
 	cout << "\tHeat enabled = " << (HeatEnabled?"YES":"NO") << endl << endl;
 
-	cout << "\tInfSpeedX = " << InfSpeedX << endl;
-	cout << "\tInfSpeedY = " << InfSpeedY << endl;
-	cout << "\tRotation = " << Rotation << endl << endl;
+	cout << "\tInfSpeedX = " << InfSpeedXsh << endl;
+	cout << "\tInfSpeedY = " << InfSpeedYsh << endl;
+	cout << "\tRotation = " << Rotationsh << endl << endl;
 
 	cout << "\tTreeFarCriteria = " << TreeFarCriteria << endl;
 	cout << "\tMinNodeSize = " << MinNodeSize << endl;
@@ -139,6 +142,7 @@ int main(int argc, char **argv)
 	InitFlowMove(S, dt, MinG);
 	InitConvectiveFast(S, ConvEps);
 	InitDiffMergeFast(S, Re, MergeEps*MergeEps);
+	InitDiffusiveFast(S, Re);
 
 	/* SIGINT part **********************/
 	struct sigaction act;
@@ -188,12 +192,15 @@ int main(int argc, char **argv)
 
 	#undef AddVar
 
+	long t1 = clock();
 	long N = ncTimeVar->num_vals();
-	for (long i=N+1; (i<N+100)&&(!quit); i++)
+	for (long i=N+1; (i<N+2000)&&(!quit); i++)
 	{
+		S->StartStep();
 		BuildTree(1, 1, HeatEnabled);
 		CalcConvectiveFast();
 		CalcVortexDiffMergeFast();
+//		CalcVortexDiffusiveFast();
 		DestroyTree();
 
 		MoveAndClean(true);
@@ -246,10 +253,11 @@ int main(int argc, char **argv)
 
 		//ncCleanedVar->put_rec(, i);
 		//ncMergedVar->put_rec(, i);
-
+		S->FinishStep();
 		cout << "step " << i << " finished. \t\t " << S->VortexList->size << " vortexes.\t\t " << DiffMergedFastV() << " merged\n";
 
 	}
+	cout << "TIME " << double(clock()-t1)/CLOCKS_PER_SEC << endl;
 
 	/************************************/
 

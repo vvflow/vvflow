@@ -5,8 +5,8 @@ CPP 			= gcc
 CXX 			= g++
 INCLUDE 		= -I headers/
 
-COBJECTS 		= convective.o convectivefast.o flowmove.o utils.o diffusive.o diffusivefast.o merge.o mergefast.o diffmerge.o diffmergefast.o
-COBJFLAGS 		= -c -g -O2 -Wall
+COBJECTS 		= convective.o convectivefast.o flowmove.o utils.o diffusive.o diffusivefast.o diffmergefast.o merge.o
+COBJFLAGS 		= -c -g -Wall -O2
 FOBJECTS 		= 
 
 all: incbuild bin/ $(LIBFILENAME) 
