@@ -5,7 +5,7 @@ CPP 			= gcc
 CXX 			= g++
 INCLUDE 		= -I headers/
 
-COBJECTS 		= elementary.o list.o space.o tree.o fexp.o
+COBJECTS 		= elementary.o space.o tree.o fexp.o
 COBJFLAGS 		= -c -g -Wall -O2
 FOBJECTS 		= 
 

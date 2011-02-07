@@ -22,16 +22,16 @@ int Inside(boundary* bnd, double x, double y)
 	return (x>=bnd->xmin)&&(x<=bnd->xmax)&&(y>=bnd->ymin)&&(y<=bnd->ymax);
 }
 
-double NearestTrack(TlList *StreamLines, double x, double y)
+double NearestTrack(TList<TObject*> *StreamLines, double x, double y)
 {
 	double nearest=1E10;
 	double dx, dy, dr2;
-	TList** StreamLineL = (TList**)StreamLines->Elements;
-	TList* StreamLine;
+	TList<TObject>** StreamLineL = (TList<TObject>**)StreamLines->First;
+	TList<TObject>* StreamLine;
 	for (int i=0; i<StreamLines->size; i++)
 	{
 		StreamLine = *StreamLineL;
-		TVortex* Obj = StreamLine->Elements;
+		TVortex* Obj = StreamLine->First;
 		for (int j=0; j<StreamLine->size; j++)
 		{
 			dx = Obj->rx-x;
@@ -45,16 +45,16 @@ double NearestTrack(TlList *StreamLines, double x, double y)
 	return sqrt(nearest);
 }
 
-double NearestTrack_faster(TlList *StreamLines, double x, double y)
+double NearestTrack_faster(TList<TList<TObject>*> *StreamLines, double x, double y)
 {
 	double nearest=1E10;
 	double dx, dy, dr2;
-	TList** StreamLineL = (TList**)StreamLines->Elements;
-	TList* StreamLine;
+	TList<TObject>** StreamLineL = (TList<TObject>**)StreamLines->First;
+	TList<TObject>* StreamLine;
 	for (int i=0; i<StreamLines->size; i++)
 	{
 		StreamLine = *StreamLineL;
-		TVortex* Obj = StreamLine->Elements;
+		TVortex* Obj = StreamLine->First;
 		for (int j=0; j<StreamLine->size; j++)
 		{
 			dx = fabs(Obj->rx-x);
@@ -68,12 +68,12 @@ double NearestTrack_faster(TlList *StreamLines, double x, double y)
 	return nearest;
 }
 
-double NearestDot(TList *StreamLine, double x, double y)
+double NearestDot(TList<TObject> *StreamLine, double x, double y)
 {
 	double nearest=1E10;
 	double dx, dy, dr2;
 
-	TVortex* Obj = StreamLine->Elements;
+	TVortex* Obj = StreamLine->First;
 	for (int j=0; j<StreamLine->size; j++)
 	{
 		dx = Obj->rx-x;
@@ -86,12 +86,12 @@ double NearestDot(TList *StreamLine, double x, double y)
 	return sqrt(nearest);
 }
 
-double NearestDot_faster(TList *StreamLine, double x, double y)
+double NearestDot_faster(TList<TObject> *StreamLine, double x, double y)
 {
 	double nearest=1E10;
 	double dx, dy, dr2;
 
-	TVortex* Obj = StreamLine->Elements;
+	TVortex* Obj = StreamLine->First;
 	for (int j=0; j<StreamLine->size; j++)
 	{
 		dx = fabs(Obj->rx-x);
@@ -104,7 +104,7 @@ double NearestDot_faster(TList *StreamLine, double x, double y)
 	return nearest;
 }
 
-int CalculateStreamLine(Space *S, boundary* bnd, TList *StreamLine, double sx, double sy, double dt)
+int CalculateStreamLine(Space *S, boundary* bnd, TList<TObject> *StreamLine, double sx, double sy, double dt)
 {
 	TVortex dot;
 	int interrupt = 0;
@@ -156,7 +156,7 @@ int main(int argc, char **argv)
 	Space *S = new Space(1, 0, 0, NULL, NULL, NULL);
 	S->LoadVorticityFromFile(argv[1]);
 	InitConvective(S, 1E-4);
-	TlList *StreamLines = new TlList;
+	TList<TList<TObject>*> *StreamLines = new TList<TList<TObject>*>;
 
 	boundary bnd;
 	double density;
@@ -168,9 +168,9 @@ int main(int argc, char **argv)
 	sscanf(argv[7], "%lf", &density);
 
 	double G =0;
-	TList *list = S->VortexList;
+	TList<TObject> *list = S->VortexList;
 	int lsize = list->size;
-	TVortex *Obj = list->Elements;
+	TVortex *Obj = list->First;
 	for ( int i=0; i<lsize; i++)
 	{
 		G += Obj->g;
@@ -185,7 +185,7 @@ int main(int argc, char **argv)
 		{
 			if ( ((x*x+y*y)>1) && (NearestTrack_faster(StreamLines, x, y)>density) )
 			{
-				TList *tmpStreamLine = new TList;
+				TList<TObject> *tmpStreamLine = new TList<TObject>;
 				cout << x << " " << y << " " << CalculateStreamLine(S, &bnd, tmpStreamLine, x, y, bnd.step) << endl;
 				StreamLines->Add(tmpStreamLine);
 			}
@@ -200,14 +200,14 @@ int main(int argc, char **argv)
 //	#define fout cout
 
 	{ //print
-		TList** StreamLineL = (TList**)StreamLines->Elements;
-		TList* StreamLine;
+		TList<TObject>** StreamLineL = (TList<TObject>**)StreamLines->First;
+		TList<TObject>* StreamLine;
 		for (int i=0; i<StreamLines->size; i++)
 		{
 			StreamLine = *StreamLineL;
 			TVortex* Obj;
 
-			Obj = StreamLine->Elements;
+			Obj = StreamLine->First;
 			for (int j=0; j<StreamLine->size; j++)
 			{
 				fout << Obj->rx << "\t" << Obj->ry << endl; 

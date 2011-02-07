@@ -37,9 +37,9 @@ int main(int argc, char **argv)
 	}
 */
 	double G =0;
-	TList *list = S->VortexList;
+	TList<TObject> *list = S->VortexList;
 	int lsize = list->size;
-	TVortex *Obj = list->Elements;
+	TVortex *Obj = list->First;
 	for ( int i=0; i<lsize; i++)
 	{
 		G += Obj->g;
@@ -64,14 +64,14 @@ int main(int argc, char **argv)
 	{
 		for ( double y=ymin; y<ymax; y+= step )
 		{
-			if ( (x*x+y*y) > 1 )
-			{
+			//if ( (x*x+y*y) > 1 )
+			//{
 				double ResX, ResY;
 				SpeedSum(S->VortexList, x, y, ResX, ResY);
-				fout << x << " " << y << " " << ResX+1 << " " << ResY << endl;
-			}
-			else
-			{ fout << x << " " << y << " 0 0" << endl; }
+				fout << x << " " << y << " " << ResX << " " << ResY << endl;
+			//}
+			//else
+			//{ fout << x << " " << y << " 0 0" << endl; }
 
 			if ( !((int)n%10000) ) 
 			{
