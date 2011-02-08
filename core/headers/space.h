@@ -29,16 +29,29 @@ class Space
 		double Time, dt;
 		double Angle, BodyX, BodyY;
 
-
+		/***************** SAVE/LOAD ******************/
 		int LoadVorticityFromFile(const char* filename);
 		int LoadHeatFromStupidFile(const char* filename, double g);
 		int LoadHeatFromFile(const char* filename);
+
+		int PrintBody(std::ostream& os);
+		int PrintVorticity(std::ostream& os);
+		int PrintHeat(std::ostream& os);
+
+		int PrintBody(const char* format);
+		int PrintVorticity(const char* format);
+		int PrintHeat(const char* format);
+
 		int Save(const char *filename);
 		int Load(const char *filename);
 
 		double Integral();
 		double gsumm();
 		void HydroDynamicMomentum(double &ResX, double &ResY);
+
+	private:
+		int Print(TList<TObject> *List, std::ostream& os);
+		int Print(TList<TObject> *List, const char* format); //format is used for sprintf(filename, "format", time)
 };
 
 inline
