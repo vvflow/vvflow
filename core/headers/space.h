@@ -12,13 +12,12 @@ class Space
 				double (*sInfSpeedX)(double Time) = NULL,
 				double (*sInfSpeedY)(double Time) = NULL,
 				double (*sRotationV)(double Time) = NULL);
-		int ConstructCircle(long BodyListSize);
+		//int ConstructCircle(long BodyListSize);
 
+		TBody *BodyList;
 		TList<TObject> *VortexList;
-		TList<TObject> *BodyList;
 		TList<TObject> *HeatList;
-		int *BodyControlLayer; //its filled by flowmove
-		double ForceX, ForceY; //dont forget to zero it when u want
+
 
 		inline void StartStep(); //update local InfSpeed variables, 
 		inline void FinishStep(); //update time and coord variables
