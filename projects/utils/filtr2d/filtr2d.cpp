@@ -18,7 +18,7 @@ bool operator<(const TPoint& a, const TPoint& b)
 	return (a.x < b.x);
 }
 
-void LeastSquares(vector<TPoint> &Array, double xmin, double xmax, double &a, double &b)
+void LeastSquares(vector<TPoint> &Array, double xmin, double xmax, double &k, double &b)
 {
 	double Sxx=0, Sx=0, Sxy=0;
 	double        N =0, Sy =0;
@@ -38,8 +38,8 @@ void LeastSquares(vector<TPoint> &Array, double xmin, double xmax, double &a, do
 	}
 
 	double bottom = (N*Sxx-Sx*Sx);
-	if (fabs(bottom) < 1E-8) {a=0; b = (N ? Sy/N : 0); return;}
-	a = (N*Sxy-Sx*Sy)/bottom;
+	if (fabs(bottom) < 1E-8) {k=0; b = (N ? Sy/N : 0); return;}
+	k = (N*Sxy-Sx*Sy)/bottom;
 	b = (Sy*Sxx-Sx*Sxy)/bottom;
 }
 
@@ -57,7 +57,7 @@ int main(int argc, char** argv)
 		cout << "Enter input filename: ";
 		filename = new char[256];
 		scanf("%s", filename);
-		cout << "Enter X span (No. of segments): ";
+		cout << "Enter X span (No. of data points in a segment): ";
 		cin >> xspan;
 	} else 
 	{
@@ -119,9 +119,9 @@ int main(int argc, char** argv)
 	double PI_2dx = M_PI/2/dx;
 	for (double x=xmin; x<xmax+dx; x+= dx)
 	{
-		double a, b;
+		double k, b;
 		double xmin1=x-dx, xmax1=x+dx;
-		LeastSquares(Array, xmin1, xmax1, a, b);
+		LeastSquares(Array, xmin1, xmax1, k, b);
 
 		for (int i=0; i<Copy.size(); i++)
 		{
@@ -129,7 +129,7 @@ int main(int argc, char** argv)
 			if ((tmp.x >  xmin1) && (tmp.x < xmax1))
 			{
 				double costmp = cos((tmp.x - x)*PI_2dx);
-				tmp.y += (a*tmp.x+b)*costmp*costmp;
+				tmp.y += (k*tmp.x+b)*costmp*costmp;
 			}
 		}
 	}
