@@ -6,25 +6,22 @@
 using namespace std;
 
 Space::Space(bool CreateVortexes,
-				bool CreateBody, 
 				bool CreateHeat,
 				double (*sInfSpeedX)(double Time),
 				double (*sInfSpeedY)(double Time),
 				double (*sRotationV)(double Time))
 {
 	if ( CreateVortexes ) VortexList = new TList<TObject>(); else VortexList = NULL;
-	if ( CreateBody ) BodyList = new TList<TObject>(); else BodyList = NULL;
 	if ( CreateHeat ) HeatList = new TList<TObject>(); else HeatList = NULL;
-	BodyControlLayer = NULL;
+	Body = new TBody();
 
 	InfSpeedX = sInfSpeedX;
 	InfSpeedY = sInfSpeedY;
 	RotationV = sRotationV;
-	ForceX = ForceY = 0;
 	Time = dt = Angle = BodyX = BodyY = 0;
 }
 
-int Space::ConstructCircle(long BodyListSize)
+/*int Space::ConstructCircle(long BodyListSize)
 {
 	if (!BodyList) return -1;
 	
@@ -41,7 +38,7 @@ int Space::ConstructCircle(long BodyListSize)
 	}
 
 	return 0;
-}
+}*/
 
 
 int Space::LoadVorticityFromFile(const char* filename)
@@ -119,7 +116,7 @@ int Space::Save(const char *filename)
 		} else { fwrite(&zero, sizeof(long), 1, pFile); } 								\
 
 	SaveList(VortexList)
-	SaveList(BodyList)
+	//SaveList(BodyList)
 	SaveList(HeatList)
 
 	fclose(pFile);
@@ -130,9 +127,9 @@ int Space::Load(const char *filename)
 {
 	long size;
 	if (VortexList) delete VortexList;
-	if (BodyList) delete BodyList;
+	//if (BodyList) delete BodyList;
 	if (HeatList) delete HeatList;
-	delete [] BodyControlLayer;
+	//delete [] BodyControlLayer;
 
 	FILE * pFile;
 	pFile = fopen(filename, "r");
@@ -152,10 +149,10 @@ int Space::Load(const char *filename)
 		}
 
 	LoadList(VortexList)
-	LoadList(BodyList)
+	//LoadList(BodyList)
 	LoadList(HeatList)
 
-	if (BodyList) BodyControlLayer = new int[BodyList->size];
+	//if (BodyList) BodyControlLayer = new int[BodyList->size];
 
 	fclose(pFile);
 	return 0;

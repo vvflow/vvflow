@@ -1,4 +1,5 @@
 #include "convective.h"
+#include "stdlib.h"
 #include "iostream"
 
 using namespace std;
@@ -14,6 +15,9 @@ inline void BioSavar(TVortex &vort, double px, double py, double &resx, double &
 inline void BioSavarIm(TVortex &vort, double px, double py, double &resx, double &resy);
 void SpeedSum(TNode &Node, double px, double py, double &resx, double &resy);
 
+int N; // BodySize;
+double VortexInfluence(TObject &obj, TObject &seg1, TObject &seg2);
+
 } //end of namespace
 
 /********************* SOURCE *****************************/
@@ -22,6 +26,10 @@ int InitConvectiveFast(Space *sS, double sEps)
 {
 	ConvectiveFast_S = sS;
 	ConvectiveFast_Eps = sEps;
+
+	N = sS->Body->size;
+	BodyMatrix = (double*)malloc(N*N*sizeof(double));
+	RightCol = (double*)malloc(N*sizeof(double));
 	return 0;
 }
 
@@ -207,6 +215,7 @@ int CalcConvectiveFast()
 	return 0;
 }
 
+/*
 int CalcCirculationFast()
 {
 	if ( !ConvectiveFast_S->BodyList ) return -1;
@@ -276,10 +285,7 @@ int CalcCirculationFast()
 								) * NVort.g / dfi; //AAAAARRRRRGGGGGHHHHH!!!!
 					}
 
-					/*BioSavar(obj, BVortX, BVortY, SpeedSumResX, SpeedSumResY);
-					SpeedSumX += SpeedSumResX; SpeedSumY += SpeedSumResY;
-					BioSavarIm(obj, BVortX, BVortY, SpeedSumResX, SpeedSumResY);
-					SpeedSumX += SpeedSumResX; SpeedSumY += SpeedSumResY;*/ //useless, instead of atan
+
 				}
 				BVort.g += AtanSum*C_1_2PI; //*dfi at the end
 			}
@@ -313,5 +319,46 @@ int CalcCirculationFast()
 
 	return 0;
 }
+*/
 
 
+namespace {
+inline
+double VortexInfluence(TObject &obj, TObject &seg1, TObject &seg2)
+{
+	return 0;
+}}
+
+
+int FillMatrix()
+{
+	int i, j;
+	int imax = N-1;
+	//BodyMatrix[N*i+j]
+	//RightCol[i]
+	TObject *NakedBodyList = ConvectiveFast_S->Body->List->First;
+	for (i=0; i<imax; i++)
+	{
+		double *RowI = BodyMatrix + N*i;
+		for (j=0; j<N; j++)
+		{
+			RowI[j] = ObjectInfluence(NakedBodyList[j], NakedBodyList[i], NakedBodyList[i+1]);
+		}
+	}
+		double *RowI = BodyMatrix + N*imax;
+		for (j=0; j<N; j++)
+		{
+			RowI[j] = 1;
+		}
+
+}
+
+int FillRightCol()
+{
+
+}
+
+int SolveMatrix()
+{
+
+}

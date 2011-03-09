@@ -1,20 +1,21 @@
 #ifndef SPACE_H_
 #define SPACE_H_
 
+//#include "elementary.h"
 #include "list.h"
+#include "body.h"
 
 class Space
 {
 	public:
 		Space(bool CreateVortexes,
-				bool CreateBody,
 				bool CreateHeat, 
 				double (*sInfSpeedX)(double Time) = NULL,
 				double (*sInfSpeedY)(double Time) = NULL,
 				double (*sRotationV)(double Time) = NULL);
 		//int ConstructCircle(long BodyListSize);
 
-		TBody *BodyList;
+		TBody *Body;
 		TList<TObject> *VortexList;
 		TList<TObject> *HeatList;
 

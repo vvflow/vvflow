@@ -1,15 +1,17 @@
 #ifndef BODY_H_
 #define BODY_H_
 
+#include "elementary.h"
+#include "list.h"
+
 class TBody
 {
 	public:
 		TBody();
 		~TBody();
 
-		//load
-		//InsideCheck
-		//Matrix
+		int LoadFromFile(const char* filename);
+		bool ObjectIsValid(TObject &obj);
 		TList<TObject> *List;
 
 		int *BodyControlLayer; //its filled by flowmove

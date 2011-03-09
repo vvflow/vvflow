@@ -1,5 +1,5 @@
-#include "tree.h"
 #include "core.h"
+#include "tree.h"
 #include "math.h"
 #include "iostream"
 using namespace std;
@@ -59,12 +59,12 @@ void FillRootNode(TList<TObject> *SList, TList<TObject*> *RootLList)
 void BuildTree(bool IncludeVortexes, bool IncludeBody, bool IncludeHeat)
 {
 	Tree_RootNode = CreateNode(Tree_S->VortexList && IncludeVortexes && Tree_S->VortexList->size, 
-								Tree_S->BodyList && IncludeBody && Tree_S->BodyList->size, 
+								Tree_S->Body->List && IncludeBody && Tree_S->Body->List->size, 
 								Tree_S->HeatList && IncludeHeat && Tree_S->HeatList->size);
 	Tree_RootNode->i = Tree_RootNode->j = 0; //DEBUG
 
 	FillRootNode(Tree_S->VortexList, Tree_RootNode->VortexLList);
-	FillRootNode(Tree_S->BodyList, Tree_RootNode->BodyLList);
+	FillRootNode(Tree_S->Body->List, Tree_RootNode->BodyLList);
 	FillRootNode(Tree_S->HeatList, Tree_RootNode->HeatLList);
 
 	Tree_BottomNodes->Clear();
