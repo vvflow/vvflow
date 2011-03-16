@@ -10,8 +10,9 @@ int CalcCirculationFast();
 int FillMatrix();
 int FillRightCol();
 int SolveMatrix();
-double *BodyMatrix;
-double *RightCol;
-//int SpeedSum(TList *List, double px, double py, double &resx, double &resy);
+
+//int SpeedSum(double px, double py, double &resx, double &resy);
+int LoadBodyMatrix(const char* filename);
+int LoadInverseMatrix(const char* filename);
 
 #endif

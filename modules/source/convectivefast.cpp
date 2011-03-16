@@ -1,4 +1,5 @@
-#include "convective.h"
+#include "convectivefast.h"
+#include "stdio.h"
 #include "stdlib.h"
 #include "iostream"
 
@@ -12,11 +13,20 @@ Space *ConvectiveFast_S;
 double ConvectiveFast_Eps;
 
 inline void BioSavar(TVortex &vort, double px, double py, double &resx, double &resy);
-inline void BioSavarIm(TVortex &vort, double px, double py, double &resx, double &resy);
 void SpeedSum(TNode &Node, double px, double py, double &resx, double &resy);
 
 int N; // BodySize;
-double VortexInfluence(TObject &obj, TObject &seg1, TObject &seg2);
+double *BodyMatrix;
+double *InverseMatrix;
+double *RightCol;
+double *Solution;
+
+bool BodyMatrixOK;
+bool InverseMatrixOK; 
+
+double ObjectInfluence(TObject &obj, TObject &seg1, TObject &seg2);
+int LoadMatrix(double *matrix, const char* filename);
+
 
 } //end of namespace
 
@@ -27,13 +37,16 @@ int InitConvectiveFast(Space *sS, double sEps)
 	ConvectiveFast_S = sS;
 	ConvectiveFast_Eps = sEps;
 
-	N = sS->Body->size;
+	N = sS->Body->List->size;
 	BodyMatrix = (double*)malloc(N*N*sizeof(double));
+	InverseMatrix = (double*)malloc(N*N*sizeof(double));
 	RightCol = (double*)malloc(N*sizeof(double));
+	Solution = (double*)malloc(N*sizeof(double));
+	BodyMatrixOK = InverseMatrixOK = false;
 	return 0;
 }
 
-/*int SpeedSum(TList *List, double px, double py, double &resx, double &resy)
+/*int SpeedSum(double px, double py, double &resx, double &resy)
 {
 	here shoult be next functions:
 
@@ -78,25 +91,6 @@ void BioSavar(TVortex &Vort, double px, double py, double &resx, double &resy)
 	resy =  drx * multiplier;
 }}
 
-namespace {
-inline
-void BioSavarIm(TVortex &Vort, double px, double py, double &resx, double &resy)
-{
-	double drx, dry;
-	double multiplier;
-	double vortrabs2 = (Vort.rx*Vort.rx + Vort.ry*Vort.ry);
-	if (!vortrabs2) { resx = resy = 0; return; }
-	double vort1rabs2 = 1/vortrabs2;
-
-	drx = px - Vort.rx * vort1rabs2;
-	dry = py - Vort.ry * vort1rabs2;
-	//drabs2 = drx*drx + dry*dry;
-	#define drabs2 drx*drx + dry*dry
-	multiplier = Vort.g / ( drabs2 + ConvectiveFast_Eps ) * C_1_2PI;
-	#undef drabs2
-	resx =  dry * multiplier;
-	resy = -drx * multiplier;
-}}
 
 namespace {
 void SpeedSum(TNode &Node, double px, double py, double &resx, double &resy)
@@ -215,116 +209,28 @@ int CalcConvectiveFast()
 	return 0;
 }
 
-/*
+
 int CalcCirculationFast()
 {
-	if ( !ConvectiveFast_S->BodyList ) return -1;
+	if (!BodyMatrixOK)
+		FillMatrix();
 
-	double TwoInfX = 2 * ConvectiveFast_S->InfSpeedXVar; 
-	double TwoInfY = 2 * ConvectiveFast_S->InfSpeedYVar;
-	double RotationG = ConvectiveFast_S->RotationVVar * C_2PI;
+	FillRightCol();
+	SolveMatrix();
 
-	double dfi = C_2PI/ConvectiveFast_S->BodyList->size;
-	double SqrOfHalfDfi = dfi*dfi*0.25;
-	double CirculationAdditionDueToRotation = RotationG/ConvectiveFast_S->BodyList->size;
-
-
-	TList<TNode*> *BottomNodes = GetTreeBottomNodes();
-	if ( !BottomNodes ) return -1;
-
-	TNode **lBNode = BottomNodes->First; //Bottom Node
-	TNode **&LastBNode = BottomNodes->Last;
-	for ( ; lBNode<LastBNode; lBNode++ )
+	TObject *NakedBodyList = ConvectiveFast_S->Body->List->First;
+	for (int i=0; i< N; i++)
 	{
-		TNode &BNode = **lBNode;
-		if ( !BNode.BodyLList ) { continue; }
-
-		TVortex **lBVort = BNode.BodyLList->First; //Body Vortex
-		TVortex **&LastBVort = BNode.BodyLList->Last;
-		for ( ; lBVort<LastBVort; lBVort++ )
-		{
-			TVortex &BVort = **lBVort;
-			double &BVortX = BVort.rx; //i don't know if it's effective or not
-			double &BVortY = BVort.ry;
-			BVort.g = 0;
-
-			TNode **lNNode = BNode.NearNodes->First; //Near Node
-			TNode **&LastNNode = BNode.NearNodes->Last;
-			for ( ; lNNode<LastNNode; lNNode++ )
-			{
-				TNode &NNode = **lNNode;
-
-				if ( !NNode.VortexLList ) { continue; }
-				//vortrex atan circle
-				//weak place
-
-				double AtanSum=0;
-				TVortex **lNVort = NNode.VortexLList->First; //Near Vortex
-				TVortex **&LastNVort = NNode.VortexLList->Last;
-				for ( ; lNVort<LastNVort; lNVort++ )
-				{
-					TVortex &NVort = **lNVort;
-					double ScalarMult = BVortX*NVort.rx + BVortY*NVort.ry;
-					double ObjRSqr = NVort.rx*NVort.rx + NVort.ry*NVort.ry;
-					double NumDifferx = NVort.rx - BVortX;
-					double NumDiffery = NVort.ry - BVortY;
-					double NumDifferSqr = NumDifferx*NumDifferx + NumDiffery*NumDiffery;
-					double Num1DifferSqr = 1./NumDifferSqr;
-					double Obj1Rsqr = 1./ObjRSqr;
-					int flagis = 1;
-					
-					if ( ObjRSqr < 1 )  flagis = -1;
-					if ( NumDifferSqr > SqrOfHalfDfi*120)
-					{
-						AtanSum += -flagis*NVort.g * (ObjRSqr-1)*Num1DifferSqr;
-					}
-					else
-					{
-						AtanSum += flagis * ( atan2( ((1-ScalarMult)*dfi), (1 + ObjRSqr - 2*ScalarMult - SqrOfHalfDfi) )
-								-atan2( ((1-ScalarMult*Obj1Rsqr)*dfi), (1 + (1 - 2*ScalarMult)*Obj1Rsqr - SqrOfHalfDfi) )
-								) * NVort.g / dfi; //AAAAARRRRRGGGGGHHHHH!!!!
-					}
-
-
-				}
-				BVort.g += AtanSum*C_1_2PI; //*dfi at the end
-			}
-
-			double SpeedSumX, SpeedSumY;
-			double SpeedSumResX, SpeedSumResY;
-			SpeedSumX = SpeedSumY = SpeedSumResX = SpeedSumResY = 0;
-
-			TNode **lFNode = BNode.FarNodes->First; //Far Node
-			TNode **&LastFNode = BNode.FarNodes->Last;
-			for ( ; lFNode<LastFNode; lFNode++ )
-			{
-				TNode &FNode = **lFNode;
-
-				//cmass circle
-				BioSavar(FNode.CMp, BVortX, BVortY, SpeedSumResX, SpeedSumResY);
-				SpeedSumX += SpeedSumResX; SpeedSumY += SpeedSumResY;
-				BioSavar(FNode.CMm, BVortX, BVortY, SpeedSumResX, SpeedSumResY);
-				SpeedSumX += SpeedSumResX; SpeedSumY += SpeedSumResY;
-				BioSavarIm(FNode.CMp, BVortX, BVortY, SpeedSumResX, SpeedSumResY);
-				SpeedSumX += SpeedSumResX; SpeedSumY += SpeedSumResY;
-				BioSavarIm(FNode.CMm, BVortX, BVortY, SpeedSumResX, SpeedSumResY);
-				SpeedSumX += SpeedSumResX; SpeedSumY += SpeedSumResY;
-			}
-			
-			BVort.g += BVortX*(SpeedSumY+TwoInfY) - BVortY*(SpeedSumX+TwoInfX);
-			BVort.g *= dfi;
-			BVort.g -= CirculationAdditionDueToRotation;
-		}
+		NakedBodyList[i].g = Solution[i];
 	}
 
 	return 0;
 }
-*/
 
 
 namespace {
 inline
-double VortexInfluence(TObject &obj, TObject &seg1, TObject &seg2)
+double ObjectInfluence(TObject &obj, TObject &seg1, TObject &seg2)
 {
 	return 0;
 }}
@@ -351,14 +257,60 @@ int FillMatrix()
 			RowI[j] = 1;
 		}
 
+	BodyMatrixOK = true;
+	return 0;
 }
 
 int FillRightCol()
 {
-
+	return 0;
 }
 
 int SolveMatrix()
 {
+	if (!InverseMatrixOK)
+		; //Inverse
 
+	for (int i=0; i<N; i++)
+	{
+		double *RowI = InverseMatrix + N*i;
+		double &SolI = Solution[i];
+		SolI = 0;
+		for (int j=0; j<N; j++)
+		{
+			SolI+= RowI[j]*RightCol[j];
+		}
+	}
+
+	return 0;
+}
+
+int LoadBodyMatrix(const char* filename)
+{ 
+	BodyMatrixOK = (LoadMatrix(BodyMatrix, filename) == N*N);
+	return BodyMatrixOK;
+}
+
+int LoadInverseMatrix(const char* filename)
+{
+	InverseMatrixOK = (LoadMatrix(InverseMatrix, filename) == N*N);
+	return InverseMatrixOK;
+}
+
+int LoadMatrix(double *matrix, const char* filename)
+{
+	if ( !matrix ) return -1;
+	FILE *fin;
+
+	fin = fopen(filename, "r");
+	if (!fin) { cerr << "No file called " << filename << endl; return -1; } 
+	double *dst = matrix;
+	while ( !feof(fin) )
+	{
+		fscanf(fin, "%lf", dst);
+		dst++;
+	}
+	fclose(fin);
+	return (dst - matrix);
+	//FIXME may work unproperly
 }

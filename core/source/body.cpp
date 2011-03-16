@@ -30,5 +30,5 @@ int TBody::LoadFromFile(const char* filename)
 
 bool TBody::ObjectIsValid(TObject &obj)
 {
-	return ( (obj.x*obj.x + obj.y*obj.y)>1 );
+	return ( (obj.rx*obj.rx + obj.ry*obj.ry)>1 );
 }
