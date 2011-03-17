@@ -3,6 +3,7 @@
 #include "stdio.h"
 #include <stdlib.h>
 #include "iostream"
+#include "fstream"
 using namespace std;
 
 Space::Space(bool CreateVortexes,
@@ -40,6 +41,7 @@ Space::Space(bool CreateVortexes,
 	return 0;
 }*/
 
+/********************************** SAVE/LOAD *********************************/
 
 int Space::LoadVorticityFromFile(const char* filename)
 {
@@ -100,6 +102,48 @@ int Space::LoadHeatFromFile(const char* filename)
 	fclose(fin);
 	return (err<0);
 }
+
+int Space::Print(TList<TObject> *List, std::ostream& os)
+{
+	if (!List) return -1;
+	if (!os) return -1;
+
+	TObject *Obj = List->First;
+	TObject *&LastObj = List->Last;
+	for ( ; Obj<LastObj; Obj++ )
+	{
+		os << (*Obj) << endl;
+	}
+	return 0;
+}
+
+int Space::Print(TList<TObject> *List, const char* format)
+{
+	int res;
+	fstream fout;
+	char fname[64];
+
+	sprintf(fname, format, int(Time/dt));
+
+	fout.open(fname, ios::out);
+	res = Print(List, fout);
+	fout.close();
+
+	return res;
+}
+
+int Space::PrintBody(std::ostream& os)
+	{ return Print(Body->List, os); }
+int Space::PrintVorticity(std::ostream& os)
+	{ return Print(VortexList, os); }
+int Space::PrintHeat(std::ostream& os)
+	{ return Print(HeatList, os); }
+int Space::PrintBody(const char* filename)
+	{ return Print(Body->List, filename); }
+int Space::PrintVorticity(const char* filename)
+	{ return Print(VortexList, filename); }
+int Space::PrintHeat(const char* filename)
+	{ return Print(HeatList, filename); }
 
 int Space::Save(const char *filename)
 {
