@@ -1,6 +1,7 @@
 #include "body.h"
 #include "stdio.h"
 #include "iostream"
+#include "math.h"
 using namespace std;
 
 TBody::TBody()
@@ -10,6 +11,7 @@ TBody::TBody()
 
 int TBody::LoadFromFile(const char* filename)
 {
+	if (!this) return -1;
 	if ( !List ) return -1;
 	FILE *fin;
 
@@ -30,5 +32,37 @@ int TBody::LoadFromFile(const char* filename)
 
 bool TBody::ObjectIsValid(TObject &obj)
 {
+	if (!this) return true;
 	return ( (obj.rx*obj.rx + obj.ry*obj.ry)>1 );
+	//FIXME wrong formula
+}
+
+double TBody::SurfaceLenght()
+{
+	if (!this) return 0;
+	double res=0;
+
+	TObject *Obj = List->First;
+	TObject *&LastObj = List->Last;
+	for (; Obj<LastObj; Obj++)
+	{
+		double dx = (Obj->rx - (Obj+1)->rx);
+		double dy = (Obj->ry - (Obj+1)->ry);
+		res += sqrt(dx*dx+dy*dy);
+	}
+
+	return res;
+}
+
+/************************** HEAT LAYER ****************************************/
+
+void TBody::CleanHeatLayer()
+{
+	if (!this) return;
+	if (!HeatLayer) return;
+
+	for (int i=0; i<List->size; i++)
+	{
+		HeatLayer[i]=0;
+	}
 }

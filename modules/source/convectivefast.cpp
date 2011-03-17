@@ -305,9 +305,8 @@ int LoadMatrix(double *matrix, const char* filename)
 	fin = fopen(filename, "r");
 	if (!fin) { cerr << "No file called " << filename << endl; return -1; } 
 	double *dst = matrix;
-	while ( !feof(fin) )
+	while ( fscanf(fin, "%lf", dst)==1 )
 	{
-		fscanf(fin, "%lf", dst);
 		dst++;
 	}
 	fclose(fin);

@@ -13,9 +13,16 @@ class TBody
 		int LoadFromFile(const char* filename);
 		bool ObjectIsValid(TObject &obj);
 		TList<TObject> *List;
+		double SurfaceLenght();
 
-		int *BodyControlLayer; //its filled by flowmove
 		double ForceX, ForceY; //dont forget to zero it when u want
+
+		//Heat layer
+		void CleanHeatLayer();
+		int *ObjectIsInHeatLayer(TObject &obj); //link to element of HeatLayer array
+
+		int *HeatLayer;
+		double HeatLayerHeight;
 };
 
 #endif /* BODY_H_ */
