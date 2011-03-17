@@ -17,7 +17,7 @@ namespace {
 Space *DiffMergeFast_S;
 double DiffMergeFast_Re;
 double DiffMergeFast_Nyu;
-double DiffMergeFast_dfi;
+//double DiffMergeFast_dfi;
 
 double DiffMergeFast_MergeSqEps;
 int DiffMergeFast_MergedV;
@@ -35,7 +35,7 @@ int InitDiffMergeFast(Space *sS, double sRe, double sMergeSqEps)
 	DiffMergeFast_Re = sRe;
 	DiffMergeFast_Nyu = 1/sRe;
 	DiffMergeFast_MergeSqEps = sMergeSqEps;
-	DiffMergeFast_dfi = (sS->BodyList) ? C_2PI/sS->BodyList->size : 0;
+	//DiffMergeFast_dfi = (sS->BodyList) ? C_2PI/sS->BodyList->size : 0;
 	return 0;
 }
 
@@ -211,9 +211,9 @@ int CalcVortexDiffMergeFast()
 	if ( !DiffMergeFast_S->VortexList ) return -1;
 
 	double multiplier;
-	double C_2Nyu_PI = DiffMergeFast_Nyu * C_2_PI;
+	//double C_2Nyu_PI = DiffMergeFast_Nyu * C_2_PI;
 
-	TList<TObject> *BList = DiffMergeFast_S->BodyList;
+	//TList<TObject> *BList = DiffMergeFast_S->Body->List;
 	TList<TNode*> *BottomNodes = GetTreeBottomNodes();
 	if ( !BottomNodes ) return -1;
 
@@ -248,7 +248,7 @@ int CalcVortexDiffMergeFast()
 				Obj.vx += ResPX * multiplier;
 				Obj.vy += ResPY * multiplier;
 			}
-
+/*
 			if ( BList )
 			{
 				double rabs = sqrtdef(Obj.rx*Obj.rx + Obj.ry*Obj.ry);
@@ -260,6 +260,7 @@ int CalcVortexDiffMergeFast()
 					Obj.vy += Obj.ry * multiplier;
 				}
 			}
+*/
 		}
 	}
 	return 0;
@@ -269,10 +270,11 @@ int CalcHeatDiffMergeFast()
 {
 	if ( !DiffMergeFast_S->HeatList ) return -1;
 
-	double multiplier1, multiplier2;
-	double M_35dfi2 = 3.5 * DiffMergeFast_dfi * DiffMergeFast_dfi;
+	double multiplier1;
+	//double multiplier2;
+	//double M_35dfi2 = 3.5 * DiffMergeFast_dfi * DiffMergeFast_dfi;
 
-	TList<TObject> *BList = DiffMergeFast_S->BodyList;
+	//TList<TObject> *BList = DiffMergeFast_S->Body->List;
 	TList<TNode*> *BottomNodes = GetTreeBottomNodes();
 	if ( !BottomNodes ) return -1;
 
@@ -302,7 +304,7 @@ int CalcHeatDiffMergeFast()
 				Obj.vx += ResPX * multiplier1;
 				Obj.vy += ResPY * multiplier1;
 			}
-
+/*
 			if ( BList )
 			{
 				double rabs = sqrtdef(Obj.rx*Obj.rx + Obj.ry*Obj.ry);
@@ -316,6 +318,7 @@ int CalcHeatDiffMergeFast()
 					Obj.vy += Obj.ry * multiplier2;
 				}
 			}
+*/
 		}
 	}
 

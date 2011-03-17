@@ -11,8 +11,17 @@ int FillMatrix();
 int FillRightCol();
 int SolveMatrix();
 
+double* MatrixLink();
+
 //int SpeedSum(double px, double py, double &resx, double &resy);
 int LoadBodyMatrix(const char* filename);
 int LoadInverseMatrix(const char* filename);
+void SaveBodyMatrix(const char* filename);
+void SaveInverseMatrix(const char* filename);
+
+int LoadBodyMatrix_bin(const char* filename);
+int LoadInverseMatrix_bin(const char* filename);
+void SaveBodyMatrix_bin(const char* filename);
+void SaveInverseMatrix_bin(const char* filename);
 
 #endif

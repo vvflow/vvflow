@@ -3,11 +3,13 @@ LIBFILENAME 	= lib$(LIBNAME).a
 
 CPP 			= gcc
 CXX 			= g++
+FORT 			= gfortran
 INCLUDE 		= -I headers/
 
-COBJECTS 		= convectivefast.o flowmove.o diffusive.o diffusivefast.o diffmergefast.o merge.o
+COBJECTS 		= convectivefast.o flowmove.o diffmergefast.o merge.o
 COBJFLAGS 		= -c -g -Wall -O2
-FOBJECTS 		= 
+FOBJECTS 		= objectinfluence.o
+FOBJFLAGS 		= -c -Wall -O3
 
 all: incbuild bin/ $(LIBFILENAME) 
 	./.incversion buildok
@@ -15,7 +17,7 @@ all: incbuild bin/ $(LIBFILENAME)
 incbuild:
 	./.incversion build
 
-$(LIBFILENAME): $(COBJECTS) 
+$(LIBFILENAME): $(COBJECTS) $(FOBJECTS)
 	cd bin/ && ar ruc $(LIBFILENAME) $^
 	ranlib bin/$@
 
@@ -24,6 +26,9 @@ $(LIBFILENAME): $(COBJECTS)
 
 %.o: source/%.c
 	$(CPP) $< $(COBJFLAGS) -o bin/$@ $(INCLUDE)
+
+%.o: source/%.f90
+	$(FORT) $< $(FOBJFLAGS) -o bin/$@ $(INCLUDE)
 
 bin/:
 	mkdir bin/

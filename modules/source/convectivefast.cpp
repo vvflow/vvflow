@@ -24,11 +24,20 @@ double *Solution;
 bool BodyMatrixOK;
 bool InverseMatrixOK; 
 
-double ObjectInfluence(TObject &obj, TObject &seg1, TObject &seg2);
+double ObjectInfluence(TObject &obj, TObject &seg1, TObject &seg2, double eps);
 int LoadMatrix(double *matrix, const char* filename);
+void SaveMatrix(double *matrix, const char* filename);
+int LoadMatrix_bin(double *matrix, const char* filename);
+void SaveMatrix_bin(double *matrix, const char* filename);
 
+extern"C"{
+void fortobjectinfluence_(double *x, double *y, double *x1, double *y1,
+					double *x2, double *y2, double *ax, double *ay, double *eps);
+}
 
 } //end of namespace
+
+double *MatrixLink() { return BodyMatrix; }
 
 /********************* SOURCE *****************************/
 
@@ -230,9 +239,12 @@ int CalcCirculationFast()
 
 namespace {
 inline
-double ObjectInfluence(TObject &obj, TObject &seg1, TObject &seg2)
+double ObjectInfluence(TObject &obj, TObject &seg1, TObject &seg2, double eps)
 {
-	return 0;
+	double resx, resy;
+	fortobjectinfluence_(&obj.rx, &obj.ry, &seg1.rx, &seg1.ry, &seg2.rx, &seg2.ry, &resx, &resy, &eps);
+	return (resy*(seg2.rx-seg1.rx) - resx*(seg2.ry-seg1.ry));
+	//FIXME kill fortran
 }}
 
 
@@ -242,19 +254,34 @@ int FillMatrix()
 	int imax = N-1;
 	//BodyMatrix[N*i+j]
 	//RightCol[i]
+
+	TObject *BVort = ConvectiveFast_S->Body->List->First;
+	TObject *&FirstBVort = ConvectiveFast_S->Body->List->First;
+	TObject *&LastBVort = ConvectiveFast_S->Body->List->Last;
+	for ( ; BVort<LastBVort; BVort++)
+	{
+		//temporarily vort->g stores eps info.
+		double dx1 = BVort->rx - ( (BVort>FirstBVort)?(BVort-1)->rx:(LastBVort-1)->rx );
+		double dy1 = BVort->ry - ( (BVort>FirstBVort)?(BVort-1)->ry:(LastBVort-1)->ry );
+		double dx2 = BVort->rx - ( (BVort<(LastBVort-1))?(BVort+1)->rx:FirstBVort->rx );
+		double dy2 = BVort->ry - ( (BVort<(LastBVort-1))?(BVort+1)->ry:FirstBVort->ry );
+		BVort->g = (sqrt(dx1*dx1+dy1*dy1) + sqrt(dx2*dx2+dy2*dy2))*0.5;
+	}
+
 	TObject *NakedBodyList = ConvectiveFast_S->Body->List->First;
 	for (i=0; i<imax; i++)
 	{
 		double *RowI = BodyMatrix + N*i;
 		for (j=0; j<N; j++)
 		{
-			RowI[j] = ObjectInfluence(NakedBodyList[j], NakedBodyList[i], NakedBodyList[i+1]);
+			RowI[j] = ObjectInfluence(NakedBodyList[j], NakedBodyList[i], NakedBodyList[i+1], NakedBodyList[j].g);
 		}
 	}
+		double _1_N = 1./N;
 		double *RowI = BodyMatrix + N*imax;
 		for (j=0; j<N; j++)
 		{
-			RowI[j] = 1;
+			RowI[j] = _1_N;
 		}
 
 	BodyMatrixOK = true;
@@ -285,6 +312,8 @@ int SolveMatrix()
 	return 0;
 }
 
+/****** LOAD/SAVE MATRIX *******/
+
 int LoadBodyMatrix(const char* filename)
 { 
 	BodyMatrixOK = (LoadMatrix(BodyMatrix, filename) == N*N);
@@ -297,6 +326,17 @@ int LoadInverseMatrix(const char* filename)
 	return InverseMatrixOK;
 }
 
+void SaveBodyMatrix(const char* filename)
+{ 
+	SaveMatrix(BodyMatrix, filename);
+}
+
+void SaveInverseMatrix(const char* filename)
+{
+	SaveMatrix(InverseMatrix, filename);
+}
+
+namespace {
 int LoadMatrix(double *matrix, const char* filename)
 {
 	if ( !matrix ) return -1;
@@ -311,5 +351,57 @@ int LoadMatrix(double *matrix, const char* filename)
 	}
 	fclose(fin);
 	return (dst - matrix);
-	//FIXME may work unproperly
+}}
+
+namespace {
+void SaveMatrix(double *matrix, const char* filename)
+{
+	if ( !matrix ) { cout << "!matrix\n"; return; }
+	FILE *fout;
+
+	fout = fopen(filename, "w");
+	if (!fout) { cerr << "Error opening file \'" << filename << "\'\n"; return; } 
+	double *src = matrix;
+	for (int i=0; i<N*N; i++)
+	{
+		fprintf(fout, "%f ", src[i]);
+		if (!((i+1)%N)) fprintf(fout, "\n");
+	}
+	fclose(fout);
+}}
+
+/****** BINARY LOAD/SAVE *******/
+
+int LoadBodyMatrix_bin(const char* filename)
+{ 
+	BodyMatrixOK = (LoadMatrix_bin(BodyMatrix, filename) == N*N);
+	return BodyMatrixOK;
 }
+
+int LoadInverseMatrix_bin(const char* filename)
+{
+	InverseMatrixOK = (LoadMatrix_bin(InverseMatrix, filename) == N*N);
+	return InverseMatrixOK;
+}
+
+void SaveBodyMatrix_bin(const char* filename)
+{ 
+	SaveMatrix_bin(BodyMatrix, filename);
+}
+
+void SaveInverseMatrix_bin(const char* filename)
+{
+	SaveMatrix_bin(InverseMatrix, filename);
+}
+
+namespace {
+int LoadMatrix_bin(double *matrix, const char* filename)
+{
+//
+}}
+
+namespace {
+void SaveMatrix_bin(double *matrix, const char* filename)
+{
+//
+}}
