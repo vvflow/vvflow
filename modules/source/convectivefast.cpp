@@ -25,15 +25,15 @@ bool BodyMatrixOK;
 bool InverseMatrixOK; 
 
 double ObjectInfluence(TObject &obj, TObject &seg1, TObject &seg2, double eps);
-int LoadMatrix(double *matrix, const char* filename);
-void SaveMatrix(double *matrix, const char* filename);
-int LoadMatrix_bin(double *matrix, const char* filename);
-void SaveMatrix_bin(double *matrix, const char* filename);
-
 extern"C"{
 void fortobjectinfluence_(double *x, double *y, double *x1, double *y1,
 					double *x2, double *y2, double *ax, double *ay, double *eps);
 }
+
+int LoadMatrix(double *matrix, const char* filename);
+void SaveMatrix(double *matrix, const char* filename);
+int LoadMatrix_bin(double *matrix, const char* filename);
+void SaveMatrix_bin(double *matrix, const char* filename);
 
 } //end of namespace
 
@@ -221,8 +221,8 @@ int CalcConvectiveFast()
 
 int CalcCirculationFast()
 {
-	if (!BodyMatrixOK)
-		FillMatrix();
+	//if (!BodyMatrixOK)
+		//FillMatrix();
 
 	FillRightCol();
 	SolveMatrix();
@@ -290,13 +290,24 @@ int FillMatrix()
 
 int FillRightCol()
 {
+	TObject *NakedBodyList = ConvectiveFast_S->Body->List->First;	
+	int imax = N-1;
+	for (int i=0; i<imax; i++)
+	{
+		double SegDx = NakedBodyList[i+1].rx - NakedBodyList[i].rx;
+		double SegDy = NakedBodyList[i+1].ry - NakedBodyList[i].ry;
+		RightCol[i] = ConvectiveFast_S->InfSpeedYVar*SegDx - ConvectiveFast_S->InfSpeedXVar*SegDy;
+		cout << RightCol[i] << endl;
+	}
+	RightCol[imax] = 0;
+
 	return 0;
 }
 
 int SolveMatrix()
 {
 	if (!InverseMatrixOK)
-		; //Inverse
+		return -1; //Inverse
 
 	for (int i=0; i<N; i++)
 	{
@@ -315,35 +326,21 @@ int SolveMatrix()
 /****** LOAD/SAVE MATRIX *******/
 
 int LoadBodyMatrix(const char* filename)
-{ 
-	BodyMatrixOK = (LoadMatrix(BodyMatrix, filename) == N*N);
-	return BodyMatrixOK;
-}
-
+{ return BodyMatrixOK = (LoadMatrix(BodyMatrix, filename) == N*N); }
 int LoadInverseMatrix(const char* filename)
-{
-	InverseMatrixOK = (LoadMatrix(InverseMatrix, filename) == N*N);
-	return InverseMatrixOK;
-}
-
+{ return InverseMatrixOK = (LoadMatrix(InverseMatrix, filename) == N*N); }
 void SaveBodyMatrix(const char* filename)
-{ 
-	SaveMatrix(BodyMatrix, filename);
-}
-
+{ SaveMatrix(BodyMatrix, filename); }
 void SaveInverseMatrix(const char* filename)
-{
-	SaveMatrix(InverseMatrix, filename);
-}
+{ SaveMatrix(InverseMatrix, filename); }
 
 namespace {
 int LoadMatrix(double *matrix, const char* filename)
 {
-	if ( !matrix ) return -1;
 	FILE *fin;
 
 	fin = fopen(filename, "r");
-	if (!fin) { cerr << "No file called " << filename << endl; return -1; } 
+	if (!fin) { cerr << "No file called \'" << filename << "\'\n"; return -1; } 
 	double *dst = matrix;
 	while ( fscanf(fin, "%lf", dst)==1 )
 	{
@@ -356,7 +353,6 @@ int LoadMatrix(double *matrix, const char* filename)
 namespace {
 void SaveMatrix(double *matrix, const char* filename)
 {
-	if ( !matrix ) { cout << "!matrix\n"; return; }
 	FILE *fout;
 
 	fout = fopen(filename, "w");
@@ -373,35 +369,33 @@ void SaveMatrix(double *matrix, const char* filename)
 /****** BINARY LOAD/SAVE *******/
 
 int LoadBodyMatrix_bin(const char* filename)
-{ 
-	BodyMatrixOK = (LoadMatrix_bin(BodyMatrix, filename) == N*N);
-	return BodyMatrixOK;
-}
-
+{ return BodyMatrixOK = (LoadMatrix_bin(BodyMatrix, filename) == N*N); }
 int LoadInverseMatrix_bin(const char* filename)
-{
-	InverseMatrixOK = (LoadMatrix_bin(InverseMatrix, filename) == N*N);
-	return InverseMatrixOK;
-}
-
+{ return InverseMatrixOK = (LoadMatrix_bin(InverseMatrix, filename) == N*N); }
 void SaveBodyMatrix_bin(const char* filename)
-{ 
-	SaveMatrix_bin(BodyMatrix, filename);
-}
-
+{ SaveMatrix_bin(BodyMatrix, filename); }
 void SaveInverseMatrix_bin(const char* filename)
-{
-	SaveMatrix_bin(InverseMatrix, filename);
-}
+{ SaveMatrix_bin(InverseMatrix, filename); }
 
 namespace {
 int LoadMatrix_bin(double *matrix, const char* filename)
 {
-//
+	FILE *fin;
+	int result;
+
+	fin = fopen(filename, "rb");
+	result = fread(matrix, sizeof(double), N*N, fin);
+	fclose(fin);
+
+	return result;
 }}
 
 namespace {
 void SaveMatrix_bin(double *matrix, const char* filename)
 {
-//
+	FILE *fout;
+
+	fout = fopen(filename, "wb");
+	fwrite(matrix, sizeof(double), N*N, fout);
+	fclose(fout);
 }}

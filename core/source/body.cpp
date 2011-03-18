@@ -66,3 +66,8 @@ void TBody::CleanHeatLayer()
 		HeatLayer[i]=0;
 	}
 }
+
+int* TBody::ObjectIsInHeatLayer(TObject &obj)
+{
+	return false;
+}
