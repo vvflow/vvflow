@@ -4,9 +4,13 @@
 #include "math.h"
 using namespace std;
 
-TBody::TBody()
+TBody::TBody(double (*sRotationV)(double Time),
+				double sRotationAxisX, double sRotationAxisY)
 {
 	List = new TList<TObject>();
+	RotationV = sRotationV;
+	RotationAxisX = sRotationAxisX;
+	RotationAxisY = sRotationAxisY;
 }
 
 int TBody::LoadFromFile(const char* filename)
@@ -28,6 +32,20 @@ int TBody::LoadFromFile(const char* filename)
 	fclose(fin);
 
 	return 0;
+}
+
+void TBody::Rotate(double dt)
+{
+	if (!this) return;
+	double alpha = RotationVVar*dt;
+
+	TObject *Obj = List->First;
+	TObject *&LastObj = List->Last;
+	for (; Obj<LastObj; Obj++)
+	{
+		Obj->rx+= (Obj->ry - RotationAxisY)*alpha;
+		Obj->ry-= (Obj->rx - RotationAxisX)*alpha;
+	}
 }
 
 bool TBody::PointIsValid(double x, double y)

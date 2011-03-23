@@ -9,8 +9,7 @@ using namespace std;
 Space::Space(bool CreateVortexes,
 				bool CreateHeat,
 				double (*sInfSpeedX)(double Time),
-				double (*sInfSpeedY)(double Time),
-				double (*sRotationV)(double Time))
+				double (*sInfSpeedY)(double Time))
 {
 	if ( CreateVortexes ) VortexList = new TList<TObject>(); else VortexList = NULL;
 	if ( CreateHeat ) HeatList = new TList<TObject>(); else HeatList = NULL;
@@ -18,8 +17,7 @@ Space::Space(bool CreateVortexes,
 
 	InfSpeedX = sInfSpeedX;
 	InfSpeedY = sInfSpeedY;
-	RotationV = sRotationV;
-	Time = dt = Angle = BodyX = BodyY = 0;
+	Time = dt = BodyX = BodyY = 0;
 }
 
 /*int Space::ConstructCircle(long BodyListSize)

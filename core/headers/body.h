@@ -7,13 +7,18 @@
 class TBody
 {
 	public:
-		TBody();
+		TBody(double (*sRotationV)(double Time) = NULL,
+				double sRotationAxisX=0, double sRotationAxisY=0);
 		~TBody();
 
 		int LoadFromFile(const char* filename);
+		void Rotate(double dt);
 		bool PointIsValid(double x, double y);
-		TList<TObject> *List;
 		double SurfaceLenght();
+
+		TList<TObject> *List;
+		double RotationAxisX, RotationAxisY;
+		double (*RotationV)(double Time); double RotationVVar;
 
 		double ForceX, ForceY; //dont forget to zero it when u want
 

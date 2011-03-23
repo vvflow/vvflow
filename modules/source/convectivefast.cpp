@@ -137,7 +137,7 @@ int CalcConvectiveFast()
 	//initialization of InfSpeed & Rotation
 	double InfX = ConvectiveFast_S->InfSpeedXVar; 
 	double InfY = ConvectiveFast_S->InfSpeedYVar;
-	double RotationG = ConvectiveFast_S->RotationVVar * C_2PI;
+	//double RotationG = ConvectiveFast_S->RotationVVar * C_2PI;
 
 	TList<TNode*> *BottomNodes = GetTreeBottomNodes();
 	if ( !BottomNodes ) return -1;
@@ -193,7 +193,6 @@ int CalcConvectiveFast()
 			for ( ; lObj<LastObj; lObj++ ) 													\
 			{																				\
 				TObject &Obj = **lObj; 														\
-				multiplier = RotationG ? RotationG/(Obj.rx*Obj.rx + Obj.ry*Obj.ry + ConvectiveFast_Eps) : 0; \
 				LocaldRx = Obj.rx - BNode.x; 												\
 				LocaldRy = Obj.ry - BNode.y; 												\
 				SpeedSum(BNode, Obj.rx, Obj.ry, SpeedSumResX, SpeedSumResY); 				\
@@ -272,12 +271,12 @@ int FillMatrix()
 			RowI[j] = ObjectInfluence(NakedBodyList[j], NakedBodyList[i], NakedBodyList[i+1], NakedBodyList[j].g);
 		}
 	}
-		double _1_N = 1./N;
 		double *RowI = BodyMatrix + N*imax;
 		for (j=0; j<N; j++)
 		{
-			RowI[j] = _1_N;
+			RowI[j] = 1;
 		}
+//			RowI[0] = 1; //Joukowski condition
 
 	BodyMatrixOK = true;
 	return 0;
@@ -285,7 +284,7 @@ int FillMatrix()
 
 int FillRightCol()
 {
-	TObject *NakedBodyList = ConvectiveFast_S->Body->List->First;	
+	TObject *NakedBodyList = ConvectiveFast_S->Body->List->First;
 	int imax = N-1;
 	for (int i=0; i<imax; i++)
 	{

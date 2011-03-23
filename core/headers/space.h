@@ -11,9 +11,7 @@ class Space
 		Space(bool CreateVortexes,
 				bool CreateHeat, 
 				double (*sInfSpeedX)(double Time) = NULL,
-				double (*sInfSpeedY)(double Time) = NULL,
-				double (*sRotationV)(double Time) = NULL);
-		//int ConstructCircle(long BodyListSize);
+				double (*sInfSpeedY)(double Time) = NULL);
 
 		TBody *Body;
 		TList<TObject> *VortexList;
@@ -25,9 +23,8 @@ class Space
 
 		double (*InfSpeedX)(double Time); double InfSpeedXVar;
 		double (*InfSpeedY)(double Time); double InfSpeedYVar;
-		double (*RotationV)(double Time); double RotationVVar;
 		double Time, dt;
-		double Angle, BodyX, BodyY;
+		double BodyX, BodyY;
 
 		/***************** SAVE/LOAD ******************/
 		int LoadVorticityFromFile(const char* filename);
@@ -59,13 +56,13 @@ void Space::StartStep()
 {
 	InfSpeedXVar = InfSpeedX ? InfSpeedX(Time) : 0;
 	InfSpeedYVar = InfSpeedY ? InfSpeedY(Time) : 0;
-	RotationVVar = RotationV ? RotationV(Time) : 0;
+	Body->RotationVVar = Body->RotationV ? Body->RotationV(Time) : 0;
 }
 
 inline
 void Space::FinishStep()
 {
-	if ( RotationV ) Angle+= RotationVVar*dt;
+	if ( Body->RotationV ) Body->Rotate(dt);
 	if ( InfSpeedX ) BodyX-= InfSpeedXVar*dt;
 	if ( InfSpeedY ) BodyY-= InfSpeedYVar*dt;
 	Time+= dt;
