@@ -62,7 +62,7 @@ void Space::StartStep()
 inline
 void Space::FinishStep()
 {
-	if ( Body->RotationV ) Body->Rotate(dt);
+	if ( Body->RotationV ) Body->Rotate(Body->RotationVVar*dt);
 	if ( InfSpeedX ) BodyX-= InfSpeedXVar*dt;
 	if ( InfSpeedY ) BodyY-= InfSpeedYVar*dt;
 	Time+= dt;

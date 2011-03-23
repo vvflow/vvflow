@@ -116,7 +116,7 @@ int Space::Print(TList<TObject> *List, const char* format)
 	fstream fout;
 	char fname[64];
 
-	sprintf(fname, format, int(Time/dt));
+	sprintf(fname, format, Time/dt);
 
 	fout.open(fname, ios::out);
 	res = Print(List, fout);

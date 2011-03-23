@@ -25,6 +25,7 @@ bool BodyMatrixOK;
 bool InverseMatrixOK; 
 
 double ObjectInfluence(TObject &obj, TObject &seg1, TObject &seg2, double eps);
+double NodeInfluence(TNode &Node, TObject &seg1, TObject &seg2, double eps);
 extern"C"{
 void fortobjectinfluence_(double *x, double *y, double *x1, double *y1,
 					double *x2, double *y2, double *ax, double *ay, double *eps);
@@ -184,7 +185,7 @@ int CalcConvectiveFast()
 		Teilor4 *= C_1_2PI;
 
 		double LocaldRx, LocaldRy;
-		double multiplier;
+		//double multiplier;
 		#define SpeedSumCircle(List) 														\
 		if (List) 																			\
 		{ 																					\
@@ -197,9 +198,9 @@ int CalcConvectiveFast()
 				LocaldRy = Obj.ry - BNode.y; 												\
 				SpeedSum(BNode, Obj.rx, Obj.ry, SpeedSumResX, SpeedSumResY); 				\
 				Obj.vx += Teilor1 + Teilor3*LocaldRx + Teilor4*LocaldRy + 					\
-							SpeedSumResX + InfX - Obj.ry*multiplier; 						\
+							SpeedSumResX + InfX; 						\
 				Obj.vy += Teilor2 + Teilor4*LocaldRx - Teilor3*LocaldRy + 					\
-							SpeedSumResY + InfY + Obj.rx*multiplier; 						\
+							SpeedSumResY + InfY; 						\
 			} 																				\
 		}
 
@@ -239,6 +240,47 @@ double ObjectInfluence(TObject &obj, TObject &seg1, TObject &seg2, double eps)
 	double dy=seg2.ry-seg1.ry;
 	return (resy*dx - resx*dy)/sqrt(dx*dx+dy*dy)*C_1_2PI;
 	//FIXME kill fortran
+}}
+
+namespace {
+inline
+double NodeInfluence(TNode &Node, TObject &seg1, TObject &seg2, double eps)
+{
+	double resx=0, resy=0;
+	double tmpx, tmpy;
+
+	TNode** lNode = Node.NearNodes->First;
+	TNode** &LastNode = Node.NearNodes->Last;
+	for ( ; lNode<LastNode; lNode++ )
+	{
+		TList<TObject*> *vList = (**lNode).VortexLList;
+		if ( !vList ) { continue; }
+
+		TVortex** lVort = vList->First;
+		TVortex** LastVort = vList->Last;
+		for ( ; lVort<LastVort; lVort++ )
+		{
+			TVortex &Vort = **lVort;
+			fortobjectinfluence_(&Vort.rx, &Vort.ry, &seg1.rx, &seg1.ry, &seg2.rx, &seg2.ry, &tmpx, &tmpy, &eps);
+			resx+= tmpx*Vort.g; resy+= tmpy*Vort.g;
+		}
+	}
+
+	TNode** lFNode = Node.FarNodes->First;
+	TNode** LastFNode = Node.FarNodes->Last;
+	for ( ; lFNode<LastFNode; lFNode++ )
+	{
+		TNode &FNode = **lFNode;
+
+		fortobjectinfluence_(&FNode.CMp.rx, &FNode.CMp.ry, &seg1.rx, &seg1.ry, &seg2.rx, &seg2.ry, &tmpx, &tmpy, &eps);
+		resx+= tmpx*FNode.CMp.g; resy+= tmpy*FNode.CMp.g;
+		fortobjectinfluence_(&FNode.CMm.rx, &FNode.CMm.ry, &seg1.rx, &seg1.ry, &seg2.rx, &seg2.ry, &tmpx, &tmpy, &eps);
+		resx+= tmpx*FNode.CMm.g; resy+= tmpy*FNode.CMm.g;
+	}
+
+	double dx=seg2.rx-seg1.rx;
+	double dy=seg2.ry-seg1.ry;
+	return (resy*dx - resx*dy)/sqrt(dx*dx+dy*dy)*C_1_2PI;
 }}
 
 
@@ -288,11 +330,17 @@ int FillRightCol()
 	int imax = N-1;
 	for (int i=0; i<imax; i++)
 	{
+		TNode* Node = FindNode(NakedBodyList[i].rx, NakedBodyList[i].ry);
+		if (!Node) { cerr << "fail" << endl; return -1;}
+
 		double SegDx = NakedBodyList[i+1].rx - NakedBodyList[i].rx;
 		double SegDy = NakedBodyList[i+1].ry - NakedBodyList[i].ry;
-		RightCol[i] = -ConvectiveFast_S->InfSpeedYVar*SegDx + ConvectiveFast_S->InfSpeedXVar*SegDy;
+
+		RightCol[i] = -ConvectiveFast_S->InfSpeedYVar*SegDx + ConvectiveFast_S->InfSpeedXVar*SegDy -
+			NodeInfluence(*Node, NakedBodyList[i], NakedBodyList[i+1], ConvectiveFast_Eps);
 	}
-	RightCol[imax] = 0;
+
+	RightCol[imax] = -ConvectiveFast_S->gsumm();
 
 	return 0;
 }
@@ -300,7 +348,10 @@ int FillRightCol()
 int SolveMatrix()
 {
 	if (!InverseMatrixOK)
+	{
+		cerr << "Inverse!\n";
 		return -1; //Inverse
+	}
 
 	for (int i=0; i<N; i++)
 	{
@@ -321,7 +372,7 @@ int SolveMatrix()
 int LoadBodyMatrix(const char* filename)
 { return BodyMatrixOK = (LoadMatrix(BodyMatrix, filename) == N*N); }
 int LoadInverseMatrix(const char* filename)
-{ return InverseMatrixOK = (LoadMatrix(InverseMatrix, filename) == N*N); }
+{ InverseMatrixOK = (LoadMatrix(InverseMatrix, filename) == N*N); return InverseMatrixOK; }
 void SaveBodyMatrix(const char* filename)
 { SaveMatrix(BodyMatrix, filename); }
 void SaveInverseMatrix(const char* filename)
@@ -362,9 +413,9 @@ void SaveMatrix(double *matrix, const char* filename)
 /****** BINARY LOAD/SAVE *******/
 
 int LoadBodyMatrix_bin(const char* filename)
-{ return BodyMatrixOK = (LoadMatrix_bin(BodyMatrix, filename) == N*N); }
+{ BodyMatrixOK = (LoadMatrix_bin(BodyMatrix, filename) == N*N); return BodyMatrixOK; }
 int LoadInverseMatrix_bin(const char* filename)
-{ return InverseMatrixOK = (LoadMatrix_bin(InverseMatrix, filename) == N*N); }
+{ InverseMatrixOK = (LoadMatrix_bin(InverseMatrix, filename) == N*N); return InverseMatrixOK; }
 void SaveBodyMatrix_bin(const char* filename)
 { SaveMatrix_bin(BodyMatrix, filename); }
 void SaveInverseMatrix_bin(const char* filename)

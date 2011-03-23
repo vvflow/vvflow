@@ -34,17 +34,16 @@ int TBody::LoadFromFile(const char* filename)
 	return 0;
 }
 
-void TBody::Rotate(double dt)
+void TBody::Rotate(double angle)
 {
 	if (!this) return;
-	double alpha = RotationVVar*dt;
 
 	TObject *Obj = List->First;
 	TObject *&LastObj = List->Last;
 	for (; Obj<LastObj; Obj++)
 	{
-		Obj->rx+= (Obj->ry - RotationAxisY)*alpha;
-		Obj->ry-= (Obj->rx - RotationAxisX)*alpha;
+		Obj->rx+= (Obj->ry - RotationAxisY)*angle;
+		Obj->ry-= (Obj->rx - RotationAxisX)*angle;
 	}
 }
 

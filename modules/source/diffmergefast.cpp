@@ -211,9 +211,9 @@ int CalcVortexDiffMergeFast()
 	if ( !DiffMergeFast_S->VortexList ) return -1;
 
 	double multiplier;
-	//double C_2Nyu_PI = DiffMergeFast_Nyu * C_2_PI;
+	double C_2Nyu_PI = DiffMergeFast_Nyu * C_2_PI;
 
-	//TList<TObject> *BList = DiffMergeFast_S->Body->List;
+	TList<TObject> *BList = DiffMergeFast_S->Body->List;
 	TList<TNode*> *BottomNodes = GetTreeBottomNodes();
 	if ( !BottomNodes ) return -1;
 
@@ -248,7 +248,7 @@ int CalcVortexDiffMergeFast()
 				Obj.vx += ResPX * multiplier;
 				Obj.vy += ResPY * multiplier;
 			}
-/*
+
 			if ( BList )
 			{
 				double rabs = sqrtdef(Obj.rx*Obj.rx + Obj.ry*Obj.ry);
@@ -260,7 +260,7 @@ int CalcVortexDiffMergeFast()
 					Obj.vy += Obj.ry * multiplier;
 				}
 			}
-*/
+
 		}
 	}
 	return 0;

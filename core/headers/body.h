@@ -12,7 +12,7 @@ class TBody
 		~TBody();
 
 		int LoadFromFile(const char* filename);
-		void Rotate(double dt);
+		void Rotate(double angle);
 		bool PointIsValid(double x, double y);
 		double SurfaceLenght();
 

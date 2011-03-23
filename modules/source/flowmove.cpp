@@ -48,7 +48,7 @@ int MoveAndClean(bool remove)
 			Obj->rx += Obj->vx*FlowMove_dt; Obj->vx = 0;
 			Obj->ry += Obj->vy*FlowMove_dt; Obj->vy = 0;
 			
-			bool inbody = remove  && FlowMove_S->Body->PointIsValid(Obj->rx, Obj->ry);
+			bool inbody = remove  && !FlowMove_S->Body->PointIsValid(Obj->rx, Obj->ry);
 			bool toosmall = ( (Obj->g < FlowMove_RemoveEps) && (Obj->g > -FlowMove_RemoveEps) );
 			if ( inbody || toosmall)
 			{
@@ -97,7 +97,7 @@ int VortexShed()
 	//double RiseHeight = FlowMove_S->Body->HeatLayerHeight*1E-6;
 	TObject ObjCopy; ZeroObject(ObjCopy);
 
-	FlowMove_CleanedV = 0;
+	//FlowMove_CleanedV = 0;
 
 	TObject *BVort = FlowMove_S->Body->List->First;
 	TObject *&LastBVort = FlowMove_S->Body->List->Last;
