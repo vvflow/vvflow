@@ -11,7 +11,7 @@ class TBody
 		~TBody();
 
 		int LoadFromFile(const char* filename);
-		bool ObjectIsValid(TObject &obj);
+		bool PointIsValid(double x, double y);
 		TList<TObject> *List;
 		double SurfaceLenght();
 

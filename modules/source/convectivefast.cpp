@@ -55,33 +55,26 @@ int InitConvectiveFast(Space *sS, double sEps)
 	return 0;
 }
 
-/*int SpeedSum(double px, double py, double &resx, double &resy)
+int SpeedSumFast(double px, double py, double &resx, double &resy)
 {
-	here shoult be next functions:
+	TNode* Node = FindNode(px, py);
+	if (!Node) return -1;
+	SpeedSum(*Node, px, py, resx, resy);
 
-	FindNode(px, py);
-	SpeedSum(List, px, py, 1, 0, resx, resy);
-	Far nodes cycle
-
-	int fnlsize; //Far nodes list size
-	TNode **lFNode = (TNode**)Node->FarNodes->Elements; //link to FarNode link
-	TNode *FNode;
-	fnlsize = Node->FarNodes->size;
-
-	for ( i=0; i<fnlsize; i++ )
+	TNode** lFNode = Node->FarNodes->First;
+	TNode** LastFNode = Node->FarNodes->Last;
+	for ( ; lFNode<LastFNode; lFNode++ )
 	{
-		FNode = *lFNode;
+		TNode &FNode = **lFNode;
 
-		double CMresx, CMresy;
-		BioSavar(&FNode->CMp, px, py, CMresx, CMresy);
-		resx+= CMresx; resy+= CMresy;
-		BioSavar(&FNode->CMm, px, py, CMresx, CMresy);
-		resx+= CMresx; resy+= CMresy;
-
-		lFNode++;
+		double tmpx, tmpy;
+		BioSavar(FNode.CMp, px, py, tmpx, tmpy);
+		resx+= tmpx; resy+= tmpy;
+		BioSavar(FNode.CMm, px, py, tmpx, tmpy);
+		resx+= tmpx; resy+= tmpy;
 	}
 	return 0;
-}*/
+}
 
 namespace {
 inline
@@ -243,7 +236,9 @@ double ObjectInfluence(TObject &obj, TObject &seg1, TObject &seg2, double eps)
 {
 	double resx, resy;
 	fortobjectinfluence_(&obj.rx, &obj.ry, &seg1.rx, &seg1.ry, &seg2.rx, &seg2.ry, &resx, &resy, &eps);
-	return (resy*(seg2.rx-seg1.rx) - resx*(seg2.ry-seg1.ry));
+	double dx=seg2.rx-seg1.rx;
+	double dy=seg2.ry-seg1.ry;
+	return (resy*dx - resx*dy)/sqrt(dx*dx+dy*dy)*C_1_2PI;
 	//FIXME kill fortran
 }}
 
@@ -265,7 +260,7 @@ int FillMatrix()
 		double dy1 = BVort->ry - ( (BVort>FirstBVort)?(BVort-1)->ry:(LastBVort-1)->ry );
 		double dx2 = BVort->rx - ( (BVort<(LastBVort-1))?(BVort+1)->rx:FirstBVort->rx );
 		double dy2 = BVort->ry - ( (BVort<(LastBVort-1))?(BVort+1)->ry:FirstBVort->ry );
-		BVort->g = (sqrt(dx1*dx1+dy1*dy1) + sqrt(dx2*dx2+dy2*dy2))*0.5;
+		BVort->g = (sqrt(dx1*dx1+dy1*dy1) + sqrt(dx2*dx2+dy2*dy2))*0.25;
 	}
 
 	TObject *NakedBodyList = ConvectiveFast_S->Body->List->First;
@@ -296,8 +291,7 @@ int FillRightCol()
 	{
 		double SegDx = NakedBodyList[i+1].rx - NakedBodyList[i].rx;
 		double SegDy = NakedBodyList[i+1].ry - NakedBodyList[i].ry;
-		RightCol[i] = ConvectiveFast_S->InfSpeedYVar*SegDx - ConvectiveFast_S->InfSpeedXVar*SegDy;
-		cout << RightCol[i] << endl;
+		RightCol[i] = -ConvectiveFast_S->InfSpeedYVar*SegDx + ConvectiveFast_S->InfSpeedXVar*SegDy;
 	}
 	RightCol[imax] = 0;
 

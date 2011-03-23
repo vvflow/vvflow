@@ -28,7 +28,7 @@ double GetAverageNearNodesPercent();
 double GetAverageNearNodesCount();
 TList<TNode*>* GetTreeBottomNodes();
 
-TNode* FindNode(double px, double py); // doesnt work
+TNode* FindNode(double px, double py);
 int GetMaxDepth();
 int PrintBottomNodes(std::ostream& os, bool PrintDepth = false); // prints lines such "x y w h [i]" 
 void PrintLevel(std::ostream& os, int level);

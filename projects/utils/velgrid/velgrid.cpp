@@ -1,88 +1,42 @@
 #include "libVVHD/core.h"
-#include "libVVHD/convective.h"
-#include "libVVHD/utils.h"
+#include "libVVHD/convectivefast.h"
 #include "stdio.h"
 #include "iostream"
-#include "fstream"
-#include <time.h>
-
-#define M_2PI 6.283185308
 
 using namespace std;
 
 int main(int argc, char **argv)
 {
-	if ( argc < 7) { cout << "Error! Please use: \n\tvelgrid filename xmin xmax ymin ymax step\n"; return -1; }   
-	Space *S = new Space(1, 0, 0, NULL, NULL, NULL);
+	if ( argc < 10) { cout << "Error! Please use: \n\tvelgrid vortexfile bodyfile xmin xmax ymin ymax step infx infy\n"; return -1; }   
+	Space *S = new Space(true, false);
+	S->Body->LoadFromFile(argv[2]);
 	S->LoadVorticityFromFile(argv[1]);
-	cout << "Load done\n";
-	InitConvective(S, 5E-3);
-	double xmin, xmax, ymin, ymax, step;
-	double A, ch=1, t=0;
-	sscanf(argv[2], "%lf", &xmin);
-	sscanf(argv[3], "%lf", &xmax);
-	sscanf(argv[4], "%lf", &ymin);
-	sscanf(argv[5], "%lf", &ymax);
-	sscanf(argv[6], "%lf", &step);
-/*	if ( argc > 7 )
+	InitTree(S, 10, S->Body->SurfaceLenght()/S->Body->List->size*10);
+	InitConvectiveFast(S, 5E-3);
+	BuildTree(true, true, false);
+
+	double xmin, xmax, ymin, ymax, step, infx, infy;
+	sscanf(argv[3], "%lf", &xmin);
+	sscanf(argv[4], "%lf", &xmax);
+	sscanf(argv[5], "%lf", &ymin);
+	sscanf(argv[6], "%lf", &ymax);
+	sscanf(argv[7], "%lf", &step);
+	sscanf(argv[8], "%lf", &infx);
+	sscanf(argv[9], "%lf", &infy);
+
+	for ( double x=xmin; x<=xmax; x+= step )
 	{
-		sscanf(argv[7], "%lf", &A);
-		if ( argc == 10 )
+		for ( double y=ymin; y<=ymax; y+= step )
 		{
-			sscanf(argv[8], "%lf", &ch);
-			sscanf(argv[9], "%lf", &t);
-		} else { ch=0; t=0; }
-		TVortex BodyRotation; InitVortex(BodyRotation, 0, 0, A*M_2PI*cos(M_2PI*ch*t));
-		S->VortexList->Copy(&BodyRotation);
-	}
-*/
-	double G =0;
-	TList<TObject> *list = S->VortexList;
-	int lsize = list->size;
-	TVortex *Obj = list->First;
-	for ( int i=0; i<lsize; i++)
-	{
-		G += Obj->g;
-		Obj++;
-	}
-	TVortex BodyRotation; InitVortex(BodyRotation, 0, 0, -G);
-	S->VortexList->Copy(&BodyRotation);
-
-
-	fstream fout;
-	char fname[256];
-	sprintf(fname, "%s.dat", argv[1]);
-	fout.open(fname, ios::out);
-	fout << "TITLE = \"" << argv[1] << "\"\n";
-	fout << "VARIABLES = \"x\", \"y\", \"u\", \"v\"\n";
-	fout << "ZONE T=\"Body\", I=" << floor((ymax-ymin)/step) << ", J=" << floor((xmax-xmin)/step) << ", F=POINT\n";
-
-	double n=0;
-	double nmax1=1/(floor((xmax-xmin)/step)*floor((ymax-ymin)/step));
-	cout.precision(2);
-	for ( double x=xmin; x<xmax; x+= step )
-	{
-		for ( double y=ymin; y<ymax; y+= step )
-		{
-			//if ( (x*x+y*y) > 1 )
-			//{
-				double ResX, ResY;
-				SpeedSum(S->VortexList, x, y, ResX, ResY);
-				fout << x << " " << y << " " << ResX << " " << ResY << endl;
-			//}
-			//else
-			//{ fout << x << " " << y << " 0 0" << endl; }
-
-			if ( !((int)n%10000) ) 
+			if (S->Body->PointIsValid(x, y))
 			{
-				printf(" %.1f %\r", n*nmax1);
-				flush(cout);
-			}
-			n+=100;
+				double ResX, ResY;
+				SpeedSumFast(x, y, ResX, ResY);
+				cout << x << " \t" << y << " \t" << ResX+infx << " \t" << ResY+infy << endl;
+			} else
+				cout << x << " \t" << y << " \t0 \t0\n";
 		}
 	}
-	cout << " 100  % " << endl;
-	fout.close();
 
 	return 0;
 }

@@ -48,19 +48,18 @@ int Space::LoadVorticityFromFile(const char* filename)
 	if ( !VortexList ) return -1;
 	FILE *fin;
 	char line[255];
-	char* err;
 
 	fin = fopen(filename, "r");
-	if (!fin) { cerr << "No file called " << filename << endl; return -1; } 
+	if (!fin) { cerr << "No file called \'" << filename << "\'\n"; return -1; } 
+
 	TVortex Vort; ZeroObject(Vort);
-	while ( !feof(fin) )
+	while ( fgets(line, 254, fin) )
 	{
-		err = fgets(line, 255, fin);
-		sscanf(line, "%lf\t%lf\t%lf\n", &Vort.rx, &Vort.ry, &Vort.g);
-		VortexList->Copy(&Vort);
+		if (sscanf(line, "%lf\t%lf\t%lf\n", &Vort.rx, &Vort.ry, &Vort.g))
+			VortexList->Copy(&Vort);
 	}
 	fclose(fin);
-	return (err<0);
+	return 0;
 }
 
 int Space::LoadHeatFromStupidFile(const char* filename, double g)
@@ -68,16 +67,14 @@ int Space::LoadHeatFromStupidFile(const char* filename, double g)
 	if ( !HeatList ) return -1;
 	FILE *fin;
 	char line[255];
-	char* err;
 
 	fin = fopen(filename, "r");
 	if (!fin) { cerr << "No file called " << filename << endl; return -1; }
 	TVortex Vort; InitVortex(Vort, 0, 0, g);
-	while ( !feof(fin) )
+	while ( fgets(line, 254, fin) )
 	{
-		err = fgets(line, 255, fin);
-		sscanf(line, "%lf\t%lf\n", &Vort.rx, &Vort.ry);
-		HeatList->Copy(&Vort);
+		if (sscanf(line, "%lf\t%lf\n", &Vort.rx, &Vort.ry))
+			HeatList->Copy(&Vort);
 	}
 	fclose(fin);
 	return 0;
@@ -88,19 +85,17 @@ int Space::LoadHeatFromFile(const char* filename)
 	if ( !HeatList ) return -1;
 	FILE *fin;
 	char line[255];
-	char* err;
 
 	fin = fopen(filename, "r");
 	if (!fin) { cerr << "No file called " << filename << endl; return -1; }
 	TVortex Vort; ZeroObject(Vort);
-	while ( !feof(fin) )
+	while ( fgets(line, 254, fin) )
 	{
-		err = fgets(line, 255, fin);
-		sscanf(line, "%lf\t%lf\t%lf\n", &Vort.rx, &Vort.ry, &Vort.g);
-		HeatList->Copy(&Vort);
+		if (sscanf(line, "%lf\t%lf\t%lf\n", &Vort.rx, &Vort.ry, &Vort.g))
+			HeatList->Copy(&Vort);
 	}
 	fclose(fin);
-	return (err<0);
+	return 0;
 }
 
 int Space::Print(TList<TObject> *List, std::ostream& os)

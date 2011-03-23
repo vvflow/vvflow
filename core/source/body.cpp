@@ -30,11 +30,27 @@ int TBody::LoadFromFile(const char* filename)
 	return 0;
 }
 
-bool TBody::ObjectIsValid(TObject &obj)
+bool TBody::PointIsValid(double x, double y)
 {
 	if (!this) return true;
-	return ( (obj.rx*obj.rx + obj.ry*obj.ry)>1 );
-	//FIXME wrong formula
+
+	bool res = true;
+
+	TObject *i = List->First;
+	TObject *j = List->Last;
+	TObject *&LastVort = List->Last;
+	for ( ; i<LastVort; j=i++)
+	{
+		if ((
+			(i->ry < j->ry) && (i->ry <= y) && (y <= j->ry) &&
+			((j->ry - i->ry) * (x - i->rx) > (j->rx - i->rx) * (y - i->ry))
+			) || (
+			(i->ry > j->ry) && (j->ry <= y) && (y <= i->ry) &&
+			((j->ry - i->ry) * (x - i->rx) < (j->rx - i->rx) * (y - i->ry))
+		)) res = !res;
+	}
+
+	return res;
 }
 
 double TBody::SurfaceLenght()

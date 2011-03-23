@@ -48,7 +48,7 @@ int MoveAndClean(bool remove)
 			Obj->rx += Obj->vx*FlowMove_dt; Obj->vx = 0;
 			Obj->ry += Obj->vy*FlowMove_dt; Obj->vy = 0;
 			
-			bool inbody = remove  && FlowMove_S->Body->ObjectIsValid(*Obj);
+			bool inbody = remove  && FlowMove_S->Body->PointIsValid(Obj->rx, Obj->ry);
 			bool toosmall = ( (Obj->g < FlowMove_RemoveEps) && (Obj->g > -FlowMove_RemoveEps) );
 			if ( inbody || toosmall)
 			{
@@ -76,7 +76,7 @@ int MoveAndClean(bool remove)
 			Obj->ry += Obj->vy*FlowMove_dt; Obj->vy = 0;
 			//double rabs2 = Obj->rx*Obj->rx + Obj->ry*Obj->ry;
 
-			bool inbody = remove  && FlowMove_S->Body->ObjectIsValid(*Obj);
+			bool inbody = remove  && FlowMove_S->Body->PointIsValid(Obj->rx, Obj->ry);
 			int* inlayer = FlowMove_S->Body->ObjectIsInHeatLayer(*Obj);
 			if ( inbody )
 			{

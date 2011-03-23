@@ -195,7 +195,20 @@ void DestroyTree()
 
 TNode* FindNode(double px, double py)
 {
-	return NULL;
+	TNode *Node = Tree_RootNode;
+
+	while (Node->Child1)
+	{
+		if (Node->h < Node->w)
+		{
+			Node = (px < Node->x) ? Node->Child1 : Node->Child2 ;
+		}
+		else
+		{
+			Node = (py < Node->y) ? Node->Child1 : Node->Child2 ;
+		}
+	}
+	return Node;
 }
 
 namespace {

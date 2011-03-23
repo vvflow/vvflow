@@ -5,6 +5,7 @@
 
 int InitConvectiveFast(Space *sS, double sEps);
 int CalcConvectiveFast();
+int SpeedSumFast(double px, double py, double &resx, double &resy);
 
 int CalcCirculationFast();
 int FillMatrix();
@@ -13,7 +14,6 @@ int SolveMatrix();
 
 double* MatrixLink();
 
-//int SpeedSum(double px, double py, double &resx, double &resy);
 int LoadBodyMatrix(const char* filename);
 int LoadInverseMatrix(const char* filename);
 void SaveBodyMatrix(const char* filename);

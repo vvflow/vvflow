@@ -197,15 +197,16 @@ void CutField(Space *S, double xmin, double xmax, double ymin, double ymax)
 
 int main(int argc, char *argv[])
 {
-	if ( argc != 5) { cout << "Error! Please use: \nheatplot filename xmin xmax precision\n"; return -1; }
+	if ( argc < 5) { cout << "Error! Please use: \nheatplot filename xmin xmax precision [cbrange]\n"; return -1; }
 
 	Space *S = new Space(1, 0, 0, NULL, NULL, NULL);
 	S->LoadVorticityFromFile(argv[1]);
 
-	double xmin, xmax, ymin, ymax, precision;
+	double xmin, xmax, ymin, ymax, precision, cb;
 	sscanf(argv[2], "%lf", &xmin);
 	sscanf(argv[3], "%lf", &xmax);
 	sscanf(argv[4], "%lf", &precision); 
+	if (!sscanf(argv[5], "%lf", &cb)) cb = -1; 
 	ymax = (xmax - xmin) / 949*729/2; ymin = -ymax;
 	double margin = 0; //0.3*sqrt((xmax-xmin)*(xmax-xmin) + (ymax-ymin)*(ymax-ymin));
 	CutField(S, xmin-margin, xmax+margin, ymin-margin, ymax+margin);
@@ -220,6 +221,7 @@ int main(int argc, char *argv[])
 	FILE *pipe = popen("gnuplot","w");
 	fprintf(pipe, "unset key\n");
 	fprintf(pipe, "set xrange [%lf:%lf]; set yrange [%lf:%lf]\n", xmin, xmax, ymin, ymax);
+	if (cb>0) fprintf(pipe, "set cbrange [%lf:%lf];\n", -cb, cb);
 
 	fprintf(pipe, "set terminal png truecolor crop enhanced size 1024, 768\n");
 	fprintf(pipe, "set output '%s.png'\n", argv[1]);
