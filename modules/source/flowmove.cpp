@@ -27,7 +27,7 @@ int InitFlowMove(Space *sS, double sdt, double sRemoveEps)
 	FlowMove_S = sS;
 	FlowMove_dt = FlowMove_S->dt = sdt;
 	FlowMove_RemoveEps = sRemoveEps;
-	FlowMove_ControlLayerHeight = (sS->Body) ? sS->Body->SurfaceLenght()/(sS->Body->List->size-1) : 0;
+	FlowMove_ControlLayerHeight = (sS->Body) ? sS->Body->SurfaceLength()/(sS->Body->List->size-1) : 0;
 
 	return 0;
 }

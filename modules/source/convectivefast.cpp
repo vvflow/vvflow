@@ -340,7 +340,7 @@ int FillRightCol()
 			NodeInfluence(*Node, NakedBodyList[i], NakedBodyList[i+1], ConvectiveFast_Eps);
 	}
 
-	RightCol[imax] = -ConvectiveFast_S->gsumm();
+	RightCol[imax] = -ConvectiveFast_S->gsum();
 
 	return 0;
 }

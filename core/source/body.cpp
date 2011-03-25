@@ -51,10 +51,10 @@ bool TBody::PointIsValid(double x, double y)
 {
 	if (!this) return true;
 
-	bool res = true;
+	bool res = false;
 
 	TObject *i = List->First;
-	TObject *j = List->Last;
+	TObject *j = List->Last-1;
 	TObject *&LastVort = List->Last;
 	for ( ; i<LastVort; j=i++)
 	{
@@ -70,7 +70,7 @@ bool TBody::PointIsValid(double x, double y)
 	return res;
 }
 
-double TBody::SurfaceLenght()
+double TBody::SurfaceLength()
 {
 	if (!this) return 0;
 	double res=0;

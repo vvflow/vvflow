@@ -11,7 +11,7 @@ int main(int argc, char **argv)
 	Space *S = new Space(true, false);
 	S->Body->LoadFromFile(argv[2]);
 	S->LoadVorticityFromFile(argv[1]);
-	InitTree(S, 10, S->Body->SurfaceLenght()/S->Body->List->size*10);
+	InitTree(S, 10, S->Body->SurfaceLength()/S->Body->List->size*10);
 	InitConvectiveFast(S, 5E-3);
 	BuildTree(true, true, false);
 

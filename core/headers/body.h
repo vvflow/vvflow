@@ -14,7 +14,7 @@ class TBody
 		int LoadFromFile(const char* filename);
 		void Rotate(double angle);
 		bool PointIsValid(double x, double y);
-		double SurfaceLenght();
+		double SurfaceLength();
 
 		TList<TObject> *List;
 		double RotationAxisX, RotationAxisY;

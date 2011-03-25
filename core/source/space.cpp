@@ -210,19 +210,34 @@ double Space::Integral()
 	return Summ;
 }
 
-double Space::gsumm()
+double Space::gsum()
 {
 	if (!VortexList) return 0;
-	double Summ = 0;
+	double Sum = 0;
 
 	TVortex *Vort = VortexList->First;
 	TVortex *&Last = VortexList->Last;
 	for ( ; Vort<Last; Vort++ )
 	{
-		Summ += Vort->g;
+		Sum += Vort->g;
 	}
 
-	return Summ;
+	return Sum;
+}
+
+double Space::gmax()
+{
+	if (!VortexList) return 0;
+	double Max = 0;
+
+	TVortex *Vort = VortexList->First;
+	TVortex *&Last = VortexList->Last;
+	for ( ; Vort<Last; Vort++ )
+	{
+		if (fabs(Vort->g) > Max) Max = fabs(Vort->g);
+	}
+
+	return Max;
 }
 
 void Space::HydroDynamicMomentum(double &ResX, double &ResY)

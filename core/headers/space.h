@@ -43,7 +43,8 @@ class Space
 		int Load(const char *filename);
 
 		double Integral();
-		double gsumm();
+		double gsum();
+		double gmax();
 		void HydroDynamicMomentum(double &ResX, double &ResY);
 
 	private:

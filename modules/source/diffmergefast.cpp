@@ -19,6 +19,8 @@ double DiffMergeFast_Re;
 double DiffMergeFast_Nyu;
 //double DiffMergeFast_dfi;
 
+double EpsRestriction;
+double GRestriction;
 double DiffMergeFast_MergeSqEps;
 int DiffMergeFast_MergedV;
 
@@ -35,6 +37,8 @@ int InitDiffMergeFast(Space *sS, double sRe, double sMergeSqEps)
 	DiffMergeFast_Re = sRe;
 	DiffMergeFast_Nyu = 1/sRe;
 	DiffMergeFast_MergeSqEps = sMergeSqEps;
+	EpsRestriction = (sS->Body) ? 0.6*sS->Body->SurfaceLength()/sS->Body->List->size : 0;
+	EpsRestriction*= EpsRestriction;
 	//DiffMergeFast_dfi = (sS->BodyList) ? C_2PI/sS->BodyList->size : 0;
 	return 0;
 }
@@ -43,16 +47,19 @@ namespace {
 inline
 int MergeVortexes(TObject **lv1, TObject **lv2)
 {
-	DiffMergeFast_MergedV++;
 	if (!lv1 || !lv2 || (lv1==lv2)) return -1;
 	if (!*lv1 || !*lv2) return -1;
 	TObject &v1 = **lv1;
 	TObject &v2 = **lv2;
+	cout << " v " << v1.g << " " << v2.g << endl;
+	//if (fabs(v1.g + v2.g) > GRestriction) return -1;
+	DiffMergeFast_MergedV++;
 	if ( ((v1.g > 0) && (v2.g > 0)) || ((v1.g < 0) && (v2.g < 0)) )
 	{
 		double g1sum = 1/(v1.g + v2.g);
 		v1.rx = (v1.g*v1.rx + v2.g*v2.rx)*g1sum;
 		v1.ry = (v1.g*v1.ry + v2.g*v2.ry)*g1sum;
+		cerr << "WARNING!" << endl;
 	}
 	else
 	{
@@ -213,6 +220,8 @@ int CalcVortexDiffMergeFast()
 	double multiplier;
 	double C_2Nyu_PI = DiffMergeFast_Nyu * C_2_PI;
 
+	GRestriction = DiffMergeFast_S->gmax();
+
 	TList<TObject> *BList = DiffMergeFast_S->Body->List;
 	TList<TNode*> *BottomNodes = GetTreeBottomNodes();
 	if ( !BottomNodes ) return -1;
@@ -233,6 +242,7 @@ int CalcVortexDiffMergeFast()
 
 			double epsilon, eps1;
 			Epsilon<true, Vortex>(BNode, lObj, epsilon, true);
+			epsilon = (epsilon > EpsRestriction) ? epsilon : EpsRestriction;
 			eps1 = 1/epsilon;
 
 			double ResPX, ResPY, ResD, ResVx, ResVy, ResAbs2;
