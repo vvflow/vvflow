@@ -428,6 +428,7 @@ int LoadMatrix_bin(double *matrix, const char* filename)
 	int result;
 
 	fin = fopen(filename, "rb");
+	if (!fin) { return -1; }
 	result = fread(matrix, sizeof(double), N*N, fin);
 	fclose(fin);
 

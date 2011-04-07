@@ -11,6 +11,7 @@ TBody::TBody(double (*sRotationV)(double Time),
 	RotationV = sRotationV;
 	RotationAxisX = sRotationAxisX;
 	RotationAxisY = sRotationAxisY;
+	InsideIsValid = true;
 }
 
 int TBody::LoadFromFile(const char* filename)
@@ -31,6 +32,8 @@ int TBody::LoadFromFile(const char* filename)
 	}
 	fclose(fin);
 
+	InsideIsValid = isInsideValid();
+
 	return 0;
 }
 
@@ -42,8 +45,8 @@ void TBody::Rotate(double angle)
 	TObject *&LastObj = List->Last;
 	for (; Obj<LastObj; Obj++)
 	{
-		Obj->rx+= (Obj->ry - RotationAxisY)*angle;
-		Obj->ry-= (Obj->rx - RotationAxisX)*angle;
+		Obj->rx-= (Obj->ry - RotationAxisY)*angle;
+		Obj->ry+= (Obj->rx - RotationAxisX)*angle;
 	}
 }
 
@@ -51,7 +54,7 @@ bool TBody::PointIsValid(double x, double y)
 {
 	if (!this) return true;
 
-	bool res = false;
+	bool res = !InsideIsValid;
 
 	TObject *i = List->First;
 	TObject *j = List->Last-1;
@@ -85,6 +88,24 @@ double TBody::SurfaceLength()
 	}
 
 	return res;
+}
+
+bool TBody::isInsideValid()
+{
+	if (!this) return true;
+
+	TObject *minObj, *Obj = minObj = List->First;
+	TObject *&LastObj = List->Last;
+	for (; Obj<LastObj; Obj++)
+	{
+		minObj = (Obj->rx < minObj->rx)?Obj:minObj;
+	}
+
+	TObject *prev = (minObj==List->First)?(List->Last-1):(minObj-1);
+	TObject *next = (minObj==(List->Last-1))?List->First:(minObj+1);
+
+	return ((atan2(prev->ry-minObj->ry, prev->rx-minObj->rx) - 
+			atan2(next->ry-minObj->ry, next->rx-minObj->rx)) > 0);
 }
 
 /************************** HEAT LAYER ****************************************/

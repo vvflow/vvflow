@@ -7,7 +7,7 @@ FORT 			= gfortran
 INCLUDE 		= -I headers/
 
 COBJECTS 		= convectivefast.o flowmove.o diffmergefast.o merge.o
-COBJFLAGS 		= -c -g -Wall -O2
+COBJFLAGS 		= -c -g -Wall -O0
 FOBJECTS 		= objectinfluence.o
 FOBJFLAGS 		= -c -Wall -O3
 

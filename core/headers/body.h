@@ -17,6 +17,8 @@ class TBody
 		double SurfaceLength();
 
 		TList<TObject> *List;
+		bool InsideIsValid;
+		bool isInsideValid();
 		double RotationAxisX, RotationAxisY;
 		double (*RotationV)(double Time); double RotationVVar;
 

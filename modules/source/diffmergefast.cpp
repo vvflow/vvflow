@@ -38,7 +38,6 @@ int InitDiffMergeFast(Space *sS, double sRe, double sMergeSqEps)
 	DiffMergeFast_Nyu = 1/sRe;
 	DiffMergeFast_MergeSqEps = sMergeSqEps;
 	EpsRestriction = (sS->Body) ? 0.6*sS->Body->SurfaceLength()/sS->Body->List->size : 0;
-	EpsRestriction*= EpsRestriction;
 	//DiffMergeFast_dfi = (sS->BodyList) ? C_2PI/sS->BodyList->size : 0;
 	return 0;
 }
@@ -51,15 +50,15 @@ int MergeVortexes(TObject **lv1, TObject **lv2)
 	if (!*lv1 || !*lv2) return -1;
 	TObject &v1 = **lv1;
 	TObject &v2 = **lv2;
-	cout << " v " << v1.g << " " << v2.g << endl;
 	//if (fabs(v1.g + v2.g) > GRestriction) return -1;
 	DiffMergeFast_MergedV++;
+
 	if ( ((v1.g > 0) && (v2.g > 0)) || ((v1.g < 0) && (v2.g < 0)) )
 	{
 		double g1sum = 1/(v1.g + v2.g);
 		v1.rx = (v1.g*v1.rx + v2.g*v2.rx)*g1sum;
 		v1.ry = (v1.g*v1.ry + v2.g*v2.ry)*g1sum;
-		cerr << "WARNING!" << endl;
+		cerr << "NOTIFICATION from diffmerge!" << endl;
 	}
 	else
 	{
@@ -213,11 +212,12 @@ void Division(TNode &Node, TObject &v, double eps1, double &ResPX, double &ResPY
 }}
 
 namespace {
-inline
+//inline
 void VortexInfluence(const TObject &v, const TObject &vj, double eps1, double *i2x, double *i2y, double *i1)
 {
 	double drx = v.rx - vj.rx;
 	double dry = v.ry - vj.ry;
+	if ( (fabs(drx) < 1E-6) && (fabs(dry) < 1E-6) ) { return; }
 	double drabs = sqrt(drx*drx+dry*dry);
 	double exparg = -drabs*eps1;
 	if ( exparg < ExpArgRestriction ) return;
@@ -225,10 +225,12 @@ void VortexInfluence(const TObject &v, const TObject &vj, double eps1, double *i
 	*i2x += drx * (i1tmp/drabs);
 	*i2y += dry * (i1tmp/drabs);
 	*i1 += i1tmp;
+	if (*i2x!= *i2x) { cerr << drx << " " << dry << " " << drabs << " " << i1tmp << endl; }
+	if (*i2x!= *i2x) { cerr << "ALERT! i2x = " << i2x << endl; sleep(1E6); }
 }}
 
 namespace {
-inline
+//inline
 void SegmentInfluence(const TObject &v, const TObject &pk, const TObject &pk1, 
 					double eps1, double *i3x, double *i3y, double *i0)
 {
@@ -239,6 +241,7 @@ void SegmentInfluence(const TObject &v, const TObject &pk, const TObject &pk1,
 	double dry = v.ry - rky;
 	double drabs2;
 	double drabs = sqrt( drabs2 = drx*drx+dry*dry );
+	//cerr << drabs << " " << drabs2 << " " << drx << " " << dry << endl;
 	double exparg = -drabs*eps1;
 	if ( exparg < ExpArgRestriction ) return;
 	double exp = expdef(exparg);
@@ -246,7 +249,11 @@ void SegmentInfluence(const TObject &v, const TObject &pk, const TObject &pk1,
 	double dSy = (pk1.rx - pk.rx);
 	*i3x += dSx * exp;
 	*i3y += dSy * exp;
+	//cerr << (drabs*eps1+1) << " " << drabs2 << " " << (drx*dSx + dry*dSy) << " " << exp << endl;
+	//cerr << &pk << " \t" << &pk1 << " \t" << *i0 << endl;
 	*i0 += (drabs*eps1+1)/drabs2*(drx*dSx + dry*dSy)*exp;
+	//cerr << *i0 << endl;
+	if (*i0 != *i0) { sleep(1E6); }
 }}
 
 int CalcVortexDiffMergeFast()
@@ -307,21 +314,32 @@ int CalcVortexDiffMergeFast()
 				{
 					if (!*lObjJ) { continue; }
 					TObject *ObjJ = *lObjJ;
-					SegmentInfluence(Obj, *ObjJ, *(ObjJ==(LastBVort-1)?FirstBVort:ObjJ), eps1, &S3x, &S3y, &S0);
+					SegmentInfluence(Obj, *ObjJ, *((ObjJ==(LastBVort-1))?FirstBVort:ObjJ+1), eps1, &S3x, &S3y, &S0);
 				}}
 			}
 
-			if ( ( (S1 < 0) && (Obj.g > 0) ) || ( (S1 > 0) && (Obj.g < 0) ) ) { S1 = Obj.g; }
+			if ( ( (S1 <= 0) && (Obj.g > 0) ) || ( (S1 >= 0) && (Obj.g < 0) ) ) { S1 = Obj.g; }
 
 			multiplier = DiffMergeFast_Nyu*eps1/S1;
 			double S2abs = S2x*S2x+S2y*S2y;
-			if (S2abs > 10000) { multiplier*=100/sqrtdef(S2abs); }
+			if (S2abs > 100) { multiplier*=10/sqrtdef(S2abs); }
 			Obj.vx += multiplier * S2x;
 			Obj.vy += multiplier * S2y;
+
+			if (multiplier!= multiplier) { cerr << "ALERT! multiplier = " << multiplier << endl; }
+			if (S2x!= S2x) { cerr << "ALERT! S2x = " << S2x << endl; }
+			if (S2y!= S2y) { cerr << "ALERT! S2y = " << S2y << endl; }
+			if (Obj.vx!= Obj.vx) { cerr << "ALERT! Obj.vx = " << Obj.vx << " " << multiplier << " " << S2x << " " << Obj.rx << " " << Obj.ry << endl; sleep(1E6); }
+			if (Obj.vy!= Obj.vy) { cerr << "ALERT! Obj.vy = " << Obj.vy << endl; }
+
 
 			multiplier = DiffMergeFast_Nyu*eps1*eps1/(C_2PI-S0);
 			Obj.vx += multiplier * S3x;
 			Obj.vy += multiplier * S3y;
+
+			if (multiplier!= multiplier) { cerr << "ALERT! multiplier = " << multiplier << endl; }
+			if (S3x!= S3x) { cerr << "ALERT! S3x = " << S3x << endl; }
+			if (S3y!= S3y) { cerr << "ALERT! S3y = " << S3y << endl; }
 
 			//FIXME may work unproperly
 		}
