@@ -41,12 +41,15 @@ void TBody::Rotate(double angle)
 {
 	if (!this) return;
 
+	double dx, dy;
 	TObject *Obj = List->First;
 	TObject *&LastObj = List->Last;
 	for (; Obj<LastObj; Obj++)
 	{
-		Obj->rx-= (Obj->ry - RotationAxisY)*angle;
-		Obj->ry+= (Obj->rx - RotationAxisX)*angle;
+		dx = (Obj->rx - RotationAxisX);
+		dy = (Obj->ry - RotationAxisY);
+		Obj->rx = RotationAxisX + dx*cos(angle) - dy*sin(angle);
+		Obj->ry = RotationAxisY + dx*sin(angle) + dy*cos(angle);
 	}
 }
 

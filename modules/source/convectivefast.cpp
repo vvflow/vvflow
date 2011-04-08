@@ -117,10 +117,10 @@ void SpeedSum(TNode &Node, double px, double py, double &resx, double &resy)
 			TVortex &Vort = **lVort;
 			drx = px - Vort.rx;
 			dry = py - Vort.ry;
-			//drabs2 = drx*drx + dry*dry;
-			#define drabs2 drx*drx + dry*dry
+			double drabs2 = drx*drx + dry*dry;
+			//#define drabs2 drx*drx + dry*dry
 			multiplier = Vort.g / ( drabs2 + ConvectiveFast_Eps ); // 1/2PI is in flowmove
-			#undef drabs2
+			//#undef drabs2
 			resx -= dry * multiplier;
 			resy += drx * multiplier;
 		}
@@ -211,6 +211,40 @@ int CalcConvectiveFast()
 	return 0;
 }
 
+int CalcBoundaryConvective()
+{
+	double drx, dry, multiplier, resx, resy;
+
+	TList<TObject> *vlist = ConvectiveFast_S->VortexList;
+	TList<TObject> *blist = ConvectiveFast_S->Body->List;
+	//TList<TObject> *hlist = ConvectiveFast_S->HeatList;
+
+	if (vlist)
+	{
+		TObject *Obj = vlist->First;
+		TObject *&LastObj = vlist->Last;
+		for( ; Obj<LastObj; Obj++ )
+		{
+			resx = resy = 0;
+
+			TVortex *BVort = blist->First;
+			TVortex *&LastBVort = blist->Last;
+			for ( ; BVort<LastBVort; BVort++ )
+			{
+				drx = Obj->rx - BVort->rx;
+				dry = Obj->ry - BVort->ry;
+				multiplier = BVort->g / ( drx*drx+dry*dry + ConvectiveFast_Eps );
+				resx -= dry * multiplier;
+				resy += drx * multiplier;
+			}
+
+			Obj->vx += resx*C_1_2PI;
+			Obj->vy += resy*C_1_2PI;
+		}
+	}
+
+	return 0;
+}
 
 int CalcCirculationFast()
 {

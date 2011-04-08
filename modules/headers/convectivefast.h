@@ -5,6 +5,7 @@
 
 int InitConvectiveFast(Space *sS, double sEps);
 int CalcConvectiveFast();
+int CalcBoundaryConvective();
 int SpeedSumFast(double px, double py, double &resx, double &resy);
 
 int CalcCirculationFast();

@@ -1,7 +1,7 @@
 #include <math.h>
 #include <cstdlib>
 #include "diffmergefast.h"
-#define expdef(x) fexp(x)
+#define expdef(x) exp(x)
 #define sqrtdef(x) sqrt(x)
 
 const double S1Restriction = 1E-6;
@@ -239,19 +239,18 @@ void SegmentInfluence(const TObject &v, const TObject &pk, const TObject &pk1,
 
 	double drx = v.rx - rkx;
 	double dry = v.ry - rky;
-	double drabs2;
-	double drabs = sqrt( drabs2 = drx*drx+dry*dry );
-	//cerr << drabs << " " << drabs2 << " " << drx << " " << dry << endl;
+	double drabs2 = drx*drx+dry*dry;
+	double drabs = sqrt( drabs2 );
 	double exparg = -drabs*eps1;
-	if ( exparg < ExpArgRestriction ) return;
-	double exp = expdef(exparg);
+	if ( exparg < ExpArgRestriction ) {return;}
+	double expres = expdef(exparg);
 	double dSx = (-pk1.ry + pk.ry);
 	double dSy = (pk1.rx - pk.rx);
-	*i3x += dSx * exp;
-	*i3y += dSy * exp;
+	*i3x += dSx * expres;
+	*i3y += dSy * expres;
 	//cerr << (drabs*eps1+1) << " " << drabs2 << " " << (drx*dSx + dry*dSy) << " " << exp << endl;
 	//cerr << &pk << " \t" << &pk1 << " \t" << *i0 << endl;
-	*i0 += (drabs*eps1+1)/drabs2*(drx*dSx + dry*dSy)*exp;
+	*i0 += (drabs*eps1+1)/drabs2*(drx*dSx + dry*dSy)*expres;
 	//cerr << *i0 << endl;
 	if (*i0 != *i0) { sleep(1E6); }
 }}
@@ -322,28 +321,20 @@ int CalcVortexDiffMergeFast()
 
 			multiplier = DiffMergeFast_Nyu*eps1/S1;
 			double S2abs = S2x*S2x+S2y*S2y;
-			if (S2abs > 100) { multiplier*=10/sqrtdef(S2abs); }
+			if (S2abs > 100) { multiplier*=10/sqrtdef(S2abs); } //FIXME
 			Obj.vx += multiplier * S2x;
 			Obj.vy += multiplier * S2y;
-
-			if (multiplier!= multiplier) { cerr << "ALERT! multiplier = " << multiplier << endl; }
-			if (S2x!= S2x) { cerr << "ALERT! S2x = " << S2x << endl; }
-			if (S2y!= S2y) { cerr << "ALERT! S2y = " << S2y << endl; }
-			if (Obj.vx!= Obj.vx) { cerr << "ALERT! Obj.vx = " << Obj.vx << " " << multiplier << " " << S2x << " " << Obj.rx << " " << Obj.ry << endl; sleep(1E6); }
-			if (Obj.vy!= Obj.vy) { cerr << "ALERT! Obj.vy = " << Obj.vy << endl; }
-
 
 			multiplier = DiffMergeFast_Nyu*eps1*eps1/(C_2PI-S0);
 			Obj.vx += multiplier * S3x;
 			Obj.vy += multiplier * S3y;
 
 			if (multiplier!= multiplier) { cerr << "ALERT! multiplier = " << multiplier << endl; }
-			if (S3x!= S3x) { cerr << "ALERT! S3x = " << S3x << endl; }
-			if (S3y!= S3y) { cerr << "ALERT! S3y = " << S3y << endl; }
 
 			//FIXME may work unproperly
 		}
 	}
+
 	return 0;
 }
 
