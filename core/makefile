@@ -5,8 +5,8 @@ CPP 			= gcc
 CXX 			= g++
 INCLUDE 		= -I headers/
 
-COBJECTS 		= elementary.o space.o tree.o fexp.o
-COBJFLAGS 		= -c -g -Wall -O2
+COBJECTS 		= elementary.o space.o tree.o fexp.o body.o
+COBJFLAGS 		= -c -g -Wall -O0
 FOBJECTS 		= 
 
 all: incbuild bin/ $(LIBFILENAME)

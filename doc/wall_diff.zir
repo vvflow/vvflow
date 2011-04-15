@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CaR>
+<Construction>
+<Window x="-2.9568221070811753" y="-0.7967760506620594" w="2.0000000000000053"/>
+<Windowdim w="379" h="300"/>
+<Preferences minfontsize="17" minpointsize="2" minlinesize="1" arrowsize="15" digits.lengths="5" digits.edit="5" digits.angles="0" colorbackground="245,245,245" fig3D="false"/>
+<Objects>
+<Point name="P1" alias="$\vec{p}_k$" n="0" showname="true" xcoffset="-0.08428907690401655" ycoffset="0.10136493153480197" keepclose="true" x="-3.660097797016535" y="-1.4738462211145373" shape="circle">Point at -3.6601, -1.47385</Point>
+<Point name="P2" alias="$\vec{p}_{k+1}$" n="3" showname="true" xcoffset="0.23949337938975113" ycoffset="0.14738054116292432" keepclose="true" x="-2.6850892343120307" y="-1.464594127806563" shape="circle">Point at -2.68509, -1.46459</Point>
+<Point name="P3" n="7" color="2" hidden="true" x="-2.0495106505469183" y="-1.7225100748416815" shape="circle">Point at -2.04951, -1.72251</Point>
+<Point name="P4" n="11" color="2" hidden="true" x="-4.398388025331029" y="-1.7501439263097294" shape="circle">Point at -4.39839, -1.75014</Point>
+<Point name="P6" alias="$\vec{r}$" n="18" color="5" showname="true" xcoffset="0.06447898675877894" ycoffset="0.018422567645365984" keepclose="true" x="-2.694300518134713" y="-0.7276914219919406" shape="dcross">Point at -2.6943, -0.72769</Point>
+<Point name="P7" alias="$W_d$" n="4161" color="2" hidden="true" showname="true" x="-2.6574553828439837" y="0.11974668969487823" shape="circle">Point at -2.65746, 0.11975</Point>
+<Segment name="s1" n="4" type="thick" from="P1" to="P2">Line segment from P1 to P2</Segment>
+<Segment name="s2" n="8" type="thick" from="P2" to="P3">Line segment from P2 to P3</Segment>
+<Segment name="s3" n="12" type="thick" from="P1" to="P4">Line segment from P1 to P4</Segment>
+<Circle name="c6" alias="ε" n="2235" color="4" showname="true" xcoffset="-0.15659182498560736" ycoffset="0.8105929763960852" fixed="0.36335" midpoint="P6">Circle around P6 with radius 0.3633498293299435</Circle>
+<Segment name="s9" alias="$W_d$" n="4162" color="5" showname="true" xcoffset="0.9693396226415109" ycoffset="-0.20518867924528272" keepclose="true" from="P6" to="P7" arrow="true">Line segment from P6 to P7</Segment>
+<PointOn name="P5" alias="$\vec{r}_k$" n="15" color="5" showname="true" on="s1" alpha="0.47580874942742063" x="-3.196180192115078" y="-1.4694439941680844" shape="dcross">Point on s1</PointOn>
+<Segment name="s4" alias="$\vec{ρ}_k$" n="19" color="2" showname="true" xcoffset="0.22619434625589488" ycoffset="-0.21762935297459246" keepclose="true" from="P5" to="P6" arrow="true">Line segment from P5 to P6</Segment>
+</Objects>
+</Construction>
+</CaR>

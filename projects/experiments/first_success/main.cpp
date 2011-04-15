@@ -76,10 +76,7 @@ fout.close();
 
 		if (!(i%print)) 
 		{
-			sprintf(fname, "results/data%04d.vort", i);
-			fout.open(fname, ios::out);
-			PrintVorticity(fout, S, true);
-			fout.close();
+			S->PrintVorticity("results/data%04d.vort");
 /*			sprintf(fname, "results/data%04d.heat", i);
 			fout.open(fname, ios::out);
 			PrintHeat(fout, S);

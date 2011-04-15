@@ -3,28 +3,24 @@
 #include "stdio.h"
 #include <stdlib.h>
 #include "iostream"
+#include "fstream"
 using namespace std;
 
 Space::Space(bool CreateVortexes,
-				bool CreateBody, 
 				bool CreateHeat,
 				double (*sInfSpeedX)(double Time),
-				double (*sInfSpeedY)(double Time),
-				double (*sRotationV)(double Time))
+				double (*sInfSpeedY)(double Time))
 {
 	if ( CreateVortexes ) VortexList = new TList<TObject>(); else VortexList = NULL;
-	if ( CreateBody ) BodyList = new TList<TObject>(); else BodyList = NULL;
 	if ( CreateHeat ) HeatList = new TList<TObject>(); else HeatList = NULL;
-	BodyControlLayer = NULL;
+	Body = new TBody();
 
 	InfSpeedX = sInfSpeedX;
 	InfSpeedY = sInfSpeedY;
-	RotationV = sRotationV;
-	ForceX = ForceY = 0;
-	Time = dt = Angle = BodyX = BodyY = 0;
+	Time = dt = BodyX = BodyY = 0;
 }
 
-int Space::ConstructCircle(long BodyListSize)
+/*int Space::ConstructCircle(long BodyListSize)
 {
 	if (!BodyList) return -1;
 	
@@ -41,27 +37,27 @@ int Space::ConstructCircle(long BodyListSize)
 	}
 
 	return 0;
-}
+}*/
 
+/********************************** SAVE/LOAD *********************************/
 
 int Space::LoadVorticityFromFile(const char* filename)
 {
 	if ( !VortexList ) return -1;
 	FILE *fin;
 	char line[255];
-	char* err;
 
 	fin = fopen(filename, "r");
-	if (!fin) { cerr << "No file called " << filename << endl; return -1; } 
+	if (!fin) { cerr << "No file called \'" << filename << "\'\n"; return -1; } 
+
 	TVortex Vort; ZeroObject(Vort);
-	while ( !feof(fin) )
+	while ( fgets(line, 254, fin) )
 	{
-		err = fgets(line, 255, fin);
-		sscanf(line, "%lf\t%lf\t%lf\n", &Vort.rx, &Vort.ry, &Vort.g);
-		VortexList->Copy(&Vort);
+		if (sscanf(line, "%lf\t%lf\t%lf\n", &Vort.rx, &Vort.ry, &Vort.g))
+			VortexList->Copy(&Vort);
 	}
 	fclose(fin);
-	return (err<0);
+	return 0;
 }
 
 int Space::LoadHeatFromStupidFile(const char* filename, double g)
@@ -69,16 +65,14 @@ int Space::LoadHeatFromStupidFile(const char* filename, double g)
 	if ( !HeatList ) return -1;
 	FILE *fin;
 	char line[255];
-	char* err;
 
 	fin = fopen(filename, "r");
 	if (!fin) { cerr << "No file called " << filename << endl; return -1; }
 	TVortex Vort; InitVortex(Vort, 0, 0, g);
-	while ( !feof(fin) )
+	while ( fgets(line, 254, fin) )
 	{
-		err = fgets(line, 255, fin);
-		sscanf(line, "%lf\t%lf\n", &Vort.rx, &Vort.ry);
-		HeatList->Copy(&Vort);
+		if (sscanf(line, "%lf\t%lf\n", &Vort.rx, &Vort.ry))
+			HeatList->Copy(&Vort);
 	}
 	fclose(fin);
 	return 0;
@@ -89,20 +83,60 @@ int Space::LoadHeatFromFile(const char* filename)
 	if ( !HeatList ) return -1;
 	FILE *fin;
 	char line[255];
-	char* err;
 
 	fin = fopen(filename, "r");
 	if (!fin) { cerr << "No file called " << filename << endl; return -1; }
 	TVortex Vort; ZeroObject(Vort);
-	while ( !feof(fin) )
+	while ( fgets(line, 254, fin) )
 	{
-		err = fgets(line, 255, fin);
-		sscanf(line, "%lf\t%lf\t%lf\n", &Vort.rx, &Vort.ry, &Vort.g);
-		HeatList->Copy(&Vort);
+		if (sscanf(line, "%lf\t%lf\t%lf\n", &Vort.rx, &Vort.ry, &Vort.g))
+			HeatList->Copy(&Vort);
 	}
 	fclose(fin);
-	return (err<0);
+	return 0;
 }
+
+int Space::Print(TList<TObject> *List, std::ostream& os)
+{
+	if (!List) return -1;
+	if (!os) return -1;
+
+	TObject *Obj = List->First;
+	TObject *&LastObj = List->Last;
+	for ( ; Obj<LastObj; Obj++ )
+	{
+		os << (*Obj) << endl;
+	}
+	return 0;
+}
+
+int Space::Print(TList<TObject> *List, const char* format)
+{
+	int res;
+	fstream fout;
+	char fname[64];
+
+	sprintf(fname, format, Time/dt);
+
+	fout.open(fname, ios::out);
+	res = Print(List, fout);
+	fout.close();
+
+	return res;
+}
+
+int Space::PrintBody(std::ostream& os)
+	{ return Print(Body->List, os); }
+int Space::PrintVorticity(std::ostream& os)
+	{ return Print(VortexList, os); }
+int Space::PrintHeat(std::ostream& os)
+	{ return Print(HeatList, os); }
+int Space::PrintBody(const char* filename)
+	{ return Print(Body->List, filename); }
+int Space::PrintVorticity(const char* filename)
+	{ return Print(VortexList, filename); }
+int Space::PrintHeat(const char* filename)
+	{ return Print(HeatList, filename); }
 
 int Space::Save(const char *filename)
 {
@@ -119,7 +153,7 @@ int Space::Save(const char *filename)
 		} else { fwrite(&zero, sizeof(long), 1, pFile); } 								\
 
 	SaveList(VortexList)
-	SaveList(BodyList)
+	//SaveList(BodyList)
 	SaveList(HeatList)
 
 	fclose(pFile);
@@ -130,9 +164,9 @@ int Space::Load(const char *filename)
 {
 	long size;
 	if (VortexList) delete VortexList;
-	if (BodyList) delete BodyList;
+	//if (BodyList) delete BodyList;
 	if (HeatList) delete HeatList;
-	delete [] BodyControlLayer;
+	//delete [] BodyControlLayer;
 
 	FILE * pFile;
 	pFile = fopen(filename, "r");
@@ -152,10 +186,10 @@ int Space::Load(const char *filename)
 		}
 
 	LoadList(VortexList)
-	LoadList(BodyList)
+	//LoadList(BodyList)
 	LoadList(HeatList)
 
-	if (BodyList) BodyControlLayer = new int[BodyList->size];
+	//if (BodyList) BodyControlLayer = new int[BodyList->size];
 
 	fclose(pFile);
 	return 0;
@@ -176,19 +210,34 @@ double Space::Integral()
 	return Summ;
 }
 
-double Space::gsumm()
+double Space::gsum()
 {
 	if (!VortexList) return 0;
-	double Summ = 0;
+	double Sum = 0;
 
 	TVortex *Vort = VortexList->First;
 	TVortex *&Last = VortexList->Last;
 	for ( ; Vort<Last; Vort++ )
 	{
-		Summ += Vort->g;
+		Sum += Vort->g;
 	}
 
-	return Summ;
+	return Sum;
+}
+
+double Space::gmax()
+{
+	if (!VortexList) return 0;
+	double Max = 0;
+
+	TVortex *Vort = VortexList->First;
+	TVortex *&Last = VortexList->Last;
+	for ( ; Vort<Last; Vort++ )
+	{
+		if (fabs(Vort->g) > Max) Max = fabs(Vort->g);
+	}
+
+	return Max;
 }
 
 void Space::HydroDynamicMomentum(double &ResX, double &ResY)
