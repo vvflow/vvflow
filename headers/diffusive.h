@@ -1,7 +1,7 @@
 #ifndef _DIFFUSIVE_H_
 #define _DIFFUSIVE_H_
 #include <math.h>
-#include "libVVHD/core.h"
+#include "core.h"
 
 int InitDiffusive(Space *sS, double sRe);
 int CalcVortexDiffusive();

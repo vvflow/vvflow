@@ -1,7 +1,7 @@
 #ifndef __CONVECTIVEFAST_H__
 #define __CONVECTIVEFAST_H__
 #include <math.h>
-#include "libVVHD/core.h"
+#include "core.h"
 
 int InitConvectiveFast(Space *sS, double sEps);
 int CalcConvectiveFast();
