@@ -65,10 +65,10 @@ bool TBody::PointIsValid(double x, double y)
 	for ( ; i<LastVort; j=i++)
 	{
 		if ((
-			(i->ry < j->ry) && (i->ry <= y) && (y <= j->ry) &&
+			(i->ry < j->ry) && (i->ry < y) && (y <= j->ry) &&
 			((j->ry - i->ry) * (x - i->rx) > (j->rx - i->rx) * (y - i->ry))
 			) || (
-			(i->ry > j->ry) && (j->ry <= y) && (y <= i->ry) &&
+			(i->ry > j->ry) && (i->ry > y) && (y >= j->ry) &&
 			((j->ry - i->ry) * (x - i->rx) < (j->rx - i->rx) * (y - i->ry))
 		)) res = !res;
 	}
