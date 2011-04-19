@@ -215,6 +215,7 @@ namespace {
 //inline
 void VortexInfluence(const TObject &v, const TObject &vj, double eps1, double *i2x, double *i2y, double *i1)
 {
+	if ( ((v.g>0) && (vj.g<0)) || ((v.g<0) && (vj.g>0)) ) { return; }
 	double drx = v.rx - vj.rx;
 	double dry = v.ry - vj.ry;
 	if ( (fabs(drx) < 1E-6) && (fabs(dry) < 1E-6) ) { return; }

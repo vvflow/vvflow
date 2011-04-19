@@ -16,7 +16,8 @@
 #                   VARIABLES                    #
 #________________________________________________#
 
-CC		= gcc
+CC		= icc
+FORT 	= gcc -xf95
 
 parts 	:= core modules
 core_objects 	:= elementary space tree body
@@ -59,13 +60,13 @@ uninstall:
 #________________________________________________#
 
 bin/%.o: %.cpp headers/%.h | bin/
-	$(CC) -xc++ $< $(optimization) $(warnings) $(addprefix -I, $(INCLUDE)) -c -o $@
+	$(CC) $< $(optimization) $(warnings) $(addprefix -I, $(INCLUDE)) -c -o $@
 
 bin/%.o: %.c headers/%.h | bin/
-	$(CC) -xc   $< $(optimization) $(warnings) $(addprefix -I, $(INCLUDE)) -c -o $@
+	$(CC) $< $(optimization) $(warnings) $(addprefix -I, $(INCLUDE)) -c -o $@
 
 bin/%.o: %.f95 | bin/
-	$(CC) -xf95 $< $(optimization) $(warnings) -c -o $@
+	$(FORT) $< $(optimization) $(warnings) -c -o $@
 
 bin/libVVHDcore.a: $(patsubst %, bin/%.o, $(core_objects))
 bin/libVVHDmodules.a: $(patsubst %, bin/%.o, $(modules_objects))
