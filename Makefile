@@ -20,7 +20,7 @@ CC		= icc
 FORT 	= gcc -xf95
 
 parts 	:= core modules
-core_objects 	:= elementary space tree body
+core_objects 	:= space tree body
 modules_objects := convectivefast flowmove diffmergefast merge objectinfluence
 VPATH := $(addprefix source/, $(parts) ) 
 # VPATH is special make var 
@@ -59,7 +59,7 @@ uninstall:
 #                     RULES                      #
 #________________________________________________#
 
-bin/%.o: %.cpp headers/%.h | bin/
+bin/%.o: %.cpp headers/%.h headers/elementary.h | bin/
 	$(CC) $< $(optimization) $(warnings) $(addprefix -I, $(INCLUDE)) -c -o $@
 
 bin/%.o: %.c headers/%.h | bin/
