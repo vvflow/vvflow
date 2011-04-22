@@ -6,6 +6,6 @@
 int InitConvective(Space *sS, double sEps);
 int CalcConvective();
 int CalcCirculation();
-int SpeedSum(TList<TVortex> *List, double px, double py, double &resx, double &resy);
+Vector SpeedSum(TList<TObject> *List, Vector p);
 
 #endif
