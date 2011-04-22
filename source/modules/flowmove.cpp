@@ -45,15 +45,13 @@ int MoveAndClean(bool remove)
 		TObject *&LastObj = VList.Last;
 		for ( ; Obj<LastObj; Obj++)
 		{
-			Obj->rx += Obj->vx*FlowMove_dt; Obj->vx = 0;
-			Obj->ry += Obj->vy*FlowMove_dt; Obj->vy = 0;
-			
-			bool inbody = remove  && !FlowMove_S->Body->PointIsValid(Obj->rx, Obj->ry);
-			bool toosmall = ( (Obj->g < FlowMove_RemoveEps) && (Obj->g > -FlowMove_RemoveEps) );
+			*Obj += Obj->v*FlowMove_dt; Obj->v.zero();
+
+			bool inbody = remove  && !FlowMove_S->Body->PointIsValid(*Obj);
+			bool toosmall = ( fabs(Obj->g) < FlowMove_RemoveEps );
 			if ( inbody || toosmall)
 			{
-				FlowMove_S->Body->ForceX += Obj->ry* Obj->g;
-				FlowMove_S->Body->ForceY -= Obj->rx* Obj->g;
+				FlowMove_S->Body->Force -= rotl(*Obj) * Obj->g;
 				FlowMove_CleanedV++;
 				VList.Remove(Obj);
 				Obj--;
@@ -72,11 +70,9 @@ int MoveAndClean(bool remove)
 //		double compare = (1 + FlowMove_ControlLayerHeight); compare*= compare;
 		for ( ; Obj<LastObj; Obj++)
 		{
-			Obj->rx += Obj->vx*FlowMove_dt; Obj->vx = 0;
-			Obj->ry += Obj->vy*FlowMove_dt; Obj->vy = 0;
-			//double rabs2 = Obj->rx*Obj->rx + Obj->ry*Obj->ry;
+			*Obj += Obj->v*FlowMove_dt; Obj->v.zero();
 
-			bool inbody = remove  && FlowMove_S->Body->PointIsValid(Obj->rx, Obj->ry);
+			bool inbody = remove  && FlowMove_S->Body->PointIsValid(*Obj);
 			int* inlayer = FlowMove_S->Body->ObjectIsInHeatLayer(*Obj);
 			if ( inbody )
 			{
@@ -108,11 +104,8 @@ int VortexShed()
 			{ FlowMove_CleanedV++; }
 		else
 		{
-			ObjCopy.rx = BVort->rx;//*RiseHeight;
-			ObjCopy.ry = BVort->ry;//*RiseHeight;
-			ObjCopy.g = BVort->g;
-			FlowMove_S->Body->ForceX -= ObjCopy.ry* ObjCopy.g;
-			FlowMove_S->Body->ForceY += ObjCopy.rx* ObjCopy.g;
+			ObjCopy = *BVort;
+			FlowMove_S->Body->Force += rotl(ObjCopy) * ObjCopy.g;
 			VList.Add(ObjCopy);
 		}
 	}

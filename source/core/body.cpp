@@ -9,8 +9,7 @@ TBody::TBody(double (*sRotationV)(double Time),
 {
 	List = new TList<TObject>();
 	RotationV = sRotationV;
-	RotationAxisX = sRotationAxisX;
-	RotationAxisY = sRotationAxisY;
+	RotationAxis = Vector(sRotationAxisX, sRotationAxisY);
 	InsideIsValid = true;
 }
 
@@ -41,19 +40,17 @@ void TBody::Rotate(double angle)
 {
 	if (!this) return;
 
-	double dx, dy;
+	Vector dr;
 	TObject *obj = List->First;
 	TObject *&LastObj = List->Last;
 	for (; obj<LastObj; obj++)
 	{
-		dx = (obj->rx - RotationAxisX);
-		dy = (obj->ry - RotationAxisY);
-		obj->rx = RotationAxisX + dx*cos(angle) - dy*sin(angle);
-		obj->ry = RotationAxisY + dx*sin(angle) + dy*cos(angle);
+		dr = *obj - RotationAxis;
+		*obj = RotationAxis + dr*cos(angle) + rotl(dr)*sin(angle);
 	}
 }
 
-bool TBody::PointIsValid(double x, double y)
+bool TBody::PointIsValid(Vector p)
 {
 	if (!this) return true;
 
@@ -65,11 +62,11 @@ bool TBody::PointIsValid(double x, double y)
 	for ( ; i<LastVort; j=i++)
 	{
 		if ((
-			(i->ry < j->ry) && (i->ry < y) && (y <= j->ry) &&
-			((j->ry - i->ry) * (x - i->rx) > (j->rx - i->rx) * (y - i->ry))
+			(i->ry < j->ry) && (i->ry < p.ry) && (p.ry <= j->ry) &&
+			((j->ry - i->ry) * (p.rx - i->rx) > (j->rx - i->rx) * (p.ry - i->ry))
 			) || (
-			(i->ry > j->ry) && (i->ry > y) && (y >= j->ry) &&
-			((j->ry - i->ry) * (x - i->rx) < (j->rx - i->rx) * (y - i->ry))
+			(i->ry > j->ry) && (i->ry > p.ry) && (p.ry >= j->ry) &&
+			((j->ry - i->ry) * (p.rx - i->rx) < (j->rx - i->rx) * (p.ry - i->ry))
 		)) res = !res;
 	}
 
@@ -85,9 +82,7 @@ double TBody::SurfaceLength()
 	TObject *&LastObj = List->Last;
 	for (; Obj<LastObj; Obj++)
 	{
-		double dx = (Obj->rx - (Obj+1)->rx);
-		double dy = (Obj->ry - (Obj+1)->ry);
-		res += sqrt(dx*dx+dy*dy);
+		res += abs(*Obj - *(Obj+1));
 	}
 
 	return res;

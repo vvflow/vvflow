@@ -23,6 +23,7 @@ class Vector
 		Vector(double rx_, double ry_) {rx=rx_; ry=ry_;}
 
 		double abs() {return sqrt(rx*rx+ry*ry);}
+		friend double abs(const Vector& p) {return sqrt(p.rx*p.rx+p.ry*p.ry);}
 		double abs2() {return rx*rx+ry*ry;}
 		void zero() { rx = ry = 0; }
 		void init(double rx_, double ry_) {rx=rx_; ry=ry_;}
@@ -53,11 +54,12 @@ class Object: public Vector
 		double g;
 
 		Object() {}
-		Object(double rx_, double ry_, double g_) {rx=rx_; ry=ry_; g=g_; v.zero();}
+		Object(double rx_, double ry_, double g_):Vector(rx_, ry_) { g=g_; v.zero();}
 
 		void zero() { rx = ry = g = 0; v.zero(); }
 		void init(double rx_, double ry_, double g_) {rx=rx_; ry=ry_; g=g_;}
 
+		Object& operator= (const Vector& p) { rx=p.rx; ry=p.ry; return *this; }
 		friend istream& operator>> (istream& is, Object& p) 		{ return is >> p.rx >> p.ry >> p.g; }
 		friend ostream& operator<< (ostream& os, const Object& p) 	{ return os << p.rx << " \t" << p.ry << " \t" << p.g; }
 };

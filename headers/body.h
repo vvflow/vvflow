@@ -13,16 +13,16 @@ class TBody
 
 		int LoadFromFile(const char* filename);
 		void Rotate(double angle);
-		bool PointIsValid(double x, double y);
+		bool PointIsValid(Vector p);
 		double SurfaceLength();
 
 		TList<TObject> *List;
 		bool InsideIsValid;
 		bool isInsideValid();
-		double RotationAxisX, RotationAxisY;
+		Vector RotationAxis;
 		double (*RotationV)(double Time); double RotationVVar;
 
-		double ForceX, ForceY; //dont forget to zero it when u want
+		Vector Force; //dont forget to zero it when u want
 
 		//Heat layer
 		void CleanHeatLayer();
