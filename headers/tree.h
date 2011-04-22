@@ -6,7 +6,7 @@ struct node
 {
 	double x, y, h, w;
 	int i, j; //debug
-	TVortex CMp, CMm;
+	TObject CMp, CMm;
 	
 	TList<TObject*> *VortexLList;
 	TList<TObject*> *BodyLList;

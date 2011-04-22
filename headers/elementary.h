@@ -49,45 +49,21 @@ class Vector
 class Object: public Vector
 {
 	public:
-		double vx, vy;
+		Vector v;
 		double g;
 
 		Object() {}
-		Object(double rx_, double ry_, double g_) {rx=rx_; ry=ry_; g=g_; vx=vy=0;}
+		Object(double rx_, double ry_, double g_) {rx=rx_; ry=ry_; g=g_; v.zero();}
 
-		void zero() { rx = ry = vx = vy = g = 0; }
+		void zero() { rx = ry = g = 0; v.zero(); }
 		void init(double rx_, double ry_, double g_) {rx=rx_; ry=ry_; g=g_;}
 
 		friend istream& operator>> (istream& is, Object& p) 		{ return is >> p.rx >> p.ry >> p.g; }
 		friend ostream& operator<< (ostream& os, const Object& p) 	{ return os << p.rx << " \t" << p.ry << " \t" << p.g; }
 };
 
-/********************* Vortex ********************/
-
-/*struct vortex
-{
-	double rx, ry;
-	double vx, vy;
-	//double vxtmp, vytmp;
-	double g;
-	//char flag;
-	// flags:
-	//	1 - to be removed;
-	//	2 - to be merged;
-};*/
-typedef Object TVortex;
 typedef Object TObject;
 
-inline void InitObject(TObject &v, double x, double y, double g)
-{ v.rx = x; v.ry = y; v.g = g; v.vx = v.vy = 0; }
-
-//inline void ZeroObject(TObject &v)
-//{ v.zero(); }
-
-//#define InitVortex(v, sx, sy, sg) v.rx=sx; v.ry=sy; v.vx=v.vy=0; v.g=sg; //v.flag=0;
-//#define ZeroVortex(v) InitVortex(v, 0, 0, 0);
-
-//std::ostream& operator<< (std::ostream& os, const TVortex &v);
 
 #endif
 

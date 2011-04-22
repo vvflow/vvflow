@@ -13,8 +13,9 @@ namespace {
 Space *ConvectiveFast_S;
 double ConvectiveFast_Eps;
 
-inline void BioSavar(TVortex &vort, double px, double py, double &resx, double &resy);
-void SpeedSum(TNode &Node, double px, double py, double &resx, double &resy);
+inline
+Vector BioSavar(const TObject &obj, const Vector &p);
+Vector SpeedSum(const TNode &Node, const Vector &p);
 
 int N; // BodySize;
 double *BodyMatrix;
@@ -57,11 +58,12 @@ int InitConvectiveFast(Space *sS, double sEps)
 	return 0;
 }
 
-int SpeedSumFast(double px, double py, double &resx, double &resy)
+Vector SpeedSumFast(const Vector p)
 {
-	TNode* Node = FindNode(px, py);
-	if (!Node) return -1;
-	SpeedSum(*Node, px, py, resx, resy);
+	Vector res(0, 0);
+	TNode* Node = FindNode(p.rx, p.ry);
+	if (!Node) return res;
+	res = SpeedSum(*Node, p);
 
 	TNode** lFNode = Node->FarNodes->First;
 	TNode** LastFNode = Node->FarNodes->Last;
@@ -69,40 +71,26 @@ int SpeedSumFast(double px, double py, double &resx, double &resy)
 	{
 		TNode &FNode = **lFNode;
 
-		double tmpx, tmpy;
-		BioSavar(FNode.CMp, px, py, tmpx, tmpy);
-		resx+= tmpx; resy+= tmpy;
-		BioSavar(FNode.CMm, px, py, tmpx, tmpy);
-		resx+= tmpx; resy+= tmpy;
+		res+= BioSavar(FNode.CMp, p) * C_1_2PI;
+		res+= BioSavar(FNode.CMm, p) * C_1_2PI;
 	}
-	return 0;
+	return res;
 }
 
 namespace {
 inline
-void BioSavar(TVortex &Vort, double px, double py, double &resx, double &resy)
+Vector BioSavar(const TObject &obj, const Vector &p)
 {
-	double drx, dry;
-	double multiplier;
-
-	drx = px - Vort.rx;
-	dry = py - Vort.ry;
-	//drabs2 = drx*drx + dry*dry;
-	#define drabs2 drx*drx + dry*dry
-	multiplier = Vort.g / ( drabs2 + ConvectiveFast_Eps ) * C_1_2PI;
-	#undef drabs2
-	resx = -dry * multiplier;
-	resy =  drx * multiplier;
+	Vector dr = p - obj;
+	return rotl(dr)*(obj.g / (dr.abs2() + ConvectiveFast_Eps) );
 }}
 
 
 namespace {
-void SpeedSum(TNode &Node, double px, double py, double &resx, double &resy)
+Vector SpeedSum(const TNode &Node, const Vector p)
 {
-	double drx, dry;
-	double multiplier;
+	Vector dr, res(0, 0);
 
-	resx = resy = 0;
 	TNode** lNode = Node.NearNodes->First;
 	TNode** &LastNode = Node.NearNodes->Last;
 	for ( ; lNode<LastNode; lNode++ )
@@ -111,24 +99,16 @@ void SpeedSum(TNode &Node, double px, double py, double &resx, double &resy)
 		TList<TObject*> *vList = (**lNode).VortexLList;
 		if ( !vList ) { continue; }
 		
-		TVortex** lVort = vList->First;
-		TVortex** LastVort = vList->Last;
+		TObject** lVort = vList->First;
+		TObject** LastVort = vList->Last;
 		for ( ; lVort<LastVort; lVort++ )
 		{
-			TVortex &Vort = **lVort;
-			drx = px - Vort.rx;
-			dry = py - Vort.ry;
-			double drabs2 = drx*drx + dry*dry;
-			//#define drabs2 drx*drx + dry*dry
-			multiplier = Vort.g / ( drabs2 + ConvectiveFast_Eps ); // 1/2PI is in flowmove
-			//#undef drabs2
-			resx -= dry * multiplier;
-			resy += drx * multiplier;
+			res+= BioSavar(**lVort, p); 
 		}
 	}
 
-	resx *= C_1_2PI;
-	resy *= C_1_2PI;
+	res *= C_1_2PI;
+	return res;
 }}
 
 int CalcConvectiveFast()
@@ -228,8 +208,8 @@ int CalcBoundaryConvective()
 		{
 			resx = resy = 0;
 
-			TVortex *BVort = blist->First;
-			TVortex *&LastBVort = blist->Last;
+			TObject *BVort = blist->First;
+			TObject *&LastBVort = blist->Last;
 			for ( ; BVort<LastBVort; BVort++ )
 			{
 				drx = Obj->rx - BVort->rx;
@@ -291,11 +271,11 @@ double NodeInfluence(TNode &Node, TObject &seg1, TObject &seg2, double eps)
 		TList<TObject*> *vList = (**lNode).VortexLList;
 		if ( !vList ) { continue; }
 
-		TVortex** lVort = vList->First;
-		TVortex** LastVort = vList->Last;
+		TObject** lVort = vList->First;
+		TObject** LastVort = vList->Last;
 		for ( ; lVort<LastVort; lVort++ )
 		{
-			TVortex &Vort = **lVort;
+			TObject &Vort = **lVort;
 			fortobjectinfluence_(&Vort.rx, &Vort.ry, &seg1.rx, &seg1.ry, &seg2.rx, &seg2.ry, &tmpx, &tmpy, &eps);
 			resx+= tmpx*Vort.g; resy+= tmpy*Vort.g;
 		}

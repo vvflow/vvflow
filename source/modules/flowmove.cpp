@@ -15,7 +15,7 @@ int FlowMove_CleanedV;
 int FlowMove_CleanedH;
 
 double FlowMove_ControlLayerHeight; //height of boundaru layer(not square)
-//TVortex **blarray;
+//TObject **blarray;
 
 } //end of namespace
 
@@ -95,13 +95,13 @@ int VortexShed()
 {
 	if ( !FlowMove_S->Body || !FlowMove_S->VortexList ) return -1;
 	//double RiseHeight = FlowMove_S->Body->HeatLayerHeight*1E-6;
-	TObject ObjCopy; ZeroObject(ObjCopy);
+	TObject ObjCopy(0, 0, 0);
 
 	//FlowMove_CleanedV = 0;
 
 	TObject *BVort = FlowMove_S->Body->List->First;
 	TObject *&LastBVort = FlowMove_S->Body->List->Last;
-	TList<TVortex> &VList = *FlowMove_S->VortexList;
+	TList<TObject> &VList = *FlowMove_S->VortexList;
 	for ( ; BVort<LastBVort; BVort++)
 	{
 		if ( (BVort->g < FlowMove_RemoveEps) && (BVort->g > -FlowMove_RemoveEps) ) 

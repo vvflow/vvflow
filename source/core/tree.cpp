@@ -4,7 +4,7 @@
 #include "iostream"
 using namespace std;
 
-#define Tree_MaxListSize 16
+const int Tree_MaxListSize = 16;
 
 /********************* HEADER ****************************/
 namespace {
@@ -308,7 +308,7 @@ void CalculateCMass(TNode* Node)
 			Node->CMSign.rx = (Ch1->CMSign.rx * Ch1->CMSign.g + Ch2->CMSign.rx * Ch2->CMSign.g) * sumg1; \
 			Node->CMSign.ry = (Ch1->CMSign.ry * Ch1->CMSign.g + Ch2->CMSign.ry * Ch2->CMSign.g) * sumg1; \
 			Node->CMSign.g = sumg; 														\
-		} else { ZeroObject(Node->CMSign); }													\
+		} else { Node->CMSign.zero(); }													\
 
 	CalculateCMassFromChilds(CMp);
 	CalculateCMassFromChilds(CMm);
@@ -319,8 +319,8 @@ namespace {
 void CalculateCMassFromScratch(TNode* Node)
 {
 	if ( !Node ) return;
-	ZeroObject(Node->CMp);
-	ZeroObject(Node->CMm);
+	Node->CMp.zero();
+	Node->CMm.zero();
 	if ( !Node->VortexLList ) return;
 
 	TObject** lObj = Node->VortexLList->First;

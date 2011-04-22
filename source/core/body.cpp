@@ -23,12 +23,12 @@ int TBody::LoadFromFile(const char* filename)
 	fin = fopen(filename, "r");
 	if (!fin) { cerr << "No file called " << filename << endl; return -1; } 
 
-	TObject Obj; ZeroObject(Obj);
+	TObject obj(0, 0, 0);
 	char line[255];
 	while ( fgets(line, 254, fin) )
 	{
-		if (sscanf(line, "%lf\t%lf\n", &Obj.rx, &Obj.ry) == 2)
-			List->Copy(&Obj);
+		if (sscanf(line, "%lf\t%lf\n", &obj.rx, &obj.ry) == 2)
+			List->Copy(&obj);
 	}
 	fclose(fin);
 
@@ -42,14 +42,14 @@ void TBody::Rotate(double angle)
 	if (!this) return;
 
 	double dx, dy;
-	TObject *Obj = List->First;
+	TObject *obj = List->First;
 	TObject *&LastObj = List->Last;
-	for (; Obj<LastObj; Obj++)
+	for (; obj<LastObj; obj++)
 	{
-		dx = (Obj->rx - RotationAxisX);
-		dy = (Obj->ry - RotationAxisY);
-		Obj->rx = RotationAxisX + dx*cos(angle) - dy*sin(angle);
-		Obj->ry = RotationAxisY + dx*sin(angle) + dy*cos(angle);
+		dx = (obj->rx - RotationAxisX);
+		dy = (obj->ry - RotationAxisY);
+		obj->rx = RotationAxisX + dx*cos(angle) - dy*sin(angle);
+		obj->ry = RotationAxisY + dx*sin(angle) + dy*cos(angle);
 	}
 }
 

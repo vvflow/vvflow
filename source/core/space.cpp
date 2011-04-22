@@ -20,25 +20,6 @@ Space::Space(bool CreateVortexes,
 	Time = dt = BodyX = BodyY = 0;
 }
 
-/*int Space::ConstructCircle(long BodyListSize)
-{
-	if (!BodyList) return -1;
-	
-	TObject Vort; ZeroObject(Vort);
-	double dfi = C_2PI/BodyListSize;
-	BodyControlLayer = new int[BodyListSize];
-
-	for ( long i=0; i<BodyListSize; i++ )
-	{
-		double fi= dfi*i; // don't use += here, cuz it causes systematic error;
-		Vort.rx = cos(fi);
-		Vort.ry = sin(fi);
-		BodyList->Copy(&Vort);
-	}
-
-	return 0;
-}*/
-
 /********************************** SAVE/LOAD *********************************/
 
 int Space::LoadVorticityFromFile(const char* filename)
@@ -50,11 +31,11 @@ int Space::LoadVorticityFromFile(const char* filename)
 	fin = fopen(filename, "r");
 	if (!fin) { cerr << "No file called \'" << filename << "\'\n"; return -1; } 
 
-	TVortex Vort; ZeroObject(Vort);
+	TObject obj(0, 0, 0);
 	while ( fgets(line, 254, fin) )
 	{
-		if (sscanf(line, "%lf\t%lf\t%lf\n", &Vort.rx, &Vort.ry, &Vort.g))
-			VortexList->Copy(&Vort);
+		if (sscanf(line, "%lf\t%lf\t%lf\n", &obj.rx, &obj.ry, &obj.g))
+			VortexList->Copy(&obj);
 	}
 	fclose(fin);
 	return 0;
@@ -68,11 +49,11 @@ int Space::LoadHeatFromStupidFile(const char* filename, double g)
 
 	fin = fopen(filename, "r");
 	if (!fin) { cerr << "No file called " << filename << endl; return -1; }
-	TVortex Vort; InitVortex(Vort, 0, 0, g);
+	TObject obj(0, 0, g);
 	while ( fgets(line, 254, fin) )
 	{
-		if (sscanf(line, "%lf\t%lf\n", &Vort.rx, &Vort.ry))
-			HeatList->Copy(&Vort);
+		if (sscanf(line, "%lf\t%lf\n", &obj.rx, &obj.ry))
+			HeatList->Copy(&obj);
 	}
 	fclose(fin);
 	return 0;
@@ -86,11 +67,11 @@ int Space::LoadHeatFromFile(const char* filename)
 
 	fin = fopen(filename, "r");
 	if (!fin) { cerr << "No file called " << filename << endl; return -1; }
-	TVortex Vort; ZeroObject(Vort);
+	TObject obj(0, 0, 0);
 	while ( fgets(line, 254, fin) )
 	{
-		if (sscanf(line, "%lf\t%lf\t%lf\n", &Vort.rx, &Vort.ry, &Vort.g))
-			HeatList->Copy(&Vort);
+		if (sscanf(line, "%lf\t%lf\t%lf\n", &obj.rx, &obj.ry, &obj.g))
+			HeatList->Copy(&obj);
 	}
 	fclose(fin);
 	return 0;
@@ -149,7 +130,7 @@ int Space::Save(const char *filename)
 		if (List) 																		\
 		{ 																				\
 			fwrite(&(List->size), sizeof(long), 1, pFile); 								\
-			fwrite(List->First, sizeof(TVortex), List->size, pFile); 				\
+			fwrite(List->First, sizeof(TObject), List->size, pFile); 				\
 		} else { fwrite(&zero, sizeof(long), 1, pFile); } 								\
 
 	SaveList(VortexList)
@@ -182,7 +163,7 @@ int Space::Load(const char *filename)
 			List->maxsize = size; 											\
 			List->size = size; 												\
 			List->First = (TObject*)malloc(size*sizeof(TObject)); 		\
-			err = fread(List->First, sizeof(TVortex), size, pFile); 			\
+			err = fread(List->First, sizeof(TObject), size, pFile); 			\
 		}
 
 	LoadList(VortexList)
@@ -200,8 +181,8 @@ double Space::Integral()
 	if (!VortexList) return 0;
 	double Summ = 0;
 
-	TVortex *Vort = VortexList->First;
-	TVortex *&Last = VortexList->Last;
+	TObject *Vort = VortexList->First;
+	TObject *&Last = VortexList->Last;
 	for ( ; Vort<Last; Vort++ )
 	{
 		Summ += Vort->g * (Vort->rx*Vort->rx + Vort->ry*Vort->ry);
@@ -215,8 +196,8 @@ double Space::gsum()
 	if (!VortexList) return 0;
 	double Sum = 0;
 
-	TVortex *Vort = VortexList->First;
-	TVortex *&Last = VortexList->Last;
+	TObject *Vort = VortexList->First;
+	TObject *&Last = VortexList->Last;
 	for ( ; Vort<Last; Vort++ )
 	{
 		Sum += Vort->g;
@@ -230,8 +211,8 @@ double Space::gmax()
 	if (!VortexList) return 0;
 	double Max = 0;
 
-	TVortex *Vort = VortexList->First;
-	TVortex *&Last = VortexList->Last;
+	TObject *Vort = VortexList->First;
+	TObject *&Last = VortexList->Last;
 	for ( ; Vort<Last; Vort++ )
 	{
 		if (fabs(Vort->g) > Max) Max = fabs(Vort->g);
@@ -245,8 +226,8 @@ void Space::HydroDynamicMomentum(double &ResX, double &ResY)
 	ResX=ResY=0;
 	if (!VortexList) return;
 
-	TVortex *Vort = VortexList->First;
-	TVortex *&Last = VortexList->Last;
+	TObject *Vort = VortexList->First;
+	TObject *&Last = VortexList->Last;
 	for ( ; Vort<Last; Vort++ )
 	{
 		ResX += Vort->g * Vort->rx;

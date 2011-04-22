@@ -39,7 +39,7 @@ class TList
 			if ( size == maxsize ) 
 			{
 				maxsize = maxsize << 1;
-				First = (T*)realloc(First, maxsize*sizeof(TVortex));
+				First = (T*)realloc(First, maxsize*sizeof(TObject));
 				Last = First + size;
 			}
 			*Last = *item;
