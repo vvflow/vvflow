@@ -8,6 +8,7 @@ TBody::TBody(double (*sRotationV)(double Time),
 				double sRotationAxisX, double sRotationAxisY)
 {
 	List = new TList<TObject>();
+	AttachList = new TList<TAttach>();
 	RotationV = sRotationV;
 	RotationAxis = Vector(sRotationAxisX, sRotationAxisY);
 	InsideIsValid = true;
@@ -48,6 +49,7 @@ void TBody::Rotate(double angle)
 		dr = *obj - RotationAxis;
 		*obj = RotationAxis + dr*cos(angle) + rotl(dr)*sin(angle);
 	}
+	UpdateAttach();
 }
 
 bool TBody::PointIsValid(Vector p)
@@ -104,6 +106,26 @@ bool TBody::isInsideValid()
 
 	return ((atan2(prev->ry-minObj->ry, prev->rx-minObj->rx) - 
 			atan2(next->ry-minObj->ry, next->rx-minObj->rx)) > 0);
+}
+
+void TBody::UpdateAttach()
+{
+	if (!this) return;
+	AttachList->Clear();
+	TAttach att;
+
+	TObject *Obj = List->First;
+	TObject *&LastObj = List->Last;
+	for (; Obj<LastObj; Obj++)
+	{
+		Vector dr = *Next(Obj) - *Obj;
+		att = 0.5*(*Next(Obj) + *Obj);
+
+		att.g = rotl(att-RotationAxis)*dr;
+		att.q =     (att-RotationAxis)*dr;
+
+		AttachList->Copy(&att);
+	}
 }
 
 /************************** HEAT LAYER ****************************************/

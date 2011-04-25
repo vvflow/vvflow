@@ -4,6 +4,17 @@
 #include "elementary.h"
 #include "list.h"
 
+class Attach : public Vector
+{
+	public:
+		double g, q;
+
+		Attach() {}
+		void zero() { rx = ry = g = q = 0; }
+		Attach& operator= (const Vector& p) { rx=p.rx; ry=p.ry; return *this; }
+};
+typedef Attach TAttach;
+
 class TBody
 {
 	public:
@@ -17,12 +28,22 @@ class TBody
 		double SurfaceLength();
 
 		TList<TObject> *List;
+		TList<TAttach> *AttachList;
 		bool InsideIsValid;
 		bool isInsideValid();
 		Vector RotationAxis;
 		double (*RotationV)(double Time); double RotationVVar;
+		void UpdateAttach();
 
 		Vector Force; //dont forget to zero it when u want
+
+		TObject* Next(TObject* obj) {
+			return (obj == (List->Last-1)) ? List->First : (obj+1);
+		}
+
+		TObject* Prev(TObject* obj) {
+			return (obj == List->First) ? (List->Last-1) : (obj-1);
+		}
 
 		//Heat layer
 		void CleanHeatLayer();

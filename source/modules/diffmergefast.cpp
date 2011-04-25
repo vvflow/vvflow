@@ -7,7 +7,7 @@
 const double S1Restriction = 1E-6;
 const double ExpArgRestriction = -8.;
 
-#include "iostream"
+#include <iostream>
 using namespace std;
 
 /********************* HEADER ****************************/
@@ -24,7 +24,7 @@ double GRestriction;
 double DiffMergeFast_MergeSqEps;
 int DiffMergeFast_MergedV;
 
-int MergeVortexes(TObject **lv1, TObject **lv2);
+void MergeVortexes(TObject **lv1, TObject **lv2);
 
 enum ParticleType {Vortex, Heat};
 }
@@ -43,35 +43,24 @@ int InitDiffMergeFast(Space *sS, double sRe, double sMergeSqEps)
 }
 
 namespace {
-inline
-int MergeVortexes(TObject **lv1, TObject **lv2)
+void MergeVortexes(TObject **lv1, TObject **lv2)
 {
-	if (!lv1 || !lv2 || (lv1==lv2)) return -1;
-	if (!*lv1 || !*lv2) return -1;
+	if (!lv1 || !lv2 || (lv1==lv2)) return;
+	if (!*lv1 || !*lv2) return;
 	TObject &v1 = **lv1;
 	TObject &v2 = **lv2;
 	//if (fabs(v1.g + v2.g) > GRestriction) return -1;
 	DiffMergeFast_MergedV++;
 
-	if ( ((v1.g > 0) && (v2.g > 0)) || ((v1.g < 0) && (v2.g < 0)) )
+	if ( sign(v1) == sign(v2) )
 	{
-		double g1sum = 1/(v1.g + v2.g);
-		v1.rx = (v1.g*v1.rx + v2.g*v2.rx)*g1sum;
-		v1.ry = (v1.g*v1.ry + v2.g*v2.ry)*g1sum;
-		cerr << "NOTIFICATION from diffmerge!" << endl;
+		v1 = (v1*v1.g + v2*v2.g)/(v1.g + v2.g);
+		//FIXME what happens with velocity?
 	}
-	else
-	{
-		if ( fabs(v1.g) < fabs(v2.g) )
-		{
-			v1.rx = v2.rx;
-			v1.ry = v2.ry;
-		}
-	}
+	else if ( fabs(v1.g) < fabs(v2.g) ) { v1 = v2; }
 	v1.g+= v2.g; 
 	v2.g = 0;
 	*lv2 = NULL;
-	return 0;
 }}
 
 int DiffMergedFastV()
@@ -79,14 +68,13 @@ int DiffMergedFastV()
 	return DiffMergeFast_MergedV;
 }
 
-// EPSILON FUNCTIONS FOR VORTEXES
-
 namespace {
-template <bool Faster, ParticleType pt>
-void Epsilon(TNode &Node, TObject **lv, double &res, bool merge)
+template <ParticleType pt>
+double Epsilon(const TNode &Node, TObject **lv, bool merge)
 {
-	if (!lv || !*lv) { res=1E-20; return; }
-	double drx, dry, drabs2;
+	double res = 0;
+	if (!lv || !*lv) { return 1E-20; }
+	Vector dr;
 	double res1, res2;
 	res2 = res1 = 1E10;
 
@@ -121,47 +109,45 @@ void Epsilon(TNode &Node, TObject **lv, double &res, bool merge)
 		{
 			if (!*lObj) { continue; }
 			TObject &Obj = **lObj;
-			drx = v.rx - Obj.rx;
-			dry = v.ry - Obj.ry;
-			if (Faster) drabs2 = fabs(drx) + fabs(dry);
-			else drabs2 = drx*drx + dry*dry;
-			if (!drabs2) continue;
+			dr = v - Obj;
+			double drabs2 = dr.abs2();
+			if (dr.iszero()) continue;
 			if ( res1 > drabs2 ) { res2 = res1; lv2 = lv1; res1 = drabs2; lv1 = lObj;} 
 			else if ( res2 > drabs2 ) { res2 = drabs2; lv2 = lObj; }
 		}
 	}
 
-	if (Faster) res = res2;
-	else res = sqrtdef(res2);
+	res = sqrtdef(res2);
 
-	if ( !lv || !lv1 ) { res=1E-10; return; }
-	if ( !lv2 ) { res = sqrtdef(res1); return; }
+	if ( !lv || !lv1 ) { return 1E-20; }
+	if ( !lv2 ) { return sqrtdef(res1)*1.1; }
 
 	if ( (pt == Vortex) && merge)
 	{
 		TObject &v1 = **lv1;
 		TObject &v2 = **lv2;
 		if ( 
-			((*lv<*lv1) && (res1 < (DiffMergeFast_MergeSqEps*(v.rx*v.rx+v.ry*v.ry+3.)*0.25) ))
+			((*lv<*lv1) && (res1 < DiffMergeFast_MergeSqEps))
 			||
-			( (v.g<0)&&(v1.g>0)&&(v2.g>0) ) || ( (v.g>0)&&(v1.g<0)&&(v2.g<0) )
+			( (sign(v1) == sign(v2)) && (sign(v1) != sign(v)) ) 
 			)
 		{
 			MergeVortexes(lv, lv1);
 			//FIXME Maybe it's better to remember res3 instead of using recursive call
-			Epsilon<Faster, pt>(Node, lv, res, false);
+			return Epsilon<pt>(Node, lv, false);
 		}
 	}
+
+	return res;
 }}
 
 namespace {
 template <ParticleType pt>
-void Division(TNode &Node, TObject &v, double eps1, double &ResPX, double &ResPY, double &ResD )
+void Division(const TNode &Node, const TObject &v, double _1_eps, Vector* ResP, double *ResD )
 {
-	double drx, dry, drabs;
-	double xx, dxx;
+	Vector dr;
 
-	ResPX =	ResPY = ResD = 0.;
+	ResP->zero(); *ResD = 0.;
 
 	TNode **lNNode = Node.NearNodes->First;
 	TNode **&LastNNode = Node.NearNodes->Last;
@@ -190,70 +176,55 @@ void Division(TNode &Node, TObject &v, double eps1, double &ResPX, double &ResPY
 		{
 			if (!*lObj) { continue; }
 			TObject &Obj = **lObj;
-			drx = v.rx - Obj.rx;
-			dry = v.ry - Obj.ry;
-			if ( (fabs(drx) < 1E-6) && (fabs(dry) < 1E-6) ) { continue; }
-			drabs = sqrtdef(drx*drx + dry*dry);
+			dr = v - Obj;
+			if ( dr.iszero() ) { continue; }
+			double drabs = dr.abs();
 
-			double exparg = -drabs*eps1;
+			double exparg = -drabs*_1_eps; //FIXME is it useful?
 			if ( exparg > ExpArgRestriction )
 			{
-				xx = Obj.g * expdef(exparg); // look for define
-				dxx = xx/drabs;
-				ResPX += drx * dxx;
-				ResPY += dry * dxx;
-				ResD += xx;
+				double tmp = Obj.g * expdef(exparg); // look for define
+				*ResP += dr * (tmp/drabs);
+				*ResD += tmp;
 			}
 		}
 	}
 
 	if (pt == Vortex)
-	if ( ( (ResD < 0) && (v.g > 0) ) || ( (ResD > 0) && (v.g < 0) ) ) { ResD = v.g; }
+	if ( ((*ResD>0)?1:-1) != sign(v) ) { *ResD = v.g; }
 }}
 
 namespace {
 //inline
-void VortexInfluence(const TObject &v, const TObject &vj, double eps1, double *i2x, double *i2y, double *i1)
+void VortexInfluence(const TObject &v, const TObject &vj, double _1_eps, Vector *i2, double *i1)
 {
-	if ( ((v.g>0) && (vj.g<0)) || ((v.g<0) && (vj.g>0)) ) { return; }
-	double drx = v.rx - vj.rx;
-	double dry = v.ry - vj.ry;
-	if ( (fabs(drx) < 1E-6) && (fabs(dry) < 1E-6) ) { return; }
-	double drabs = sqrt(drx*drx+dry*dry);
-	double exparg = -drabs*eps1;
+	if ( sign(v) != sign(vj) ) { return; }
+	Vector dr = v - vj;
+	if ( dr.iszero() ) { return; }
+	double drabs = dr.abs();
+	double exparg = -drabs*_1_eps;
 	if ( exparg < ExpArgRestriction ) return;
 	double i1tmp = vj.g * expdef(exparg);
-	*i2x += drx * (i1tmp/drabs);
-	*i2y += dry * (i1tmp/drabs);
+	*i2 += dr * (i1tmp/drabs);
 	*i1 += i1tmp;
-	if (*i2x!= *i2x) { cerr << drx << " " << dry << " " << drabs << " " << i1tmp << endl; }
-	if (*i2x!= *i2x) { cerr << "ALERT! i2x = " << i2x << endl; sleep(1E6); }
 }}
 
 namespace {
 //inline
 void SegmentInfluence(const TObject &v, const TObject &pk, const TObject &pk1, 
-					double eps1, double *i3x, double *i3y, double *i0)
+					double _1_eps, Vector *i3, double *i0)
 {
-	double rkx = (pk.rx+pk1.rx)*0.5;
-	double rky = (pk.ry+pk1.ry)*0.5;
+	Vector rk = (pk+pk1)*0.5;
 
-	double drx = v.rx - rkx;
-	double dry = v.ry - rky;
-	double drabs2 = drx*drx+dry*dry;
+	Vector dr = v - rk;
+	double drabs2 = dr.abs2();
 	double drabs = sqrt( drabs2 );
-	double exparg = -drabs*eps1;
+	double exparg = -drabs*_1_eps;
 	if ( exparg < ExpArgRestriction ) {return;}
 	double expres = expdef(exparg);
-	double dSx = (-pk1.ry + pk.ry);
-	double dSy = (pk1.rx - pk.rx);
-	*i3x += dSx * expres;
-	*i3y += dSy * expres;
-	//cerr << (drabs*eps1+1) << " " << drabs2 << " " << (drx*dSx + dry*dSy) << " " << exp << endl;
-	//cerr << &pk << " \t" << &pk1 << " \t" << *i0 << endl;
-	*i0 += (drabs*eps1+1)/drabs2*(drx*dSx + dry*dSy)*expres;
-	//cerr << *i0 << endl;
-	if (*i0 != *i0) { sleep(1E6); }
+	Vector dS = rotl(pk1 - pk);
+	*i3 += dS * expres;
+	*i0 += (drabs*_1_eps+1)/drabs2*(dr*dS)*expres;
 }}
 
 int CalcVortexDiffMergeFast()
@@ -262,9 +233,6 @@ int CalcVortexDiffMergeFast()
 	if ( !DiffMergeFast_S->VortexList ) return -1;
 
 	double multiplier;
-	TObject *&FirstBVort = DiffMergeFast_S->Body->List->First;
-	TObject *&LastBVort = DiffMergeFast_S->Body->List->Last;
-
 	GRestriction = DiffMergeFast_S->gmax();
 
 	TList<TNode*> *BottomNodes = GetTreeBottomNodes();
@@ -284,13 +252,13 @@ int CalcVortexDiffMergeFast()
 			if (!*lObj) { continue; }
 			TObject &Obj = **lObj;
 
-			double epsilon, eps1;
-			Epsilon<true, Vortex>(BNode, lObj, epsilon, true);
-			epsilon = (epsilon > EpsRestriction) ? epsilon : EpsRestriction;
-			eps1 = 1/epsilon;
+			double eps, _1_eps;
+			eps = Epsilon<Vortex>(BNode, lObj, true);
+			eps = (eps > EpsRestriction) ? eps : EpsRestriction;
+			_1_eps = 1/eps;
 
-			double S2x, S2y, S1, S3x, S3y, S0;//, ResPY, ResD, ResVx, ResVy, ResAbs2;
-			S2x = S2y = S1 = S3x = S3y = S0 = 0;
+			Vector S2(0,0), S3(0,0);
+			double S1 = 0, S0 = 0;
 
 			TNode **lNNode = BNode.NearNodes->First;
 			TNode **&LastNNode = BNode.NearNodes->Last;
@@ -304,7 +272,7 @@ int CalcVortexDiffMergeFast()
 				{
 					if (!*lObjJ) { continue; }
 					TObject &ObjJ = **lObjJ;
-					VortexInfluence(Obj, ObjJ, eps1, &S2x, &S2y, &S1);
+					VortexInfluence(Obj, ObjJ, _1_eps, &S2, &S1);
 				}}
 
 				if ( NNode.BodyLList ) {
@@ -314,25 +282,17 @@ int CalcVortexDiffMergeFast()
 				{
 					if (!*lObjJ) { continue; }
 					TObject *ObjJ = *lObjJ;
-					SegmentInfluence(Obj, *ObjJ, *((ObjJ==(LastBVort-1))?FirstBVort:ObjJ+1), eps1, &S3x, &S3y, &S0);
+					SegmentInfluence(Obj, *ObjJ, *DiffMergeFast_S->Body->Next(ObjJ), _1_eps, &S3, &S0);
 				}}
 			}
 
 			if ( ( (S1 <= 0) && (Obj.g > 0) ) || ( (S1 >= 0) && (Obj.g < 0) ) ) { S1 = Obj.g; }
 
-			multiplier = DiffMergeFast_Nyu*eps1/S1;
-			double S2abs = S2x*S2x+S2y*S2y;
-			if (S2abs > 100) { multiplier*=10/sqrtdef(S2abs); } //FIXME
-			Obj.vx += multiplier * S2x;
-			Obj.vy += multiplier * S2y;
-
-			multiplier = DiffMergeFast_Nyu*eps1*eps1/(C_2PI-S0);
-			Obj.vx += multiplier * S3x;
-			Obj.vy += multiplier * S3y;
-
-			if (multiplier!= multiplier) { cerr << "ALERT! multiplier = " << multiplier << endl; }
-
-			//FIXME may work unproperly
+			multiplier = DiffMergeFast_Nyu*_1_eps/S1;
+			double S2abs = S2.abs();
+			if (S2abs > 100) { multiplier*=10/sqrtdef(S2abs); }
+			Obj.v += multiplier * S2;
+			Obj.v += (DiffMergeFast_Nyu*_1_eps*_1_eps/(C_2PI-S0)) * S3;
 		}
 	}
 
@@ -343,7 +303,6 @@ int CalcHeatDiffMergeFast()
 {
 	if ( !DiffMergeFast_S->HeatList ) return -1;
 
-	double multiplier1;
 	//double multiplier2;
 	//double M_35dfi2 = 3.5 * DiffMergeFast_dfi * DiffMergeFast_dfi;
 
@@ -365,17 +324,16 @@ int CalcHeatDiffMergeFast()
 			TObject &Obj = **lObj;
 
 			double epsilon, eps1;
-			Epsilon<true, Heat>(BNode, lObj, epsilon, false);
+			epsilon = Epsilon<Heat>(BNode, lObj, false);
 			eps1 = 1/epsilon;
 
-			double ResPX, ResPY, ResD;
-			Division<Heat>(BNode, Obj, eps1, ResPX, ResPY, ResD);
+			Vector ResP;
+			double ResD;
+			Division<Heat>(BNode, Obj, eps1, &ResP, &ResD);
  
 			if ( fabs(ResD) > S1Restriction )
 			{
-				multiplier1 = DiffMergeFast_Nyu/ResD*eps1;
-				Obj.vx += ResPX * multiplier1;
-				Obj.vy += ResPY * multiplier1;
+				Obj.v += ResP * (DiffMergeFast_Nyu/ResD*eps1);
 			}
 /*
 			if ( BList )

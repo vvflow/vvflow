@@ -17,6 +17,8 @@ inline
 Vector BioSavar(const TObject &obj, const Vector &p);
 Vector SpeedSum(const TNode &Node, const Vector &p);
 
+Vector BoundaryConvective(const Vector &p);
+
 int N; // BodySize;
 double *BodyMatrix;
 double *InverseMatrix;
@@ -28,6 +30,7 @@ bool InverseMatrixOK;
 
 double ObjectInfluence(TObject &obj, TObject &seg1, TObject &seg2, double eps);
 double NodeInfluence(TNode &Node, TObject &seg1, TObject &seg2, double eps);
+double AttachInfluence(TObject &seg1, TObject &seg2, const TAttach &center, double eps);
 extern"C"{
 void fortobjectinfluence_(double *x, double *y, double *x1, double *y1,
 					double *x2, double *y2, double *ax, double *ay, double *eps);
@@ -197,40 +200,37 @@ int CalcConvectiveFast()
 
 int CalcBoundaryConvective()
 {
-	//TODO
-	/*
-	double drx, dry, multiplier, resx, resy;
-
 	TList<TObject> *vlist = ConvectiveFast_S->VortexList;
-	TList<TObject> *blist = ConvectiveFast_S->Body->List;
 	//TList<TObject> *hlist = ConvectiveFast_S->HeatList;
 
-	if (vlist)
+	if (!vlist) { return -1; }
+
+	TObject *Obj = vlist->First;
+	TObject *&LastObj = vlist->Last;
+	for( ; Obj<LastObj; Obj++ )
 	{
-		TObject *Obj = vlist->First;
-		TObject *&LastObj = vlist->Last;
-		for( ; Obj<LastObj; Obj++ )
-		{
-			resx = resy = 0;
-
-			TObject *BVort = blist->First;
-			TObject *&LastBVort = blist->Last;
-			for ( ; BVort<LastBVort; BVort++ )
-			{
-				drx = Obj->rx - BVort->rx;
-				dry = Obj->ry - BVort->ry;
-				multiplier = BVort->g / ( drx*drx+dry*dry + ConvectiveFast_Eps );
-				resx -= dry * multiplier;
-				resy += drx * multiplier;
-			}
-
-			Obj->vx += resx*C_1_2PI;
-			Obj->vy += resy*C_1_2PI;
-		}
-	}*/
+		Obj->v += BoundaryConvective(*Obj)*C_1_2PI;
+	}
 
 	return 0;
 }
+
+namespace {
+Vector BoundaryConvective(const Vector &p)
+{
+	Vector dr, res(0, 0);
+	TList<TAttach> *alist = ConvectiveFast_S->Body->AttachList;
+
+	TAttach *Att = alist->First;
+	TAttach *&LastAtt = alist->Last;
+	for ( ; Att<LastAtt; Att++ )
+	{
+		dr = p - *Att;
+		res -= (dr*Att->q + rotl(dr)*Att->g) / (( dr.abs2() + ConvectiveFast_Eps ) * ConvectiveFast_S->Body->RotationVVar);
+		//FIXME signs
+	}
+	return res;
+}}
 
 int CalcCirculationFast()
 {
@@ -300,6 +300,30 @@ double NodeInfluence(TNode &Node, TObject &seg1, TObject &seg2, double eps)
 	return -(rotl(res)*dl)/dl.abs()*C_1_2PI;
 }}
 
+namespace {
+inline
+double AttachInfluence(TObject &seg1, TObject &seg2, const TAttach &center, double eps)
+{
+	TList<TAttach> *alist = ConvectiveFast_S->Body->AttachList;
+	if (!alist->size) { return 0; }
+
+	double resx=0, resy=0;
+	double tmpx, tmpy;
+
+	TAttach* lAtt = alist->First;
+	TAttach* &LastAtt = alist->Last;
+	for ( ; lAtt<LastAtt; lAtt++ )
+	{
+		if (lAtt == &center) continue;
+		fortobjectinfluence_(&lAtt->rx, &lAtt->ry, &seg1.rx, &seg1.ry, &seg2.rx, &seg2.ry, &tmpx, &tmpy, &eps);
+		resx+= tmpx*lAtt->g+tmpy*lAtt->q; resy+= tmpy*lAtt->g-tmpx*lAtt->q;
+	}
+	double dx=seg2.rx-seg1.rx;
+	double dy=seg2.ry-seg1.ry;
+	return (resy*dx - resx*dy)/sqrt(dx*dx+dy*dy)*C_1_2PI - center.q*0.5; //FIXME sign
+	//FIXME kill fortran
+}}
+
 
 int FillMatrix()
 {
@@ -342,6 +366,7 @@ int FillMatrix()
 int FillRightCol()
 {
 	TObject *NakedBodyList = ConvectiveFast_S->Body->List->First;
+	TList<TAttach> *alist = ConvectiveFast_S->Body->AttachList;
 	int imax = N-1;
 	for (int i=0; i<imax; i++)
 	{
@@ -351,10 +376,18 @@ int FillRightCol()
 		Vector SegDl = NakedBodyList[i+1] - NakedBodyList[i];
 
 		RightCol[i] = -ConvectiveFast_S->InfSpeedYVar*SegDl.rx + ConvectiveFast_S->InfSpeedXVar*SegDl.ry -
-			NodeInfluence(*Node, NakedBodyList[i], NakedBodyList[i+1], ConvectiveFast_Eps);
+			NodeInfluence(*Node, NakedBodyList[i], NakedBodyList[i+1], ConvectiveFast_Eps) -
+			AttachInfluence(NakedBodyList[i], NakedBodyList[i+1], alist->item(i), ConvectiveFast_Eps)*
+			ConvectiveFast_S->Body->RotationVVar;
 	}
 
-	RightCol[imax] = -ConvectiveFast_S->gsum();
+	double tmpgsum =0;
+	TAttach *lAtt = alist->First;
+	TAttach *lLastAtt = alist->Last;
+	for ( ; lAtt<lLastAtt; lAtt++ )
+	{ tmpgsum += lAtt->g; }
+
+	RightCol[imax] = -ConvectiveFast_S->gsum() - ConvectiveFast_S->Body->RotationVVar*tmpgsum;
 
 	return 0;
 }
