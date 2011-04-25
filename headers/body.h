@@ -4,6 +4,13 @@
 #include "elementary.h"
 #include "list.h"
 
+struct attach
+{
+	double rx, ry;
+	double g, q;
+};
+typedef struct attach TAttach;
+
 class TBody
 {
 	public:
@@ -17,12 +24,22 @@ class TBody
 		double SurfaceLength();
 
 		TList<TObject> *List;
+		TList<TAttach> *AttachList;
 		bool InsideIsValid;
 		bool isInsideValid();
 		double RotationAxisX, RotationAxisY;
 		double (*RotationV)(double Time); double RotationVVar;
+		void UpdateAttach();
 
 		double ForceX, ForceY; //dont forget to zero it when u want
+
+		TObject* Next(TObject* obj) {
+			return (obj == (List->Last-1)) ? List->First : (obj+1);
+		}
+
+		TObject* Prev(TObject* obj) {
+			return (obj == List->First) ? (List->Last-1) : (obj-1);
+		}
 
 		//Heat layer
 		void CleanHeatLayer();
