@@ -29,6 +29,7 @@ bool InverseMatrixOK;
 
 double ObjectInfluence(TObject &obj, TObject &seg1, TObject &seg2, double eps);
 double NodeInfluence(TNode &Node, TObject &seg1, TObject &seg2, double eps);
+double AttachInfluence(TObject &seg1, TObject &seg2, const TAttach &center, double eps);
 extern"C"{
 void fortobjectinfluence_(double *x, double *y, double *x1, double *y1,
 					double *x2, double *y2, double *ax, double *ay, double *eps);
@@ -251,8 +252,8 @@ void BoundaryConvective(double px, double py, double &resx, double &resy)
 		drx = px - Att->rx;
 		dry = py - Att->ry;
 		multiplier = 1 / ( drx*drx+dry*dry + ConvectiveFast_Eps ) * ConvectiveFast_S->Body->RotationVVar;
-		resx += (drx*Att->q - dry*Att->g) * multiplier;
-		resy += (dry*Att->q + drx*Att->g) * multiplier;
+		resx -= (drx*Att->q - dry*Att->g) * multiplier; //FIXME signs
+		resy -= (dry*Att->q + drx*Att->g) * multiplier;
 	}
 }}
 
@@ -327,6 +328,30 @@ double NodeInfluence(TNode &Node, TObject &seg1, TObject &seg2, double eps)
 	return (resy*dx - resx*dy)/sqrt(dx*dx+dy*dy)*C_1_2PI;
 }}
 
+namespace {
+inline
+double AttachInfluence(TObject &seg1, TObject &seg2, const TAttach &center, double eps)
+{
+	TList<TAttach> *alist = ConvectiveFast_S->Body->AttachList;
+	if (!alist->size) { return 0; }
+
+	double resx=0, resy=0;
+	double tmpx, tmpy;
+
+	TAttach* lAtt = alist->First;
+	TAttach* &LastAtt = alist->Last;
+	for ( ; lAtt<LastAtt; lAtt++ )
+	{
+		if (lAtt == &center) continue;
+		fortobjectinfluence_(&lAtt->rx, &lAtt->ry, &seg1.rx, &seg1.ry, &seg2.rx, &seg2.ry, &tmpx, &tmpy, &eps);
+		resx+= tmpx*lAtt->g+tmpy*lAtt->q; resy+= tmpy*lAtt->g-tmpx*lAtt->q;
+	}
+	double dx=seg2.rx-seg1.rx;
+	double dy=seg2.ry-seg1.ry;
+	return (resy*dx - resx*dy)/sqrt(dx*dx+dy*dy)*C_1_2PI - center.q*0.5; //FIXME sign
+	//FIXME kill fortran
+}}
+
 
 int FillMatrix()
 {
@@ -380,17 +405,20 @@ int FillRightCol()
 
 		double SegDx = NakedBodyList[i+1].rx - NakedBodyList[i].rx;
 		double SegDy = NakedBodyList[i+1].ry - NakedBodyList[i].ry;
-		double AttResX = 0, AttResY = 0;
-		BoundaryConvective(alist->item(i).rx, alist->item(i).ry, AttResX, AttResY);
-		AttResX*= ConvectiveFast_S->Body->RotationVVar;
-		AttResY*= ConvectiveFast_S->Body->RotationVVar;
 
-		RightCol[i] = -(ConvectiveFast_S->InfSpeedYVar+AttResY)*SegDx + (ConvectiveFast_S->InfSpeedXVar+AttResX)*SegDy -
-			NodeInfluence(*Node, NakedBodyList[i], NakedBodyList[i+1], ConvectiveFast_Eps) - 
-			0.5*alist->item(i).q;
+		RightCol[i] = -ConvectiveFast_S->InfSpeedYVar*SegDx + ConvectiveFast_S->InfSpeedXVar*SegDy -
+			NodeInfluence(*Node, NakedBodyList[i], NakedBodyList[i+1], ConvectiveFast_Eps) -
+			AttachInfluence(NakedBodyList[i], NakedBodyList[i+1], alist->item(i), ConvectiveFast_Eps)*
+			ConvectiveFast_S->Body->RotationVVar;
 	}
 
-	RightCol[imax] = -ConvectiveFast_S->gsum()-C_2PI*ConvectiveFast_S->Body->RotationVVar;
+	double tmpgsum =0;
+	TAttach *lAtt = alist->First;
+	TAttach *lLastAtt = alist->Last;
+	for ( ; lAtt<lLastAtt; lAtt++ )
+	{ tmpgsum += lAtt->g; }
+
+	RightCol[imax] = -ConvectiveFast_S->gsum() - ConvectiveFast_S->Body->RotationVVar*tmpgsum;
 
 	return 0;
 }

@@ -124,8 +124,8 @@ void TBody::UpdateAttach()
 	TObject *&LastObj = List->Last;
 	for (; Obj<LastObj; Obj++)
 	{
-		dx = Next(Obj)->rx - Obj->rx;
-		dy = Next(Obj)->ry - Obj->ry;
+		dx = (Next(Obj)->rx - Obj->rx) * (InsideIsValid? -1:1);
+		dy = (Next(Obj)->ry - Obj->ry) * (InsideIsValid? -1:1);
 		att.rx = 0.5*(Next(Obj)->rx + Obj->rx);
 		att.ry = 0.5*(Next(Obj)->ry + Obj->ry);
 
