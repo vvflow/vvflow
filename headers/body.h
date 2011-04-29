@@ -33,6 +33,7 @@ class TBody
 		bool isInsideValid();
 		Vector RotationAxis;
 		double (*RotationV)(double Time); double RotationVVar;
+		double Angle;
 		void UpdateAttach();
 
 		Vector Force; //dont forget to zero it when u want

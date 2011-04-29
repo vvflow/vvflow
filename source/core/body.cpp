@@ -12,6 +12,7 @@ TBody::TBody(double (*sRotationV)(double Time),
 	RotationV = sRotationV;
 	RotationAxis = Vector(sRotationAxisX, sRotationAxisY);
 	InsideIsValid = true;
+	Angle = 0;
 }
 
 int TBody::LoadFromFile(const char* filename)
@@ -49,6 +50,7 @@ void TBody::Rotate(double angle)
 		dr = *obj - RotationAxis;
 		*obj = RotationAxis + dr*cos(angle) + rotl(dr)*sin(angle);
 	}
+	Angle += angle;
 	UpdateAttach();
 }
 

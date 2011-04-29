@@ -226,9 +226,10 @@ Vector BoundaryConvective(const Vector &p)
 	for ( ; Att<LastAtt; Att++ )
 	{
 		dr = p - *Att;
-		res -= (dr*Att->q + rotl(dr)*Att->g) / (( dr.abs2() + ConvectiveFast_Eps ) * ConvectiveFast_S->Body->RotationVVar);
+		res += (dr*Att->q + rotl(dr)*Att->g) * (ConvectiveFast_S->Body->RotationVVar/( dr.abs2() + ConvectiveFast_Eps ));
 		//FIXME signs
 	}
+	//if (res.rx!=res.rx) { cout << p << endl; }
 	return res;
 }}
 
