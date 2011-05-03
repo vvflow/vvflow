@@ -55,10 +55,10 @@ void MergeVortexes(TObject **lv1, TObject **lv2)
 	if ( sign(v1) == sign(v2) )
 	{
 		v1 = (v1*v1.g + v2*v2.g)/(v1.g + v2.g);
-		//FIXME what happens with velocity?
 	}
-	else if ( fabs(v1.g) < fabs(v2.g) ) { v1 = v2; }
-	v1.g+= v2.g; 
+	else if ( fabs(v1.g) < fabs(v2.g) ) { Vector(v1) = Vector(v2); }
+	v1.v = (v1.v*v1.g + v2.v*v2.g)/(v1.g + v2.g);
+	v1.g+= v2.g;
 	v2.g = 0;
 	*lv2 = NULL;
 }}
@@ -72,7 +72,6 @@ namespace {
 template <ParticleType pt>
 double Epsilon(const TNode &Node, TObject **lv, bool merge)
 {
-	double res = 0;
 	if (!lv || !*lv) { return 1E-20; }
 	Vector dr;
 	double res1, res2;
@@ -111,16 +110,14 @@ double Epsilon(const TNode &Node, TObject **lv, bool merge)
 			TObject &Obj = **lObj;
 			dr = v - Obj;
 			double drabs2 = dr.abs2();
-			if (dr.iszero()) continue;
+			if (!drabs2) continue;
 			if ( res1 > drabs2 ) { res2 = res1; lv2 = lv1; res1 = drabs2; lv1 = lObj;} 
 			else if ( res2 > drabs2 ) { res2 = drabs2; lv2 = lObj; }
 		}
 	}
 
-	res = sqrtdef(res2);
-
 	if ( !lv || !lv1 ) { return 1E-20; }
-	if ( !lv2 ) { return sqrtdef(res1)*1.1; }
+	if ( !lv2 ) { return sqrtdef(res1); }
 
 	if ( (pt == Vortex) && merge)
 	{
@@ -138,7 +135,7 @@ double Epsilon(const TNode &Node, TObject **lv, bool merge)
 		}
 	}
 
-	return res;
+	return sqrt(res2);
 }}
 
 namespace {
@@ -286,10 +283,10 @@ int CalcVortexDiffMergeFast()
 				}}
 			}
 
-			if ( ( (S1 <= 0) && (Obj.g > 0) ) || ( (S1 >= 0) && (Obj.g < 0) ) ) { S1 = Obj.g; }
+			if ( sign(S1) != sign(Obj) ) { S1 = Obj.g; }
 
 			multiplier = DiffMergeFast_Nyu*_1_eps/S1;
-			double S2abs = S2.abs();
+			double S2abs = S2.abs2();
 			if (S2abs > 100) { multiplier*=10/sqrtdef(S2abs); }
 			Obj.v += multiplier * S2;
 			Obj.v += (DiffMergeFast_Nyu*_1_eps*_1_eps/(C_2PI-S0)) * S3;

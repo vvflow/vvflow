@@ -252,7 +252,7 @@ int CalcCirculationFast()
 
 
 namespace {
-inline
+//inline
 double ObjectInfluence(TObject &obj, TObject &seg1, TObject &seg2, double eps)
 {
 	Vector res;
@@ -263,7 +263,7 @@ double ObjectInfluence(TObject &obj, TObject &seg1, TObject &seg2, double eps)
 }}
 
 namespace {
-inline
+//inline
 double NodeInfluence(TNode &Node, TObject &seg1, TObject &seg2, double eps)
 {
 	Vector res(0, 0), tmp;
@@ -302,7 +302,7 @@ double NodeInfluence(TNode &Node, TObject &seg1, TObject &seg2, double eps)
 }}
 
 namespace {
-inline
+//inline
 double AttachInfluence(TObject &seg1, TObject &seg2, const TAttach &center, double eps)
 {
 	TList<TAttach> *alist = ConvectiveFast_S->Body->AttachList;
@@ -377,16 +377,19 @@ int FillRightCol()
 		Vector SegDl = NakedBodyList[i+1] - NakedBodyList[i];
 
 		RightCol[i] = -ConvectiveFast_S->InfSpeedYVar*SegDl.rx + ConvectiveFast_S->InfSpeedXVar*SegDl.ry -
-			NodeInfluence(*Node, NakedBodyList[i], NakedBodyList[i+1], ConvectiveFast_Eps) -
-			AttachInfluence(NakedBodyList[i], NakedBodyList[i+1], alist->item(i), ConvectiveFast_Eps)*
-			ConvectiveFast_S->Body->RotationVVar;
+		               NodeInfluence(*Node, NakedBodyList[i], NakedBodyList[i+1], ConvectiveFast_Eps) -
+		               ((!ConvectiveFast_S->Body->RotationVVar)?0:AttachInfluence(NakedBodyList[i], NakedBodyList[i+1], alist->item(i), ConvectiveFast_Eps)*
+		               ConvectiveFast_S->Body->RotationVVar);
 	}
 
 	double tmpgsum =0;
-	TAttach *lAtt = alist->First;
-	TAttach *lLastAtt = alist->Last;
-	for ( ; lAtt<lLastAtt; lAtt++ )
-	{ tmpgsum += lAtt->g; }
+	if (ConvectiveFast_S->Body->RotationVVar)
+	{
+		TAttach *lAtt = alist->First;
+		TAttach *lLastAtt = alist->Last;
+		for ( ; lAtt<lLastAtt; lAtt++ )
+		{ tmpgsum += lAtt->g; }
+	}
 
 	RightCol[imax] = -ConvectiveFast_S->gsum() - ConvectiveFast_S->Body->RotationVVar*tmpgsum;
 

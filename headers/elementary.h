@@ -14,6 +14,8 @@ const double C_2_PI = 	2./C_PI;
 
 /******************* Vectors *******************/
 
+inline double sign(double x) { return (x>0) ? 1 : ((x<0) ? -1 : 0); }
+
 class Vector
 {
 	public:
@@ -25,7 +27,7 @@ class Vector
 		double abs() {return sqrt(rx*rx+ry*ry);}
 		friend double abs(const Vector& p) {return sqrt(p.rx*p.rx+p.ry*p.ry);}
 		double abs2() {return rx*rx+ry*ry;}
-		bool iszero() {return !(rx||ry); }
+		bool iszero() {return (fabs(rx)+fabs(ry) < 1E-10); }
 		void zero() { rx = ry = 0; }
 		void init(double rx_, double ry_) {rx=rx_; ry=ry_;}
 
