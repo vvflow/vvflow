@@ -495,3 +495,4 @@ void SaveMatrix_bin(double *matrix, const char* filename)
 	fwrite(matrix, sizeof(double), N*N, fout);
 	fclose(fout);
 }}
+

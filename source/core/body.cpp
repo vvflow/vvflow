@@ -147,3 +147,4 @@ int* TBody::ObjectIsInHeatLayer(TObject &obj)
 {
 	return false;
 }
+
