@@ -7,10 +7,10 @@ using namespace std;
 TBody::TBody(double (*sRotationV)(double Time),
 				double sRotationAxisX, double sRotationAxisY)
 {
-	List = new TList<TObject>();
-	AttachList = new TList<TAttach>();
+	List = new vector<TObj>();
+	AttachList = new vector<TAtt>();
 	RotationV = sRotationV;
-	RotationAxis = Vector(sRotationAxisX, sRotationAxisY);
+	RotationAxis = TVec(sRotationAxisX, sRotationAxisY);
 	InsideIsValid = true;
 	Angle = 0;
 }
@@ -19,22 +19,17 @@ int TBody::LoadFromFile(const char* filename)
 {
 	if (!this) return -1;
 	if ( !List ) return -1;
-	FILE *fin;
-
-	fin = fopen(filename, "r");
+	FILE *fin = fopen(filename, "r");
 	if (!fin) { cerr << "No file called " << filename << endl; return -1; } 
 
-	TObject obj(0, 0, 0);
-	char line[255];
-	while ( fgets(line, 254, fin) )
+	TObj obj(0, 0, 0);
+	while ( fscanf(fin, "%lf %lf %lf", &obj.rx, &obj.ry, &obj.g)==3 )
 	{
-		if (sscanf(line, "%lf\t%lf\n", &obj.rx, &obj.ry) == 2)
-			List->Copy(&obj);
+		List->push_back(obj);
 	}
+
 	fclose(fin);
-
 	InsideIsValid = isInsideValid();
-
 	return 0;
 }
 
@@ -42,28 +37,22 @@ void TBody::Rotate(double angle)
 {
 	if (!this) return;
 
-	Vector dr;
-	TObject *obj = List->First;
-	TObject *&LastObj = List->Last;
-	for (; obj<LastObj; obj++)
+	for (auto obj = List->begin(); obj<List->end(); obj++)
 	{
-		dr = *obj - RotationAxis;
+		TVec dr = *obj - RotationAxis;
 		*obj = RotationAxis + dr*cos(angle) + rotl(dr)*sin(angle);
 	}
 	Angle += angle;
 	UpdateAttach();
 }
 
-bool TBody::PointIsValid(Vector p)
+bool TBody::PointIsValid(TVec p)
 {
 	if (!this) return true;
 
 	bool res = !InsideIsValid;
 
-	TObject *i = List->First;
-	TObject *j = List->Last-1;
-	TObject *&LastVort = List->Last;
-	for ( ; i<LastVort; j=i++)
+	for (auto i = List->begin(), j = List->end()-1; i<List->end(); j=i++)
 	{
 		if ((
 			(i->ry < j->ry) && (i->ry < p.ry) && (p.ry <= j->ry) &&
@@ -82,51 +71,47 @@ double TBody::SurfaceLength()
 	if (!this) return 0;
 	double res=0;
 
-	TObject *Obj = List->First;
-	TObject *&LastObj = List->Last;
-	for (; Obj<LastObj; Obj++)
+	for (auto obj = List->begin(); obj<List->end(); obj++)
 	{
-		res += abs(*Obj - *(Obj+1));
+		res += abs(*obj - *(obj+1));
 	}
 
 	return res;
+}
+
+inline double atan2(const TVec &p)
+{
+	return atan2(p.ry, p.rx);
 }
 
 bool TBody::isInsideValid()
 {
 	if (!this) return true;
 
-	TObject *minObj, *Obj = minObj = List->First;
-	TObject *&LastObj = List->Last;
-	for (; Obj<LastObj; Obj++)
+	auto min = List->begin();
+	for (auto obj = min; obj<List->end(); obj++)
 	{
-		minObj = (Obj->rx < minObj->rx)?Obj:minObj;
+		min = (obj->rx < min->rx) ? obj : min;
 	}
 
-	TObject *prev = (minObj==List->First)?(List->Last-1):(minObj-1);
-	TObject *next = (minObj==(List->Last-1))?List->First:(minObj+1);
-
-	return ((atan2(prev->ry-minObj->ry, prev->rx-minObj->rx) - 
-			atan2(next->ry-minObj->ry, next->rx-minObj->rx)) > 0);
+	return ((atan2(*prev(min)-*min) - atan2(*next(min)-*min)) > 0);
 }
 
 void TBody::UpdateAttach()
 {
 	if (!this) return;
-	AttachList->Clear();
-	TAttach att;
+	AttachList->clear();
+	TAtt att;
 
-	TObject *Obj = List->First;
-	TObject *&LastObj = List->Last;
-	for (; Obj<LastObj; Obj++)
+	for (auto obj = List->begin(); obj<List->end(); obj++)
 	{
-		Vector dr = *Next(Obj) - *Obj;
-		att = 0.5*(*Next(Obj) + *Obj);
+		TVec dr = *next(obj) - *obj;
+		att = TVec(0.5*(*next(obj) + *obj));
 
 		att.g = rotl(att-RotationAxis)*dr;
 		att.q =     (att-RotationAxis)*dr;
 
-		AttachList->Copy(&att);
+		AttachList->push_back(att);
 	}
 }
 
@@ -137,13 +122,13 @@ void TBody::CleanHeatLayer()
 	if (!this) return;
 	if (!HeatLayer) return;
 
-	for (int i=0; i<List->size; i++)
+	for (unsigned int i=0; i<List->size(); i++)
 	{
 		HeatLayer[i]=0;
 	}
 }
 
-int* TBody::ObjectIsInHeatLayer(TObject &obj)
+int* TBody::ObjectIsInHeatLayer(TObj &obj)
 {
 	return false;
 }
