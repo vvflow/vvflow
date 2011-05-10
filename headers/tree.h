@@ -6,14 +6,14 @@ struct node
 {
 	double x, y, h, w;
 	int i, j; //debug
-	TObject CMp, CMm;
+	TObj CMp, CMm;
 	
-	TList<TObject*> *VortexLList;
-	TList<TObject*> *BodyLList;
-	TList<TObject*> *HeatLList;
+	vector<TObj*> *VortexLList;
+	vector<TObj*> *BodyLList;
+	vector<TObj*> *HeatLList;
 
-	TList<struct node*> *NearNodes;
-	TList<struct node*> *FarNodes;
+	vector<struct node*> *NearNodes;
+	vector<struct node*> *FarNodes;
 
 	struct node *Child1;
 	struct node *Child2;
@@ -26,7 +26,7 @@ void DestroyTree();
 
 double GetAverageNearNodesPercent();
 double GetAverageNearNodesCount();
-TList<TNode*>* GetTreeBottomNodes();
+vector<TNode*>* GetTreeBottomNodes();
 
 TNode* FindNode(double px, double py);
 int GetMaxDepth();

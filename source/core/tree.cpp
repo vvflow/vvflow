@@ -14,7 +14,7 @@ int Tree_FarCriteria;
 double Tree_MinNodeSize;
 
 TNode *Tree_RootNode;
-TList<TNode*> *Tree_BottomNodes;
+vector<TNode*> *Tree_BottomNodes;
 
 void DivideNode(TNode* ParentNode);
 
@@ -24,7 +24,7 @@ void DeleteNode(TNode* Node);
 void DeleteSubTree(TNode* Node);
 
 void Stretch(TNode* Node);
-void DistributeObjects(TList<TObject*>* ParentList, double NodeC, TList<TObject*>* &ch1, TList<TObject*>* &ch2, char side);
+void DistributeObjects(vector<TObj*>* ParentList, double NodeC, vector<TObj*>* &ch1, vector<TObj*>* &ch2, char side);
 void CalculateCMass(TNode* Node);
 void CalculateCMassFromScratch(TNode* Node);
 void FindNearNodes(TNode* BottomNode, TNode* TopNode);
@@ -40,45 +40,41 @@ void InitTree(Space *sS, int sFarCriteria, double sMinNodeSize)
 	Tree_MinNodeSize = sMinNodeSize;
 	Tree_RootNode = NULL;
 	Tree_NodeStack = NULL;
-	Tree_BottomNodes = new TList<TNode*>();
+	Tree_BottomNodes = new vector<TNode*>();
 }
 
 inline
-void FillRootNode(TList<TObject> *SList, TList<TObject*> *RootLList)
+void FillRootNode(vector<TObj> *SList, vector<TObj*> *RootLList)
 {
 	if ( !RootLList ) return;
 
-	TObject* Obj = SList->First;
-	TObject* &Last = SList->Last;
-	for ( ; Obj<Last; Obj++ )
+	for (auto Obj = SList->begin() ; Obj<SList->end(); Obj++ )
 	{
-		RootLList->Add(Obj);
+		RootLList->push_back(&*Obj);
 	}
 }
 
 void BuildTree(bool IncludeVortexes, bool IncludeBody, bool IncludeHeat)
 {
-	Tree_RootNode = CreateNode(Tree_S->VortexList && IncludeVortexes && Tree_S->VortexList->size, 
-								Tree_S->Body->List && IncludeBody && Tree_S->Body->List->size, 
-								Tree_S->HeatList && IncludeHeat && Tree_S->HeatList->size);
+	Tree_RootNode = CreateNode(Tree_S->VortexList && IncludeVortexes && Tree_S->VortexList->size(), 
+								Tree_S->Body->List && IncludeBody && Tree_S->Body->List->size(), 
+								Tree_S->HeatList && IncludeHeat && Tree_S->HeatList->size());
 	Tree_RootNode->i = Tree_RootNode->j = 0; //DEBUG
 
 	FillRootNode(Tree_S->VortexList, Tree_RootNode->VortexLList);
 	FillRootNode(Tree_S->Body->List, Tree_RootNode->BodyLList);
 	FillRootNode(Tree_S->HeatList, Tree_RootNode->HeatLList);
 
-	Tree_BottomNodes->Clear();
+	Tree_BottomNodes->clear();
 
 	Stretch(Tree_RootNode);
 	DivideNode(Tree_RootNode); //recursive
 
 	CalculateCMass(Tree_RootNode);
-	TNode** BottomNode = Tree_BottomNodes->First;
-	TNode** &LastBN = Tree_BottomNodes->Last;
-	for ( ; BottomNode<LastBN; BottomNode++ )
+	for (auto BottomNode = Tree_BottomNodes->begin() ; BottomNode<Tree_BottomNodes->end(); BottomNode++ )
 	{
-		(*BottomNode)->NearNodes = new TList<TNode*>();
-		(*BottomNode)->FarNodes = new TList<TNode*>();
+		(*BottomNode)->NearNodes = new vector<TNode*>();
+		(*BottomNode)->FarNodes = new vector<TNode*>();
 		FindNearNodes(*BottomNode, Tree_RootNode);
 	}
 }
@@ -94,7 +90,7 @@ void DivideNode(TNode* ParentNode)
 
 	if ( (NodeH < Tree_MinNodeSize) || (NodeW < Tree_MinNodeSize) ) 
 	{
-		Tree_BottomNodes->Add(ParentNode);
+		Tree_BottomNodes->push_back(ParentNode);
 		return;
 	}
 
@@ -102,15 +98,15 @@ void DivideNode(TNode* ParentNode)
 	long ParentBodyListSize = 0;
 	long ParentHeatListSize = 0;
 	long MaxListSize = 0;
-	if ( ParentNode->VortexLList ) ParentVortexListSize = ParentNode->VortexLList->size;
-	if ( ParentNode->BodyLList ) ParentBodyListSize = ParentNode->BodyLList->size;
-	if ( ParentNode->HeatLList ) ParentHeatListSize = ParentNode->HeatLList->size;
+	if ( ParentNode->VortexLList ) ParentVortexListSize = ParentNode->VortexLList->size();
+	if ( ParentNode->BodyLList ) ParentBodyListSize = ParentNode->BodyLList->size();
+	if ( ParentNode->HeatLList ) ParentHeatListSize = ParentNode->HeatLList->size();
 	if ( MaxListSize < ParentVortexListSize ) MaxListSize = ParentVortexListSize;
 	if ( MaxListSize < ParentBodyListSize ) MaxListSize = ParentBodyListSize;
 	if ( MaxListSize < ParentHeatListSize ) MaxListSize = ParentHeatListSize;
 	if ( MaxListSize < Tree_MaxListSize ) //look for define
 	{
-		Tree_BottomNodes->Add(ParentNode);
+		Tree_BottomNodes->push_back(ParentNode);
 		return;
 	}
 
@@ -158,9 +154,9 @@ TNode* CreateNode(bool CreateVortexes, bool CreateBody, bool CreateHeat)
 		NewNode = new TNode;
 	}
 	
-	if (CreateVortexes) NewNode->VortexLList = new TList<TObject*>(); else NewNode->VortexLList = NULL;
-	if (CreateBody) NewNode->BodyLList = new TList<TObject*>(); else NewNode->BodyLList = NULL;
-	if (CreateHeat) NewNode->HeatLList = new TList<TObject*>(); else NewNode->HeatLList = NULL;
+	if (CreateVortexes) NewNode->VortexLList = new vector<TObj*>(); else NewNode->VortexLList = NULL;
+	if (CreateBody) NewNode->BodyLList = new vector<TObj*>(); else NewNode->BodyLList = NULL;
+	if (CreateHeat) NewNode->HeatLList = new vector<TObj*>(); else NewNode->HeatLList = NULL;
 	NewNode->NearNodes = NewNode->FarNodes = NULL;
 	NewNode->Child1 = NewNode->Child2 = NULL;
 	return NewNode;
@@ -190,7 +186,7 @@ void DeleteSubTree(TNode* Node)
 void DestroyTree()
 {
 	if ( Tree_RootNode ) DeleteSubTree(Tree_RootNode);
-	Tree_BottomNodes->Clear();
+	Tree_BottomNodes->clear();
 }
 
 TNode* FindNode(double px, double py)
@@ -217,28 +213,26 @@ void Stretch(TNode* Node)
 	double NodeL=0, NodeR=0, NodeT=0, NodeB=0; // left right top & bottom of the node
 	if ( Node->VortexLList )
 	{
-		NodeL = NodeR = (*Node->VortexLList->First)->rx;
-		NodeB = NodeT = (*Node->VortexLList->First)->ry;
+		NodeL = NodeR = (*Node->VortexLList->begin())->rx;
+		NodeB = NodeT = (*Node->VortexLList->begin())->ry;
 	} else
 	if ( Node->BodyLList )
 	{
-		NodeL = NodeR = (*Node->BodyLList->First)->rx;
-		NodeB = NodeT = (*Node->BodyLList->First)->ry;
+		NodeL = NodeR = (*Node->BodyLList->begin())->rx;
+		NodeB = NodeT = (*Node->BodyLList->begin())->ry;
 	} else
 	if ( Node->HeatLList )
 	{
-		NodeL = NodeR = (*Node->HeatLList->First)->rx;
-		NodeB = NodeT = (*Node->HeatLList->First)->ry;
+		NodeL = NodeR = (*Node->HeatLList->begin())->rx;
+		NodeB = NodeT = (*Node->HeatLList->begin())->ry;
 	}
 
 	#define ResizeNode(List) 							\
 		if ( (List) ) 									\
 		{ 												\
-			TObject** Obj = (List)->First; 				\
-			TObject** &Last = (List)->Last; 			\
-			for ( ; Obj<Last; Obj++ ) 					\
+			for (auto Obj = (List)->begin() ; Obj<(List)->end(); Obj++ ) 					\
 			{ 											\
-				TObject &o = **Obj; 					\
+				TObj &o = **Obj; 					\
 				if ( o.rx < NodeL ) NodeL = o.rx; 		\
 				if ( o.rx > NodeR ) NodeR = o.rx; 		\
 				if ( o.ry < NodeB ) NodeB = o.ry; 		\
@@ -258,32 +252,30 @@ void Stretch(TNode* Node)
 }}
 
 namespace {
-void DistributeObjects(TList<TObject*>* ParentList, double NodeC, TList<TObject*>* &ch1, TList<TObject*>* &ch2, char side)
+void DistributeObjects(vector<TObj*>* ParentList, double NodeC, vector<TObj*>* &ch1, vector<TObj*>* &ch2, char side)
 {
 	if (!ParentList) return;
 
-	TObject** lObj = ParentList->First;
-	TObject** &Last = ParentList->Last;
 	if ( side == 'x' )
-		for ( ; lObj<Last; lObj++ )
+		for (auto lObj = ParentList->begin() ; lObj<ParentList->end(); lObj++ )
 		{
-			TObject *&Obj = *lObj;
+			TObj *&Obj = *lObj;
 			if ( Obj->rx < NodeC ) 
-				ch1->Add(Obj);
+				ch1->push_back(Obj);
 			else
-				ch2->Add(Obj);
+				ch2->push_back(Obj);
 		}
 	else if ( side == 'y' )
-		for ( ; lObj<Last; lObj++ )
+		for (auto lObj = ParentList->begin() ; lObj<ParentList->end(); lObj++ )
 		{
-			TObject *&Obj = *lObj;
+			TObj *&Obj = *lObj;
 			if ( Obj->ry < NodeC ) 
-				ch1->Add(Obj);
+				ch1->push_back(Obj);
 			else
-				ch2->Add(Obj);
+				ch2->push_back(Obj);
 		}
-	if ( !ch1->size ) { delete ch1; ch1=NULL; }
-	if ( !ch2->size ) { delete ch2; ch2=NULL; }
+	if ( !ch1->size() ) { delete ch1; ch1=NULL; }
+	if ( !ch2->size() ) { delete ch2; ch2=NULL; }
 }}
 
 namespace {
@@ -323,11 +315,9 @@ void CalculateCMassFromScratch(TNode* Node)
 	Node->CMm.zero();
 	if ( !Node->VortexLList ) return;
 
-	TObject** lObj = Node->VortexLList->First;
-	TObject** &Last = Node->VortexLList->Last;
-	for ( ; lObj<Last; lObj++ )
+	for (auto lObj = Node->VortexLList->begin() ; lObj<Node->VortexLList->end(); lObj++ )
 	{
-		TObject *&Obj = *lObj;
+		TObj *&Obj = *lObj;
 		if ( Obj->g > 0 )
 		{
 			Node->CMp.rx+= Obj->rx * Obj->g;
@@ -367,7 +357,7 @@ void FindNearNodes(TNode* BottomNode, TNode* TopNode)
 	if ( SqDistance > Tree_FarCriteria*HalfPerim*HalfPerim )
 	{
 		//Far
-		BottomNode->FarNodes->Add(TopNode);
+		BottomNode->FarNodes->push_back(TopNode);
 		return;
 	}
 	if ( TopNode->Child1 )
@@ -376,13 +366,13 @@ void FindNearNodes(TNode* BottomNode, TNode* TopNode)
 		FindNearNodes(BottomNode, TopNode->Child2);
 		return;
 	}
-	BottomNode->NearNodes->Add(TopNode);
+	BottomNode->NearNodes->push_back(TopNode);
 }}
 
 double GetAverageNearNodesPercent()
 {
 	//FIXME
-	long sum = 0;
+	/*long sum = 0;
 
 	long lsize = Tree_BottomNodes->size; 
 	TNode** BottomNode = Tree_BottomNodes->First;
@@ -391,14 +381,14 @@ double GetAverageNearNodesPercent()
 	{
 		sum+= (*BottomNode)->NearNodes->size;
 	}
-	sum-= lsize;
-	return (sum/((lsize-1.)*lsize));
+	sum-= lsize; */
+	return 0;//(sum/((lsize-1.)*lsize));
 }
 
 double GetAverageNearNodesCount()
 {
 	//FIXME
-	double sum = 0;
+	/*double sum = 0;
 
 	TNode** BottomNode = Tree_BottomNodes->First;
 	TNode** &Last = Tree_BottomNodes->Last;
@@ -407,18 +397,18 @@ double GetAverageNearNodesCount()
 	{
 		sum+= (*BottomNode)->NearNodes->size;
 	}
-	sum-= lsize;
-	return (sum/lsize);
+	sum-= lsize;*/
+	return 0;//(sum/lsize);
 }
 
-TList<TNode*>* GetTreeBottomNodes()
+vector<TNode*>* GetTreeBottomNodes()
 {
 	return Tree_BottomNodes;
 }
 
 int GetMaxDepth()
 {
-	//FIXME
+	/*//FIXME
 	int max = 0;
 	if ( !Tree_BottomNodes ) return 0;
 	TNode** BottomNode = Tree_BottomNodes->First;
@@ -427,14 +417,14 @@ int GetMaxDepth()
 	{
 		if (max < (*BottomNode)->i) max = (*BottomNode)->i;
 		BottomNode++;
-	}
-	return max;
+	}*/
+	return 0;// max;
 }
 
 int PrintBottomNodes(std::ostream& os, bool PrintDepth)
 {
 	//FIXME
-	if ( !Tree_BottomNodes ) return -1;
+	/*if ( !Tree_BottomNodes ) return -1;
 	TNode** BottomNode = Tree_BottomNodes->First;
 	long lsize = Tree_BottomNodes->size;
 	for ( long i=0; i<lsize; i++ )
@@ -443,25 +433,25 @@ int PrintBottomNodes(std::ostream& os, bool PrintDepth)
 		if (PrintDepth) { os << "\t" << (*BottomNode)->i; }
 		os << endl;
 		BottomNode++;
-	}
+	}*/
 	return 0;
 }
 
 namespace {
 void PrintNode(std::ostream& os, int level, TNode* Node)
 {
-	if (!Node) return;
+	/*if (!Node) return;
 	if (Node->i == level)
 	{
 		os << Node->x << "\t" << Node->y << "\t" << Node->w << "\t" << Node->h << endl;
 	} else {
 		PrintNode(os, level, Node->Child1);
 		PrintNode(os, level, Node->Child2);
-	}
+	}*/
 }}
 
 void PrintLevel(std::ostream& os, int level)
 {
-	PrintNode(os, level, Tree_RootNode);
+	/*PrintNode(os, level, Tree_RootNode);*/
 }
 
