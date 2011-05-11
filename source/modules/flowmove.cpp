@@ -27,7 +27,7 @@ int InitFlowMove(Space *sS, double sdt, double sRemoveEps)
 	FlowMove_S = sS;
 	FlowMove_dt = FlowMove_S->dt = sdt;
 	FlowMove_RemoveEps = sRemoveEps;
-	FlowMove_ControlLayerHeight = (sS->Body) ? sS->Body->SurfaceLength()/(sS->Body->List->size-1) : 0;
+	FlowMove_ControlLayerHeight = (sS->Body) ? sS->Body->AverageSegmentLength() : 0;
 	FlowMove_CleanedV = 0;
 
 	return 0;
@@ -41,21 +41,20 @@ int MoveAndClean(bool remove)
 	//MOVING VORTEXES
 	if ( FlowMove_S->VortexList )
 	{
-		TList<TObject> &VList = *FlowMove_S->VortexList;
-		TObject *Obj = VList.First;
-		TObject *&LastObj = VList.Last;
-		for ( ; Obj<LastObj; Obj++)
+		auto vlist = FlowMove_S->VortexList;
+
+		for (auto Obj = vlist->begin(); Obj<vlist->end(); Obj++)
 		{
 			*Obj += Obj->v*FlowMove_dt; Obj->v.zero();
 
-			bool inbody = remove  && !FlowMove_S->Body->PointIsValid(*Obj);
+			bool inbody = remove && !FlowMove_S->Body->PointIsValid(*Obj);
 			bool toosmall = ( fabs(Obj->g) < FlowMove_RemoveEps );
 			if ( inbody || toosmall)
 			{
 				FlowMove_S->Body->Force -= rotl(*Obj) * Obj->g;
 				FlowMove_CleanedV++;
-				VList.Remove(Obj);
-				Obj--;
+				vlist->erase(Obj);
+				//Obj--;
 			}
 		}
 	}
@@ -65,11 +64,10 @@ int MoveAndClean(bool remove)
 	{
 		FlowMove_S->Body->CleanHeatLayer();
 
-		TList<TObject> &HList = *FlowMove_S->HeatList;
-		TObject *Obj = HList.First;
-		TObject *&LastObj = HList.Last;
+		auto hlist = FlowMove_S->HeatList;
+
 //		double compare = (1 + FlowMove_ControlLayerHeight); compare*= compare;
-		for ( ; Obj<LastObj; Obj++)
+		for (auto Obj = hlist->begin(); Obj<hlist->end(); Obj++)
 		{
 			*Obj += Obj->v*FlowMove_dt; Obj->v.zero();
 
@@ -79,7 +77,7 @@ int MoveAndClean(bool remove)
 			{
 				FlowMove_CleanedH++;
 				if (inlayer) { (*inlayer)++; }
-				HList.Remove(Obj);
+				hlist->erase(Obj);
 				Obj--;
 			}
 		}
@@ -92,22 +90,21 @@ int VortexShed()
 {
 	if ( !FlowMove_S->Body || !FlowMove_S->VortexList ) return -1;
 	//double RiseHeight = FlowMove_S->Body->HeatLayerHeight*1E-6;
-	TObject ObjCopy(0, 0, 0);
+	TObj ObjCopy(0, 0, 0);
 
 	//FlowMove_CleanedV = 0;
 
-	TObject *BVort = FlowMove_S->Body->List->First;
-	TObject *&LastBVort = FlowMove_S->Body->List->Last;
-	TList<TObject> &VList = *FlowMove_S->VortexList;
-	for ( ; BVort<LastBVort; BVort++)
+	auto vlist = FlowMove_S->VortexList;
+	auto blist = FlowMove_S->Body->List;
+	for (auto bvort = blist->begin(); bvort<blist->end(); bvort++)
 	{
-		if ( (BVort->g < FlowMove_RemoveEps) && (BVort->g > -FlowMove_RemoveEps) ) 
+		if ( (bvort->g < FlowMove_RemoveEps) && (bvort->g > -FlowMove_RemoveEps) ) 
 			{ FlowMove_CleanedV++; }
 		else
 		{
-			ObjCopy = *BVort;
+			ObjCopy = *bvort;
 			FlowMove_S->Body->Force += rotl(ObjCopy) * ObjCopy.g;
-			VList.Add(ObjCopy);
+			vlist->push_back(ObjCopy);
 		}
 	}
 

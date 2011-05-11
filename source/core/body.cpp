@@ -68,13 +68,15 @@ bool TBody::PointIsValid(TVec p)
 
 double TBody::SurfaceLength()
 {
-	if (!this) return 0;
+	if (!this || !List->size()) return 0;
 	double res=0;
 
 	for (auto obj = List->begin(); obj<List->end(); obj++)
 	{
 		res += abs(*obj - *(obj+1));
 	}
+
+	res += abs(*List->begin() - *(List->end()-1));
 
 	return res;
 }

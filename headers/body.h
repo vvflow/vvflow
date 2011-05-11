@@ -26,6 +26,7 @@ class TBody
 		void Rotate(double angle);
 		bool PointIsValid(TVec p);
 		double SurfaceLength();
+		double AverageSegmentLength() { return SurfaceLength() / List->size(); }
 
 		vector<TObj> *List;
 		vector<TAtt> *AttachList;

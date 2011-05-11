@@ -21,8 +21,8 @@ FORT 	= gcc -xf95
 
 parts 	:= core modules
 core_objects 	:= space body tree
-modules_objects := convective convectivefast objectinfluence
-#flowmove diffmergefast merge
+modules_objects := convective convectivefast objectinfluence flowmove 
+#diffmergefast merge
 VPATH := $(addprefix source/, $(parts) ) 
 # VPATH is special make var 
 
