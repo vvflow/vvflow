@@ -6,7 +6,7 @@
 int InitConvectiveFast(Space *sS, double sEps);
 int CalcConvectiveFast();
 int CalcBoundaryConvective();
-Vector SpeedSumFast(const Vector p);
+TVec SpeedSumFast(const TVec p);
 
 int CalcCirculationFast();
 int FillMatrix();

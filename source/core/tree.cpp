@@ -189,7 +189,7 @@ void DestroyTree()
 	Tree_BottomNodes->clear();
 }
 
-TNode* FindNode(double px, double py)
+TNode* FindNode(TVec p)
 {
 	TNode *Node = Tree_RootNode;
 
@@ -197,11 +197,11 @@ TNode* FindNode(double px, double py)
 	{
 		if (Node->h < Node->w)
 		{
-			Node = (px < Node->x) ? Node->Child1 : Node->Child2 ;
+			Node = (p.rx < Node->x) ? Node->Child1 : Node->Child2 ;
 		}
 		else
 		{
-			Node = (py < Node->y) ? Node->Child1 : Node->Child2 ;
+			Node = (p.ry < Node->y) ? Node->Child1 : Node->Child2 ;
 		}
 	}
 	return Node;

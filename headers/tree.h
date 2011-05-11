@@ -28,7 +28,7 @@ double GetAverageNearNodesPercent();
 double GetAverageNearNodesCount();
 vector<TNode*>* GetTreeBottomNodes();
 
-TNode* FindNode(double px, double py);
+TNode* FindNode(TVec p);
 int GetMaxDepth();
 int PrintBottomNodes(std::ostream& os, bool PrintDepth = false); // prints lines such "x y w h [i]" 
 void PrintLevel(std::ostream& os, int level);
