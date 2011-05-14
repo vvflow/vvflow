@@ -423,17 +423,16 @@ int GetMaxDepth()
 
 int PrintBottomNodes(std::ostream& os, bool PrintDepth)
 {
-	//FIXME
-	/*if ( !Tree_BottomNodes ) return -1;
-	TNode** BottomNode = Tree_BottomNodes->First;
-	long lsize = Tree_BottomNodes->size;
+	if ( !Tree_BottomNodes ) return -1;
+	auto BottomNode = Tree_BottomNodes->begin();
+	long lsize = Tree_BottomNodes->size();
 	for ( long i=0; i<lsize; i++ )
 	{
 		os << (*BottomNode)->x << "\t" << (*BottomNode)->y << "\t" << (*BottomNode)->w << "\t" << (*BottomNode)->h;
 		if (PrintDepth) { os << "\t" << (*BottomNode)->i; }
 		os << endl;
 		BottomNode++;
-	}*/
+	}
 	return 0;
 }
 

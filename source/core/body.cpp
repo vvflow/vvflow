@@ -23,7 +23,7 @@ int TBody::LoadFromFile(const char* filename)
 	if (!fin) { cerr << "No file called " << filename << endl; return -1; } 
 
 	TObj obj(0, 0, 0);
-	while ( fscanf(fin, "%lf %lf %lf", &obj.rx, &obj.ry, &obj.g)==3 )
+	while ( fscanf(fin, "%lf %lf", &obj.rx, &obj.ry)==2 )
 	{
 		List->push_back(obj);
 	}
