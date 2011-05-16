@@ -2,23 +2,36 @@
 #define TREE_H_
 #include "core.h"
 
-struct node
+class node
 {
-	double x, y, h, w;
-	int i, j; //debug
-	TObj CMp, CMm;
-	
-	vector<TObj*> *VortexLList;
-	vector<TObj*> *BodyLList;
-	vector<TObj*> *HeatLList;
+	public:
+		node();
+		~node();
 
-	vector<struct node*> *NearNodes;
-	vector<struct node*> *FarNodes;
+		double x, y, h, w;
+		int i, j; //debug
+		TObj CMp, CMm;
 
-	struct node *Child1;
-	struct node *Child2;
+		typedef vector<TObj*> content;
+		content *VortexLList;
+		content *BodyLList;
+		content *HeatLList;
+
+		vector<node*> *NearNodes;
+		vector<node*> *FarNodes;
+
+		node *ch1;
+		node *ch2;
+	public:
+		void DivideNode();
+		void DistributeContent(content *parent, content **ch1, content **ch2, char side);
+		void Stretch();
+		void Destroy();
+		void CalculateCMass();
+		void CalculateCMassFromScratch();
+		void FindNearNodes(node *TopNode);
 };
-typedef struct node TNode; 
+typedef node TNode;
 
 void InitTree(Space *sS, int sFarCriteria, double sMinNodeSize);
 void BuildTree(bool IncludeVortexes, bool IncludeBody, bool IncludeHeat);

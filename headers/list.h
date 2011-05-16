@@ -24,6 +24,7 @@ class list
 		T* begin();
 		T* end();
 		long size();
+		long size_safe();
 
 	private:
 		long size_;
@@ -78,6 +79,10 @@ T* list<T>::end() { return end_; }
 
 template <class T> inline
 long list<T>::size() { return size_; }
+
+template <class T> inline
+long list<T>::size_safe() { return this ? size_ : 0; }
+
 
 template <class T>
 void list<T>::realloc_()

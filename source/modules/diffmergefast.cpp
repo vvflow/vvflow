@@ -260,7 +260,7 @@ int CalcVortexDiffMergeFast()
 				auto jlist = NNode.BodyLList;
 				auto lObjJ = jlist->begin();
 				auto lObjJEnd = jlist->end();
-				for ( ; lObjJ<lObjJ; lObjJ++ )
+				for ( ; lObjJ<lObjJEnd; lObjJ++ )
 				{
 					if (!*lObjJ) { continue; }
 					TObj *ObjJ = *lObjJ;
