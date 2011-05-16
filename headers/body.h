@@ -1,8 +1,6 @@
 #ifndef BODY_H_
 #define BODY_H_
 
-#include <vector>
-
 #include "elementary.h"
 
 class TAtt : public TVec

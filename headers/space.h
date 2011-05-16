@@ -1,12 +1,10 @@
 #ifndef SPACE_H_
 #define SPACE_H_
 
-#include <vector>
-#include <algorithm>
-using namespace std;
-
 #include "body.h"
 #include "elementary.h"
+
+using namespace std;
 
 class Space
 {

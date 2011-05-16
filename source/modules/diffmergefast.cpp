@@ -95,8 +95,8 @@ double Epsilon(const TNode &Node, TObj **lv, bool merge)
 			dr = v - Obj;
 			double drabs2 = dr.abs2();
 			if (!drabs2) continue;
-			if ( res1 > drabs2 ) { res2 = res1; lv2 = lv1; res1 = drabs2; lv1 = &*lObj;} 
-			else if ( res2 > drabs2 ) { res2 = drabs2; lv2 = &*lObj; }
+			if ( res1 > drabs2 ) { res2 = res1; lv2 = lv1; res1 = drabs2; lv1 = lObj;} 
+			else if ( res2 > drabs2 ) { res2 = drabs2; lv2 = lObj; }
 		}
 	}
 
@@ -232,7 +232,7 @@ int CalcVortexDiffMergeFast()
 			TObj &Obj = **lObj;
 
 			double eps, _1_eps;
-			eps = Epsilon<Vortex>(BNode, &*lObj, true);
+			eps = Epsilon<Vortex>(BNode, lObj, true);
 			eps = (eps > EpsRestriction) ? eps : EpsRestriction;
 			_1_eps = 1/eps;
 

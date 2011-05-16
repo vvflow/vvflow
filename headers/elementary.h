@@ -3,7 +3,9 @@
 
 #include <math.h>
 #include <iostream>
+#include "list.h"
 using namespace std;
+
 
 const double C_PI =		3.14159265358979323846;
 const double C_2PI =	2.*C_PI;

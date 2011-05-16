@@ -79,7 +79,7 @@ int Space::Print(vector<TObj> *list, std::ostream& os)
 	if (!list) return -1;
 	if (!os) return -1;
 
-	for (auto obj = list->begin(); obj < list->end(); obj++)
+	const_for (list, obj)
 	{
 		os << *obj << endl;
 	}
@@ -175,7 +175,7 @@ double Space::integral()
 	if (!VortexList) return 0;
 	double sum = 0;
 
-	for ( auto obj = VortexList->begin(); obj < VortexList->end(); obj++ )
+	const_for (VortexList, obj)
 	{
 		sum += obj->g * obj->abs2();
 	}
@@ -186,14 +186,14 @@ double Space::integral()
 double Space::gsum()
 {
 	if (!VortexList) return 0;
-	double Sum = 0;
+	double sum = 0;
 
-	for ( auto obj = VortexList->begin(); obj < VortexList->end(); obj++ )
+	const_for (VortexList, obj)
 	{
-		Sum += obj->g;
+		sum += obj->g;
 	}
 
-	return Sum;
+	return sum;
 }
 
 double Space::gmax()
@@ -201,7 +201,7 @@ double Space::gmax()
 	if (!VortexList) return 0;
 	double max = 0;
 
-	for ( auto obj = VortexList->begin(); obj < VortexList->end(); obj++ )
+	const_for (VortexList, obj)
 	{
 		max = ( fabs(obj->g) > fabs(max) ) ? obj->g : max;
 	}
@@ -214,7 +214,7 @@ TVec Space::HydroDynamicMomentum()
 	TVec res(0, 0);
 	if (!VortexList) return res;
 
-	for ( auto obj = VortexList->begin(); obj < VortexList->end(); obj++ )
+	const_for (VortexList, obj)
 	{
 		res += obj->g * TVec(*obj);
 	}

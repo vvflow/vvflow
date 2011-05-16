@@ -37,7 +37,7 @@ void TBody::Rotate(double angle)
 {
 	if (!this) return;
 
-	for (auto obj = List->begin(); obj<List->end(); obj++)
+	const_for (List, obj)
 	{
 		TVec dr = *obj - RotationAxis;
 		*obj = RotationAxis + dr*cos(angle) + rotl(dr)*sin(angle);
@@ -71,7 +71,7 @@ double TBody::SurfaceLength()
 	if (!this || !List->size()) return 0;
 	double res=0;
 
-	for (auto obj = List->begin(); obj<List->end(); obj++)
+	const_for (List, obj)
 	{
 		res += abs(*obj - *(obj+1));
 	}
@@ -91,7 +91,7 @@ bool TBody::isInsideValid()
 	if (!this) return true;
 
 	auto min = List->begin();
-	for (auto obj = min; obj<List->end(); obj++)
+	const_for (List, obj)
 	{
 		min = (obj->rx < min->rx) ? obj : min;
 	}
@@ -105,7 +105,7 @@ void TBody::UpdateAttach()
 	AttachList->clear();
 	TAtt att;
 
-	for (auto obj = List->begin(); obj<List->end(); obj++)
+	const_for (List, obj)
 	{
 		TVec dr = *next(obj) - *obj;
 		att = TVec(0.5*(*next(obj) + *obj));
@@ -124,7 +124,7 @@ void TBody::CleanHeatLayer()
 	if (!this) return;
 	if (!HeatLayer) return;
 
-	for (unsigned int i=0; i<List->size(); i++)
+	for (long i=0; i<List->size(); i++)
 	{
 		HeatLayer[i]=0;
 	}
