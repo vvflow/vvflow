@@ -16,11 +16,8 @@ namespace {
 
 Space *DiffMergeFast_S;
 double DiffMergeFast_Re;
-double DiffMergeFast_Nyu;
-//double DiffMergeFast_dfi;
 
 double EpsRestriction;
-double GRestriction;
 double DiffMergeFast_MergeSqEps;
 int DiffMergeFast_MergedV;
 
@@ -35,10 +32,8 @@ int InitDiffMergeFast(Space *sS, double sRe, double sMergeSqEps)
 {
 	DiffMergeFast_S = sS;
 	DiffMergeFast_Re = sRe;
-	DiffMergeFast_Nyu = 1/sRe;
 	DiffMergeFast_MergeSqEps = sMergeSqEps;
 	EpsRestriction = (sS->Body) ? 0.6*sS->Body->AverageSegmentLength() : 0;
-	//DiffMergeFast_dfi = (sS->BodyList) ? C_2PI/sS->BodyList->size : 0;
 	return 0;
 }
 
@@ -181,7 +176,7 @@ void Division(const TNode &Node, const TObj &v, double _1_eps, TVec* ResP, doubl
 }}
 
 namespace {
-//inline
+inline
 void VortexInfluence(const TObj &v, const TObj &vj, double _1_eps, TVec *i2, double *i1)
 {
 	if ( sign(v) != sign(vj) ) { return; }
@@ -196,7 +191,7 @@ void VortexInfluence(const TObj &v, const TObj &vj, double _1_eps, TVec *i2, dou
 }}
 
 namespace {
-//inline
+inline
 void SegmentInfluence(const TObj &v, const TObj &pk, const TObj &pk1, 
 					double _1_eps, TVec *i3, double *i0)
 {
@@ -219,7 +214,6 @@ int CalcVortexDiffMergeFast()
 	if ( !DiffMergeFast_S->VortexList ) return -1;
 
 	double multiplier;
-	GRestriction = DiffMergeFast_S->gmax();
 
 	auto BottomNodes = GetTreeBottomNodes();
 	if ( !BottomNodes ) return -1;
@@ -276,11 +270,11 @@ int CalcVortexDiffMergeFast()
 
 			if ( sign(S1) != sign(Obj) ) { S1 = Obj.g; }
 
-			multiplier = DiffMergeFast_Nyu*_1_eps/S1;
+			multiplier = _1_eps/(DiffMergeFast_Re*S1);
 			double S2abs = S2.abs2();
 			if (S2abs > 100) { multiplier*=10/sqrtdef(S2abs); }
 			Obj.v += multiplier * S2;
-			Obj.v += (DiffMergeFast_Nyu*_1_eps*_1_eps/(C_2PI-S0)) * S3;
+			Obj.v += (_1_eps*_1_eps/(DiffMergeFast_Re*(C_2PI-S0))) * S3;
 		}
 	}
 
