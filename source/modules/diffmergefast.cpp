@@ -76,27 +76,22 @@ double Epsilon(const TNode &Node, TObj **lv, bool merge)
 	TObj **lv1, **lv2;
 	lv1 = lv2 = NULL;
 
-	auto nnodes = Node.NearNodes;
-	auto lNNode = nnodes->begin();
-	auto lNNodeEnd = nnodes->end();
-	for (; lNNode<lNNodeEnd; lNNode++ )
+	const_for(Node.NearNodes, llnnode)
 	{
-		TNode &NNode = **lNNode;
+		TNode &nnode = **llnnode;
 
-		vector<TObj*> *list;
-		list = (pt==Vortex) ? NNode.VortexLList : NNode.HeatLList;
+		TNode::content *list;
+		list = (pt==Vortex) ? nnode.VortexLList : nnode.HeatLList;
 		if (!list) {continue;}
-		auto lObj = list->begin();
-		auto lObjEnd = list->end();
-		for (; lObj<lObjEnd; lObj++ )
+		const_for (list, llobj)
 		{
-			if (!*lObj) { continue; }
-			TObj &Obj = **lObj;
-			dr = v - Obj;
+			if (!*llobj) { continue; }
+			TObj &obj = **llobj;
+			dr = v - obj;
 			double drabs2 = dr.abs2();
 			if (!drabs2) continue;
-			if ( res1 > drabs2 ) { res2 = res1; lv2 = lv1; res1 = drabs2; lv1 = lObj;} 
-			else if ( res2 > drabs2 ) { res2 = drabs2; lv2 = lObj; }
+			if ( res1 > drabs2 ) { res2 = res1; lv2 = lv1; res1 = drabs2; lv1 = llobj;} 
+			else if ( res2 > drabs2 ) { res2 = drabs2; lv2 = llobj; }
 		}
 	}
 

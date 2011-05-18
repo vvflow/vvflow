@@ -66,11 +66,9 @@ TVec SpeedSumFast(TVec p)
 	TNode* Node = FindNode(p);
 	if (!Node) return res;
 
-	auto lFNode = Node->FarNodes->begin();
-	auto LastFNode = Node->FarNodes->end();
-	for ( ; lFNode<LastFNode; lFNode++ )
+	const_for (Node->FarNodes, llfnode)
 	{
-		res+= BioSavar((**lFNode).CMp, p) + BioSavar((**lFNode).CMm, p);
+		res+= BioSavar((**llfnode).CMp, p) + BioSavar((**llfnode).CMm, p);
 	}
 	res *= C_1_2PI;
 	res += SpeedSum(*Node, p);
@@ -92,19 +90,14 @@ TVec SpeedSum(const TNode &Node, const TVec &p)
 {
 	TVec dr, res(0, 0);
 
-	auto lNode = Node.NearNodes->begin();
-	auto LastNode = Node.NearNodes->end();
-	for ( ; lNode<LastNode; lNode++ )
+	const_for (Node.NearNodes, llnnode)
 	{
-		//TNode &NNode = **lNode;
-		auto vList = (**lNode).VortexLList;
-		if ( !vList ) { continue; }
-		
-		auto lVort = vList->begin();
-		auto LastVort = vList->end();
-		for ( ; lVort<LastVort; lVort++ )
+		auto vlist = (**llnnode).VortexLList;
+		if ( !vlist ) { continue; }
+
+		const_for (vlist, llobj)
 		{
-			res+= BioSavar(**lVort, p); 
+			res+= BioSavar(**llobj, p); 
 		}
 	}
 
@@ -116,19 +109,15 @@ int CalcConvectiveFast()
 {
 	double Teilor1, Teilor2, Teilor3, Teilor4;
 
-	//initialization of InfSpeed & Rotation
-	double InfX = ConvectiveFast_S->InfSpeedXVar; 
-	double InfY = ConvectiveFast_S->InfSpeedYVar;
-	//double RotationG = ConvectiveFast_S->RotationVVar * C_2PI;
+	TVec infspeed = TVec(ConvectiveFast_S->InfSpeedXVar,
+	                     ConvectiveFast_S->InfSpeedYVar);
 
 	auto BottomNodes = GetTreeBottomNodes();
 	if ( !BottomNodes ) return -1;
 
-	auto lBNode = BottomNodes->begin();
-	auto LastBNode = BottomNodes->end();
-	for ( ; lBNode<LastBNode; lBNode++ )
+	const_for (BottomNodes, llbnode)
 	{
-		TNode &BNode = **lBNode;
+		TNode &bnode = **llbnode;
 
 		TVec DistP, DistM; //Distance between current node center and positive center of mass of far node 
 		double FuncP1, FuncM1; //Extremely complicated useless variables
@@ -136,18 +125,16 @@ int CalcConvectiveFast()
 
 		Teilor1 = Teilor2 = Teilor3 = Teilor4 = 0;
 
-		auto lFNode = BNode.FarNodes->begin();
-		auto LastFNode = BNode.FarNodes->end();
-		for ( ; lFNode<LastFNode; lFNode++ )
+		const_for (bnode.FarNodes, llfnode)
 		{
-			TNode &FarNode = **lFNode;
-			DistP = TVec(BNode.x, BNode.y) - FarNode.CMp;
-			DistM = TVec(BNode.x, BNode.y) - FarNode.CMm;
-			
+			TNode &fnode = **llfnode;
+			DistP = TVec(bnode.x, bnode.y) - fnode.CMp;
+			DistM = TVec(bnode.x, bnode.y) - fnode.CMm;
+
 			double _1_DistPabs = 1/DistP.abs2();
 			double _1_DistMabs = 1/DistM.abs2();
-			FuncP1 = FarNode.CMp.g * _1_DistPabs; //Extremely complicated useless variables
-			FuncM1 = FarNode.CMm.g * _1_DistMabs;
+			FuncP1 = fnode.CMp.g * _1_DistPabs; //Extremely complicated useless variables
+			FuncM1 = fnode.CMm.g * _1_DistMabs;
 			FuncP2 = FuncP1 * _1_DistPabs;
 			FuncM2 = FuncM1 * _1_DistMabs;
 			
@@ -164,31 +151,27 @@ int CalcConvectiveFast()
 
 		TVec dr_local;
 		
-		if (BNode.VortexLList)
+		if (bnode.VortexLList)
 		{
-			auto lObj = BNode.VortexLList->begin();
-			auto LastObj = BNode.VortexLList->end();
-			for ( ; lObj<LastObj; lObj++ )
+			const_for (bnode.VortexLList, llobj)
 			{
-				TObj &Obj = **lObj;
-				dr_local = Obj - TVec(BNode.x, BNode.y);
-				Obj.v += TVec(Teilor1, Teilor2) + TVec(InfX, InfY) + SpeedSum(BNode, Obj) +
-							TVec(TVec(Teilor3, Teilor4)*dr_local, 
-									TVec(Teilor4, -Teilor3)*dr_local);
+				TObj &obj = **llobj;
+				dr_local = obj - TVec(bnode.x, bnode.y);
+				obj.v += TVec(Teilor1, Teilor2) + infspeed + SpeedSum(bnode, obj) +
+				         TVec(TVec(Teilor3,  Teilor4)*dr_local, 
+				              TVec(Teilor4, -Teilor3)*dr_local);
 			}
 		}
 
-		if (BNode.HeatLList)
+		if (bnode.HeatLList)
 		{
-			auto lObj = BNode.HeatLList->begin();
-			auto LastObj = BNode.HeatLList->end();
-			for ( ; lObj<LastObj; lObj++ )
+			const_for (bnode.HeatLList, llobj)
 			{
-				TObj &Obj = **lObj;
-				dr_local = Obj - TVec(BNode.x, BNode.y);
-				Obj.v += TVec(Teilor1, Teilor2) + TVec(InfX, InfY) + SpeedSum(BNode, Obj) +
-							TVec(TVec(Teilor3, Teilor4)*dr_local, 
-									TVec(Teilor4, -Teilor3)*dr_local);
+				TObj &obj = **llobj;
+				dr_local = obj - TVec(bnode.x, bnode.y);
+				obj.v += TVec(Teilor1, Teilor2) + infspeed + SpeedSum(bnode, obj) +
+				         TVec(TVec(Teilor3,  Teilor4)*dr_local, 
+				              TVec(Teilor4, -Teilor3)*dr_local);
 			}
 		}
 	}
@@ -203,11 +186,9 @@ int CalcBoundaryConvective()
 
 	if (!vlist) { return -1; }
 
-	auto Obj = vlist->begin();
-	auto LastObj = vlist->end();
-	for( ; Obj<LastObj; Obj++ )
+	const_for(vlist, lobj)
 	{
-		Obj->v += BoundaryConvective(*Obj)*C_1_2PI;
+		lobj->v += BoundaryConvective(*lobj)*C_1_2PI;
 	}
 
 	return 0;
@@ -218,16 +199,13 @@ TVec BoundaryConvective(const TVec &p)
 {
 	TVec dr, res(0, 0);
 	auto alist = ConvectiveFast_S->Body->AttachList;
+	double rotspeed = ConvectiveFast_S->Body->RotationVVar;
 
-	auto Att = alist->begin();
-	auto LastAtt = alist->end();
-	for ( ; Att<LastAtt; Att++ )
+	const_for(alist, latt)
 	{
-		dr = p - *Att;
-		res += (dr*Att->q + rotl(dr)*Att->g) * (ConvectiveFast_S->Body->RotationVVar/( dr.abs2() + ConvectiveFast_Eps ));
-		//FIXME signs
+		dr = p - *latt;
+		res += (dr*latt->q + rotl(dr)*latt->g) * (rotspeed/( dr.abs2() + ConvectiveFast_Eps ));
 	}
-	//if (res.rx!=res.rx) { cout << p << endl; }
 	return res;
 }}
 
