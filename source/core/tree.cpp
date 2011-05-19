@@ -66,18 +66,9 @@ void TNode::DivideNode()
 	ch1->i = ch2->i = i+1; //DEBUG
 	ch1->j = j*2; ch2->j = j*2+1; //DEBUG
 
-	if ( h < w )
-	{
-		DistributeContent(VortexLList, &ch1->VortexLList, &ch2->VortexLList, 'x');
-		DistributeContent(BodyLList, &ch1->BodyLList, &ch2->BodyLList, 'x');
-		DistributeContent(HeatLList, &ch1->HeatLList, &ch2->HeatLList, 'x');
-	}
-	else
-	{
-		DistributeContent(VortexLList, &ch1->VortexLList, &ch2->VortexLList, 'y');
-		DistributeContent(BodyLList, &ch1->BodyLList, &ch2->BodyLList, 'y');
-		DistributeContent(HeatLList, &ch1->HeatLList, &ch2->HeatLList, 'y');
-	}
+	DistributeContent(VortexLList, &ch1->VortexLList, &ch2->VortexLList);
+	DistributeContent(BodyLList, &ch1->BodyLList, &ch2->BodyLList);
+	DistributeContent(HeatLList, &ch1->HeatLList, &ch2->HeatLList);
 
 	ch1->Stretch();
 	ch2->Stretch();
@@ -133,11 +124,11 @@ void TNode::Stretch()
 
 	x = (bl+tr).rx * 0.5;
 	y = (bl+tr).ry * 0.5;
-	h = (tr-bl).rx;
-	w = (tr-bl).ry;
+	h = (tr-bl).ry;
+	w = (tr-bl).rx;
 }
 
-void TNode::DistributeContent(content *parent, content **ch1, content **ch2, char side)
+void TNode::DistributeContent(content *parent, content **ch1, content **ch2)
 {
 	if (!parent) return;
 	if (!*ch1) *ch1 = new content();
@@ -145,7 +136,7 @@ void TNode::DistributeContent(content *parent, content **ch1, content **ch2, cha
 
 	const_for (parent, llobj)
 	{
-		if ( (side=='x') ? (**llobj).rx<x : (**llobj).ry<y ) 
+		if ( (h<w) ? (**llobj).rx<x : (**llobj).ry<y ) 
 			(**ch1).push_back(*llobj);
 		else
 			(**ch2).push_back(*llobj);
@@ -243,7 +234,7 @@ namespace {
 void FillRootNode(vector<TObj> *src, node::content **dst)
 {
 	if (!src->size_safe()) return;
-	//if (!*dst) *dst = new node::content();
+	*dst = new node::content();
 
 	const_for (src, lobj)
 	{

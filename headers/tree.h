@@ -24,7 +24,7 @@ class node
 		node *ch2;
 	public:
 		void DivideNode();
-		void DistributeContent(content *parent, content **ch1, content **ch2, char side);
+		void DistributeContent(content *parent, content **ch1, content **ch2);
 		void Stretch();
 		void Destroy();
 		void CalculateCMass();
