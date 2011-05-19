@@ -115,6 +115,7 @@ int CalcConvectiveFast()
 	auto BottomNodes = GetTreeBottomNodes();
 	if ( !BottomNodes ) return -1;
 
+	#pragma omp parallel for
 	const_for (BottomNodes, llbnode)
 	{
 		TNode &bnode = **llbnode;
@@ -201,6 +202,7 @@ TVec BoundaryConvective(const TVec &p)
 	auto alist = ConvectiveFast_S->Body->AttachList;
 	double rotspeed = ConvectiveFast_S->Body->RotationVVar;
 
+	if (rotspeed)
 	const_for(alist, latt)
 	{
 		dr = p - *latt;
@@ -335,10 +337,12 @@ int FillRightCol()
 	auto NakedBodyList = ConvectiveFast_S->Body->List->begin();
 	auto alist = ConvectiveFast_S->Body->AttachList;
 	int imax = N-1;
+
+	#pragma omp parallel for
 	for (int i=0; i<imax; i++)
 	{
 		TNode* Node = FindNode(NakedBodyList[i]);
-		if (!Node) { cerr << "fail" << endl; return -1;}
+		if (!Node) { continue; }
 
 		TVec SegDl = NakedBodyList[i+1] - NakedBodyList[i];
 

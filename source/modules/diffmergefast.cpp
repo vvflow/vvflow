@@ -21,6 +21,7 @@ double EpsRestriction;
 double DiffMergeFast_MergeSqEps;
 int DiffMergeFast_MergedV;
 
+void VortexInfluence(const TObj &v, const TObj &vj, double _1_eps, TVec *i2, double *i1);
 void MergeVortexes(TObj **lv1, TObj **lv2);
 
 enum ParticleType {Vortex, Heat};
@@ -171,7 +172,7 @@ void Division(const TNode &Node, const TObj &v, double _1_eps, TVec* ResP, doubl
 }}
 
 namespace {
-inline
+//inline
 void VortexInfluence(const TObj &v, const TObj &vj, double _1_eps, TVec *i2, double *i1)
 {
 	if ( sign(v) != sign(vj) ) { return; }
@@ -213,63 +214,56 @@ int CalcVortexDiffMergeFast()
 	auto BottomNodes = GetTreeBottomNodes();
 	if ( !BottomNodes ) return -1;
 
-	auto lBNode = BottomNodes->begin();
-	auto lBNodeEnd = BottomNodes->end();
-	for (; lBNode<lBNodeEnd; lBNode++ )
+	#pragma omp parallel for schedule(dynamic, 10)
+	const_for(BottomNodes, llbnode)
 	{
-		TNode &BNode = **lBNode;
-		if ( !BNode.VortexLList ) { continue; }
+		TNode &bnode = **llbnode;
 
-		auto vllist = BNode.VortexLList;
-		for (auto lObj = vllist->begin(); lObj<vllist->end(); lObj++ )
+		auto vlist = bnode.VortexLList;
+		if ( !vlist ) { continue; }
+		const_for (vlist, llobj)
 		{
-			if (!*lObj) { continue; }
-			TObj &Obj = **lObj;
+			if (!*llobj) { continue; }
+			TObj &obj = **llobj;
 
 			double eps, _1_eps;
-			eps = Epsilon<Vortex>(BNode, lObj, true);
+			eps = Epsilon<Vortex>(bnode, llobj, true);
 			eps = (eps > EpsRestriction) ? eps : EpsRestriction;
 			_1_eps = 1/eps;
 
 			TVec S2(0,0), S3(0,0);
 			double S1 = 0, S0 = 0;
 
-			auto nnodes = BNode.NearNodes;
-			auto lNNode = nnodes->begin();
-			auto lNNodeEnd = nnodes->end();
-			for (; lNNode<lNNodeEnd; lNNode++ )
+			auto nnodes = bnode.NearNodes;
+			const_for(nnodes, llnnode)
 			{
-				TNode &NNode = **lNNode;
-				if ( NNode.VortexLList ) {
-				auto jlist = NNode.VortexLList;
-				auto lObjJ = jlist->begin();
-				auto lObjJEnd = jlist->end();
-				for ( ; lObjJ<lObjJEnd; lObjJ++ )
+				TNode &nnode = **llnnode;
+				auto jlist = nnode.VortexLList;
+				if ( jlist )
+				const_for (jlist, lljobj)
 				{
-					if (!*lObjJ) { continue; }
-					TObj &ObjJ = **lObjJ;
-					VortexInfluence(Obj, ObjJ, _1_eps, &S2, &S1);
-				}}
+					if (!*lljobj) { continue; }
+					TObj &jobj = **lljobj;
+					VortexInfluence(obj, jobj, _1_eps, &S2, &S1);
+				}
 
-				if ( NNode.BodyLList ) {
-				auto jlist = NNode.BodyLList;
-				auto lObjJ = jlist->begin();
-				auto lObjJEnd = jlist->end();
-				for ( ; lObjJ<lObjJEnd; lObjJ++ )
+				jlist = nnode.BodyLList;
+				if ( jlist )
+				const_for(jlist, lljobj)
 				{
-					if (!*lObjJ) { continue; }
-					TObj *ObjJ = *lObjJ;
-					SegmentInfluence(Obj, *ObjJ, *DiffMergeFast_S->Body->next(vector<TObj>::const_iterator(ObjJ)), _1_eps, &S3, &S0);
-				}}
+					if (!*lljobj) { continue; }
+					TObj *jobj = *lljobj;
+					SegmentInfluence(obj, *jobj, *DiffMergeFast_S->Body->next(jobj), _1_eps, &S3, &S0);
+				}
 			}
 
-			if ( sign(S1) != sign(Obj) ) { S1 = Obj.g; }
+			if ( sign(S1) != sign(obj) ) { S1 = obj.g; }
 
 			multiplier = _1_eps/(DiffMergeFast_Re*S1);
 			double S2abs = S2.abs2();
 			if (S2abs > 100) { multiplier*=10/sqrtdef(S2abs); }
-			Obj.v += multiplier * S2;
-			Obj.v += (_1_eps*_1_eps/(DiffMergeFast_Re*(C_2PI-S0))) * S3;
+			obj.v += multiplier * S2;
+			obj.v += (_1_eps*_1_eps/(DiffMergeFast_Re*(C_2PI-S0))) * S3;
 		}
 	}
 
