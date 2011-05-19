@@ -244,33 +244,27 @@ double NodeInfluence(TNode &Node, TObj &seg1, TObj &seg2, double eps)
 {
 	TVec res(0, 0), tmp;
 
-	auto lNode = Node.NearNodes->begin();
-	auto LastNode = Node.NearNodes->end();
-	for ( ; lNode<LastNode; lNode++ )
+	const_for(Node.NearNodes, llnnode)
 	{
-		auto vList = (**lNode).VortexLList;
-		if ( !vList ) { continue; }
+		auto vlist = (**llnnode).VortexLList;
+		if ( !vlist ) { continue; }
 
-		auto lVort = vList->begin();
-		auto LastVort = vList->end();
-		for ( ; lVort<LastVort; lVort++ )
+		const_for (vlist, llobj)
 		{
-			TObj &Vort = **lVort;
-			fortobjectinfluence_(&Vort.rx, &Vort.ry, &seg1.rx, &seg1.ry, &seg2.rx, &seg2.ry, &tmp.rx, &tmp.ry, &eps);
-			res+= tmp*Vort.g;
+			TObj &obj = **llobj;
+			fortobjectinfluence_(&obj.rx, &obj.ry, &seg1.rx, &seg1.ry, &seg2.rx, &seg2.ry, &tmp.rx, &tmp.ry, &eps);
+			res+= tmp*obj.g;
 		}
 	}
 
-	auto lFNode = Node.FarNodes->begin();
-	auto LastFNode = Node.FarNodes->end();
-	for ( ; lFNode<LastFNode; lFNode++ )
+	const_for(Node.FarNodes, llfnode)
 	{
-		TNode &FNode = **lFNode;
+		TNode &fnode = **llfnode;
 
-		fortobjectinfluence_(&FNode.CMp.rx, &FNode.CMp.ry, &seg1.rx, &seg1.ry, &seg2.rx, &seg2.ry, &tmp.rx, &tmp.ry, &eps);
-		res+= tmp*FNode.CMp.g;
-		fortobjectinfluence_(&FNode.CMm.rx, &FNode.CMm.ry, &seg1.rx, &seg1.ry, &seg2.rx, &seg2.ry, &tmp.rx, &tmp.ry, &eps);
-		res+= tmp*FNode.CMm.g;
+		fortobjectinfluence_(&fnode.CMp.rx, &fnode.CMp.ry, &seg1.rx, &seg1.ry, &seg2.rx, &seg2.ry, &tmp.rx, &tmp.ry, &eps);
+		res+= tmp*fnode.CMp.g;
+		fortobjectinfluence_(&fnode.CMm.rx, &fnode.CMm.ry, &seg1.rx, &seg1.ry, &seg2.rx, &seg2.ry, &tmp.rx, &tmp.ry, &eps);
+		res+= tmp*fnode.CMm.g;
 	}
 
 	TVec dl=seg2-seg1;
@@ -284,20 +278,16 @@ double AttachInfluence(TObj &seg1, TObj &seg2, const TAtt &center, double eps)
 	auto alist = ConvectiveFast_S->Body->AttachList;
 	if (!alist->size()) { return 0; }
 
-	double resx=0, resy=0;
-	double tmpx, tmpy;
+	TVec res(0, 0), tmp;
 
-	auto lAtt = alist->begin();
-	auto LastAtt = alist->end();
-	for ( ; lAtt<LastAtt; lAtt++ )
+	const_for(alist, latt)
 	{
-		if (&*lAtt == &center) continue;
-		fortobjectinfluence_(&lAtt->rx, &lAtt->ry, &seg1.rx, &seg1.ry, &seg2.rx, &seg2.ry, &tmpx, &tmpy, &eps);
-		resx+= tmpx*lAtt->g+tmpy*lAtt->q; resy+= tmpy*lAtt->g-tmpx*lAtt->q;
+		if (latt == &center) continue;
+		fortobjectinfluence_(&latt->rx, &latt->ry, &seg1.rx, &seg1.ry, &seg2.rx, &seg2.ry, &tmp.rx, &tmp.ry, &eps);
+		res+= tmp*latt->g - rotl(tmp)*latt->q;
 	}
-	double dx=seg2.rx-seg1.rx;
-	double dy=seg2.ry-seg1.ry;
-	return (resy*dx - resx*dy)/sqrt(dx*dx+dy*dy)*C_1_2PI - center.q*0.5; //FIXME sign
+	TVec dl=seg2-seg1;
+	return -(rotl(res)*dl)/dl.abs()*C_1_2PI - center.q*0.5; //FIXME sign
 	//FIXME kill fortran
 }}
 

@@ -37,9 +37,9 @@ TVec SpeedSum(vector<TObj> *list, TVec p)
 {
 	TVec dr, res(0, 0);
 
-	for (auto obj = list->begin(); obj<list->end(); obj++ )
+	const_for(list, lobj)
 	{
-		res+= BioSavar(*obj, p);
+		res+= BioSavar(*lobj, p);
 	}
 
 	res *= C_1_2PI;
@@ -57,9 +57,9 @@ int CalcConvective()
 	auto list = Convective_S->VortexList;
 	if (!list) return -1;
 
-	for (auto obj = list->begin(); obj<list->end(); obj++ )
+	const_for(list, lobj)
 	{
-		obj->v += SpeedSum(list, *obj);
+		lobj->v += SpeedSum(list, *lobj);
 	}
 
 	return 0;
