@@ -81,4 +81,8 @@ bin/:
 $(INSTALLDIR)/%:
 	mkdir $@ -p
 
+export_vars:
+	export VVHDdir="$(INSTALLDIR)"
+	export VVHD="-I $VVHDdir/include -L $VVHDdir/lib -lVVHDmodules -lVVHDcore"
+
 
