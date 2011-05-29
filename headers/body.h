@@ -7,9 +7,10 @@ class TAtt : public TVec
 {
 	public:
 		double g, q;
+		double pres, fric;
 
 		TAtt() {}
-		void zero() { rx = ry = g = q = 0; }
+		void zero() { rx = ry = g = q = pres = fric = 0; }
 		TAtt& operator= (const TVec& p) { rx=p.rx; ry=p.ry; return *this; }
 };
 
@@ -37,11 +38,11 @@ class TBody
 
 		TVec Force; //dont forget to zero it when u want
 
-		vector<TObj>::const_iterator next(vector<TObj>::const_iterator obj) {
+		TObj* next(TObj* obj) {
 			return (obj == List->end()-1) ? List->begin() : (obj+1);
 		}
 
-		vector<TObj>::const_iterator prev(vector<TObj>::const_iterator obj) {
+		TObj* prev(TObj* obj) {
 			return (obj == List->begin()) ? (List->end()-1) : (obj-1);
 		}
 
