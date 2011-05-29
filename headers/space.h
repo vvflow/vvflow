@@ -1,9 +1,10 @@
 #ifndef SPACE_H_
 #define SPACE_H_
 
-//#include "elementary.h"
-#include "list.h"
 #include "body.h"
+#include "elementary.h"
+
+using namespace std;
 
 class Space
 {
@@ -14,15 +15,15 @@ class Space
 				double (*sInfSpeedY)(double Time) = NULL);
 
 		TBody *Body;
-		TList<TObject> *VortexList;
-		TList<TObject> *HeatList;
+		vector<TObj> *VortexList;
+		vector<TObj> *HeatList;
 
 
 		inline void StartStep(); //update local InfSpeed variables, 
 		inline void FinishStep(); //update time and coord variables
 
-		double (*InfSpeedX)(double Time); double InfSpeedXVar;
-		double (*InfSpeedY)(double Time); double InfSpeedYVar;
+		double (*InfSpeedX)(double time); double InfSpeedXVar;
+		double (*InfSpeedY)(double time); double InfSpeedYVar;
 		double Time, dt;
 		double BodyX, BodyY;
 
@@ -42,14 +43,14 @@ class Space
 		int Save(const char *filename);
 		int Load(const char *filename);
 
-		double Integral();
+		double integral();
 		double gsum();
 		double gmax();
-		void HydroDynamicMomentum(double &ResX, double &ResY);
+		TVec HydroDynamicMomentum();
 
 	private:
-		int Print(TList<TObject> *List, std::ostream& os);
-		int Print(TList<TObject> *List, const char* format); //format is used for sprintf(filename, "format", time)
+		int Print(vector<TObj> *list, std::ostream& os);
+		int Print(vector<TObj> *list, const char* format); //format is used for sprintf(filename, "format", time)
 };
 
 inline

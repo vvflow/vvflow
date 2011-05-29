@@ -1,10 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
+using namespace std;
 
 #include "convectivefast.h"
-
-using namespace std;
 
 /********************* HEADER ****************************/
 
@@ -14,10 +13,10 @@ Space *ConvectiveFast_S;
 double ConvectiveFast_Eps;
 
 inline
-Vector BioSavar(const TObject &obj, const Vector &p);
-Vector SpeedSum(const TNode &Node, const Vector &p);
+TVec BioSavar(const TObj &obj, const TVec &p);
+TVec SpeedSum(const TNode &Node, const TVec &p);
 
-Vector BoundaryConvective(const Vector &p);
+TVec BoundaryConvective(const TVec &p);
 
 int N; // BodySize;
 double *BodyMatrix;
@@ -28,9 +27,9 @@ double *Solution;
 bool BodyMatrixOK;
 bool InverseMatrixOK; 
 
-double ObjectInfluence(TObject &obj, TObject &seg1, TObject &seg2, double eps);
-double NodeInfluence(TNode &Node, TObject &seg1, TObject &seg2, double eps);
-double AttachInfluence(TObject &seg1, TObject &seg2, const TAttach &center, double eps);
+double ObjectInfluence(TObj &obj, TObj &seg1, TObj &seg2, double eps);
+double NodeInfluence(TNode &Node, TObj &seg1, TObj &seg2, double eps);
+double AttachInfluence(TObj &seg1, TObj &seg2, const TAtt &center, double eps);
 extern"C"{
 void fortobjectinfluence_(double *x, double *y, double *x1, double *y1,
 					double *x2, double *y2, double *ax, double *ay, double *eps);
@@ -52,7 +51,7 @@ int InitConvectiveFast(Space *sS, double sEps)
 	ConvectiveFast_S = sS;
 	ConvectiveFast_Eps = sEps;
 
-	N = sS->Body->List->size;
+	N = sS->Body->List->size();
 	BodyMatrix = (double*)malloc(N*N*sizeof(double));
 	InverseMatrix = (double*)malloc(N*N*sizeof(double));
 	RightCol = (double*)malloc(N*sizeof(double));
@@ -61,52 +60,44 @@ int InitConvectiveFast(Space *sS, double sEps)
 	return 0;
 }
 
-Vector SpeedSumFast(const Vector p)
+TVec SpeedSumFast(TVec p)
 {
-	Vector res(0, 0);
-	TNode* Node = FindNode(p.rx, p.ry);
+	TVec res(0, 0);
+	TNode* Node = FindNode(p);
 	if (!Node) return res;
-	res = SpeedSum(*Node, p);
 
-	TNode** lFNode = Node->FarNodes->First;
-	TNode** LastFNode = Node->FarNodes->Last;
-	for ( ; lFNode<LastFNode; lFNode++ )
+	const_for (Node->FarNodes, llfnode)
 	{
-		TNode &FNode = **lFNode;
-
-		res+= BioSavar(FNode.CMp, p) * C_1_2PI;
-		res+= BioSavar(FNode.CMm, p) * C_1_2PI;
+		res+= BioSavar((**llfnode).CMp, p) + BioSavar((**llfnode).CMm, p);
 	}
+	res *= C_1_2PI;
+	res += SpeedSum(*Node, p);
+
 	return res;
 }
 
 namespace {
 inline
-Vector BioSavar(const TObject &obj, const Vector &p)
+TVec BioSavar(const TObj &obj, const TVec &p)
 {
-	Vector dr = p - obj;
+	TVec dr = p - obj;
 	return rotl(dr)*(obj.g / (dr.abs2() + ConvectiveFast_Eps) );
 }}
 
 
 namespace {
-Vector SpeedSum(const TNode &Node, const Vector &p)
+TVec SpeedSum(const TNode &Node, const TVec &p)
 {
-	Vector dr, res(0, 0);
+	TVec dr, res(0, 0);
 
-	TNode** lNode = Node.NearNodes->First;
-	TNode** &LastNode = Node.NearNodes->Last;
-	for ( ; lNode<LastNode; lNode++ )
+	const_for (Node.NearNodes, llnnode)
 	{
-		//TNode &NNode = **lNode;
-		TList<TObject*> *vList = (**lNode).VortexLList;
-		if ( !vList ) { continue; }
-		
-		TObject** lVort = vList->First;
-		TObject** LastVort = vList->Last;
-		for ( ; lVort<LastVort; lVort++ )
+		auto vlist = (**llnnode).VortexLList;
+		if ( !vlist ) { continue; }
+
+		const_for (vlist, llobj)
 		{
-			res+= BioSavar(**lVort, p); 
+			res+= BioSavar(**llobj, p); 
 		}
 	}
 
@@ -118,38 +109,33 @@ int CalcConvectiveFast()
 {
 	double Teilor1, Teilor2, Teilor3, Teilor4;
 
-	//initialization of InfSpeed & Rotation
-	double InfX = ConvectiveFast_S->InfSpeedXVar; 
-	double InfY = ConvectiveFast_S->InfSpeedYVar;
-	//double RotationG = ConvectiveFast_S->RotationVVar * C_2PI;
+	TVec infspeed = TVec(ConvectiveFast_S->InfSpeedXVar,
+	                     ConvectiveFast_S->InfSpeedYVar);
 
-	TList<TNode*> *BottomNodes = GetTreeBottomNodes();
+	auto BottomNodes = GetTreeBottomNodes();
 	if ( !BottomNodes ) return -1;
 
-	TNode** lBNode = BottomNodes->First;
-	TNode** LastBNode = BottomNodes->Last;
-	for ( ; lBNode<LastBNode; lBNode++ )
+	#pragma omp parallel for
+	const_for (BottomNodes, llbnode)
 	{
-		TNode &BNode = **lBNode;
+		TNode &bnode = **llbnode;
 
-		Vector DistP, DistM; //Distance between current node center and positive center of mass of far node 
+		TVec DistP, DistM; //Distance between current node center and positive center of mass of far node 
 		double FuncP1, FuncM1; //Extremely complicated useless variables
 		double FuncP2, FuncM2;
 
 		Teilor1 = Teilor2 = Teilor3 = Teilor4 = 0;
 
-		TNode** lFNode = BNode.FarNodes->First;
-		TNode** LastFNode = BNode.FarNodes->Last;
-		for ( ; lFNode<LastFNode; lFNode++ )
+		const_for (bnode.FarNodes, llfnode)
 		{
-			TNode &FarNode = **lFNode;
-			DistP = Vector(BNode.x, BNode.y) - FarNode.CMp;
-			DistM = Vector(BNode.x, BNode.y) - FarNode.CMm;
-			
+			TNode &fnode = **llfnode;
+			DistP = TVec(bnode.x, bnode.y) - fnode.CMp;
+			DistM = TVec(bnode.x, bnode.y) - fnode.CMm;
+
 			double _1_DistPabs = 1/DistP.abs2();
 			double _1_DistMabs = 1/DistM.abs2();
-			FuncP1 = FarNode.CMp.g * _1_DistPabs; //Extremely complicated useless variables
-			FuncM1 = FarNode.CMm.g * _1_DistMabs;
+			FuncP1 = fnode.CMp.g * _1_DistPabs; //Extremely complicated useless variables
+			FuncM1 = fnode.CMm.g * _1_DistMabs;
 			FuncP2 = FuncP1 * _1_DistPabs;
 			FuncM2 = FuncM1 * _1_DistMabs;
 			
@@ -164,33 +150,29 @@ int CalcConvectiveFast()
 		Teilor3 *= C_1_PI;
 		Teilor4 *= C_1_2PI;
 
-		Vector dr_local;
+		TVec dr_local;
 		
-		if (BNode.VortexLList)
+		if (bnode.VortexLList)
 		{
-			TObject **lObj = BNode.VortexLList->First;
-			TObject **&LastObj = BNode.VortexLList->Last;
-			for ( ; lObj<LastObj; lObj++ )
+			const_for (bnode.VortexLList, llobj)
 			{
-				TObject &Obj = **lObj;
-				dr_local = Obj - Vector(BNode.x, BNode.y);
-				Obj.v += Vector(Teilor1, Teilor2) + Vector(InfX, InfY) + SpeedSum(BNode, Obj) +
-							Vector(Vector(Teilor3, Teilor4)*dr_local, 
-									Vector(Teilor4, -Teilor3)*dr_local);
+				TObj &obj = **llobj;
+				dr_local = obj - TVec(bnode.x, bnode.y);
+				obj.v += TVec(Teilor1, Teilor2) + infspeed + SpeedSum(bnode, obj) +
+				         TVec(TVec(Teilor3,  Teilor4)*dr_local, 
+				              TVec(Teilor4, -Teilor3)*dr_local);
 			}
 		}
 
-		if (BNode.HeatLList)
+		if (bnode.HeatLList)
 		{
-			TObject **lObj = BNode.HeatLList->First;
-			TObject **&LastObj = BNode.HeatLList->Last;
-			for ( ; lObj<LastObj; lObj++ )
+			const_for (bnode.HeatLList, llobj)
 			{
-				TObject &Obj = **lObj;
-				dr_local = Obj - Vector(BNode.x, BNode.y);
-				Obj.v += Vector(Teilor1, Teilor2) + Vector(InfX, InfY) + SpeedSum(BNode, Obj) +
-							Vector(Vector(Teilor3, Teilor4)*dr_local, 
-									Vector(Teilor4, -Teilor3)*dr_local);
+				TObj &obj = **llobj;
+				dr_local = obj - TVec(bnode.x, bnode.y);
+				obj.v += TVec(Teilor1, Teilor2) + infspeed + SpeedSum(bnode, obj) +
+				         TVec(TVec(Teilor3,  Teilor4)*dr_local, 
+				              TVec(Teilor4, -Teilor3)*dr_local);
 			}
 		}
 	}
@@ -200,36 +182,32 @@ int CalcConvectiveFast()
 
 int CalcBoundaryConvective()
 {
-	TList<TObject> *vlist = ConvectiveFast_S->VortexList;
-	//TList<TObject> *hlist = ConvectiveFast_S->HeatList;
+	auto vlist = ConvectiveFast_S->VortexList;
+	//TList<TObj> *hlist = ConvectiveFast_S->HeatList;
 
 	if (!vlist) { return -1; }
 
-	TObject *Obj = vlist->First;
-	TObject *&LastObj = vlist->Last;
-	for( ; Obj<LastObj; Obj++ )
+	const_for(vlist, lobj)
 	{
-		Obj->v += BoundaryConvective(*Obj)*C_1_2PI;
+		lobj->v += BoundaryConvective(*lobj)*C_1_2PI;
 	}
 
 	return 0;
 }
 
 namespace {
-Vector BoundaryConvective(const Vector &p)
+TVec BoundaryConvective(const TVec &p)
 {
-	Vector dr, res(0, 0);
-	TList<TAttach> *alist = ConvectiveFast_S->Body->AttachList;
+	TVec dr, res(0, 0);
+	auto alist = ConvectiveFast_S->Body->AttachList;
+	double rotspeed = ConvectiveFast_S->Body->RotationVVar;
 
-	TAttach *Att = alist->First;
-	TAttach *&LastAtt = alist->Last;
-	for ( ; Att<LastAtt; Att++ )
+	if (rotspeed)
+	const_for(alist, latt)
 	{
-		dr = p - *Att;
-		res += (dr*Att->q + rotl(dr)*Att->g) * (ConvectiveFast_S->Body->RotationVVar/( dr.abs2() + ConvectiveFast_Eps ));
-		//FIXME signs
+		dr = p - *latt;
+		res += (dr*latt->q + rotl(dr)*latt->g) * (rotspeed/( dr.abs2() + ConvectiveFast_Eps ));
 	}
-	//if (res.rx!=res.rx) { cout << p << endl; }
 	return res;
 }}
 
@@ -241,7 +219,7 @@ int CalcCirculationFast()
 	FillRightCol();
 	SolveMatrix();
 
-	TObject *NakedBodyList = ConvectiveFast_S->Body->List->First;
+	auto NakedBodyList = ConvectiveFast_S->Body->List->begin();
 	for (int i=0; i< N; i++)
 	{
 		NakedBodyList[i].g = Solution[i];
@@ -253,75 +231,65 @@ int CalcCirculationFast()
 
 namespace {
 //inline
-double ObjectInfluence(TObject &obj, TObject &seg1, TObject &seg2, double eps)
+double ObjectInfluence(TObj &obj, TObj &seg1, TObj &seg2, double eps)
 {
-	Vector res;
+	TVec res;
 	fortobjectinfluence_(&obj.rx, &obj.ry, &seg1.rx, &seg1.ry, &seg2.rx, &seg2.ry, &res.rx, &res.ry, &eps);
-	Vector dl=seg2-seg1;
+	TVec dl=seg2-seg1;
 	return -(rotl(res)*dl)/dl.abs()*C_1_2PI;
 	//FIXME kill fortran
 }}
 
 namespace {
 //inline
-double NodeInfluence(TNode &Node, TObject &seg1, TObject &seg2, double eps)
+double NodeInfluence(TNode &Node, TObj &seg1, TObj &seg2, double eps)
 {
-	Vector res(0, 0), tmp;
+	TVec res(0, 0), tmp;
 
-	TNode** lNode = Node.NearNodes->First;
-	TNode** &LastNode = Node.NearNodes->Last;
-	for ( ; lNode<LastNode; lNode++ )
+	const_for(Node.NearNodes, llnnode)
 	{
-		TList<TObject*> *vList = (**lNode).VortexLList;
-		if ( !vList ) { continue; }
+		auto vlist = (**llnnode).VortexLList;
+		if ( !vlist ) { continue; }
 
-		TObject** lVort = vList->First;
-		TObject** LastVort = vList->Last;
-		for ( ; lVort<LastVort; lVort++ )
+		const_for (vlist, llobj)
 		{
-			TObject &Vort = **lVort;
-			fortobjectinfluence_(&Vort.rx, &Vort.ry, &seg1.rx, &seg1.ry, &seg2.rx, &seg2.ry, &tmp.rx, &tmp.ry, &eps);
-			res+= tmp*Vort.g;
+			TObj &obj = **llobj;
+			fortobjectinfluence_(&obj.rx, &obj.ry, &seg1.rx, &seg1.ry, &seg2.rx, &seg2.ry, &tmp.rx, &tmp.ry, &eps);
+			res+= tmp*obj.g;
 		}
 	}
 
-	TNode** lFNode = Node.FarNodes->First;
-	TNode** LastFNode = Node.FarNodes->Last;
-	for ( ; lFNode<LastFNode; lFNode++ )
+	const_for(Node.FarNodes, llfnode)
 	{
-		TNode &FNode = **lFNode;
+		TNode &fnode = **llfnode;
 
-		fortobjectinfluence_(&FNode.CMp.rx, &FNode.CMp.ry, &seg1.rx, &seg1.ry, &seg2.rx, &seg2.ry, &tmp.rx, &tmp.ry, &eps);
-		res+= tmp*FNode.CMp.g;
-		fortobjectinfluence_(&FNode.CMm.rx, &FNode.CMm.ry, &seg1.rx, &seg1.ry, &seg2.rx, &seg2.ry, &tmp.rx, &tmp.ry, &eps);
-		res+= tmp*FNode.CMm.g;
+		fortobjectinfluence_(&fnode.CMp.rx, &fnode.CMp.ry, &seg1.rx, &seg1.ry, &seg2.rx, &seg2.ry, &tmp.rx, &tmp.ry, &eps);
+		res+= tmp*fnode.CMp.g;
+		fortobjectinfluence_(&fnode.CMm.rx, &fnode.CMm.ry, &seg1.rx, &seg1.ry, &seg2.rx, &seg2.ry, &tmp.rx, &tmp.ry, &eps);
+		res+= tmp*fnode.CMm.g;
 	}
 
-	Vector dl=seg2-seg1;
+	TVec dl=seg2-seg1;
 	return -(rotl(res)*dl)/dl.abs()*C_1_2PI;
 }}
 
 namespace {
 //inline
-double AttachInfluence(TObject &seg1, TObject &seg2, const TAttach &center, double eps)
+double AttachInfluence(TObj &seg1, TObj &seg2, const TAtt &center, double eps)
 {
-	TList<TAttach> *alist = ConvectiveFast_S->Body->AttachList;
-	if (!alist->size) { return 0; }
+	auto alist = ConvectiveFast_S->Body->AttachList;
+	if (!alist->size()) { return 0; }
 
-	double resx=0, resy=0;
-	double tmpx, tmpy;
+	TVec res(0, 0), tmp;
 
-	TAttach* lAtt = alist->First;
-	TAttach* &LastAtt = alist->Last;
-	for ( ; lAtt<LastAtt; lAtt++ )
+	const_for(alist, latt)
 	{
-		if (lAtt == &center) continue;
-		fortobjectinfluence_(&lAtt->rx, &lAtt->ry, &seg1.rx, &seg1.ry, &seg2.rx, &seg2.ry, &tmpx, &tmpy, &eps);
-		resx+= tmpx*lAtt->g+tmpy*lAtt->q; resy+= tmpy*lAtt->g-tmpx*lAtt->q;
+		if (latt == &center) continue;
+		fortobjectinfluence_(&latt->rx, &latt->ry, &seg1.rx, &seg1.ry, &seg2.rx, &seg2.ry, &tmp.rx, &tmp.ry, &eps);
+		res+= tmp*latt->g - rotl(tmp)*latt->q;
 	}
-	double dx=seg2.rx-seg1.rx;
-	double dy=seg2.ry-seg1.ry;
-	return (resy*dx - resx*dy)/sqrt(dx*dx+dy*dy)*C_1_2PI - center.q*0.5; //FIXME sign
+	TVec dl=seg2-seg1;
+	return -(rotl(res)*dl)/dl.abs()*C_1_2PI - center.q*0.5; //FIXME sign
 	//FIXME kill fortran
 }}
 
@@ -333,18 +301,18 @@ int FillMatrix()
 	//BodyMatrix[N*i+j]
 	//RightCol[i]
 
-	TObject *BVort = ConvectiveFast_S->Body->List->First;
-	TObject *&FirstBVort = ConvectiveFast_S->Body->List->First;
-	TObject *&LastBVort = ConvectiveFast_S->Body->List->Last;
+	auto BVort = ConvectiveFast_S->Body->List->begin();
+	auto FirstBVort = ConvectiveFast_S->Body->List->begin();
+	auto LastBVort = ConvectiveFast_S->Body->List->end();
 	for ( ; BVort<LastBVort; BVort++)
 	{
 		//temporarily vort->g stores eps info.
-		Vector dr1 = *BVort - ( (BVort>FirstBVort)?*(BVort-1):*(LastBVort-1) );
-		Vector dr2 = *BVort - ( (BVort<(LastBVort-1))?*(BVort+1):*FirstBVort );
+		TVec dr1 = *BVort - ( (BVort>FirstBVort)?*(BVort-1):*(LastBVort-1) );
+		TVec dr2 = *BVort - ( (BVort<(LastBVort-1))?*(BVort+1):*FirstBVort );
 		BVort->g = (dr1.abs() + dr2.abs())*0.25;
 	}
 
-	TObject *NakedBodyList = ConvectiveFast_S->Body->List->First;
+	auto NakedBodyList = ConvectiveFast_S->Body->List->begin();
 	for (i=0; i<imax; i++)
 	{
 		double *RowI = BodyMatrix + N*i;
@@ -366,27 +334,29 @@ int FillMatrix()
 
 int FillRightCol()
 {
-	TObject *NakedBodyList = ConvectiveFast_S->Body->List->First;
-	TList<TAttach> *alist = ConvectiveFast_S->Body->AttachList;
+	auto NakedBodyList = ConvectiveFast_S->Body->List->begin();
+	auto alist = ConvectiveFast_S->Body->AttachList;
 	int imax = N-1;
+
+	#pragma omp parallel for
 	for (int i=0; i<imax; i++)
 	{
-		TNode* Node = FindNode(NakedBodyList[i].rx, NakedBodyList[i].ry);
-		if (!Node) { cerr << "fail" << endl; return -1;}
+		TNode* Node = FindNode(NakedBodyList[i]);
+		if (!Node) { continue; }
 
-		Vector SegDl = NakedBodyList[i+1] - NakedBodyList[i];
+		TVec SegDl = NakedBodyList[i+1] - NakedBodyList[i];
 
 		RightCol[i] = -ConvectiveFast_S->InfSpeedYVar*SegDl.rx + ConvectiveFast_S->InfSpeedXVar*SegDl.ry -
 		               NodeInfluence(*Node, NakedBodyList[i], NakedBodyList[i+1], ConvectiveFast_Eps) -
-		               ((!ConvectiveFast_S->Body->RotationVVar)?0:AttachInfluence(NakedBodyList[i], NakedBodyList[i+1], alist->item(i), ConvectiveFast_Eps)*
+		               ((!ConvectiveFast_S->Body->RotationVVar)?0:AttachInfluence(NakedBodyList[i], NakedBodyList[i+1], alist->at(i), ConvectiveFast_Eps)*
 		               ConvectiveFast_S->Body->RotationVVar);
 	}
 
 	double tmpgsum =0;
 	if (ConvectiveFast_S->Body->RotationVVar)
 	{
-		TAttach *lAtt = alist->First;
-		TAttach *lLastAtt = alist->Last;
+		auto lAtt = alist->begin();
+		auto lLastAtt = alist->end();
 		for ( ; lAtt<lLastAtt; lAtt++ )
 		{ tmpgsum += lAtt->g; }
 	}

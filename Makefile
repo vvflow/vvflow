@@ -16,12 +16,13 @@
 #                   VARIABLES                    #
 #________________________________________________#
 
-CC		= icc
+CC		= g++
 FORT 	= gcc -xf95
 
 parts 	:= core modules
-core_objects 	:= space tree body
-modules_objects := convectivefast flowmove diffmergefast merge objectinfluence
+core_objects 	:= space body tree
+modules_objects := convective convectivefast objectinfluence flowmove diffmergefast
+#merge
 VPATH := $(addprefix source/, $(parts) ) 
 # VPATH is special make var 
 
@@ -60,7 +61,7 @@ uninstall:
 #________________________________________________#
 
 bin/%.o: %.cpp headers/%.h headers/elementary.h | bin/
-	$(CC) $< $(optimization) $(warnings) $(addprefix -I, $(INCLUDE)) -c -o $@
+	$(CC) $< $(optimization) $(warnings) $(addprefix -I, $(INCLUDE)) -c -o $@ -std=c++0x
 
 bin/%.o: %.c headers/%.h | bin/
 	$(CC) $< $(optimization) $(warnings) $(addprefix -I, $(INCLUDE)) -c -o $@
@@ -79,5 +80,9 @@ bin/:
 
 $(INSTALLDIR)/%:
 	mkdir $@ -p
+
+export_vars:
+	export VVHDdir="$(INSTALLDIR)"
+	export VVHD="-I $VVHDdir/include -L $VVHDdir/lib -lVVHDmodules -lVVHDcore"
 
 

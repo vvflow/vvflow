@@ -12,7 +12,7 @@ Space *Convective_S;
 double Convective_Eps;
 
 inline
-Vector BioSavar(const TObject &obj, const Vector &p);
+TVec BioSavar(const TObj &obj, const TVec &p);
 
 } //end of namespace
 
@@ -27,21 +27,19 @@ int InitConvective(Space *sS, double sEps)
 
 namespace {
 inline
-Vector BioSavar(const TObject &obj, const Vector &p)
+TVec BioSavar(const TObj &obj, const TVec &p)
 {
-	Vector dr = p - obj;
+	TVec dr = p - obj;
 	return rotl(dr)*(obj.g / (dr.abs2() + Convective_Eps) );
 }}
 
-Vector SpeedSum(TList<TObject> *List, Vector p)
+TVec SpeedSum(vector<TObj> *list, TVec p)
 {
-	Vector dr, res(0, 0);
+	TVec dr, res(0, 0);
 
-	TObject *Obj = List->First;
-	TObject *&LastObj = List->Last;
-	for ( ; Obj<LastObj; Obj++ )
+	const_for(list, lobj)
 	{
-		res+= BioSavar(*Obj, p);
+		res+= BioSavar(*lobj, p);
 	}
 
 	res *= C_1_2PI;
@@ -56,16 +54,12 @@ int CalcConvective()
 	//double &InfY = Convective_S->InfSpeedYVar;
 	//double RotationG = Convective_S->RotationVVar * C_2PI;
 
-	TList<TObject> *&vlist = Convective_S->VortexList;
+	auto list = Convective_S->VortexList;
+	if (!list) return -1;
 
-	if (Convective_S->VortexList)
+	const_for(list, lobj)
 	{
-		TObject *Obj = Convective_S->VortexList->First;
-		TObject *&LastObj = Convective_S->VortexList->Last;
-		for( ; Obj<LastObj; Obj++ )
-		{
-			Obj->v += SpeedSum(vlist, *Obj);
-		}
+		lobj->v += SpeedSum(list, *lobj);
 	}
 
 	return 0;
@@ -79,13 +73,13 @@ int CalcCirculation()
 	double TwoInfY = 2*Convective_S->InfSpeedYVar;
 	double RotationG = Convective_S->RotationVVar * C_2PI;
 
-	TList<TObject> *VList = Convective_S->VortexList;
+	vector<TObj> *VList = Convective_S->VortexList;
 	double SpeedSumResX, SpeedSumResY;
 	double dfi = C_2PI/Convective_S->BodyList->size;
 	double CirculationAdditionDueToRotation = RotationG/Convective_S->BodyList->size;
 
-	TObject *BVort = Convective_S->BodyList->First;
-	TObject *&LastBVort = Convective_S->BodyList->Last;
+	TObj *BVort = Convective_S->BodyList->First;
+	TObj *&LastBVort = Convective_S->BodyList->Last;
 	for( ; BVort<LastBVort; BVort++ )
 	{
 		SpeedSum(VList, BVort->rx, BVort->ry, 1, 1, SpeedSumResX, SpeedSumResY);
