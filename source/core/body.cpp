@@ -46,11 +46,13 @@ void TBody::Rotate(double angle)
 	UpdateAttach();
 }
 
-bool TBody::PointIsValid(TVec p)
+TAtt* TBody::PointIsInvalid(TVec p)
 {
-	if (!this) return true;
+	if (!this) return NULL;
 
 	bool res = !InsideIsValid;
+	TAtt *nearest = NULL;
+	double nearest_dr2 = 0;
 
 	for (auto i = List->begin(), j = List->end()-1; i<List->end(); j=i++)
 	{
@@ -63,7 +65,17 @@ bool TBody::PointIsValid(TVec p)
 		)) res = !res;
 	}
 
-	return res;
+	if (!res)
+	const_for(AttachList, latt)
+	{
+		if ((*latt-p).abs2()<nearest_dr2)
+		{
+			nearest = latt;
+			nearest_dr2 = (*latt-p).abs2();
+		}
+	}
+
+	return nearest;
 }
 
 double TBody::SurfaceLength()
@@ -73,10 +85,10 @@ double TBody::SurfaceLength()
 
 	const_for (List, obj)
 	{
-		res += abs(*obj - *(obj+1));
+		res += (*obj - *(obj+1)).abs();
 	}
 
-	res += abs(*List->begin() - *(List->end()-1));
+	res += (*List->begin() - *(List->end()-1)).abs();
 
 	return res;
 }
@@ -115,6 +127,16 @@ void TBody::UpdateAttach()
 		att.q =     (att-RotationAxis)*dr;
 
 		AttachList->push_back(att);
+	}
+}
+
+void TBody::calc_pressure()
+{
+	double res =0;
+	const_for(AttachList, latt)
+	{
+		res+= latt->gsum;
+		latt->pres = res;
 	}
 }
 

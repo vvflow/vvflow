@@ -25,6 +25,8 @@ class list
 		T* end();
 		long size();
 		long size_safe();
+		T* next(T* item);
+		T* prev(T* item);
 
 	private:
 		long size_;
@@ -82,6 +84,12 @@ long list<T>::size() { return size_; }
 
 template <class T> inline
 long list<T>::size_safe() { return this ? size_ : 0; }
+
+template <class T> inline
+T* list<T>::next(T* item) { return (item == end_-1) ? begin_ : item+1; }
+
+template <class T> inline
+T* list<T>::prev(T* item) { return (item == begin_) ? end_-1 : item-1; }
 
 
 template <class T>

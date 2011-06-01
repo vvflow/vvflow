@@ -17,6 +17,7 @@ namespace {
 Space *DiffMergeFast_S;
 double DiffMergeFast_Re;
 
+double _1_EpsRestriction;
 double EpsRestriction;
 double DiffMergeFast_MergeSqEps;
 int DiffMergeFast_MergedV;
@@ -35,6 +36,7 @@ int InitDiffMergeFast(Space *sS, double sRe, double sMergeSqEps)
 	DiffMergeFast_Re = sRe;
 	DiffMergeFast_MergeSqEps = sMergeSqEps;
 	EpsRestriction = (sS->Body) ? 0.6*sS->Body->AverageSegmentLength() : 0;
+	_1_EpsRestriction = 1./EpsRestriction;
 	return 0;
 }
 
@@ -157,7 +159,7 @@ void Division(const TNode &Node, const TObj &v, double _1_eps, TVec* ResP, doubl
 			if ( dr.iszero() ) { continue; }
 			double drabs = dr.abs();
 
-			double exparg = -drabs*_1_eps; //FIXME is it useful?
+			double exparg = -drabs*_1_eps;
 			if ( exparg > ExpArgRestriction )
 			{
 				double tmp = Obj.g * expdef(exparg); // look for define
@@ -202,6 +204,11 @@ void SegmentInfluence(const TObj &v, const TObj &pk, const TObj &pk1,
 	TVec dS = rotl(pk1 - pk);
 	*i3 += dS * expres;
 	*i0 += (drabs*_1_eps+1)/drabs2*(dr*dS)*expres;
+
+	exparg = -drabs*_1_EpsRestriction;
+	if ( exparg < ExpArgRestriction ) {return;}
+	TAtt* att = &DiffMergeFast_S->Body->AttachList->at(&pk-DiffMergeFast_S->Body->List->begin());
+	att->fric += v.g * expdef(exparg);
 }}
 
 int CalcVortexDiffMergeFast()

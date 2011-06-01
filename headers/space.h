@@ -68,6 +68,11 @@ void Space::FinishStep()
 	if ( InfSpeedX ) BodyX-= InfSpeedXVar*dt;
 	if ( InfSpeedY ) BodyY-= InfSpeedYVar*dt;
 	Time+= dt;
+
+	const_for(Body->AttachList, latt)
+	{
+		latt->pres = latt->gsum = latt->fric = 0;
+	}
 }
 
 #endif /*SPACE_H_*/

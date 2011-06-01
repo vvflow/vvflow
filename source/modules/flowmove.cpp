@@ -47,14 +47,20 @@ int MoveAndClean(bool remove)
 		{
 			*Obj += Obj->v*FlowMove_dt; Obj->v.zero();
 
-			bool inbody = remove && !FlowMove_S->Body->PointIsValid(*Obj);
-			bool toosmall = ( fabs(Obj->g) < FlowMove_RemoveEps );
-			if ( inbody || toosmall)
+			TAtt* invalid_inbody = FlowMove_S->Body->PointIsInvalid(*Obj);
+			if ( remove && invalid_inbody )
 			{
 				FlowMove_S->Body->Force -= rotl(*Obj) * Obj->g;
+				invalid_inbody->gsum -= Obj->g;
 				FlowMove_CleanedV++;
 				vlist->erase(Obj);
-				//Obj--;
+				Obj--;
+			}
+			if ( fabs(Obj->g) < FlowMove_RemoveEps )
+			{
+				//FlowMove_CleanedV++;
+				vlist->erase(Obj);
+				Obj--;
 			}
 		}
 	}
@@ -71,15 +77,15 @@ int MoveAndClean(bool remove)
 		{
 			*Obj += Obj->v*FlowMove_dt; Obj->v.zero();
 
-			bool inbody = remove  && FlowMove_S->Body->PointIsValid(*Obj);
+			TAtt* invalid_inbody = FlowMove_S->Body->PointIsInvalid(*Obj);
 			int* inlayer = FlowMove_S->Body->ObjectIsInHeatLayer(*Obj);
-			if ( inbody )
+			if ( remove && invalid_inbody )
 			{
 				FlowMove_CleanedH++;
-				if (inlayer) { (*inlayer)++; }
 				hlist->erase(Obj);
 				Obj--;
-			}
+			} else
+			if (inlayer) { (*inlayer)++; }
 		}
 	}
 
@@ -104,6 +110,8 @@ int VortexShed()
 		{
 			ObjCopy = *bvort;
 			FlowMove_S->Body->Force += rotl(ObjCopy) * ObjCopy.g;
+			FlowMove_S->Body->AttachList->at(            bvort  - blist->begin()).gsum+= 0.5*ObjCopy.g;
+			FlowMove_S->Body->AttachList->at(blist->prev(bvort) - blist->begin()).gsum+= 0.5*ObjCopy.g;
 			vlist->push_back(ObjCopy);
 		}
 	}
