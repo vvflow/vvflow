@@ -17,6 +17,7 @@ const double C_2_PI = 	2./C_PI;
 /******************* Vectors *******************/
 
 inline double sign(double x) { return (x>0) ? 1 : ((x<0) ? -1 : 0); }
+inline double sqr(double x) { return x*x; }
 
 class TVec
 {
@@ -58,6 +59,7 @@ class TObj: public TVec
 	public:
 		TVec v;
 		double g;
+		double _1_eps;
 
 		TObj() {}
 		TObj(double rx_, double ry_, double g_):TVec(rx_, ry_) { g=g_; v.zero();}
