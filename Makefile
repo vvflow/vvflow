@@ -16,8 +16,8 @@
 #                   VARIABLES                    #
 #________________________________________________#
 
-CC		= g++
-FORT 	= gcc -xf95
+CC		= icc -O3 -g -openmp 
+FORT 	= gcc -xf95 -O3
 
 parts 	:= core modules
 core_objects 	:= space body tree
@@ -26,7 +26,7 @@ modules_objects := convective convectivefast objectinfluence flowmove diffmergef
 VPATH := $(addprefix source/, $(parts) ) 
 # VPATH is special make var 
 
-optimization 	:= -O3 -g
+optimization 	:= 
 warnings 		:= -Wall
 INCLUDE 		:= headers/
 
