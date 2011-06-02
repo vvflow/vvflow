@@ -48,7 +48,7 @@ class Space
 		double gmax();
 		TVec HydroDynamicMomentum();
 
-	private:
+	public:
 		int Print(vector<TObj> *list, std::ostream& os);
 		int Print(vector<TObj> *list, const char* format); //format is used for sprintf(filename, "format", time)
 };

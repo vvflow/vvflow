@@ -1,7 +1,8 @@
 #include "body.h"
-#include "stdio.h"
-#include "iostream"
-#include "math.h"
+#include <stdio.h>
+#include <iostream>
+#include <limits>
+#include <math.h>
 using namespace std;
 
 TBody::TBody(double (*sRotationV)(double Time),
@@ -30,6 +31,7 @@ int TBody::LoadFromFile(const char* filename)
 
 	fclose(fin);
 	InsideIsValid = isInsideValid();
+	UpdateAttach();
 	return 0;
 }
 
@@ -50,9 +52,9 @@ TAtt* TBody::PointIsInvalid(TVec p)
 {
 	if (!this) return NULL;
 
-	bool res = !InsideIsValid;
+	bool res = InsideIsValid;
 	TAtt *nearest = NULL;
-	double nearest_dr2 = 0;
+	double nearest_dr2 = 1E10;
 
 	for (auto i = List->begin(), j = List->end()-1; i<List->end(); j=i++)
 	{
@@ -65,7 +67,7 @@ TAtt* TBody::PointIsInvalid(TVec p)
 		)) res = !res;
 	}
 
-	if (!res)
+	if (res)
 	const_for(AttachList, latt)
 	{
 		if ((*latt-p).abs2()<nearest_dr2)
@@ -91,6 +93,11 @@ double TBody::SurfaceLength()
 	res += (*List->begin() - *(List->end()-1)).abs();
 
 	return res;
+}
+
+TAtt* TBody::att(const TObj* obj)
+{
+	return &AttachList->at(obj - List->begin());
 }
 
 inline double atan2(const TVec &p)

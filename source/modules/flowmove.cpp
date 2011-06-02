@@ -110,8 +110,8 @@ int VortexShed()
 		{
 			ObjCopy = *bvort;
 			FlowMove_S->Body->Force += rotl(ObjCopy) * ObjCopy.g;
-			FlowMove_S->Body->AttachList->at(            bvort  - blist->begin()).gsum+= 0.5*ObjCopy.g;
-			FlowMove_S->Body->AttachList->at(blist->prev(bvort) - blist->begin()).gsum+= 0.5*ObjCopy.g;
+			FlowMove_S->Body->att(            bvort )->gsum+= 0.5*ObjCopy.g;
+			FlowMove_S->Body->att(blist->prev(bvort))->gsum+= 0.5*ObjCopy.g;
 			vlist->push_back(ObjCopy);
 		}
 	}

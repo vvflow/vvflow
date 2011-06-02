@@ -30,6 +30,7 @@ class TBody
 
 		vector<TObj> *List;
 		vector<TAtt> *AttachList;
+		TAtt* att(const TObj* obj); //returns attach next to the obj
 		bool InsideIsValid;
 		bool isInsideValid();
 		TVec RotationAxis;

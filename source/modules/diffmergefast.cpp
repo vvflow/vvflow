@@ -5,7 +5,7 @@
 #define sqrtdef(x) sqrt(x)
 
 const double S1Restriction = 1E-6;
-const double ExpArgRestriction = -8.;
+const double ExpArgRestriction = -12.;
 
 #include <iostream>
 using namespace std;
@@ -207,8 +207,7 @@ void SegmentInfluence(const TObj &v, const TObj &pk, const TObj &pk1,
 
 	exparg = -drabs*_1_EpsRestriction;
 	if ( exparg < ExpArgRestriction ) {return;}
-	TAtt* att = &DiffMergeFast_S->Body->AttachList->at(&pk-DiffMergeFast_S->Body->List->begin());
-	att->fric += v.g * expdef(exparg);
+	DiffMergeFast_S->Body->att(&pk)->fric += v.g * expdef(exparg);
 }}
 
 int CalcVortexDiffMergeFast()
