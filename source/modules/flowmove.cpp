@@ -54,7 +54,7 @@ int MoveAndClean(bool remove)
 				FlowMove_S->Body->Force -= rotl(*Obj) * Obj->g;
 				FlowMove_CleanedV++;
 				vlist->erase(Obj);
-				//Obj--;
+				Obj--;
 			}
 		}
 	}

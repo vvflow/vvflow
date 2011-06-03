@@ -32,7 +32,7 @@ void InitDiffusiveFast(Space *sS, double sRe)
 	Nyu = 1/sRe;
 }
 
-void CalcVortexDiffMergeFast()
+void CalcVortexDiffusiveFast()
 {
 	if (!S) {cerr << "CalcVortexDiffMergeFast() is called before initialization"
 	              << endl; return; }
@@ -80,10 +80,10 @@ void CalcVortexDiffMergeFast()
 
 			if ( sign(S1) != sign(obj) ) { S1 = obj.g; }
 
-			//double multiplier = obj._1_eps/(Re*S1);
-			//double S2abs = S2.abs2();
-			//if (S2abs > 100) { multiplier*=10/sqrtdef(S2abs); }
-			obj.v += obj._1_eps/(Re*S1) * S2;
+			double multiplier = obj._1_eps/(Re*S1);
+			double S2abs = S2.abs2();
+			if (S2abs > 100) { multiplier*=10/sqrt(S2abs); }
+			obj.v += multiplier * S2;
 			obj.v += (sqr(obj._1_eps)/(Re*(C_2PI-S0))) * S3;
 		}
 	}

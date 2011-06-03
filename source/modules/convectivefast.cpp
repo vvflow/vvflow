@@ -97,6 +97,7 @@ TVec SpeedSum(const TNode &Node, const TVec &p)
 
 		const_for (vlist, llobj)
 		{
+			if (!*llobj) continue;
 			res+= BioSavar(**llobj, p); 
 		}
 	}
@@ -156,6 +157,7 @@ int CalcConvectiveFast()
 		{
 			const_for (bnode.VortexLList, llobj)
 			{
+				if (!*llobj) {continue;}
 				TObj &obj = **llobj;
 				dr_local = obj - TVec(bnode.x, bnode.y);
 				obj.v += TVec(Teilor1, Teilor2) + infspeed + SpeedSum(bnode, obj) +
@@ -253,6 +255,7 @@ double NodeInfluence(TNode &Node, TObj &seg1, TObj &seg2, double eps)
 
 		const_for (vlist, llobj)
 		{
+			if (!*llobj) {continue;}
 			TObj &obj = **llobj;
 			fortobjectinfluence_(&obj.rx, &obj.ry, &seg1.rx, &seg1.ry, &seg2.rx, &seg2.ry, &tmp.rx, &tmp.ry, &eps);
 			res+= tmp*obj.g;
