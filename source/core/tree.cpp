@@ -12,6 +12,7 @@ namespace {
 Space *Tree_S;
 int Tree_FarCriteria;
 double Tree_MinNodeSize;
+double Tree_MaxNodeSize;
 //double Tree_MaxNodeSize;
 
 TNode *Tree_RootNode;
@@ -42,19 +43,19 @@ node::~node()
 
 void TNode::DivideNode()
 {
-	if ( (h < Tree_MinNodeSize) || (w < Tree_MinNodeSize) ) 
+	if ( max(h,w) < Tree_MaxNodeSize )
+	if ( min(h,w) < Tree_MinNodeSize )
 	{
 		Tree_BottomNodes->push_back(this);
 		return;
 	}
 
-	#define max(a, b) ( (a) > (b) ) ? (a) : (b)
 	long MaxListSize = max( max( 
 	                   VortexLList->size_safe(),
 	                   BodyLList->size_safe()),
 	                   HeatLList->size_safe());
-	#undef max
 
+	if ( max(h,w) < Tree_MaxNodeSize )
 	if ( MaxListSize < Tree_MaxListSize ) //look for define
 	{
 		Tree_BottomNodes->push_back(this);
@@ -100,8 +101,6 @@ void TNode::Stretch()
 		tr = bl = **HeatLList->begin();
 	}
 
-	#define min(a, b) (a<b) ? a : b
-	#define max(a, b) (a>b) ? a : b
 	#define ResizeNode(List) \
 		if ( List ) \
 		{ \
@@ -119,8 +118,6 @@ void TNode::Stretch()
 	ResizeNode(BodyLList);
 	ResizeNode(HeatLList);
 	#undef ResizeNode
-	#undef min
-	#undef max
 
 	x = (bl+tr).rx * 0.5;
 	y = (bl+tr).ry * 0.5;
@@ -221,11 +218,12 @@ void TNode::FindNearNodes(TNode* top)
 
 /************************** REST SOURCE ***************************************/
 
-void InitTree(Space *sS, int sFarCriteria, double sMinNodeSize)
+void InitTree(Space *sS, int sFarCriteria, double sMinNodeSize, double sMaxNodeSize)
 {
 	Tree_S = sS;
 	Tree_FarCriteria = sFarCriteria;
 	Tree_MinNodeSize = sMinNodeSize;
+	Tree_MaxNodeSize = sMaxNodeSize;
 	Tree_RootNode = NULL;
 	Tree_BottomNodes = new vector<TNode*>();
 }
@@ -257,11 +255,21 @@ void BuildTree(bool includeV, bool includeB, bool includeH)
 	Tree_RootNode->DivideNode(); //recursive
 
 	Tree_RootNode->CalculateCMass();
-	const_for (Tree_BottomNodes, bnode)
+	const_for (Tree_BottomNodes, llbnode)
 	{
-		(*bnode)->NearNodes = new vector<TNode*>();
-		(*bnode)->FarNodes = new vector<TNode*>();
-		(*bnode)->FindNearNodes(Tree_RootNode);
+		TNode &bnode = **llbnode;
+		if ( bnode.VortexLList && (bnode.VortexLList->size_safe() < 3) &&
+		    !bnode.BodyLList && !bnode.HeatLList )
+		{
+			const_for(bnode.VortexLList, llobj) { (**llobj).g = 0; }
+			delete bnode.VortexLList; bnode.VortexLList=NULL;
+			Tree_BottomNodes->erase(llbnode);
+			llbnode--;
+			continue;
+		}
+		bnode.NearNodes = new vector<TNode*>();
+		bnode.FarNodes = new vector<TNode*>();
+		bnode.FindNearNodes(Tree_RootNode);
 	}
 }
 

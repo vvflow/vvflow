@@ -18,6 +18,8 @@ const double C_2_PI = 	2./C_PI;
 
 inline double sign(double x) { return (x>0) ? 1 : ((x<0) ? -1 : 0); }
 inline double sqr(double x) { return x*x; }
+inline double max(double a, double b) { return(a>b)?a:b; }
+inline double min(double a, double b) { return(a<b)?a:b; }
 
 class TVec
 {

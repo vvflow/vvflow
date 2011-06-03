@@ -1,6 +1,7 @@
 #ifndef TREE_H_
 #define TREE_H_
 #include "core.h"
+#include <float.h>
 
 class node
 {
@@ -33,7 +34,7 @@ class node
 };
 typedef node TNode;
 
-void InitTree(Space *sS, int sFarCriteria, double sMinNodeSize);
+void InitTree(Space *sS, int sFarCriteria, double sMinNodeSize, double sMaxNodeSize = DBL_MAX);
 void BuildTree(bool IncludeVortexes, bool IncludeBody, bool IncludeHeat);
 void DestroyTree();
 
