@@ -34,7 +34,7 @@ void InitDiffusiveFast(Space *sS, double sRe)
 
 void CalcVortexDiffusiveFast()
 {
-	if (!S) {cerr << "CalcVortexDiffMergeFast() is called before initialization"
+	if (!S) {cerr << "CalcVortexDiffusiveFast() is called before initialization"
 	              << endl; return; }
 	if ( !S->VortexList ) return;
 

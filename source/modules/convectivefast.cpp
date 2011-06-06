@@ -5,18 +5,18 @@ using namespace std;
 
 #include "convectivefast.h"
 
-/********************* HEADER ****************************/
+/********************************** HEADER ************************************/
 
 namespace {
 
-Space *ConvectiveFast_S;
-double ConvectiveFast_Eps;
+Space *S;
+double Rd2; //sqr(radius of discrete)
 
 inline
 TVec BioSavar(const TObj &obj, const TVec &p);
 TVec SpeedSum(const TNode &Node, const TVec &p);
 
-TVec BoundaryConvective(const TVec &p);
+TVec BoundaryConvective(const TBody &b, const TVec &p);
 
 int N; // BodySize;
 double *BodyMatrix;
@@ -40,25 +40,24 @@ void SaveMatrix(double *matrix, const char* filename);
 int LoadMatrix_bin(double *matrix, const char* filename);
 void SaveMatrix_bin(double *matrix, const char* filename);
 
-} //end of namespace
+}
 
-double *MatrixLink() { return BodyMatrix; }
+/****************************** MAIN FUNCTIONS ********************************/
 
-/********************* SOURCE *****************************/
-
-int InitConvectiveFast(Space *sS, double sEps)
+void InitConvectiveFast(Space *sS, double sRd2)
 {
-	ConvectiveFast_S = sS;
-	ConvectiveFast_Eps = sEps;
+	S = sS;
+	Rd2 = sRd2;
 
-	N = sS->Body->List->size();
+	N = 0; const_for(sS->BodyList, llbody){ N+=(**llbody).List->size(); }
 	BodyMatrix = (double*)malloc(N*N*sizeof(double));
 	InverseMatrix = (double*)malloc(N*N*sizeof(double));
 	RightCol = (double*)malloc(N*sizeof(double));
 	Solution = (double*)malloc(N*sizeof(double));
 	BodyMatrixOK = InverseMatrixOK = false;
-	return 0;
 }
+
+double *MatrixLink() { return BodyMatrix; }
 
 TVec SpeedSumFast(TVec p)
 {
@@ -81,7 +80,7 @@ inline
 TVec BioSavar(const TObj &obj, const TVec &p)
 {
 	TVec dr = p - obj;
-	return rotl(dr)*(obj.g / (dr.abs2() + ConvectiveFast_Eps) );
+	return rotl(dr)*(obj.g / (dr.abs2() + Rd2) );
 }}
 
 
@@ -106,15 +105,16 @@ TVec SpeedSum(const TNode &Node, const TVec &p)
 	return res;
 }}
 
-int CalcConvectiveFast()
+void CalcConvectiveFast()
 {
+	if (!S) {cerr << "CalcConvectiveFast() is called before initialization"
+	              << endl; return; }
+
 	double Teilor1, Teilor2, Teilor3, Teilor4;
 
-	TVec infspeed = TVec(ConvectiveFast_S->InfSpeedXVar,
-	                     ConvectiveFast_S->InfSpeedYVar);
-
 	auto BottomNodes = GetTreeBottomNodes();
-	if ( !BottomNodes ) return -1;
+	if (!BottomNodes) {cerr << "CalcConvectiveFast() is called before tree is built"
+	                        << endl; return; }
 
 	#pragma omp parallel for
 	const_for (BottomNodes, llbnode)
@@ -160,7 +160,7 @@ int CalcConvectiveFast()
 				if (!*llobj) {continue;}
 				TObj &obj = **llobj;
 				dr_local = obj - TVec(bnode.x, bnode.y);
-				obj.v += TVec(Teilor1, Teilor2) + infspeed + SpeedSum(bnode, obj) +
+				obj.v += TVec(Teilor1, Teilor2) + S->InfSpeed() + SpeedSum(bnode, obj) +
 				         TVec(TVec(Teilor3,  Teilor4)*dr_local, 
 				              TVec(Teilor4, -Teilor3)*dr_local);
 			}
@@ -172,48 +172,52 @@ int CalcConvectiveFast()
 			{
 				TObj &obj = **llobj;
 				dr_local = obj - TVec(bnode.x, bnode.y);
-				obj.v += TVec(Teilor1, Teilor2) + infspeed + SpeedSum(bnode, obj) +
+				obj.v += TVec(Teilor1, Teilor2) + S->InfSpeed() + SpeedSum(bnode, obj) +
 				         TVec(TVec(Teilor3,  Teilor4)*dr_local, 
 				              TVec(Teilor4, -Teilor3)*dr_local);
 			}
 		}
 	}
-
-	return 0;
 }
 
-int CalcBoundaryConvective()
+void CalcBoundaryConvective()
 {
-	auto vlist = ConvectiveFast_S->VortexList;
+	auto vlist = S->VortexList;
 	//TList<TObj> *hlist = ConvectiveFast_S->HeatList;
 
-	if (!vlist) { return -1; }
+	if (!vlist) { return; }
 
 	const_for(vlist, lobj)
 	{
-		lobj->v += BoundaryConvective(*lobj)*C_1_2PI;
+		const_for(S->BodyList, llbody)
+		{
+			lobj->v += BoundaryConvective(**llbody, *lobj)*C_1_2PI;
+		}
 	}
-
-	return 0;
 }
 
 namespace {
-TVec BoundaryConvective(const TVec &p)
+TVec BoundaryConvective(const TBody &b, const TVec &p)
 {
 	TVec dr, res(0, 0);
-	auto alist = ConvectiveFast_S->Body->AttachList;
-	double rotspeed = ConvectiveFast_S->Body->RotationVVar;
+	auto alist = b.AttachList;
+	double rotspeed = b.RotSpeed(S->Time);
+	if (!rotspeed) return res;
 
-	if (rotspeed)
 	const_for(alist, latt)
 	{
 		dr = p - *latt;
-		res += (dr*latt->q + rotl(dr)*latt->g) * (rotspeed/( dr.abs2() + ConvectiveFast_Eps ));
+		res += (dr*latt->q + rotl(dr)*latt->g) * (rotspeed/( dr.abs2() + Rd2 ));
+		if (latt->bc == bc::slip)
+		{
+			res += BioSavar(*b.next(b.obj(latt)), p);
+		}
 	}
+
 	return res;
 }}
 
-int CalcCirculationFast()
+void CalcCirculationFast()
 {
 	//if (!BodyMatrixOK)
 		//FillMatrix();
@@ -221,13 +225,14 @@ int CalcCirculationFast()
 	FillRightCol();
 	SolveMatrix();
 
-	auto NakedBodyList = ConvectiveFast_S->Body->List->begin();
-	for (int i=0; i< N; i++)
+	const_for (S->BodyList, llbody)
 	{
-		NakedBodyList[i].g = Solution[i];
+		TBody &body = **llbody;
+		const_for(body.List, lobj)
+		{
+			lobj->g = Solution[body.att(lobj)->i];
+		}
 	}
-
-	return 0;
 }
 
 
@@ -280,16 +285,18 @@ namespace {
 //inline
 double AttachInfluence(TObj &seg1, TObj &seg2, const TAtt &center, double eps)
 {
-	auto alist = ConvectiveFast_S->Body->AttachList;
-	if (!alist->size()) { return 0; }
+	TVec res(0,0), tmp;
 
-	TVec res(0, 0), tmp;
-
-	const_for(alist, latt)
+	const_for(S->BodyList, llbody)
 	{
-		if (latt == &center) continue;
-		fortobjectinfluence_(&latt->rx, &latt->ry, &seg1.rx, &seg1.ry, &seg2.rx, &seg2.ry, &tmp.rx, &tmp.ry, &eps);
-		res+= tmp*latt->g - rotl(tmp)*latt->q;
+		TBody &body = **llbody;
+		if (!body.AttachList->size_safe()) continue;
+		const_for(body.AttachList, latt)
+		{
+			if (latt == &center) continue;
+			fortobjectinfluence_(&latt->rx, &latt->ry, &seg1.rx, &seg1.ry, &seg2.rx, &seg2.ry, &tmp.rx, &tmp.ry, &eps);
+			res+= tmp*latt->g - rotl(tmp)*latt->q;
+		}
 	}
 	TVec dl=seg2-seg1;
 	return -(rotl(res)*dl)/dl.abs()*C_1_2PI - center.q*0.5; //FIXME sign
@@ -297,84 +304,109 @@ double AttachInfluence(TObj &seg1, TObj &seg2, const TAtt &center, double eps)
 }}
 
 
-int FillMatrix()
+void FillMatrix()
 {
-	int i, j;
+	int i=0, j=0;
 	int imax = N-1;
 	//BodyMatrix[N*i+j]
 	//RightCol[i]
 
-	auto BVort = ConvectiveFast_S->Body->List->begin();
-	auto FirstBVort = ConvectiveFast_S->Body->List->begin();
-	auto LastBVort = ConvectiveFast_S->Body->List->end();
-	for ( ; BVort<LastBVort; BVort++)
+	const_for(S->BodyList, llbody)
 	{
-		//temporarily vort->g stores eps info.
-		TVec dr1 = *BVort - ( (BVort>FirstBVort)?*(BVort-1):*(LastBVort-1) );
-		TVec dr2 = *BVort - ( (BVort<(LastBVort-1))?*(BVort+1):*FirstBVort );
-		BVort->g = (dr1.abs() + dr2.abs())*0.25;
+		TBody &body = **llbody;
+		const_for(body.List, lbvort)
+		{
+			//temporarily vort->g stores eps info.
+			lbvort->g = (*body.next(lbvort)-*lbvort).abs2()+
+			            (*body.prev(lbvort)-*lbvort).abs2();
+			lbvort->g *= 0.25;
+		}
 	}
 
-	auto NakedBodyList = ConvectiveFast_S->Body->List->begin();
-	for (i=0; i<imax; i++)
+	const_for(S->BodyList, llibody)
 	{
-		double *RowI = BodyMatrix + N*i;
-		for (j=0; j<N; j++)
+		TBody &ibody = **llibody;
+		const_for(ibody.AttachList, latt)
 		{
-			RowI[j] = ObjectInfluence(NakedBodyList[j], NakedBodyList[i], NakedBodyList[i+1], NakedBodyList[j].g);
+			j=0;
+			const_for(S->BodyList, lljbody)
+			{
+				TBody &jbody = **lljbody;
+				const_for(jbody.List, lobj)
+				{
+					switch (latt->bc)
+					{
+					case bc::slip:
+					case bc::noslip:
+						BodyMatrix[N*i+j] = ObjectInfluence(*lobj, *jbody.obj(latt),
+						            *jbody.next(jbody.obj(latt)), lobj->g);
+						break;
+					case bc::kutta:
+						BodyMatrix[N*i+j] = (lobj == jbody.obj(latt)) ||
+						                    (lobj == jbody.next(jbody.obj(latt))) ?
+						                    1:0;
+					case bc::noperturbations:
+						BodyMatrix[N*i+j] = 1;
+						break;
+					}
+					j++;
+				}
+			}
+			i++;
 		}
 	}
-		double *RowI = BodyMatrix + N*imax;
-		for (j=0; j<N; j++)
-		{
-			RowI[j] = 1;
-		}
-//			RowI[0] = 1; //Joukowski condition
 
 	BodyMatrixOK = true;
-	return 0;
 }
 
-int FillRightCol()
+void FillRightCol()
 {
-	auto NakedBodyList = ConvectiveFast_S->Body->List->begin();
-	auto alist = ConvectiveFast_S->Body->AttachList;
-	int imax = N-1;
-
-	#pragma omp parallel for
-	for (int i=0; i<imax; i++)
+	const_for (S->BodyList, llbody)
 	{
-		TNode* Node = FindNode(NakedBodyList[i]);
-		if (!Node) { continue; }
+		TBody &body = **llbody;
+		double tmp = 0;
+		const_for(body.AttachList, latt)
+		{
+			tmp+= latt->g;
+		}
+		tmp*= body.RotSpeed(S->Time);
 
-		TVec SegDl = NakedBodyList[i+1] - NakedBodyList[i];
+		#pragma omp parallel for
+		const_for (body.AttachList, latt)
+		{
+			TNode* Node = FindNode(*latt);
+			if (!Node) { continue; }
 
-		RightCol[i] = -ConvectiveFast_S->InfSpeedYVar*SegDl.rx + ConvectiveFast_S->InfSpeedXVar*SegDl.ry -
-		               NodeInfluence(*Node, NakedBodyList[i], NakedBodyList[i+1], ConvectiveFast_Eps) -
-		               ((!ConvectiveFast_S->Body->RotationVVar)?0:AttachInfluence(NakedBodyList[i], NakedBodyList[i+1], alist->at(i), ConvectiveFast_Eps)*
-		               ConvectiveFast_S->Body->RotationVVar);
+			TVec SegDl = *body.next(body.obj(latt)) - *body.obj(latt);
+
+			switch (latt->bc)
+			{
+			case bc::slip:
+			case bc::noslip:
+			RightCol[latt->i] = rotl(S->InfSpeed())*SegDl;
+			RightCol[latt->i] -= NodeInfluence(*Node, *body.obj(latt), *body.next(body.obj(latt)), Rd2);
+			const_for (S->BodyList, lljbody)
+			{
+				double RotSpeed_tmp = (**lljbody).RotSpeed(S->Time);
+				if (!RotSpeed_tmp) continue;
+				RightCol[latt->i] -= AttachInfluence(*body.obj(latt), *body.next(body.obj(latt)), *latt, Rd2)
+				                     * RotSpeed_tmp;
+			}
+			break;
+			case bc::kutta:
+			case bc::noperturbations:
+			RightCol[latt->i] = -S->gsum() - tmp;
+			break;
+			}
+		}
 	}
-
-	double tmpgsum =0;
-	if (ConvectiveFast_S->Body->RotationVVar)
-	{
-		auto lAtt = alist->begin();
-		auto lLastAtt = alist->end();
-		for ( ; lAtt<lLastAtt; lAtt++ )
-		{ tmpgsum += lAtt->g; }
-	}
-
-	RightCol[imax] = -ConvectiveFast_S->gsum() - ConvectiveFast_S->Body->RotationVVar*tmpgsum;
-
-	return 0;
 }
 
-int SolveMatrix()
+void SolveMatrix()
 {
 	if (!InverseMatrixOK)
 	{
 		cerr << "Inverse!\n";
-		return -1; //Inverse
 	}
 
 	for (int i=0; i<N; i++)
@@ -388,7 +420,6 @@ int SolveMatrix()
 		}
 	}
 
-	return 0;
 }
 
 /****** LOAD/SAVE MATRIX *******/

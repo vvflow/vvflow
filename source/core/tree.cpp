@@ -246,7 +246,13 @@ void BuildTree(bool includeV, bool includeB, bool includeH)
 	Tree_RootNode->i = Tree_RootNode->j = 0; //DEBUG
 
 	if (includeV) FillRootNode(Tree_S->VortexList, &Tree_RootNode->VortexLList);
-	if (includeB) FillRootNode(Tree_S->Body->List, &Tree_RootNode->BodyLList);
+	if (includeB)
+	{
+		const_for(Tree_S->BodyList, llbody)
+		{
+			FillRootNode((**llbody).List, &Tree_RootNode->BodyLList);
+		}
+	}
 	if (includeH) FillRootNode(Tree_S->HeatList, &Tree_RootNode->HeatLList);
 
 	Tree_BottomNodes->clear();

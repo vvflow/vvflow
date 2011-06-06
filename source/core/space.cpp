@@ -9,16 +9,14 @@ using namespace std;
 
 Space::Space(bool CreateVortexes,
 				bool CreateHeat,
-				double (*sInfSpeedX)(double Time),
-				double (*sInfSpeedY)(double Time))
+				TVec (*sInfSpeed)(double time))
 {
 	VortexList = CreateVortexes ? (new vector<TObj>()) : NULL;
 	HeatList = CreateHeat ? (new vector<TObj>()) : NULL;
-	Body = new TBody();
+	//Body = new TBody();
 
-	InfSpeedX = sInfSpeedX;
-	InfSpeedY = sInfSpeedY;
-	Time = dt = BodyX = BodyY = 0;
+	InfSpeed_link = sInfSpeed;
+	Time = dt = 0;
 }
 
 /********************************** SAVE/LOAD *********************************/
@@ -103,13 +101,13 @@ int Space::Print(vector<TObj> *list, const char* format)
 }
 
 int Space::PrintBody(std::ostream& os)
-	{ return Print(Body->List, os); }
+	{ const_for(BodyList, llbody) { Print((**llbody).List, os); } return 0; }
 int Space::PrintVorticity(std::ostream& os)
 	{ return Print(VortexList, os); }
 int Space::PrintHeat(std::ostream& os)
 	{ return Print(HeatList, os); }
 int Space::PrintBody(const char* filename)
-	{ return Print(Body->List, filename); }
+	{ const_for(BodyList, llbody) { Print((**llbody).List, filename); } return 0; }
 int Space::PrintVorticity(const char* filename)
 	{ return Print(VortexList, filename); }
 int Space::PrintHeat(const char* filename)

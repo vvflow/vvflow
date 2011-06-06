@@ -5,15 +5,15 @@
 #include <math.h>
 using namespace std;
 
-TBody::TBody(double (*sRotationV)(double Time),
-				double sRotationAxisX, double sRotationAxisY)
+TBody::TBody()
 {
 	List = new vector<TObj>();
 	AttachList = new vector<TAtt>();
-	RotationV = sRotationV;
-	RotationAxis = TVec(sRotationAxisX, sRotationAxisY);
+	RotSpeed_link = NULL;
+	RotAxis = TVec(0,0);
 	InsideIsValid = true;
 	Angle = 0;
+	Position = TVec(0,0);
 }
 
 int TBody::LoadFromFile(const char* filename)
@@ -41,8 +41,8 @@ void TBody::Rotate(double angle)
 
 	const_for (List, obj)
 	{
-		TVec dr = *obj - RotationAxis;
-		*obj = RotationAxis + dr*cos(angle) + rotl(dr)*sin(angle);
+		TVec dr = *obj - RotAxis;
+		*obj = RotAxis + dr*cos(angle) + rotl(dr)*sin(angle);
 	}
 	Angle += angle;
 	UpdateAttach();
@@ -95,9 +95,10 @@ double TBody::SurfaceLength()
 	return res;
 }
 
-TAtt* TBody::att(const TObj* obj)
+void TBody::SetRotation(double (*sRotSpeed)(double time), TVec sRotAxis)
 {
-	return &AttachList->at(obj - List->begin());
+	RotSpeed_link = sRotSpeed;
+	RotAxis = sRotAxis;
 }
 
 inline double atan2(const TVec &p)
@@ -130,8 +131,8 @@ void TBody::UpdateAttach()
 		TVec dr = *next(obj) - *obj;
 		att = TVec(0.5*(*next(obj) + *obj));
 
-		att.g = rotl(att-RotationAxis)*dr;
-		att.q =     (att-RotationAxis)*dr;
+		att.g = rotl(att-RotAxis)*dr;
+		att.q =     (att-RotAxis)*dr;
 
 		AttachList->push_back(att);
 	}
@@ -144,6 +145,14 @@ void TBody::calc_pressure()
 	{
 		res+= latt->gsum;
 		latt->pres = res;
+	}
+}
+
+void TBody::zero_variables()
+{
+	const_for(AttachList, latt)
+	{
+		latt->pres = latt->gsum = latt->fric = 0;
 	}
 }
 

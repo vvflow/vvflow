@@ -3,12 +3,21 @@
 
 #include "elementary.h"
 
+namespace bc{
+enum BoundaryCondition {slip, noslip, kutta, noperturbations};}
+namespace sc{
+enum SourceCondition {none, source, sink};}
+namespace hc{
+enum HeatCondition {none, temperature};}
+
 class TAtt : public TVec
 {
 	public:
 		double g, q;
 		double gsum;
 		double pres, fric;
+		int i;
+		bc::BoundaryCondition bc;
 
 		TAtt() {}
 		void zero() { rx = ry = g = q = pres = fric = gsum = 0; }
@@ -18,8 +27,7 @@ class TAtt : public TVec
 class TBody
 {
 	public:
-		TBody(double (*sRotationV)(double Time) = NULL,
-				double sRotationAxisX=0, double sRotationAxisY=0);
+		TBody();
 		~TBody();
 
 		int LoadFromFile(const char* filename);
@@ -27,24 +35,27 @@ class TBody
 		TAtt* PointIsInvalid(TVec p);
 		double SurfaceLength();
 		double AverageSegmentLength() { return SurfaceLength() / List->size(); }
+		void SetRotation(double (*sRotSpeed)(double time), TVec sRotAxis);
 
 		vector<TObj> *List;
 		vector<TAtt> *AttachList;
-		TAtt* att(const TObj* obj); //returns attach next to the obj
 		bool InsideIsValid;
 		bool isInsideValid();
-		TVec RotationAxis;
-		double (*RotationV)(double Time); double RotationVVar;
+		double RotSpeed(double time) const { return RotSpeed_link?RotSpeed_link(time):0; }
 		double Angle;
+		TVec Position;
 		void UpdateAttach();
 
 		void calc_pressure(); // need /dt
 		//void calc_friction(); // need /Pi/Eps_min^2
+		void zero_variables();
 
 		TVec Force; //dont forget to zero it when u want
 
-		TObj* next(TObj* obj) { return List->next(obj); }
-		TObj* prev(TObj* obj) { return List->prev(obj); }
+		TObj* next(TObj* obj) const { return List->next(obj); }
+		TObj* prev(TObj* obj) const { return List->prev(obj); }
+		TAtt* att(const TObj* obj) const { return &AttachList->at(obj - List->begin());}
+		TObj* obj(const TAtt* att) const { return &List->at(att - AttachList->begin());}
 
 		//Heat layer
 		void CleanHeatLayer();
@@ -52,7 +63,10 @@ class TBody
 
 		int *HeatLayer;
 		double HeatLayerHeight;
+
+	private:
+		double (*RotSpeed_link)(double time);
+		TVec RotAxis;
 };
 
 #endif /* BODY_H_ */
-

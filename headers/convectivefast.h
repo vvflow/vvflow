@@ -3,15 +3,15 @@
 #include <math.h>
 #include "core.h"
 
-int InitConvectiveFast(Space *sS, double sEps);
-int CalcConvectiveFast();
-int CalcBoundaryConvective();
+void InitConvectiveFast(Space *sS, double sRd2);
+void CalcConvectiveFast();
+void CalcBoundaryConvective();
 TVec SpeedSumFast(TVec p);
 
-int CalcCirculationFast();
-int FillMatrix();
-int FillRightCol();
-int SolveMatrix();
+void CalcCirculationFast();
+void FillMatrix();
+void FillRightCol();
+void SolveMatrix();
 
 double* MatrixLink();
 

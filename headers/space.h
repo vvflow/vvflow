@@ -11,10 +11,9 @@ class Space
 	public:
 		Space(bool CreateVortexes,
 				bool CreateHeat, 
-				double (*sInfSpeedX)(double Time) = NULL,
-				double (*sInfSpeedY)(double Time) = NULL);
+				TVec (*sInfSpeed)(double time) = NULL);
 
-		TBody *Body;
+		vector<TBody*> *BodyList;
 		vector<TObj> *VortexList;
 		vector<TObj> *HeatList;
 
@@ -22,10 +21,8 @@ class Space
 		inline void StartStep(); //update local InfSpeed variables, 
 		inline void FinishStep(); //update time and coord variables
 
-		double (*InfSpeedX)(double time); double InfSpeedXVar;
-		double (*InfSpeedY)(double time); double InfSpeedYVar;
+		TVec InfSpeed() { return InfSpeed_link?InfSpeed_link(Time):TVec(0,0); }
 		double Time, dt;
-		double BodyX, BodyY;
 
 		/***************** SAVE/LOAD ******************/
 		int LoadVorticityFromFile(const char* filename);
@@ -48,31 +45,31 @@ class Space
 		double gmax();
 		TVec HydroDynamicMomentum();
 
-	public:
+	private:
 		int Print(vector<TObj> *list, std::ostream& os);
 		int Print(vector<TObj> *list, const char* format); //format is used for sprintf(filename, "format", time)
+
+		TVec (*InfSpeed_link)(double time);
 };
 
 inline
 void Space::StartStep()
 {
-	InfSpeedXVar = InfSpeedX ? InfSpeedX(Time) : 0;
-	InfSpeedYVar = InfSpeedY ? InfSpeedY(Time) : 0;
-	Body->RotationVVar = Body->RotationV ? Body->RotationV(Time) : 0;
+	//InfSpeedXVar = InfSpeedX ? InfSpeedX(Time) : 0;
+	//InfSpeedYVar = InfSpeedY ? InfSpeedY(Time) : 0;
+	//Body->RotationVVar = Body->RotationV ? Body->RotationV(Time) : 0;
 }
 
 inline
 void Space::FinishStep()
 {
-	if ( Body->RotationV ) Body->Rotate(Body->RotationVVar*dt);
-	if ( InfSpeedX ) BodyX-= InfSpeedXVar*dt;
-	if ( InfSpeedY ) BodyY-= InfSpeedYVar*dt;
-	Time+= dt;
-
-	const_for(Body->AttachList, latt)
+	const_for (BodyList, llbody)
 	{
-		latt->pres = latt->gsum = latt->fric = 0;
+		TBody & body = **llbody;
+		body.Rotate(body.RotSpeed(Time) * dt);
+		body.Position -= InfSpeed() * dt;
 	}
+	Time+= dt;
 }
 
 #endif /*SPACE_H_*/
