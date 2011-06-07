@@ -10,6 +10,7 @@ enum SourceCondition {none, source, sink};}
 namespace hc{
 enum HeatCondition {none, temperature};}
 
+class TBody;
 class TAtt : public TVec
 {
 	public:
@@ -18,8 +19,9 @@ class TAtt : public TVec
 		double pres, fric;
 		int i;
 		bc::BoundaryCondition bc;
+		TBody* body;
 
-		TAtt() {}
+		TAtt(TBody *body);
 		void zero() { rx = ry = g = q = pres = fric = gsum = 0; }
 		TAtt& operator= (const TVec& p) { rx=p.rx; ry=p.ry; return *this; }
 };
@@ -54,6 +56,8 @@ class TBody
 
 		TObj* next(TObj* obj) const { return List->next(obj); }
 		TObj* prev(TObj* obj) const { return List->prev(obj); }
+		TAtt* next(TAtt* att) const { return AttachList->next(att); }
+		TAtt* prev(TAtt* att) const { return AttachList->prev(att); }
 		TAtt* att(const TObj* obj) const { return &AttachList->at(obj - List->begin());}
 		TObj* obj(const TAtt* att) const { return &List->at(att - AttachList->begin());}
 
@@ -68,5 +72,7 @@ class TBody
 		double (*RotSpeed_link)(double time);
 		TVec RotAxis;
 };
+
+TAtt::TAtt(TBody *body) {this->body = body;}
 
 #endif /* BODY_H_ */

@@ -123,7 +123,7 @@ void TBody::UpdateAttach()
 {
 	if (!this) return;
 	AttachList->clear();
-	TAtt att;
+	TAtt att(this);
 	att.zero();
 
 	const_for (List, obj)

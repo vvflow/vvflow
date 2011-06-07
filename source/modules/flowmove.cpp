@@ -3,125 +3,133 @@
 #include <cstdlib>
 #include <time.h>
 
-/********************* HEADER ****************************/
-
+/********************************** HEADER ************************************/
 namespace {
 
-Space *FlowMove_S;
-double FlowMove_dt;
-double FlowMove_RemoveEps;
+Space *S;
+double dt;
+double RemoveEps;
 
-int FlowMove_CleanedV;
-int FlowMove_CleanedH;
+int CleanedV_;
+int CleanedH_;
 
 double FlowMove_ControlLayerHeight; //height of boundaru layer(not square)
-//TObject **blarray;
 
-} //end of namespace
-
-/********************* SOURCE *****************************/
-
-int InitFlowMove(Space *sS, double sdt, double sRemoveEps)
-{
-	srand (time(NULL));
-	FlowMove_S = sS;
-	FlowMove_dt = FlowMove_S->dt = sdt;
-	FlowMove_RemoveEps = sRemoveEps;
-	FlowMove_ControlLayerHeight = (sS->Body) ? sS->Body->AverageSegmentLength() : 0;
-	FlowMove_CleanedV = 0;
-
-	return 0;
 }
 
-int MoveAndClean(bool remove)
+/****************************** MAIN FUNCTIONS ********************************/
+
+void InitFlowMove(Space *sS, double sdt, double sRemoveEps)
 {
-	FlowMove_CleanedV = 0;
-	FlowMove_CleanedH = 0;
+	S = sS;
+	dt = S->dt = sdt;
+	RemoveEps = sRemoveEps;
+	CleanedV_ = CleanedH_ = 0;
+}
+
+void MoveAndClean(bool remove)
+{
+	if (!S) {cerr << "MoveAndClean() is called before initialization"
+	              << endl; return; }
+
+	CleanedV_ = CleanedH_ = 0;
+
+	auto vlist = S->VortexList;
+	auto hlist = S->HeatList;
 
 	//MOVING VORTEXES
-	if ( FlowMove_S->VortexList )
+	if ( vlist )
+	const_for (vlist, lobj)
 	{
-		auto vlist = FlowMove_S->VortexList;
+		*lobj += lobj->v*dt; lobj->v.zero();
 
-		for (auto Obj = vlist->begin(); Obj<vlist->end(); Obj++)
+		TAtt* invalid_inbody;
+		const_for(S->BodyList, llbody)
+			invalid_inbody = (**llbody).PointIsInvalid(*lobj);
+
+		if ( remove && invalid_inbody )
 		{
-			*Obj += Obj->v*FlowMove_dt; Obj->v.zero();
-
-			TAtt* invalid_inbody = FlowMove_S->Body->PointIsInvalid(*Obj);
-			if ( remove && invalid_inbody )
-			{
-				FlowMove_S->Body->Force -= rotl(*Obj) * Obj->g;
-				invalid_inbody->gsum -= Obj->g;
-				FlowMove_CleanedV++;
-				vlist->erase(Obj);
-				Obj--;
-			}
-			if ( fabs(Obj->g) < FlowMove_RemoveEps )
-			{
-				//FlowMove_CleanedV++;
-				vlist->erase(Obj);
-				Obj--;
-			}
+			invalid_inbody->body->Force -= rotl(*lobj) * lobj->g;
+			invalid_inbody->gsum -= lobj->g;
+			CleanedV_++;
+			vlist->erase(lobj);
+			lobj--;
+		}
+		if ( fabs(lobj->g) < RemoveEps )
+		{
+			//FlowMove_CleanedV++;
+			vlist->erase(lobj);
+			lobj--;
 		}
 	}
 
 	//MOVING HEAT PARTICLES
-	if ( FlowMove_S->HeatList )
+	if ( hlist )
 	{
-		FlowMove_S->Body->CleanHeatLayer();
-
-		auto hlist = FlowMove_S->HeatList;
-
-//		double compare = (1 + FlowMove_ControlLayerHeight); compare*= compare;
-		for (auto Obj = hlist->begin(); Obj<hlist->end(); Obj++)
+		const_for(S->BodyList, llbody)
 		{
-			*Obj += Obj->v*FlowMove_dt; Obj->v.zero();
+			(**llbody).CleanHeatLayer();
+		}
 
-			TAtt* invalid_inbody = FlowMove_S->Body->PointIsInvalid(*Obj);
-			int* inlayer = FlowMove_S->Body->ObjectIsInHeatLayer(*Obj);
+		const_for (hlist, lobj)
+		{
+			*lobj += lobj->v*dt; lobj->v.zero();
+
+			TAtt* invalid_inbody;
+			int* inlayer;
+			const_for(S->BodyList, llbody)
+			{
+				invalid_inbody = (**llbody).PointIsInvalid(*lobj);
+				inlayer = (**llbody).ObjectIsInHeatLayer(*lobj);
+			}
 			if ( remove && invalid_inbody )
 			{
-				FlowMove_CleanedH++;
-				hlist->erase(Obj);
-				Obj--;
+				CleanedH_++;
+				hlist->erase(lobj);
+				lobj--;
 			} else
 			if (inlayer) { (*inlayer)++; }
 		}
 	}
-
-	return 0;
 }
 
-int VortexShed()
+void VortexShed()
 {
-	if ( !FlowMove_S->Body || !FlowMove_S->VortexList ) return -1;
-	//double RiseHeight = FlowMove_S->Body->HeatLayerHeight*1E-6;
+	if (!S) {cerr << "VortexShed() is called before initialization"
+	              << endl; return; }
+	if (!S->VortexList) return;
 	TObj ObjCopy(0, 0, 0);
 
 	//FlowMove_CleanedV = 0;
 
-	auto vlist = FlowMove_S->VortexList;
-	auto blist = FlowMove_S->Body->List;
-	for (auto bvort = blist->begin(); bvort<blist->end(); bvort++)
+	auto vlist = S->VortexList;
+	auto blist = S->BodyList;
+	
+	const_for(S->BodyList, llbody)
 	{
-		if ( (bvort->g < FlowMove_RemoveEps) && (bvort->g > -FlowMove_RemoveEps) ) 
-			{ FlowMove_CleanedV++; }
-		else
+		TBody &body = **llbody;
+		const_for(body.List, lbobj)
 		{
-			ObjCopy = *bvort;
-			FlowMove_S->Body->Force += rotl(ObjCopy) * ObjCopy.g;
-			FlowMove_S->Body->att(            bvort )->gsum+= 0.5*ObjCopy.g;
-			FlowMove_S->Body->att(blist->prev(bvort))->gsum+= 0.5*ObjCopy.g;
-			vlist->push_back(ObjCopy);
+			TAtt *latt = body.att(lbobj);
+			if (fabs(lbobj->g) < RemoveEps)
+				{ CleanedV_++; }
+			else if (latt->bc == bc::noslip)
+			{
+				ObjCopy = *lbobj;
+				body.Force += rotl(ObjCopy) * ObjCopy.g;
+				          latt ->gsum+= 0.5*ObjCopy.g;
+				body.prev(latt)->gsum+= 0.5*ObjCopy.g;
+				vlist->push_back(ObjCopy);
+			}
 		}
 	}
-
-	return 0;
 }
 
-int HeatShed()
+void HeatShed()
 {
-	if ( !FlowMove_S->Body || !FlowMove_S->HeatList) return -1;
+	if (!S) {cerr << "HeatShed() is called before initialization"
+	              << endl; return; }
+	if (!S->HeatList) return;
 /*
 	long BodyListSize = FlowMove_S->Body->List->size;
 	//double dfi = C_2PI/BodyListSize;
@@ -136,8 +144,7 @@ int HeatShed()
 		FlowMove_S->HeatList->Copy(&ObjCopy);
 	}
 */
-	return 0;
 }
 
-int CleanedV() { return FlowMove_CleanedV; }
-int CleanedH() { return FlowMove_CleanedH; }
+int CleanedV() { return CleanedV_; }
+int CleanedH() { return CleanedH_; }
