@@ -31,7 +31,7 @@ void InitEpsilonFast(Space *sS, double sSqEps)
 void CalcEpsilonFast(bool merge)
 {
 	merged_count = 0;
-	eps_restriction = (S->Body) ? 0.6*S->Body->AverageSegmentLength() : 0;
+	eps_restriction = 0.6*(**S->BodyList->begin()).AverageSegmentLength();
 	if (!S) {cerr << "MergeFast() is called before initialization" << endl; return; }
 	auto bnodes = GetTreeBottomNodes();
 	if ( !bnodes ) return;

@@ -20,7 +20,7 @@ namespace {
 	enum ParticleType {Vortex, Heat};
 	void VortexInfluence(const TObj &v, const TObj &vj,
 	                      TVec *i2, double *i1);
-	void SegmentInfluence(const TObj &v, const TObj &pk, const TObj &pk1, 
+	void SegmentInfluence(const TObj &v, const TObj &pk, const TObj &pk1, TBody *body,
 	                      TVec *i3, double *i0);
 }
 /****************************** MAIN FUNCTIONS ********************************/
@@ -73,8 +73,14 @@ void CalcVortexDiffusiveFast()
 				const_for(jlist, lljobj)
 				{
 					if (!*lljobj) { continue; }
-					SegmentInfluence(obj, **lljobj, 
-					           *S->Body->next(*lljobj), &S3, &S0);
+					TBody *body;
+					const_for(S->BodyList, llbody)
+						if ( (*lljobj >= (**llbody).List->begin()) &&
+						     (*lljobj >= (**llbody).List->begin()) )
+							body = *llbody;
+					if (!body) { continue; }
+					SegmentInfluence(obj, **lljobj, *body->next(*lljobj),
+					           body, &S3, &S0);
 				}
 			}
 
@@ -108,7 +114,7 @@ void VortexInfluence(const TObj &v, const TObj &vj, TVec *i2, double *i1)
 
 namespace {
 inline
-void SegmentInfluence(const TObj &v, const TObj &pk, const TObj &pk1, 
+void SegmentInfluence(const TObj &v, const TObj &pk, const TObj &pk1, TBody *body,
                       TVec *i3, double *i0)
 {
 	TVec rk = (pk+pk1)*0.5;
@@ -125,7 +131,7 @@ void SegmentInfluence(const TObj &v, const TObj &pk, const TObj &pk1,
 
 	exparg = -drabs*v._1_eps;
 	if ( exparg < ExpArgRestriction ) {return;}
-	S->Body->att(&pk)->fric += sqr(v._1_eps) * v.g * expdef(exparg);
+	body->att(&pk)->fric += sqr(v._1_eps) * v.g * expdef(exparg);
 }}
 
 
