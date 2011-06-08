@@ -230,7 +230,7 @@ void CalcCirculationFast()
 		TBody &body = **llbody;
 		const_for(body.List, lobj)
 		{
-			lobj->g = Solution[body.att(lobj)->i];
+			lobj->g = Solution[body.att(lobj)->eq_no];
 		}
 	}
 }
@@ -303,10 +303,8 @@ double AttachInfluence(TObj &seg1, TObj &seg2, const TAtt &center, double eps)
 	//FIXME kill fortran
 }}
 
-
 void FillMatrix()
 {
-	int i=0, j=0;
 	//BodyMatrix[N*i+j]
 	//RightCol[i]
 
@@ -325,9 +323,12 @@ void FillMatrix()
 	const_for(S->BodyList, llibody)
 	{
 		TBody &ibody = **llibody;
+		#pragma omp parallel for
+
 		const_for(ibody.AttachList, latt)
 		{
-			j=0;
+			int i = latt->eq_no;
+			int j=0;
 			const_for(S->BodyList, lljbody)
 			{
 				TBody &jbody = **lljbody;
@@ -337,21 +338,20 @@ void FillMatrix()
 					{
 					case bc::slip:
 					case bc::noslip:
-						BodyMatrix[N*i+j] = ObjectInfluence(*lobj, *jbody.obj(latt),
-						            *jbody.next(jbody.obj(latt)), lobj->g);
+						BodyMatrix[N*i+j] = ObjectInfluence(*lobj, *ibody.obj(latt),
+						            *ibody.next(ibody.obj(latt)), lobj->g);
 						break;
 					case bc::kutta:
-						BodyMatrix[N*i+j] = (lobj == jbody.obj(latt)) ||
-						                    (lobj == jbody.next(jbody.obj(latt))) ?
+						BodyMatrix[N*i+j] = (lobj == ibody.obj(latt)) ||
+						                    (lobj == ibody.next(ibody.obj(latt))) ?
 						                    1:0;
 					case bc::noperturbations:
-						BodyMatrix[N*i+j] = 1;
+						BodyMatrix[N*i+j] = (llibody==lljbody)?1:0;
 						break;
 					}
 					j++;
 				}
 			}
-			i++;
 		}
 	}
 
@@ -376,25 +376,25 @@ void FillRightCol()
 			TNode* Node = FindNode(*latt);
 			if (!Node) { continue; }
 
-			TVec SegDl = *body.next(body.obj(latt)) - *body.obj(latt);
+			TVec SegDl = latt->dl;
 
 			switch (latt->bc)
 			{
 			case bc::slip:
 			case bc::noslip:
-			RightCol[latt->i] = rotl(S->InfSpeed())*SegDl;
-			RightCol[latt->i] -= NodeInfluence(*Node, *body.obj(latt), *body.next(body.obj(latt)), Rd2);
+			RightCol[latt->eq_no] = rotl(S->InfSpeed())*SegDl;
+			RightCol[latt->eq_no] -= NodeInfluence(*Node, *body.obj(latt), *body.next(body.obj(latt)), Rd2);
 			const_for (S->BodyList, lljbody)
 			{
 				double RotSpeed_tmp = (**lljbody).RotSpeed(S->Time);
 				if (!RotSpeed_tmp) continue;
-				RightCol[latt->i] -= AttachInfluence(*body.obj(latt), *body.next(body.obj(latt)), *latt, Rd2)
+				RightCol[latt->eq_no] -= AttachInfluence(*body.obj(latt), *body.next(body.obj(latt)), *latt, Rd2)
 				                     * RotSpeed_tmp;
 			}
 			break;
 			case bc::kutta:
 			case bc::noperturbations:
-			RightCol[latt->i] = -S->gsum() - tmp;
+			RightCol[latt->eq_no] = -S->gsum() - tmp;
 			break;
 			}
 		}

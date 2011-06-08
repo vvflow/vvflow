@@ -264,6 +264,8 @@ void BuildTree(bool includeV, bool includeB, bool includeH)
 	const_for (Tree_BottomNodes, llbnode)
 	{
 		TNode &bnode = **llbnode;
+		bnode.NearNodes = new vector<TNode*>();
+		bnode.FarNodes = new vector<TNode*>();
 		if ( bnode.VortexLList && (bnode.VortexLList->size_safe() < 3) &&
 		    !bnode.BodyLList && !bnode.HeatLList )
 		{
@@ -273,8 +275,6 @@ void BuildTree(bool includeV, bool includeB, bool includeH)
 			llbnode--;
 			continue;
 		}
-		bnode.NearNodes = new vector<TNode*>();
-		bnode.FarNodes = new vector<TNode*>();
 		bnode.FindNearNodes(Tree_RootNode);
 	}
 }

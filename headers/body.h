@@ -18,11 +18,11 @@ class TAtt : public TVec
 		double gsum;
 		double pres, fric;
 		TVec dl;
-		int i;
+		int eq_no;
 		bc::BoundaryCondition bc;
 		TBody* body;
 
-		TAtt(TBody *body);
+		TAtt(TBody *body, int eq_no);
 		void zero() { rx = ry = g = q = pres = fric = gsum = 0; }
 		TAtt& operator= (const TVec& p) { rx=p.rx; ry=p.ry; return *this; }
 };
@@ -33,7 +33,7 @@ class TBody
 		TBody();
 		~TBody();
 
-		int LoadFromFile(const char* filename);
+		int LoadFromFile(const char* filename, int start_eq_no);
 		void Rotate(double angle);
 		TAtt* PointIsInvalid(TVec p);
 		double SurfaceLength();

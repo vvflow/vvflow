@@ -43,9 +43,12 @@ void MoveAndClean(bool remove)
 	{
 		*lobj += lobj->v*dt; lobj->v.zero();
 
-		TAtt* invalid_inbody;
+		TAtt* invalid_inbody = NULL;
 		const_for(S->BodyList, llbody)
+		{
+			if (!invalid_inbody)
 			invalid_inbody = (**llbody).PointIsInvalid(*lobj);
+		}
 
 		if ( remove && invalid_inbody )
 		{
@@ -54,7 +57,7 @@ void MoveAndClean(bool remove)
 			CleanedV_++;
 			vlist->erase(lobj);
 			lobj--;
-		}
+		} else
 		if ( fabs(lobj->g) < RemoveEps )
 		{
 			//FlowMove_CleanedV++;
@@ -112,7 +115,8 @@ void VortexShed()
 			TAtt *latt = body.att(lbobj);
 			if (fabs(lbobj->g) < RemoveEps)
 				{ CleanedV_++; }
-			else if (latt->bc == bc::noslip)
+			else if ( (latt->bc == bc::noslip)
+			       || ((**llbody).prev(latt)->bc == bc::noslip) )
 			{
 				ObjCopy = *lbobj;
 				body.Force += rotl(ObjCopy) * ObjCopy.g;

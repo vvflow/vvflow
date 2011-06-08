@@ -5,7 +5,11 @@
 #include <math.h>
 using namespace std;
 
-TAtt::TAtt(TBody *body) {this->body = body;}
+TAtt::TAtt(TBody *body, int eq_no)
+{
+	this->body = body;
+	this->eq_no = eq_no;
+}
 
 TBody::TBody()
 {
@@ -18,7 +22,7 @@ TBody::TBody()
 	Position = TVec(0,0);
 }
 
-int TBody::LoadFromFile(const char* filename)
+int TBody::LoadFromFile(const char* filename, int start_eq_no)
 {
 	if (!this) return -1;
 	if ( !List ) return -1;
@@ -26,11 +30,12 @@ int TBody::LoadFromFile(const char* filename)
 	if (!fin) { cerr << "No file called " << filename << endl; return -1; } 
 
 	TObj obj(0, 0, 0);
-	TAtt att(this); att.zero();
+	TAtt att(this, start_eq_no); att.zero();
 	while ( fscanf(fin, "%lf %lf %d", &obj.rx, &obj.ry, &att.bc)==3 )
 	{
 		List->push_back(obj);
 		AttachList->push_back(att);
+		att.eq_no++;
 	}
 
 	fclose(fin);

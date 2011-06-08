@@ -75,7 +75,8 @@ int Space::LoadHeatFromFile(const char* filename)
 int Space::LoadBody(const char* filename)
 {
 	TBody *body = new TBody();
-	int res = body->LoadFromFile(filename);
+	int N=0; const_for(BodyList, llbody) N+= (**llbody).List->size();
+	int res = body->LoadFromFile(filename, N);
 	BodyList->push_back(body);
 	return res;
 }
