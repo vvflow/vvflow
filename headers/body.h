@@ -17,6 +17,7 @@ class TAtt : public TVec
 		double g, q;
 		double gsum;
 		double pres, fric;
+		TVec dl;
 		int i;
 		bc::BoundaryCondition bc;
 		TBody* body;

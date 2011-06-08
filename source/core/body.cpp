@@ -24,9 +24,11 @@ int TBody::LoadFromFile(const char* filename)
 	if (!fin) { cerr << "No file called " << filename << endl; return -1; } 
 
 	TObj obj(0, 0, 0);
-	while ( fscanf(fin, "%lf %lf", &obj.rx, &obj.ry)==2 )
+	TAtt att(this); att.zero();
+	while ( fscanf(fin, "%lf %lf %d", &obj.rx, &obj.ry, &att.bc)==3 )
 	{
 		List->push_back(obj);
+		AttachList->push_back(att);
 	}
 
 	fclose(fin);
@@ -122,19 +124,15 @@ bool TBody::isInsideValid()
 void TBody::UpdateAttach()
 {
 	if (!this) return;
-	AttachList->clear();
-	TAtt att(this);
-	att.zero();
 
-	const_for (List, obj)
+	const_for (List, lobj)
 	{
-		TVec dr = *next(obj) - *obj;
-		att = TVec(0.5*(*next(obj) + *obj));
+		TAtt att = *this->att(lobj);
+		att.dl = *next(lobj) - *lobj;
+		att = TVec(0.5*(*next(lobj) + *lobj));
 
-		att.g = rotl(att-RotAxis)*dr;
-		att.q =     (att-RotAxis)*dr;
-
-		AttachList->push_back(att);
+		att.g = rotl(att-RotAxis)*att.dl;
+		att.q =     (att-RotAxis)*att.dl;
 	}
 }
 
