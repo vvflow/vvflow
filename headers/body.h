@@ -74,6 +74,4 @@ class TBody
 		TVec RotAxis;
 };
 
-TAtt::TAtt(TBody *body) {this->body = body;}
-
 #endif /* BODY_H_ */

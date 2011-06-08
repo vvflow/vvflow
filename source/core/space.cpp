@@ -13,7 +13,7 @@ Space::Space(bool CreateVortexes,
 {
 	VortexList = CreateVortexes ? (new vector<TObj>()) : NULL;
 	HeatList = CreateHeat ? (new vector<TObj>()) : NULL;
-	//Body = new TBody();
+	BodyList = new vector<TBody*>();
 
 	InfSpeed_link = sInfSpeed;
 	Time = dt = 0;
@@ -70,6 +70,14 @@ int Space::LoadHeatFromFile(const char* filename)
 
 	fclose(fin);
 	return 0;
+}
+
+int Space::LoadBody(const char* filename)
+{
+	TBody *body = new TBody();
+	int res = body->LoadFromFile(filename);
+	BodyList->push_back(body);
+	return res;
 }
 
 int Space::Print(vector<TObj> *list, std::ostream& os)

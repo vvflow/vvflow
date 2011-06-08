@@ -5,6 +5,8 @@
 #include <math.h>
 using namespace std;
 
+TAtt::TAtt(TBody *body) {this->body = body;}
+
 TBody::TBody()
 {
 	List = new vector<TObj>();
@@ -127,7 +129,7 @@ void TBody::UpdateAttach()
 
 	const_for (List, lobj)
 	{
-		TAtt att = *this->att(lobj);
+		TAtt &att = *this->att(lobj);
 		att.dl = *next(lobj) - *lobj;
 		att = TVec(0.5*(*next(lobj) + *lobj));
 

@@ -307,7 +307,6 @@ double AttachInfluence(TObj &seg1, TObj &seg2, const TAtt &center, double eps)
 void FillMatrix()
 {
 	int i=0, j=0;
-	int imax = N-1;
 	//BodyMatrix[N*i+j]
 	//RightCol[i]
 

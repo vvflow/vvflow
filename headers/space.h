@@ -29,6 +29,8 @@ class Space
 		int LoadHeatFromStupidFile(const char* filename, double g);
 		int LoadHeatFromFile(const char* filename);
 
+		int LoadBody(const char* filename);
+
 		int PrintBody(std::ostream& os);
 		int PrintVorticity(std::ostream& os);
 		int PrintHeat(std::ostream& os);
@@ -63,9 +65,9 @@ void Space::StartStep()
 inline
 void Space::FinishStep()
 {
-	const_for (BodyList, llbody)
+	const_for(BodyList, llbody)
 	{
-		TBody & body = **llbody;
+		TBody &body = **llbody;
 		body.Rotate(body.RotSpeed(Time) * dt);
 		body.Position -= InfSpeed() * dt;
 	}

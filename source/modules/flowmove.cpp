@@ -103,8 +103,7 @@ void VortexShed()
 	//FlowMove_CleanedV = 0;
 
 	auto vlist = S->VortexList;
-	auto blist = S->BodyList;
-	
+
 	const_for(S->BodyList, llbody)
 	{
 		TBody &body = **llbody;

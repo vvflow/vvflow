@@ -105,7 +105,7 @@ double eps(const TNode &Node, TObj **lv, bool merge)
 			TObj &obj = **llobj;
 			dr = v - obj;
 			double drabs2 = dr.abs2();
-			if ( drabs2 )
+			if ( drabs2 ) {
 			if ( res1 > drabs2 )
 			{
 				res2 = res1; lv2 = lv1;
@@ -114,7 +114,7 @@ double eps(const TNode &Node, TObj **lv, bool merge)
 			else if ( res2 > drabs2 )
 			{
 				res2 = drabs2; lv2 = llobj;
-			}
+			}}
 		}
 	}
 
