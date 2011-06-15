@@ -8,10 +8,12 @@ void CalcConvectiveFast();
 void CalcBoundaryConvective();
 TVec SpeedSumFast(TVec p);
 
-void CalcCirculationFast();
+void CalcCirculationFast(bool use_inverse);
 void FillMatrix();
 void FillRightCol();
 void SolveMatrix();
+void SpoilBodyMatrix();
+void SpoilInverseMatrix();
 
 double* MatrixLink();
 

@@ -19,6 +19,7 @@ TBody::TBody()
 	RotAxis = TVec(0,0);
 	InsideIsValid = true;
 	Angle = 0;
+	g_dead = 0;
 	Position = TVec(0,0);
 }
 

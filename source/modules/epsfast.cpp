@@ -32,10 +32,17 @@ void CalcEpsilonFast(bool merge)
 {
 	merged_count = 0;
 	eps_restriction = 0.6*(**S->BodyList->begin()).AverageSegmentLength();
-	if (!S) {cerr << "MergeFast() is called before initialization" << endl; return; }
+	if (!S)
+	{
+		cerr << "CalcEpsilonFast() is called before initialization" << endl;
+		return;
+	}
 	auto bnodes = GetTreeBottomNodes();
-	if ( !bnodes ) return;
-
+	if ( !bnodes )
+	{
+		cerr << "Tree isn't built" << endl;
+		return;
+	}
 	const_for(bnodes, llbnode)
 	{
 		TNode &bnode = **llbnode;

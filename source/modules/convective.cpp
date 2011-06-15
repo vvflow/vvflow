@@ -59,7 +59,7 @@ int CalcConvective()
 
 	const_for(list, lobj)
 	{
-		lobj->v += SpeedSum(list, *lobj);
+		lobj->v += SpeedSum(list, *lobj)+ Convective_S->InfSpeed();
 	}
 
 	return 0;

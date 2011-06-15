@@ -49,7 +49,7 @@ class Space
 
 	private:
 		int Print(vector<TObj> *list, std::ostream& os);
-		int Print(vector<TObj> *list, const char* format); //format is used for sprintf(filename, "format", time)
+		int Print(vector<TObj> *list, const char* format, ios::openmode mode = ios::out); //format is used for sprintf(filename, "format", time)
 
 		TVec (*InfSpeed_link)(double time);
 };

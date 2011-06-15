@@ -90,11 +90,11 @@ int Space::Print(vector<TObj> *list, std::ostream& os)
 	{
 		os << *obj << endl;
 	}
-
+	os << endl;
 	return 0;
 }
 
-int Space::Print(vector<TObj> *list, const char* format)
+int Space::Print(vector<TObj> *list, const char* format, ios::openmode mode)
 {
 	int res;
 	fstream fout;
@@ -102,7 +102,7 @@ int Space::Print(vector<TObj> *list, const char* format)
 
 	sprintf(fname, format, Time/dt);
 
-	fout.open(fname, ios::out);
+	fout.open(fname, mode);
 	res = Print(list, fout);
 	fout.close();
 
@@ -116,7 +116,15 @@ int Space::PrintVorticity(std::ostream& os)
 int Space::PrintHeat(std::ostream& os)
 	{ return Print(HeatList, os); }
 int Space::PrintBody(const char* filename)
-	{ const_for(BodyList, llbody) { Print((**llbody).List, filename); } return 0; }
+{
+	ios::openmode mode = ios::out;
+	const_for(BodyList, llbody)
+	{
+		Print((**llbody).List, filename, mode);
+		mode = ios::out | ios::app;
+	}
+	return 0;
+}
 int Space::PrintVorticity(const char* filename)
 	{ return Print(VortexList, filename); }
 int Space::PrintHeat(const char* filename)

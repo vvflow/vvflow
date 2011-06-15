@@ -54,13 +54,14 @@ void MoveAndClean(bool remove)
 		{
 			invalid_inbody->body->Force -= rotl(*lobj) * lobj->g;
 			invalid_inbody->gsum -= lobj->g;
+			invalid_inbody->body->g_dead += lobj->g;
 			CleanedV_++;
 			vlist->erase(lobj);
 			lobj--;
 		} else
 		if ( fabs(lobj->g) < RemoveEps )
 		{
-			//FlowMove_CleanedV++;
+			//remove merged vortexes
 			vlist->erase(lobj);
 			lobj--;
 		}
@@ -114,7 +115,7 @@ void VortexShed()
 		{
 			TAtt *latt = body.att(lbobj);
 			if (fabs(lbobj->g) < RemoveEps)
-				{ CleanedV_++; }
+				{ CleanedV_++; body.g_dead+= lbobj->g; }
 			else if ( (latt->bc == bc::noslip)
 			       || ((**llbody).prev(latt)->bc == bc::noslip) )
 			{

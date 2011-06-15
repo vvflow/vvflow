@@ -4,7 +4,7 @@
 #include "elementary.h"
 
 namespace bc{
-enum BoundaryCondition {slip, noslip, kutta, noperturbations};}
+enum BoundaryCondition {slip, noslip, kutta, noperturbations, tricky};}
 namespace sc{
 enum SourceCondition {none, source, sink};}
 namespace hc{
@@ -54,6 +54,7 @@ class TBody
 		void zero_variables();
 
 		TVec Force; //dont forget to zero it when u want
+		double g_dead;
 
 		TObj* next(TObj* obj) const { return List->next(obj); }
 		TObj* prev(TObj* obj) const { return List->prev(obj); }

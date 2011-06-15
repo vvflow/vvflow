@@ -1,16 +1,28 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
+#include <string.h>
 using namespace std;
 
 #include "convectivefast.h"
+//#define dbg(func) cout << "Doing " << #func << "... " << flush; func; cout << "done\n";
+#define dbg(func) func;
 
 /********************************** HEADER ************************************/
+
+extern "C" {
+	void dgesv_(int* n, const int* nrhs, double* a, int* lda, int* ipiv,
+	            double *x, int *incx, int *info);
+	void dgetrf_(int* M, int *N, double* A, int* lda, int* IPIV, int* INFO);
+	void dgetri_(int* N, double* A, int* lda, int* IPIV, double* WORK,
+	             int* lwork, int* INFO);
+}
 
 namespace {
 
 Space *S;
-double Rd2; //sqr(radius of discrete)
+double Rd2; //radius of discrete ^2
+double Rd;
 
 inline
 TVec BioSavar(const TObj &obj, const TVec &p);
@@ -23,13 +35,17 @@ double *BodyMatrix;
 double *InverseMatrix;
 double *RightCol;
 double *Solution;
+int *ipvt; //technical variable for lapack
+void inverse(double* A, int N, double *workspace); //workspace is being spoiled;
+void transpose(double* A, int N);
+void SolveMatrix_inv();
 
 bool BodyMatrixOK;
-bool InverseMatrixOK; 
+bool InverseMatrixOK;
 
-double ObjectInfluence(TObj &obj, TObj &seg1, TObj &seg2, double eps);
-double NodeInfluence(TNode &Node, TObj &seg1, TObj &seg2, double eps);
-double AttachInfluence(TObj &seg1, TObj &seg2, const TAtt &center, double eps);
+double ObjectInfluence(TObj &obj, TObj &seg1, TObj &seg2, double rd);
+double NodeInfluence(TNode &Node, TObj &seg1, TObj &seg2, double rd);
+double AttachInfluence(TObj &seg1, TObj &seg2, const TAtt &center, double rd);
 extern"C"{
 void fortobjectinfluence_(double *x, double *y, double *x1, double *y1,
 					double *x2, double *y2, double *ax, double *ay, double *eps);
@@ -48,12 +64,14 @@ void InitConvectiveFast(Space *sS, double sRd2)
 {
 	S = sS;
 	Rd2 = sRd2;
+	Rd = sqrt(Rd2);
 
 	N = 0; const_for(sS->BodyList, llbody){ N+=(**llbody).List->size(); }
 	BodyMatrix = (double*)malloc(N*N*sizeof(double));
 	InverseMatrix = (double*)malloc(N*N*sizeof(double));
 	RightCol = (double*)malloc(N*sizeof(double));
 	Solution = (double*)malloc(N*sizeof(double));
+	ipvt = (int*)malloc((N+1)*sizeof(int));
 	BodyMatrixOK = InverseMatrixOK = false;
 }
 
@@ -217,13 +235,26 @@ TVec BoundaryConvective(const TBody &b, const TVec &p)
 	return res;
 }}
 
-void CalcCirculationFast()
+void CalcCirculationFast(bool use_inverse)
 {
-	//if (!BodyMatrixOK)
-		//FillMatrix();
-
-	FillRightCol();
-	SolveMatrix();
+	dbg(FillRightCol());
+	if (!BodyMatrixOK) {dbg(FillMatrix());}
+	if(use_inverse)
+	{
+		if (!InverseMatrixOK)
+		{
+			memcpy(InverseMatrix, BodyMatrix, N*N*sizeof(double));
+			dbg(inverse(InverseMatrix, N, BodyMatrix));
+			InverseMatrixOK = true;
+			BodyMatrixOK = false;
+		}
+		dbg(SolveMatrix_inv());
+	}
+	else
+	{
+		dbg(SolveMatrix());
+		BodyMatrixOK = false;
+	}
 
 	const_for (S->BodyList, llbody)
 	{
@@ -238,10 +269,11 @@ void CalcCirculationFast()
 
 namespace {
 //inline
-double ObjectInfluence(TObj &obj, TObj &seg1, TObj &seg2, double eps)
+double ObjectInfluence(TObj &obj, TObj &seg1, TObj &seg2, double rd)
 {
 	TVec res;
-	fortobjectinfluence_(&obj.rx, &obj.ry, &seg1.rx, &seg1.ry, &seg2.rx, &seg2.ry, &res.rx, &res.ry, &eps);
+	fortobjectinfluence_(&obj.rx, &obj.ry, &seg1.rx, &seg1.ry,
+	                                 &seg2.rx, &seg2.ry, &res.rx, &res.ry, &rd);
 	TVec dl=seg2-seg1;
 	return -(rotl(res)*dl)/dl.abs()*C_1_2PI;
 	//FIXME kill fortran
@@ -249,7 +281,7 @@ double ObjectInfluence(TObj &obj, TObj &seg1, TObj &seg2, double eps)
 
 namespace {
 //inline
-double NodeInfluence(TNode &Node, TObj &seg1, TObj &seg2, double eps)
+double NodeInfluence(TNode &Node, TObj &seg1, TObj &seg2, double rd)
 {
 	TVec res(0, 0), tmp;
 
@@ -262,7 +294,8 @@ double NodeInfluence(TNode &Node, TObj &seg1, TObj &seg2, double eps)
 		{
 			if (!*llobj) {continue;}
 			TObj &obj = **llobj;
-			fortobjectinfluence_(&obj.rx, &obj.ry, &seg1.rx, &seg1.ry, &seg2.rx, &seg2.ry, &tmp.rx, &tmp.ry, &eps);
+			fortobjectinfluence_(&obj.rx, &obj.ry, &seg1.rx, &seg1.ry,
+			                         &seg2.rx, &seg2.ry, &tmp.rx, &tmp.ry, &rd);
 			res+= tmp*obj.g;
 		}
 	}
@@ -271,9 +304,11 @@ double NodeInfluence(TNode &Node, TObj &seg1, TObj &seg2, double eps)
 	{
 		TNode &fnode = **llfnode;
 
-		fortobjectinfluence_(&fnode.CMp.rx, &fnode.CMp.ry, &seg1.rx, &seg1.ry, &seg2.rx, &seg2.ry, &tmp.rx, &tmp.ry, &eps);
+		fortobjectinfluence_(&fnode.CMp.rx, &fnode.CMp.ry, &seg1.rx,
+		                   &seg1.ry, &seg2.rx, &seg2.ry, &tmp.rx, &tmp.ry, &rd);
 		res+= tmp*fnode.CMp.g;
-		fortobjectinfluence_(&fnode.CMm.rx, &fnode.CMm.ry, &seg1.rx, &seg1.ry, &seg2.rx, &seg2.ry, &tmp.rx, &tmp.ry, &eps);
+		fortobjectinfluence_(&fnode.CMm.rx, &fnode.CMm.ry, &seg1.rx,
+		                   &seg1.ry, &seg2.rx, &seg2.ry, &tmp.rx, &tmp.ry, &rd);
 		res+= tmp*fnode.CMm.g;
 	}
 
@@ -283,7 +318,7 @@ double NodeInfluence(TNode &Node, TObj &seg1, TObj &seg2, double eps)
 
 namespace {
 //inline
-double AttachInfluence(TObj &seg1, TObj &seg2, const TAtt &center, double eps)
+double AttachInfluence(TObj &seg1, TObj &seg2, const TAtt &center, double rd)
 {
 	TVec res(0,0), tmp;
 
@@ -294,7 +329,8 @@ double AttachInfluence(TObj &seg1, TObj &seg2, const TAtt &center, double eps)
 		const_for(body.AttachList, latt)
 		{
 			if (latt == &center) continue;
-			fortobjectinfluence_(&latt->rx, &latt->ry, &seg1.rx, &seg1.ry, &seg2.rx, &seg2.ry, &tmp.rx, &tmp.ry, &eps);
+			fortobjectinfluence_(&latt->rx, &latt->ry, &seg1.rx, &seg1.ry,
+			                         &seg2.rx, &seg2.ry, &tmp.rx, &tmp.ry, &rd);
 			res+= tmp*latt->g - rotl(tmp)*latt->q;
 		}
 	}
@@ -314,8 +350,8 @@ void FillMatrix()
 		const_for(body.List, lbvort)
 		{
 			//temporarily vort->g stores eps info.
-			lbvort->g = (*body.next(lbvort)-*lbvort).abs2()+
-			            (*body.prev(lbvort)-*lbvort).abs2();
+			lbvort->g = (*body.next(lbvort)-*lbvort).abs()+
+			            (*body.prev(lbvort)-*lbvort).abs();
 			lbvort->g *= 0.25;
 		}
 	}
@@ -328,12 +364,12 @@ void FillMatrix()
 		const_for(ibody.AttachList, latt)
 		{
 			int i = latt->eq_no;
-			int j=0;
 			const_for(S->BodyList, lljbody)
 			{
 				TBody &jbody = **lljbody;
 				const_for(jbody.List, lobj)
 				{
+					int j=jbody.att(lobj)->eq_no;
 					switch (latt->bc)
 					{
 					case bc::slip:
@@ -348,8 +384,10 @@ void FillMatrix()
 					case bc::noperturbations:
 						BodyMatrix[N*i+j] = (llibody==lljbody)?1:0;
 						break;
+					case bc::tricky:
+						BodyMatrix[N*i+j] = 1;
+						break;
 					}
-					j++;
 				}
 			}
 		}
@@ -360,6 +398,7 @@ void FillMatrix()
 
 void FillRightCol()
 {
+	double rot_sum = 0;
 	const_for (S->BodyList, llbody)
 	{
 		TBody &body = **llbody;
@@ -369,6 +408,18 @@ void FillRightCol()
 			tmp+= latt->g;
 		}
 		tmp*= body.RotSpeed(S->Time);
+		rot_sum+= tmp;
+	}
+
+	const_for (S->BodyList, llbody)
+	{
+		TBody &body = **llbody;
+		double tmp = 0;
+		const_for(body.AttachList, latt)
+		{
+			tmp+= latt->g;
+		}
+		tmp*= body.RotSpeed(S->Time) - body.RotSpeed(S->Time-S->dt);
 
 		#pragma omp parallel for
 		const_for (body.AttachList, latt)
@@ -383,18 +434,25 @@ void FillRightCol()
 			case bc::slip:
 			case bc::noslip:
 			RightCol[latt->eq_no] = rotl(S->InfSpeed())*SegDl;
-			RightCol[latt->eq_no] -= NodeInfluence(*Node, *body.obj(latt), *body.next(body.obj(latt)), Rd2);
+			RightCol[latt->eq_no] -= NodeInfluence(*Node, *body.obj(latt),
+			                                    *body.next(body.obj(latt)), Rd);
 			const_for (S->BodyList, lljbody)
 			{
 				double RotSpeed_tmp = (**lljbody).RotSpeed(S->Time);
 				if (!RotSpeed_tmp) continue;
-				RightCol[latt->eq_no] -= AttachInfluence(*body.obj(latt), *body.next(body.obj(latt)), *latt, Rd2)
+				RightCol[latt->eq_no] -= AttachInfluence(*body.obj(latt),
+				                          *body.next(body.obj(latt)), *latt, Rd)
 				                     * RotSpeed_tmp;
 			}
 			break;
 			case bc::kutta:
 			case bc::noperturbations:
-			RightCol[latt->eq_no] = -S->gsum() - tmp;
+			RightCol[latt->eq_no] = -tmp +  body.g_dead;
+			body.g_dead = 0;
+			break;
+			case bc::tricky:
+			RightCol[latt->eq_no] = -S->gsum() - rot_sum;
+//			cerr << "\n\t\t\t\t\t2 " << RightCol[latt->eq_no] << " \t" << rot_sum << "\t" << S->gsum() << endl;
 			break;
 			}
 		}
@@ -403,11 +461,67 @@ void FillRightCol()
 
 void SolveMatrix()
 {
+	if (!BodyMatrixOK)
+	{
+		cerr << "Matrix isn't filled!\n";
+		return;
+	}
+
+	int info, one=1;
+	transpose(BodyMatrix, N);
+	dgesv_(&N,&one,BodyMatrix,&N,ipvt,RightCol,&N,&info);
+
+	if (info)
+	{
+		cerr << "SolveMatrix() failed with info=" << info << endl;
+		return;
+	}
+
+	for (int i=0; i<N; i++)
+	{
+		Solution[i] = RightCol[i];
+	}
+}
+
+void SpoilBodyMatrix() {BodyMatrixOK=false;}
+void SpoilInverseMatrix() {InverseMatrixOK=false;}
+
+namespace {
+void inverse(double* A, int N, double* workspace)
+{
+	int LWORK = N*N;
+	int info;
+
+	dgetrf_(&N,&N,A,&N,ipvt,&info);
+	if (info) { cerr << "dgetrf_() failed with info=" << info << endl; return; }
+	dgetri_(&N,A,&N,ipvt,workspace,&LWORK,&info);
+	if (info) { cerr << "dgetri_() failed with info=" << info << endl; return; }
+}}
+
+namespace {
+void transpose(double* A, int N)
+{
+	#pragma omp parallel for
+	for (int i=0; i<N; i++)
+	{
+		for (int j=i+1; j<N; j++)
+		{
+			double tmp = A[i*N+j];
+			A[i*N+j] = A[j*N+i];
+			A[j*N+i] = tmp;
+		}
+	}
+}}
+
+namespace {
+void SolveMatrix_inv()
+{
 	if (!InverseMatrixOK)
 	{
 		cerr << "Inverse!\n";
 	}
 
+	#pragma omp parallel for
 	for (int i=0; i<N; i++)
 	{
 		double *RowI = InverseMatrix + N*i;
@@ -418,8 +532,7 @@ void SolveMatrix()
 			SolI+= RowI[j]*RightCol[j];
 		}
 	}
-
-}
+}}
 
 /****** LOAD/SAVE MATRIX *******/
 

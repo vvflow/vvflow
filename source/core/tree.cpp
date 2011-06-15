@@ -28,6 +28,7 @@ node::node()
 	HeatLList = NULL;
 	NearNodes = FarNodes = NULL;
 	ch1 = ch2 = NULL;
+	CMp.zero(); CMm.zero();
 }
 
 node::~node()
@@ -133,7 +134,7 @@ void TNode::DistributeContent(content *parent, content **ch1, content **ch2)
 
 	const_for (parent, llobj)
 	{
-		if ( (h<w) ? (**llobj).rx<x : (**llobj).ry<y ) 
+		if ( (h<w) ? ((**llobj).rx<x) : ((**llobj).ry<y) ) 
 			(**ch1).push_back(*llobj);
 		else
 			(**ch2).push_back(*llobj);
