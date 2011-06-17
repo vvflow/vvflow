@@ -439,7 +439,7 @@ void FillRightCol()
 			const_for (S->BodyList, lljbody)
 			{
 				double RotSpeed_tmp = (**lljbody).RotSpeed(S->Time);
-				if (!RotSpeed_tmp) continue;
+				if (!RotSpeed_tmp || (lljbody!=llbody) ) continue;
 				RightCol[latt->eq_no] -= AttachInfluence(*body.obj(latt),
 				                          *body.next(body.obj(latt)), *latt, Rd)
 				                     * RotSpeed_tmp;

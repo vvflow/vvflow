@@ -139,8 +139,8 @@ void TBody::UpdateAttach()
 		att.dl = *next(lobj) - *lobj;
 		att = TVec(0.5*(*next(lobj) + *lobj));
 
-		att.g = rotl(att-RotAxis)*att.dl;
-		att.q =     (att-RotAxis)*att.dl;
+		att.g = -rotl(att-RotAxis)*att.dl;
+		att.q =      (att-RotAxis)*att.dl;
 	}
 }
 
