@@ -33,7 +33,7 @@ INCLUDE 		:= headers/
 
 INSTALLDIR 		:= ~/.libVVHDinstall
 
-AR		= ar
+AR		= xiar
 ifeq ($(CC),icc)
   AR = xiar
 endif
@@ -67,7 +67,7 @@ bin/%.o: %.cpp headers/%.h headers/elementary.h | bin/
 bin/%.o: %.c headers/%.h | bin/
 	$(CC) $< $(optimization) $(warnings) $(addprefix -I, $(INCLUDE)) -c -o $@
 
-bin/%.o: %.f95 | bin/
+bin/%.o: %.f90 | bin/
 	$(FORT) $< $(optimization) $(warnings) -c -o $@
 
 bin/libVVHDcore.a: $(patsubst %, bin/%.o, $(core_objects))
