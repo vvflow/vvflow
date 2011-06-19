@@ -128,8 +128,6 @@ void CalcConvectiveFast()
 	if (!S) {cerr << "CalcConvectiveFast() is called before initialization"
 	              << endl; return; }
 
-	double Teilor1, Teilor2, Teilor3, Teilor4;
-
 	auto BottomNodes = GetTreeBottomNodes();
 	if (!BottomNodes) {cerr << "CalcConvectiveFast() is called before tree is built"
 	                        << endl; return; }
@@ -143,6 +141,7 @@ void CalcConvectiveFast()
 		double FuncP1, FuncM1; //Extremely complicated useless variables
 		double FuncP2, FuncM2;
 
+		double Teilor1, Teilor2, Teilor3, Teilor4;
 		Teilor1 = Teilor2 = Teilor3 = Teilor4 = 0;
 
 		const_for (bnode.FarNodes, llfnode)
