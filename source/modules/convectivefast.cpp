@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include <string.h>
+#include <complex>
 using namespace std;
 
 #include "convectivefast.h"
@@ -43,13 +44,9 @@ void SolveMatrix_inv();
 bool BodyMatrixOK;
 bool InverseMatrixOK;
 
-double ObjectInfluence(TObj &obj, TObj &seg1, TObj &seg2, double rd);
-double NodeInfluence(TNode &Node, TObj &seg1, TObj &seg2, double rd);
-double AttachInfluence(TObj &seg1, TObj &seg2, const TAtt &center, double rd);
-extern"C"{
-void fortobjectinfluence_(double *x, double *y, double *x1, double *y1,
-					double *x2, double *y2, double *ax, double *ay, double *eps);
-}
+double ConvectiveInfluence(TVec p, const TAtt &seg, double rd);
+double NodeInfluence(const TNode &Node, const TAtt &seg, double rd);
+double AttachInfluence(const TAtt &seg, double rd);
 
 int LoadMatrix(double *matrix, const char* filename);
 void SaveMatrix(double *matrix, const char* filename);
@@ -265,24 +262,48 @@ void CalcCirculationFast(bool use_inverse)
 	}
 }
 
-
 namespace {
-//inline
-double ObjectInfluence(TObj &obj, TObj &seg1, TObj &seg2, double rd)
+double ConvectiveInfluence(TVec p, const TAtt &seg, double rd)
 {
-	TVec res;
-	fortobjectinfluence_(&obj.rx, &obj.ry, &seg1.rx, &seg1.ry,
-	                                 &seg2.rx, &seg2.ry, &res.rx, &res.ry, &rd);
-	TVec dl=seg2-seg1;
-	return -(rotl(res)*dl)/dl.abs()*C_1_2PI;
-	//FIXME kill fortran
+	complex<double> z(p.rx, -p.ry);
+	complex<double> zc(seg.rx,-seg.ry);
+	complex<double> dz(seg.dl.rx,-seg.dl.ry);
+	complex<double> z1 = zc-dz*0.5;
+	complex<double> z2 = zc+dz*0.5;
+
+	double c1=abs(z-z1);
+	double c2=abs(z-z2);
+	if ((c1>=rd)&&(c2>=rd))
+	{
+		return -log((z-z1)/(z-z2)).real();
+	} else
+	if ((c1<=rd)&&(c2<=rd))
+	{
+		return ((seg-p)*seg.dl)/(rd*rd);
+	}
+	else
+	{
+		double a0 = seg.dl.abs2();
+		double b0 = (p-seg)*seg.dl;
+		double d  = sqrt(b0*b0-a0*((p-seg).abs2()-rd*rd));
+		double k  = (b0+d)/a0; if ((k<=-0.5)||(k>=0.5)) k = (b0-d)/a0;
+		complex<double> z3 = zc + k*dz;
+
+		if (c1 < rd)
+			return (((z1+z3)*0.5-z)*conj(z3-z1)).real()/(rd*rd) -
+			       log((z-z3)/(z-z2)).real();
+		else
+			return -log((z-z1)/(z-z3)).real() +
+			       (((z3+z2)*0.5-z)*conj(z2-z3)).real()/(rd*rd);
+	}
 }}
 
 namespace {
 //inline
-double NodeInfluence(TNode &Node, TObj &seg1, TObj &seg2, double rd)
+//double NodeInfluence(TNode &Node, TObj &seg1, TObj &seg2, double rd)
+double NodeInfluence(const TNode &Node, const TAtt &seg, double rd)
 {
-	TVec res(0, 0), tmp;
+	double res = 0;
 
 	const_for(Node.NearNodes, llnnode)
 	{
@@ -291,35 +312,27 @@ double NodeInfluence(TNode &Node, TObj &seg1, TObj &seg2, double rd)
 
 		const_for (vlist, llobj)
 		{
-			if (!*llobj) {continue;}
-			TObj &obj = **llobj;
-			fortobjectinfluence_(&obj.rx, &obj.ry, &seg1.rx, &seg1.ry,
-			                         &seg2.rx, &seg2.ry, &tmp.rx, &tmp.ry, &rd);
-			res+= tmp*obj.g;
+			//if (!*llobj) {continue;}
+			res+= ConvectiveInfluence((**llobj), seg, rd) * (**llobj).g;
 		}
 	}
 
 	const_for(Node.FarNodes, llfnode)
 	{
 		TNode &fnode = **llfnode;
-
-		fortobjectinfluence_(&fnode.CMp.rx, &fnode.CMp.ry, &seg1.rx,
-		                   &seg1.ry, &seg2.rx, &seg2.ry, &tmp.rx, &tmp.ry, &rd);
-		res+= tmp*fnode.CMp.g;
-		fortobjectinfluence_(&fnode.CMm.rx, &fnode.CMm.ry, &seg1.rx,
-		                   &seg1.ry, &seg2.rx, &seg2.ry, &tmp.rx, &tmp.ry, &rd);
-		res+= tmp*fnode.CMm.g;
+		res+= ConvectiveInfluence(fnode.CMp, seg, rd) * fnode.CMp.g;
+		res+= ConvectiveInfluence(fnode.CMm, seg, rd) * fnode.CMm.g;
 	}
 
-	TVec dl=seg2-seg1;
-	return -(rotl(res)*dl)/dl.abs()*C_1_2PI;
+	return res*C_1_2PI;
 }}
 
 namespace {
 //inline
-double AttachInfluence(TObj &seg1, TObj &seg2, const TAtt &center, double rd)
+//double AttachInfluence(TObj &seg1, TObj &seg2, const TAtt &center, double rd)
+double AttachInfluence(const TAtt &seg, double rd)
 {
-	TVec res(0,0), tmp;
+	double res = 0;
 
 	const_for(S->BodyList, llbody)
 	{
@@ -327,15 +340,16 @@ double AttachInfluence(TObj &seg1, TObj &seg2, const TAtt &center, double rd)
 		if (!body.AttachList->size_safe()) continue;
 		const_for(body.AttachList, latt)
 		{
-			if (latt == &center) continue;
-			fortobjectinfluence_(&latt->rx, &latt->ry, &seg1.rx, &seg1.ry,
-			                         &seg2.rx, &seg2.ry, &tmp.rx, &tmp.ry, &rd);
-			res+= tmp*latt->g - rotl(tmp)*latt->q;
+			if (latt == &seg) continue;
+			res+= ConvectiveInfluence(*latt, seg, rd) * latt->g;
+			TAtt seg_tmp = seg;
+			seg_tmp = rotl(TVec(seg));
+			seg_tmp.dl = rotl(seg.dl);
+			res+= ConvectiveInfluence(*latt, seg_tmp, rd) * latt->q;
 		}
 	}
-	TVec dl=seg2-seg1;
-	return -(rotl(res)*dl)/dl.abs()*C_1_2PI - center.q*0.5; //FIXME sign
-	//FIXME kill fortran
+
+	return res * C_1_2PI - seg.q*0.5;
 }}
 
 void FillMatrix()
@@ -373,8 +387,8 @@ void FillMatrix()
 					{
 					case bc::slip:
 					case bc::noslip:
-						BodyMatrix[N*i+j] = ObjectInfluence(*lobj, *ibody.obj(latt),
-						            *ibody.next(ibody.obj(latt)), lobj->g);
+						BodyMatrix[N*i+j] = ConvectiveInfluence(*lobj, *latt, lobj->g)*C_1_2PI;
+						// lobj->g TEMPORARILY stores rd info. Assignment made 30 lines earlier.
 						break;
 					case bc::kutta:
 						BodyMatrix[N*i+j] = (lobj == ibody.obj(latt)) ||
@@ -433,15 +447,12 @@ void FillRightCol()
 			case bc::slip:
 			case bc::noslip:
 			RightCol[latt->eq_no] = rotl(S->InfSpeed())*SegDl;
-			RightCol[latt->eq_no] -= NodeInfluence(*Node, *body.obj(latt),
-			                                    *body.next(body.obj(latt)), Rd);
+			RightCol[latt->eq_no] -= NodeInfluence(*Node, *latt, Rd);
 			const_for (S->BodyList, lljbody)
 			{
 				double RotSpeed_tmp = (**lljbody).RotSpeed(S->Time);
 				if (!RotSpeed_tmp || (lljbody!=llbody) ) continue;
-				RightCol[latt->eq_no] -= AttachInfluence(*body.obj(latt),
-				                          *body.next(body.obj(latt)), *latt, Rd)
-				                     * RotSpeed_tmp;
+				RightCol[latt->eq_no] -= AttachInfluence(*latt, Rd)*RotSpeed_tmp;
 			}
 			break;
 			case bc::kutta:

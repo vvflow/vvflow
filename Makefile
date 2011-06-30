@@ -16,14 +16,11 @@
 #                   VARIABLES                    #
 #________________________________________________#
 
-CC		= icc -O3 -g -openmp 
-FORT 	= gcc -xf95 -O3
+CC		= icc -O3 -g -openmp
 
 parts 	:= core modules
 core_objects 	:= space body tree
-modules_objects := convective convectivefast objectinfluence flowmove\
- epsfast diffusivefast
-#merge
+modules_objects := convective convectivefast flowmove epsfast diffusivefast
 VPATH := $(addprefix source/, $(parts) ) 
 # VPATH is special make var 
 
@@ -63,12 +60,6 @@ uninstall:
 
 bin/%.o: %.cpp headers/%.h headers/elementary.h | bin/
 	$(CC) $< $(optimization) $(warnings) $(addprefix -I, $(INCLUDE)) -c -o $@ -std=c++0x
-
-bin/%.o: %.c headers/%.h | bin/
-	$(CC) $< $(optimization) $(warnings) $(addprefix -I, $(INCLUDE)) -c -o $@
-
-bin/%.o: %.f90 | bin/
-	$(FORT) $< $(optimization) $(warnings) -c -o $@
 
 bin/libVVHDcore.a: $(patsubst %, bin/%.o, $(core_objects))
 bin/libVVHDmodules.a: $(patsubst %, bin/%.o, $(modules_objects))

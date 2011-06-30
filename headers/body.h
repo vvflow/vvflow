@@ -22,6 +22,7 @@ class TAtt : public TVec
 		bc::BoundaryCondition bc;
 		TBody* body;
 
+		TAtt(){}
 		TAtt(TBody *body, int eq_no);
 		void zero() { rx = ry = g = q = pres = fric = gsum = 0; }
 		TAtt& operator= (const TVec& p) { rx=p.rx; ry=p.ry; return *this; }
