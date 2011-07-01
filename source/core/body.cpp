@@ -169,7 +169,7 @@ void TBody::CleanHeatLayer()
 	if (!this) return;
 	if (!HeatLayer) return;
 
-	for (long i=0; i<List->size(); i++)
+	for (size_t i=0; i<List->size(); i++)
 	{
 		HeatLayer[i]=0;
 	}

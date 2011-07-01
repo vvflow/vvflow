@@ -73,7 +73,7 @@ void CalcVortexDiffusiveFast()
 				const_for(jlist, lljobj)
 				{
 					if (!*lljobj) { continue; }
-					TBody *body;
+					TBody *body = NULL;
 					const_for(S->BodyList, llbody)
 						if ( (*lljobj >= (**llbody).List->begin()) &&
 						     (*lljobj >= (**llbody).List->begin()) )

@@ -17,13 +17,13 @@ void SpoilInverseMatrix();
 
 double* MatrixLink();
 
-int LoadBodyMatrix(const char* filename);
-int LoadInverseMatrix(const char* filename);
+bool LoadBodyMatrix(const char* filename);
+bool LoadInverseMatrix(const char* filename);
 void SaveBodyMatrix(const char* filename);
 void SaveInverseMatrix(const char* filename);
 
-int LoadBodyMatrix_bin(const char* filename);
-int LoadInverseMatrix_bin(const char* filename);
+bool LoadBodyMatrix_bin(const char* filename);
+bool LoadInverseMatrix_bin(const char* filename);
 void SaveBodyMatrix_bin(const char* filename);
 void SaveInverseMatrix_bin(const char* filename);
 

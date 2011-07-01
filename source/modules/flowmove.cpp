@@ -12,9 +12,6 @@ double RemoveEps;
 
 int CleanedV_;
 int CleanedH_;
-
-double FlowMove_ControlLayerHeight; //height of boundaru layer(not square)
-
 }
 
 /****************************** MAIN FUNCTIONS ********************************/
@@ -79,8 +76,8 @@ void MoveAndClean(bool remove)
 		{
 			*lobj += lobj->v*dt; lobj->v.zero();
 
-			TAtt* invalid_inbody;
-			int* inlayer;
+			TAtt* invalid_inbody = NULL;
+			int* inlayer = 0;
 			const_for(S->BodyList, llbody)
 			{
 				invalid_inbody = (**llbody).PointIsInvalid(*lobj);

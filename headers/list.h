@@ -20,17 +20,17 @@ class list
 		void push_back(const T &item);
 		void erase(T* item);
 		void clear();
-		T& at(long i);
+		T& at(size_t i);
 		T* begin();
 		T* end();
-		long size();
-		long size_safe();
+		size_t size();
+		size_t size_safe();
 		T* next(T* item);
 		T* prev(T* item);
 
 	private:
-		long size_;
-		long maxsize;
+		size_t size_;
+		size_t maxsize;
 		T* begin_;
 		T* end_;
 
@@ -41,7 +41,7 @@ template <class T> inline
 list<T>::list()
 {
 	maxsize = 4;
-	begin_ = (T*)malloc(maxsize*sizeof(T));
+	begin_ = reinterpret_cast<T*>( malloc(maxsize*sizeof(T)) );
 	size_ = 0;
 	end_ = begin_;
 }
@@ -71,7 +71,7 @@ template <class T> inline
 void list<T>::clear() { size_=0; end_ = begin_; }
 
 template <class T> inline
-T& list<T>::at(long i) { return begin_[i]; }
+T& list<T>::at(size_t i) { return begin_[i]; }
 
 template <class T> inline
 T* list<T>::begin() { return begin_; }
@@ -80,10 +80,10 @@ template <class T> inline
 T* list<T>::end() { return end_; }
 
 template <class T> inline
-long list<T>::size() { return size_; }
+size_t list<T>::size() { return size_; }
 
 template <class T> inline
-long list<T>::size_safe() { return this ? size_ : 0; }
+size_t list<T>::size_safe() { return this ? size_ : 0; }
 
 template <class T> inline
 T* list<T>::next(T* item) { return (item == end_-1) ? begin_ : item+1; }
@@ -96,7 +96,7 @@ template <class T>
 void list<T>::realloc_()
 {
 		maxsize*= 2;
-		begin_ = (T*)realloc(begin_, maxsize*sizeof(T));
+		begin_ = reinterpret_cast<T*>( realloc(begin_, maxsize*sizeof(T)) );
 		end_ = begin_ + size_;
 }
 

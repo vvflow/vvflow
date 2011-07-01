@@ -3,6 +3,8 @@
 #include <iostream>
 #include <string.h>
 #include <complex>
+
+#include "mkl.h"
 using namespace std;
 
 #include "convectivefast.h"
@@ -11,13 +13,13 @@ using namespace std;
 
 /********************************** HEADER ************************************/
 
-extern "C" {
+/*extern "C" {
 	void dgesv_(int* n, const int* nrhs, double* a, int* lda, int* ipiv,
 	            double *x, int *incx, int *info);
 	void dgetrf_(int* M, int *N, double* A, int* lda, int* IPIV, int* INFO);
 	void dgetri_(int* N, double* A, int* lda, int* IPIV, double* WORK,
 	             int* lwork, int* INFO);
-}
+}*/
 
 namespace {
 
@@ -31,7 +33,7 @@ TVec SpeedSum(const TNode &Node, const TVec &p);
 
 TVec BoundaryConvective(const TBody &b, const TVec &p);
 
-int N; // BodySize;
+size_t N; // BodySize;
 double *BodyMatrix;
 double *InverseMatrix;
 double *RightCol;
@@ -48,9 +50,9 @@ double ConvectiveInfluence(TVec p, const TAtt &seg, double rd);
 double NodeInfluence(const TNode &Node, const TAtt &seg, double rd);
 double AttachInfluence(const TAtt &seg, double rd);
 
-int LoadMatrix(double *matrix, const char* filename);
+size_t LoadMatrix(double *matrix, const char* filename);
 void SaveMatrix(double *matrix, const char* filename);
-int LoadMatrix_bin(double *matrix, const char* filename);
+size_t LoadMatrix_bin(double *matrix, const char* filename);
 void SaveMatrix_bin(double *matrix, const char* filename);
 
 }
@@ -64,11 +66,11 @@ void InitConvectiveFast(Space *sS, double sRd2)
 	Rd = sqrt(Rd2);
 
 	N = 0; const_for(sS->BodyList, llbody){ N+=(**llbody).List->size(); }
-	BodyMatrix = (double*)malloc(N*N*sizeof(double));
-	InverseMatrix = (double*)malloc(N*N*sizeof(double));
-	RightCol = (double*)malloc(N*sizeof(double));
-	Solution = (double*)malloc(N*sizeof(double));
-	ipvt = (int*)malloc((N+1)*sizeof(int));
+	BodyMatrix = new double[N*N]; //(double*)malloc(N*N*sizeof(double));
+	InverseMatrix = new double[N*N]; //(double*)malloc(N*N*sizeof(double));
+	RightCol = new double[N]; //(double*)malloc(N*sizeof(double));
+	Solution = new double[N]; //(double*)malloc(N*sizeof(double));
+	ipvt = new int[N+1]; //(int*)malloc((N+1)*sizeof(int));
 	BodyMatrixOK = InverseMatrixOK = false;
 }
 
@@ -477,9 +479,9 @@ void SolveMatrix()
 		return;
 	}
 
-	int info, one=1;
+	int info, one=1, N_int=N;
 	transpose(BodyMatrix, N);
-	dgesv_(&N,&one,BodyMatrix,&N,ipvt,RightCol,&N,&info);
+	dgesv_(&N_int,&one,BodyMatrix,&N_int,ipvt,RightCol,&N_int,&info);
 
 	if (info)
 	{
@@ -487,7 +489,7 @@ void SolveMatrix()
 		return;
 	}
 
-	for (int i=0; i<N; i++)
+	for (size_t i=0; i<N; i++)
 	{
 		Solution[i] = RightCol[i];
 	}
@@ -532,12 +534,12 @@ void SolveMatrix_inv()
 	}
 
 	#pragma omp parallel for
-	for (int i=0; i<N; i++)
+	for (size_t i=0; i<N; i++)
 	{
 		double *RowI = InverseMatrix + N*i;
 		double &SolI = Solution[i];
 		SolI = 0;
-		for (int j=0; j<N; j++)
+		for (size_t j=0; j<N; j++)
 		{
 			SolI+= RowI[j]*RightCol[j];
 		}
@@ -546,9 +548,9 @@ void SolveMatrix_inv()
 
 /****** LOAD/SAVE MATRIX *******/
 
-int LoadBodyMatrix(const char* filename)
-{ return BodyMatrixOK = (LoadMatrix(BodyMatrix, filename) == N*N); }
-int LoadInverseMatrix(const char* filename)
+bool LoadBodyMatrix(const char* filename)
+{ BodyMatrixOK = (LoadMatrix(BodyMatrix, filename) == N*N); return BodyMatrixOK; }
+bool LoadInverseMatrix(const char* filename)
 { InverseMatrixOK = (LoadMatrix(InverseMatrix, filename) == N*N); return InverseMatrixOK; }
 void SaveBodyMatrix(const char* filename)
 { SaveMatrix(BodyMatrix, filename); }
@@ -556,12 +558,12 @@ void SaveInverseMatrix(const char* filename)
 { SaveMatrix(InverseMatrix, filename); }
 
 namespace {
-int LoadMatrix(double *matrix, const char* filename)
+size_t LoadMatrix(double *matrix, const char* filename)
 {
 	FILE *fin;
 
 	fin = fopen(filename, "r");
-	if (!fin) { cerr << "No file called \'" << filename << "\'\n"; return -1; } 
+	if (!fin) { cerr << "No file called \'" << filename << "\'\n"; return 0; } 
 	double *dst = matrix;
 	while ( fscanf(fin, "%lf", dst)==1 )
 	{
@@ -579,7 +581,7 @@ void SaveMatrix(double *matrix, const char* filename)
 	fout = fopen(filename, "w");
 	if (!fout) { cerr << "Error opening file \'" << filename << "\'\n"; return; } 
 	double *src = matrix;
-	for (int i=0; i<N*N; i++)
+	for (size_t i=0; i<N*N; i++)
 	{
 		fprintf(fout, "%f ", src[i]);
 		if (!((i+1)%N)) fprintf(fout, "\n");
@@ -589,9 +591,9 @@ void SaveMatrix(double *matrix, const char* filename)
 
 /****** BINARY LOAD/SAVE *******/
 
-int LoadBodyMatrix_bin(const char* filename)
+bool LoadBodyMatrix_bin(const char* filename)
 { BodyMatrixOK = (LoadMatrix_bin(BodyMatrix, filename) == N*N); return BodyMatrixOK; }
-int LoadInverseMatrix_bin(const char* filename)
+bool LoadInverseMatrix_bin(const char* filename)
 { InverseMatrixOK = (LoadMatrix_bin(InverseMatrix, filename) == N*N); return InverseMatrixOK; }
 void SaveBodyMatrix_bin(const char* filename)
 { SaveMatrix_bin(BodyMatrix, filename); }
@@ -599,14 +601,11 @@ void SaveInverseMatrix_bin(const char* filename)
 { SaveMatrix_bin(InverseMatrix, filename); }
 
 namespace {
-int LoadMatrix_bin(double *matrix, const char* filename)
+size_t LoadMatrix_bin(double *matrix, const char* filename)
 {
-	FILE *fin;
-	int result;
-
-	fin = fopen(filename, "rb");
-	if (!fin) { return -1; }
-	result = fread(matrix, sizeof(double), N*N, fin);
+	FILE *fin = fopen(filename, "rb");
+	if (!fin) { return 0; }
+	size_t result = fread(matrix, sizeof(double), N*N, fin);
 	fclose(fin);
 
 	return result;
