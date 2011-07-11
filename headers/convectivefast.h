@@ -10,12 +10,14 @@ TVec SpeedSumFast(TVec p);
 
 void CalcCirculationFast(bool use_inverse);
 void FillMatrix();
+void FillInverseMatrix();
 void FillRightCol();
 void SolveMatrix();
 void SpoilBodyMatrix();
 void SpoilInverseMatrix();
 
 double* MatrixLink();
+double* InvMatrixLink();
 
 bool LoadBodyMatrix(const char* filename);
 bool LoadInverseMatrix(const char* filename);

@@ -13,14 +13,6 @@ using namespace std;
 
 /********************************** HEADER ************************************/
 
-/*extern "C" {
-	void dgesv_(int* n, const int* nrhs, double* a, int* lda, int* ipiv,
-	            double *x, int *incx, int *info);
-	void dgetrf_(int* M, int *N, double* A, int* lda, int* IPIV, int* INFO);
-	void dgetri_(int* N, double* A, int* lda, int* IPIV, double* WORK,
-	             int* lwork, int* INFO);
-}*/
-
 namespace {
 
 Space *S;
@@ -74,7 +66,16 @@ void InitConvectiveFast(Space *sS, double sRd2)
 	BodyMatrixOK = InverseMatrixOK = false;
 }
 
-double *MatrixLink() { return BodyMatrix; }
+double *MatrixLink()
+{
+	if (!BodyMatrixOK) {dbg(FillMatrix());} 
+	return BodyMatrix;
+}
+double *InvMatrixLink()
+{
+	if (!InverseMatrixOK) {dbg(FillInverseMatrix());} 
+	return InverseMatrix;
+}
 
 TVec SpeedSumFast(TVec p)
 {
@@ -239,13 +240,7 @@ void CalcCirculationFast(bool use_inverse)
 	if (!BodyMatrixOK) {dbg(FillMatrix());}
 	if(use_inverse)
 	{
-		if (!InverseMatrixOK)
-		{
-			memcpy(InverseMatrix, BodyMatrix, N*N*sizeof(double));
-			dbg(inverse(InverseMatrix, N, BodyMatrix));
-			InverseMatrixOK = true;
-			BodyMatrixOK = false;
-		}
+		if (!InverseMatrixOK) { dbg(FillInverseMatrix()); }
 		dbg(SolveMatrix_inv());
 	}
 	else
@@ -262,6 +257,14 @@ void CalcCirculationFast(bool use_inverse)
 			lobj->g = Solution[body.att(lobj)->eq_no];
 		}
 	}
+}
+
+void FillInverseMatrix()
+{
+	memcpy(InverseMatrix, BodyMatrix, N*N*sizeof(double));
+	dbg(inverse(InverseMatrix, N, BodyMatrix));
+	InverseMatrixOK = true;
+	BodyMatrixOK = false;
 }
 
 namespace {
@@ -301,8 +304,6 @@ double ConvectiveInfluence(TVec p, const TAtt &seg, double rd)
 }}
 
 namespace {
-//inline
-//double NodeInfluence(TNode &Node, TObj &seg1, TObj &seg2, double rd)
 double NodeInfluence(const TNode &Node, const TAtt &seg, double rd)
 {
 	double res = 0;
@@ -330,8 +331,6 @@ double NodeInfluence(const TNode &Node, const TAtt &seg, double rd)
 }}
 
 namespace {
-//inline
-//double AttachInfluence(TObj &seg1, TObj &seg2, const TAtt &center, double rd)
 double AttachInfluence(const TAtt &seg, double rd)
 {
 	double res = 0;
@@ -340,18 +339,23 @@ double AttachInfluence(const TAtt &seg, double rd)
 	{
 		TBody &body = **llbody;
 		if (!body.AttachList->size_safe()) continue;
+		double RotSpeed_tmp = body.RotSpeed(S->Time);
+		if (!RotSpeed_tmp) continue;
+
+		double res_tmp=0;
 		const_for(body.AttachList, latt)
 		{
-			if (latt == &seg) continue;
-			res+= ConvectiveInfluence(*latt, seg, rd) * latt->g;
+			if (latt == &seg) { res_tmp+= seg.q*0.5; continue; }
+			res_tmp+= ConvectiveInfluence(*latt, seg, rd) * latt->g;
 			TAtt seg_tmp = seg;
 			seg_tmp = rotl(TVec(seg));
 			seg_tmp.dl = rotl(seg.dl);
-			res+= ConvectiveInfluence(*latt, seg_tmp, rd) * latt->q;
+			res_tmp+= ConvectiveInfluence(*latt, seg_tmp, rd) * latt->q;
 		}
+		res+= res_tmp * RotSpeed_tmp;
 	}
 
-	return res * C_1_2PI - seg.q*0.5;
+	return res * C_1_2PI;
 }}
 
 void FillMatrix()
@@ -450,12 +454,7 @@ void FillRightCol()
 			case bc::noslip:
 			RightCol[latt->eq_no] = rotl(S->InfSpeed())*SegDl;
 			RightCol[latt->eq_no] -= NodeInfluence(*Node, *latt, Rd);
-			const_for (S->BodyList, lljbody)
-			{
-				double RotSpeed_tmp = (**lljbody).RotSpeed(S->Time);
-				if (!RotSpeed_tmp || (lljbody!=llbody) ) continue;
-				RightCol[latt->eq_no] -= AttachInfluence(*latt, Rd)*RotSpeed_tmp;
-			}
+			RightCol[latt->eq_no] -= AttachInfluence(*latt, Rd);
 			break;
 			case bc::kutta:
 			case bc::noperturbations:

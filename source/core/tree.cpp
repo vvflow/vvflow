@@ -233,7 +233,8 @@ namespace {
 void FillRootNode(vector<TObj> *src, node::content **dst)
 {
 	if (!src->size_safe()) return;
-	*dst = new node::content();
+	if (!(*dst))
+		*dst = new node::content();
 
 	const_for (src, lobj)
 	{

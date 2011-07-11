@@ -76,7 +76,7 @@ void CalcVortexDiffusiveFast()
 					TBody *body = NULL;
 					const_for(S->BodyList, llbody)
 						if ( (*lljobj >= (**llbody).List->begin()) &&
-						     (*lljobj >= (**llbody).List->begin()) )
+						     (*lljobj <  (**llbody).List->end()) )
 							body = *llbody;
 					if (!body) { continue; }
 					SegmentInfluence(obj, body->att(*lljobj), &S3, &S0);

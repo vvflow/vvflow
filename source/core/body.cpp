@@ -21,6 +21,7 @@ TBody::TBody()
 	Angle = 0;
 	g_dead = 0;
 	Position = TVec(0,0);
+	Force = TVec(0,0);
 }
 
 int TBody::LoadFromFile(const char* filename, int start_eq_no)
@@ -97,10 +98,8 @@ double TBody::SurfaceLength()
 
 	const_for (List, obj)
 	{
-		res += (*obj - *(obj+1)).abs();
+		res += (*obj - *next(obj)).abs();
 	}
-
-	res += (*List->begin() - *(List->end()-1)).abs();
 
 	return res;
 }
