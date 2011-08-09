@@ -26,17 +26,13 @@ class Space
 
 		/***************** SAVE/LOAD ******************/
 		int LoadVorticityFromFile(const char* filename);
-		int LoadHeatFromStupidFile(const char* filename, double g);
 		int LoadHeatFromFile(const char* filename);
 
 		int LoadBody(const char* filename);
 
-		int PrintBody(std::ostream& os);
-		int PrintVorticity(std::ostream& os);
-		int PrintHeat(std::ostream& os);
-
 		int PrintBody(const char* format);
 		int PrintVorticity(const char* format);
+		int PrintVorticity_bin(const char* format);
 		int PrintHeat(const char* format);
 
 		int Save(const char *filename);
@@ -48,8 +44,8 @@ class Space
 		TVec HydroDynamicMomentum();
 
 	private:
-		int Print(vector<TObj> *list, std::ostream& os);
-		int Print(vector<TObj> *list, const char* format, ios::openmode mode = ios::out); //format is used for sprintf(filename, "format", time)
+		int Print_byos(vector<TObj> *list, std::ostream& os, bool bin);
+		int Print_bymask(vector<TObj> *list, const char* format, ios::openmode mode = ios::out); //format is used for sprintf(filename, "format", time)
 
 		TVec (*InfSpeed_link)(double time);
 };

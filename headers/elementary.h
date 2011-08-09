@@ -57,8 +57,8 @@ class TVec
 class TObj: public TVec
 {
 	public:
-		TVec v;
 		double g;
+		TVec v;
 		double _1_eps;
 
 		TObj() {}
