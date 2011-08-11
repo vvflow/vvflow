@@ -35,8 +35,7 @@ class Space
 		int PrintVorticity_bin(const char* format);
 		int PrintHeat(const char* format);
 
-		int Save(const char *filename);
-		int Load(const char *filename);
+		void PrintHeader(const char* format, const char* data, streamsize size);
 
 		double integral();
 		double gsum();

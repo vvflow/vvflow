@@ -89,7 +89,7 @@ int Space::Print_bymask(vector<TObj> *list, const char* format, ios::openmode mo
 	sprintf(fname, format, int(Time/dt));
 
 	fout.open(fname, mode);
-	if (mode & ios::binary) fout.seekp(128, ios::beg);
+	if (mode & ios::binary) { fout.seekp(1024, ios::beg); }
 	res = Print_byos(list, fout, (mode & ios::binary));
 	fout.close();
 
@@ -122,59 +122,14 @@ int Space::PrintHeat(const char* filename)
 	return Print_bymask(HeatList, filename);
 }
 
-int Space::Save(const char *filename)
+void Space::PrintHeader(const char* format, const char* data, streamsize size)
 {
-	/*long zero = 0;
-	FILE * fout = fopen(filename, "w");
-	if (!fout) return -1;
+	fstream fout;
+	char fname[64]; sprintf(fname, format, int(Time/dt));
 
-	if (VortexList)
-	{
-		fwrite(&(VortexList->size), sizeof(long), 1, pFile);
-		fwrite(List->First, sizeof(TObj), List->size, pFile);
-	} else { fwrite(&zero, sizeof(long), 1, pFile); }
-
-	SaveList(VortexList)
-	//SaveList(BodyList)
-	SaveList(HeatList)
-
-	fclose(pFile);*/
-	return 0;
-}
-
-int Space::Load(const char *filename)
-{
-	/*long size;
-	if (VortexList) delete VortexList;
-	//if (BodyList) delete BodyList;
-	if (HeatList) delete HeatList;
-	//delete [] BodyControlLayer;
-
-	FILE * pFile;
-	pFile = fopen(filename, "r");
-	if (!pFile) return -1;
-
-	size_t err;
-	#define LoadList(List) 													\
-		err = fread(&size, sizeof(long), 1, pFile); 								\
-		printf("%ld ", size); 												\
-		if (size) 															\
-		{ 																	\
-			List = (TList<TObj>*)malloc(sizeof(TList<TObj>)); 							\
-			List->maxsize = size; 											\
-			List->size = size; 												\
-			List->First = (TObj*)malloc(size*sizeof(TObj)); 		\
-			err = fread(List->First, sizeof(TObj), size, pFile); 			\
-		}
-
-	LoadList(VortexList)
-	//LoadList(BodyList)
-	LoadList(HeatList)
-
-	//if (BodyList) BodyControlLayer = new int[BodyList->size];
-
-	fclose(pFile);*/
-	return 0;
+	fout.open(fname, ios::out | ios::binary);
+	fout.write(data, min(size, 1024));
+	fout.close();
 }
 
 double Space::integral()
