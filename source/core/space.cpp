@@ -114,7 +114,7 @@ int Space::PrintVorticity(const char* filename)
 
 int Space::PrintVorticity_bin(const char* filename)
 {
-	return Print_bymask(VortexList, filename, ios::out | ios::binary);
+	return Print_bymask(VortexList, filename, ios::out | ios::in | ios::binary);
 }
 
 int Space::PrintHeat(const char* filename)
@@ -127,7 +127,7 @@ void Space::PrintHeader(const char* format, const char* data, streamsize size)
 	fstream fout;
 	char fname[64]; sprintf(fname, format, int(Time/dt));
 
-	fout.open(fname, ios::out | ios::binary);
+	fout.open(fname, ios::out);
 	fout.write(data, min(size, 1024));
 	fout.close();
 }
