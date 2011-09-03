@@ -3,36 +3,18 @@
 #include <cstdlib>
 #include <time.h>
 
-/********************************** HEADER ************************************/
-namespace {
-
-Space *S;
-double dt;
-double RemoveEps;
-
-int CleanedV_;
-int CleanedH_;
-}
-
-/****************************** MAIN FUNCTIONS ********************************/
-
-void InitFlowMove(Space *sS, double sdt, double sRemoveEps)
+flowmove::flowmove(Space *sS, double sdt, double sRemoveEps)
 {
 	S = sS;
 	dt = S->dt = sdt;
 	RemoveEps = sRemoveEps;
-	CleanedV_ = CleanedH_ = 0;
+	CleanedV_ = 0;
 }
 
-void MoveAndClean(bool remove)
+void flowmove::MoveAndClean(bool remove)
 {
-	if (!S) {cerr << "MoveAndClean() is called before initialization"
-	              << endl; return; }
-
-	CleanedV_ = CleanedH_ = 0;
-
+	CleanedV_ = 0;
 	auto vlist = S->VortexList;
-	auto hlist = S->HeatList;
 
 	//MOVING VORTEXES
 	if ( vlist )
@@ -63,47 +45,15 @@ void MoveAndClean(bool remove)
 			lobj--;
 		}
 	}
-
-	//MOVING HEAT PARTICLES
-	if ( hlist )
-	{
-		const_for(S->BodyList, llbody)
-		{
-			(**llbody).CleanHeatLayer();
-		}
-
-		const_for (hlist, lobj)
-		{
-			*lobj += lobj->v*dt; lobj->v.zero();
-
-			TAtt* invalid_inbody = NULL;
-			int* inlayer = 0;
-			const_for(S->BodyList, llbody)
-			{
-				invalid_inbody = (**llbody).PointIsInvalid(*lobj);
-				inlayer = (**llbody).ObjectIsInHeatLayer(*lobj);
-			}
-			if ( remove && invalid_inbody )
-			{
-				CleanedH_++;
-				hlist->erase(lobj);
-				lobj--;
-			} else
-			if (inlayer) { (*inlayer)++; }
-		}
-	}
 }
 
-void VortexShed()
+void flowmove::VortexShed()
 {
-	if (!S) {cerr << "VortexShed() is called before initialization"
-	              << endl; return; }
-	if (!S->VortexList) return;
+	auto vlist = S->VortexList;
+	if (!vlist) return;
 	TObj ObjCopy(0, 0, 0);
 
 	//FlowMove_CleanedV = 0;
-
-	auto vlist = S->VortexList;
 
 	const_for(S->BodyList, llbody)
 	{
@@ -126,26 +76,3 @@ void VortexShed()
 	}
 }
 
-void HeatShed()
-{
-	if (!S) {cerr << "HeatShed() is called before initialization"
-	              << endl; return; }
-	if (!S->HeatList) return;
-/*
-	long BodyListSize = FlowMove_S->Body->List->size;
-	//double dfi = C_2PI/BodyListSize;
-	TObject ObjCopy; ZeroVortex(ObjCopy); //ObjCopy.g = dfi * dfi;
-
-	for ( long i=0; i<BodyListSize; i++ )
-	{
-		double r = 1. + double(rand())*FlowMove_ControlLayerHeight/RAND_MAX;
-		double fi= dfi * (i + double(rand())/RAND_MAX);
-		ObjCopy.rx = r*cos(fi);
-		ObjCopy.ry = r*sin(fi);
-		FlowMove_S->HeatList->Copy(&ObjCopy);
-	}
-*/
-}
-
-int CleanedV() { return CleanedV_; }
-int CleanedH() { return CleanedH_; }

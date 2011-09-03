@@ -3,11 +3,22 @@
 #include <math.h>
 #include "core.h"
 
-void InitFlowMove(Space *sS, double sdt, double sRemoveEps);
-void MoveAndClean(bool remove = false);
-void VortexShed();
-void HeatShed();
-int CleanedV(); // Returns ammount of Vortex items removed after MoveAndClean() call
-int CleanedH(); // Returns ammount of Heat   items removed after MoveAndClean() call
+class flowmove
+{
+	public:
+		flowmove(Space *sS, double sdt, double sRemoveEps = 1E-10);
+		void MoveAndClean(bool remove);
+		void VortexShed();
+		//void HeatShed();
+
+		int CleanedV() {return CleanedV_;}
+		//int CleanedH();
+	private:
+		Space *S;
+		double dt;
+		double RemoveEps;
+		int CleanedV_;
+		//int CleanedH_;
+};
 
 #endif

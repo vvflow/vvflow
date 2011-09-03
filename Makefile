@@ -17,10 +17,12 @@
 #________________________________________________#
 
 CC		= icc -O3 -g -openmp
+AR		= xiar
 
 parts 	:= core modules
 core_objects 	:= space body tree
-modules_objects := convective convectivefast flowmove epsfast diffusivefast
+modules_objects := flowmove flowmove2 epsfast diffusivefast
+#convective convectivefast
 VPATH := $(addprefix source/, $(parts) ) 
 # VPATH is special make var 
 
@@ -29,11 +31,6 @@ warnings 		:= -Wall
 INCLUDE 		:= headers/
 
 INSTALLDIR 		:= ~/.libVVHDinstall
-
-AR		= xiar
-ifeq ($(CC),icc)
-  AR = xiar
-endif
 
 #‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾#
 #                    TARGETS                     #
