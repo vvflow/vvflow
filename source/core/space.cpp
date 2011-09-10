@@ -38,6 +38,30 @@ int Space::LoadVorticityFromFile(const char* filename)
 	return 0;
 }
 
+int Space::LoadVorticity_bin(const char* filename)
+{
+	if ( !VortexList ) return -1;
+
+	fstream fin;
+	fin.open(filename, ios::in | ios::binary);
+	if (!fin) { cerr << "No file called \'" << filename << "\'\n"; return -1; } 
+
+	fin.seekg (0, ios::end);
+	size_t N = (size_t(fin.tellg())-1024)/(sizeof(double)*3);
+	fin.seekp(1024, ios::beg);
+
+	TObj obj(0, 0, 0);
+	
+	while ( fin.good() )
+	{
+		fin.read(pchar(&obj), 3*sizeof(double));
+		VortexList->push_back(obj);
+	}
+
+	fin.close();
+	return 0;
+}
+
 int Space::LoadHeatFromFile(const char* filename)
 {
 	if ( !HeatList ) return -1;
@@ -120,6 +144,17 @@ int Space::PrintVorticity_bin(const char* filename)
 int Space::PrintHeat(const char* filename)
 {
 	return Print_bymask(HeatList, filename);
+}
+
+/********************************* HEADERS ************************************/
+
+void Space::LoadHeader(const char* fname, char* data, streamsize size)
+{
+	fstream fin;
+
+	fin.open(fname, ios::in | ios::binary);
+	fin.read(data, min(size, 1024));
+	fin.close();
 }
 
 void Space::PrintHeader(const char* format, const char* data, streamsize size)

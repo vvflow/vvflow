@@ -26,6 +26,7 @@ class Space
 
 		/***************** SAVE/LOAD ******************/
 		int LoadVorticityFromFile(const char* filename);
+		int LoadVorticity_bin(const char* filename);
 		int LoadHeatFromFile(const char* filename);
 
 		int LoadBody(const char* filename);
@@ -35,6 +36,7 @@ class Space
 		int PrintVorticity_bin(const char* format);
 		int PrintHeat(const char* format);
 
+		void LoadHeader(const char* filename, char* data, streamsize size);
 		void PrintHeader(const char* format, const char* data, streamsize size);
 
 		double integral();
