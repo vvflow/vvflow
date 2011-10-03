@@ -142,8 +142,13 @@ void VortexShed()
 			}
 		}
 	}
+}
 
-	//SHEDDING STREAK PARTICLES
+void StreakShed()
+{
+	if (!S) {cerr << "StreakShed() is called before initialization"
+	              << endl; return; }
+
 	const_for(S->StreakSourceList, lobj)
 	{
 		S->StreakList->push_back(*lobj);
