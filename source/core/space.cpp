@@ -23,14 +23,24 @@ Space::Space(bool CreateVortexes,
 
 /********************************** SAVE/LOAD *********************************/
 
+int bookmark;
+void SaveBookmark(FILE* fout)
+{
+	size_t tmp = ftell(fout);
+	fseek(fout, bookmark*8, SEEK_SET);
+	fwrite(&tmp, 8, 1, fout);
+	fseek(fout, tmp, SEEK_SET);
+	bookmark++;
+}
+
 void SaveList(vector<TObj> *list, FILE* fout)
 {
 	size_t size = list->size_safe();
-	fwrite(&size, sizeof(size_t), 1, fout);
+	fwrite(&size, 8, 1, fout);
 	if (!list) return;
 	const_for (list, obj)
 	{
-		fwrite(pointer(obj), 3*sizeof(double), 1, fout);
+		fwrite(pointer(obj), 24, 1, fout);
 	}
 }
 
@@ -40,16 +50,19 @@ void Space::Save(const char* format)
 	char fname[64]; sprintf(fname, format, int(Time/dt));
 	FILE *fout;
 	fout = fopen(fname, "rb+");
+	if (!fout) fout = fopen(fname, "wb");
+	if (!fout) { perror("Error saving the space"); return; }
 	fseek(fout, 1024, SEEK_SET);
 
-	SaveList(VortexList, fout);
-	SaveList(HeatList, fout);
-	const_for(BodyList, llbody)
+	bookmark = 0;
+	SaveBookmark(fout); SaveList(VortexList, fout);
+	SaveBookmark(fout); SaveList(HeatList, fout);
+	SaveBookmark(fout); const_for(BodyList, llbody)
 	{
 		SaveList((**llbody).List, fout);
 	}
-	SaveList(StreakSourceList, fout);
-	SaveList(StreakList, fout);
+	SaveBookmark(fout); SaveList(StreakSourceList, fout);
+	SaveBookmark(fout); SaveList(StreakList, fout);
 
 	fclose(fout);
 }
