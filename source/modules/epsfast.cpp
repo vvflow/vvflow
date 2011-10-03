@@ -31,12 +31,16 @@ void InitEpsilonFast(Space *sS, double sSqEps)
 void CalcEpsilonFast(bool merge)
 {
 	merged_count = 0;
-	eps_restriction = 0.6*(**S->BodyList->begin()).AverageSegmentLength();
 	if (!S)
 	{
 		cerr << "CalcEpsilonFast() is called before initialization" << endl;
 		return;
 	}
+
+	if (S->BodyList->size())
+		eps_restriction = 0.6*(**S->BodyList->begin()).AverageSegmentLength();
+	else eps_restriction = 0;
+
 	auto bnodes = GetTreeBottomNodes();
 	if ( !bnodes )
 	{
@@ -54,9 +58,7 @@ void CalcEpsilonFast(bool merge)
 			if (!*llobj) { continue; }
 			TObj &obj = **llobj;
 
-			double eps_tmp = eps(bnode, llobj, merge);
-			eps_tmp = (eps_tmp > eps_restriction) ? eps_tmp : eps_restriction;
-			obj._1_eps = 1./eps_tmp;
+			obj._1_eps = 1./max(eps(bnode, llobj, merge), eps_restriction);
 		}
 	}
 }

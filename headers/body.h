@@ -38,7 +38,7 @@ class TBody
 		void Rotate(double angle);
 		TAtt* PointIsInvalid(TVec p);
 		double SurfaceLength();
-		double AverageSegmentLength() { return SurfaceLength() / List->size(); }
+		double AverageSegmentLength() { return SurfaceLength() / List->size(); } //FIXME unsafe
 		void SetRotation(double (*sRotSpeed)(double time), TVec sRotAxis);
 
 		vector<TObj> *List;
