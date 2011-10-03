@@ -16,6 +16,8 @@ class Space
 		vector<TBody*> *BodyList;
 		vector<TObj> *VortexList;
 		vector<TObj> *HeatList;
+		vector<TObj> *StreakSourceList;
+		vector<TObj> *StreakList;
 
 
 		inline void StartStep(); //update local InfSpeed variables, 
@@ -23,6 +25,9 @@ class Space
 
 		TVec InfSpeed() { return InfSpeed_link?InfSpeed_link(Time):TVec(0,0); }
 		double Time, dt;
+
+		void Save(const char* format);
+		void Load(const char* format);
 
 		/***************** SAVE/LOAD ******************/
 		int LoadVorticityFromFile(const char* filename);
@@ -37,7 +42,7 @@ class Space
 		int PrintHeat(const char* format);
 
 		void LoadHeader(const char* filename, char* data, streamsize size);
-		void PrintHeader(const char* format, const char* data, streamsize size);
+		void PrintHeader(const char* format, const char* data, size_t size);
 
 		double integral();
 		double gsum();

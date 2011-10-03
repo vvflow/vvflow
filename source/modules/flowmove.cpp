@@ -92,6 +92,24 @@ void MoveAndClean(bool remove)
 			if (inlayer) { (*inlayer)++; }
 		}
 	}
+
+	//MOVING Streak PARTICLES
+	if ( S->StreakList )
+	const_for (S->StreakList, lobj)
+	{
+		*lobj += lobj->v*dt; lobj->v.zero();
+
+		TAtt* invalid_inbody = NULL;
+		const_for(S->BodyList, llbody)
+		{
+			if ((**llbody).PointIsInvalid(*lobj))
+			{
+				S->StreakList->erase(lobj);
+				lobj--;
+				break;
+			}
+		}
+	}
 }
 
 void VortexShed()
@@ -123,6 +141,12 @@ void VortexShed()
 				vlist->push_back(ObjCopy);
 			}
 		}
+	}
+
+	//SHEDDING STREAK PARTICLES
+	const_for(S->StreakSourceList, lobj)
+	{
+		S->StreakList->push_back(*lobj);
 	}
 }
 

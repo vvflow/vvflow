@@ -14,9 +14,49 @@ Space::Space(bool CreateVortexes,
 	VortexList = CreateVortexes ? (new vector<TObj>()) : NULL;
 	HeatList = CreateHeat ? (new vector<TObj>()) : NULL;
 	BodyList = new vector<TBody*>();
+	StreakSourceList = new vector<TObj>();
+	StreakList = new vector<TObj>();
 
 	InfSpeed_link = sInfSpeed;
 	Time = dt = 0;
+}
+
+/********************************** SAVE/LOAD *********************************/
+
+void SaveList(vector<TObj> *list, FILE* fout)
+{
+	size_t size = list->size_safe();
+	fwrite(&size, sizeof(size_t), 1, fout);
+	if (!list) return;
+	const_for (list, obj)
+	{
+		fwrite(pointer(obj), 3*sizeof(double), 1, fout);
+	}
+}
+
+void Space::Save(const char* format)
+{
+	int res;
+	char fname[64]; sprintf(fname, format, int(Time/dt));
+	FILE *fout;
+	fout = fopen(fname, "rb+");
+	fseek(fout, 1024, SEEK_SET);
+
+	SaveList(VortexList, fout);
+	SaveList(HeatList, fout);
+	const_for(BodyList, llbody)
+	{
+		SaveList((**llbody).List, fout);
+	}
+	SaveList(StreakSourceList, fout);
+	SaveList(StreakList, fout);
+
+	fclose(fout);
+}
+
+void Space::Load(const char* format)
+{
+
 }
 
 /********************************** SAVE/LOAD *********************************/
@@ -157,15 +197,17 @@ void Space::LoadHeader(const char* fname, char* data, streamsize size)
 	fin.close();
 }
 
-void Space::PrintHeader(const char* format, const char* data, streamsize size)
+void Space::PrintHeader(const char* format, const char* data, size_t size)
 {
-	fstream fout;
+	FILE *fout;
 	char fname[64]; sprintf(fname, format, int(Time/dt));
 
-	fout.open(fname, ios::out);
-	fout.write(data, min(size, 1024));
-	fout.close();
+	fout = fopen(fname, "rb+");
+	fwrite(data, min(size, 1024), 1, fout);
+	fclose(fout);
 }
+
+/********************************* INTEGRALS **********************************/
 
 double Space::integral()
 {

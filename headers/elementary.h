@@ -6,6 +6,7 @@
 #include "list.h"
 using namespace std;
 
+typedef void* pointer;
 typedef char* pchar;
 const double C_PI =		3.14159265358979323846;
 const double C_2PI =	2.*C_PI;
