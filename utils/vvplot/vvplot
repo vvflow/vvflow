@@ -1,0 +1,28 @@
+#!/bin/bash
+
+time=$(echo $(od -j0 -N8 -tf8 -w8 -An $1) | cut -d. -f1)
+angle=0
+#$(echo $(od -j8 -N8 -tf8 -w8 -An $1))
+
+echo "unset key
+set xrange [$4: $5]
+set yrange [$6: $7]
+
+set terminal jpeg giant enhanced size 1280, 720
+set output '$3'
+
+set lmargin 0; set rmargin 0; set bmargin 0; set tmargin 0;
+set border 0;
+set zeroaxis;
+unset xtics; unset ytics;
+
+set label \"t = $time\" at graph 0.05, 0.90 font \"$font, 26\" 
+set style fill transparent solid 0.25 noborder 
+
+rgb(r,g,b) = 65536 * int(r) + 256 * int(g) + int(b)
+color(x) = (x>0) ? rgb(255,0,0) : rgb(0,0,255)
+plot '$1' binary skip=1024 format='%3float64' u 1:2:(\$3*10):(color(\$3)) w circles lc rgb variable, \
+'$2' using 1:2 with filledcurve lc rgb \"#cccccc\" fs transparent solid 1 border rgb \"black\"
+" \
+ | gnuplot
+

@@ -17,6 +17,7 @@ class node
 		content *VortexLList;
 		content *BodyLList;
 		content *HeatLList;
+		content *StreakLList;
 
 		vector<node*> *NearNodes;
 		vector<node*> *FarNodes;

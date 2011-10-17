@@ -178,7 +178,7 @@ void CalcConvectiveFast()
 				TObj &obj = **llobj;
 				dr_local = obj - TVec(bnode.x, bnode.y);
 				obj.v += TVec(Teilor1, Teilor2) + S->InfSpeed() + SpeedSum(bnode, obj) +
-				         TVec(TVec(Teilor3,  Teilor4)*dr_local, 
+				         TVec(TVec(Teilor3,  Teilor4)*dr_local,
 				              TVec(Teilor4, -Teilor3)*dr_local);
 			}
 		}
@@ -190,7 +190,19 @@ void CalcConvectiveFast()
 				TObj &obj = **llobj;
 				dr_local = obj - TVec(bnode.x, bnode.y);
 				obj.v += TVec(Teilor1, Teilor2) + S->InfSpeed() + SpeedSum(bnode, obj) +
-				         TVec(TVec(Teilor3,  Teilor4)*dr_local, 
+				         TVec(TVec(Teilor3,  Teilor4)*dr_local,
+				              TVec(Teilor4, -Teilor3)*dr_local);
+			}
+		}
+
+		if (bnode.StreakLList)
+		{
+			const_for (bnode.StreakLList, llobj)
+			{
+				TObj &obj = **llobj;
+				dr_local = obj - TVec(bnode.x, bnode.y);
+				obj.v += TVec(Teilor1, Teilor2) + S->InfSpeed() + SpeedSum(bnode, obj) +
+				         TVec(TVec(Teilor3,  Teilor4)*dr_local,
 				              TVec(Teilor4, -Teilor3)*dr_local);
 			}
 		}
@@ -199,12 +211,17 @@ void CalcConvectiveFast()
 
 void CalcBoundaryConvective()
 {
-	auto vlist = S->VortexList;
-	//TList<TObj> *hlist = ConvectiveFast_S->HeatList;
+	if (S->VortexList)
+	const_for(S->VortexList, lobj)
+	{
+		const_for(S->BodyList, llbody)
+		{
+			lobj->v += BoundaryConvective(**llbody, *lobj)*C_1_2PI;
+		}
+	}
 
-	if (!vlist) { return; }
-
-	const_for(vlist, lobj)
+	if (S->StreakList)
+	const_for(S->StreakList, lobj)
 	{
 		const_for(S->BodyList, llbody)
 		{

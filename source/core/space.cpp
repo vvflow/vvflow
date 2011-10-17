@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include <fstream>
+#include <time.h>
 using namespace std;
 
 #include "space.h"
@@ -14,9 +15,75 @@ Space::Space(bool CreateVortexes,
 	VortexList = CreateVortexes ? (new vector<TObj>()) : NULL;
 	HeatList = CreateHeat ? (new vector<TObj>()) : NULL;
 	BodyList = new vector<TBody*>();
+	
+	StreakSourceList = new vector<TObj>();
+	StreakList = new vector<TObj>();
 
 	InfSpeed_link = sInfSpeed;
 	Time = dt = 0;
+}
+
+/********************************** SAVE/LOAD *********************************/
+
+void SaveBookmark(FILE* fout, int bookmark, const char *comment)
+{
+	size_t tmp = ftell(fout);
+	fseek(fout, bookmark*16, SEEK_SET);
+	fwrite(&tmp, 8, 1, fout);
+	fwrite(comment, 1, 8, fout);
+	fseek(fout, tmp, SEEK_SET);
+}
+
+void SaveList(vector<TObj> *list, FILE* fout)
+{
+	size_t size = list->size_safe();
+	fwrite(&size, 8, 1, fout);
+	if (!list) return;
+	const_for (list, obj)
+	{
+		fwrite(pointer(obj), 24, 1, fout);
+	}
+}
+
+void Space::Save(const char* format, const double header[], int N)
+{
+	int res;
+	char fname[64]; sprintf(fname, format, int(Time/dt));
+	FILE *fout;
+	fout = fopen(fname, "rb+");
+	if (!fout) fout = fopen(fname, "wb");
+	if (!fout) { perror("Error saving the space"); return; }
+
+	fseek(fout, 8*128, SEEK_SET);
+	SaveBookmark(fout, 0, "Header  "); fwrite(header, 8, N, fout);
+	time_t rawtime; time(&rawtime); fwrite(&rawtime, 8, 1, fout);
+	SaveBookmark(fout, 1, "Vortexes"); SaveList(VortexList, fout);
+	SaveBookmark(fout, 2, "Heat    "); SaveList(HeatList, fout);
+	SaveBookmark(fout, 3, "StrkSrc "); SaveList(StreakSourceList, fout);
+	SaveBookmark(fout, 4, "Streak  "); SaveList(StreakList, fout);
+
+	int bookmark = 4;
+	const_for(BodyList, llbody)
+	{
+		SaveBookmark(fout, ++bookmark, "Body");
+		SaveList((**llbody).List, fout);
+	}
+
+	fclose(fout);
+}
+
+void Space::Load(const char* format)
+{
+
+}
+
+void Space::LoadHeader(const char* fname, char* data, streamsize size)
+{
+	/*fstream fin;
+
+	fin.open(fname, ios::in | ios::binary);
+	fin.read(data, min(size, 1024));
+	fin.close();*/
 }
 
 /********************************** SAVE/LOAD *********************************/
@@ -35,6 +102,30 @@ int Space::LoadVorticityFromFile(const char* filename)
 	}
 
 	fclose(fin);
+	return 0;
+}
+
+int Space::LoadVorticity_bin(const char* filename)
+{
+	if ( !VortexList ) return -1;
+
+	fstream fin;
+	fin.open(filename, ios::in | ios::binary);
+	if (!fin) { cerr << "No file called \'" << filename << "\'\n"; return -1; } 
+
+	fin.seekg (0, ios::end);
+	size_t N = (size_t(fin.tellg())-1024)/(sizeof(double)*3);
+	fin.seekp(1024, ios::beg);
+
+	TObj obj(0, 0, 0);
+	
+	while ( fin.good() )
+	{
+		fin.read(pchar(&obj), 3*sizeof(double));
+		VortexList->push_back(obj);
+	}
+
+	fin.close();
 	return 0;
 }
 
@@ -122,15 +213,9 @@ int Space::PrintHeat(const char* filename)
 	return Print_bymask(HeatList, filename);
 }
 
-void Space::PrintHeader(const char* format, const char* data, streamsize size)
-{
-	fstream fout;
-	char fname[64]; sprintf(fname, format, int(Time/dt));
+/********************************* HEADERS ************************************/
 
-	fout.open(fname, ios::out);
-	fout.write(data, min(size, 1024));
-	fout.close();
-}
+/********************************* INTEGRALS **********************************/
 
 double Space::integral()
 {

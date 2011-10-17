@@ -71,7 +71,5 @@ $(INSTALLDIR)/%:
 	mkdir $@ -p
 
 export_vars:
-	export VVHDdir="$(INSTALLDIR)"
-	export VVHD="-I $VVHDdir/include -L $VVHDdir/lib -lVVHDmodules -lVVHDcore"
-
+	export VVHD="-I $(INSTALLDIR)/include -L $(INSTALLDIR)/lib -lVVHDmodules -lVVHDcore"
 

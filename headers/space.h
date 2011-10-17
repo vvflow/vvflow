@@ -16,16 +16,20 @@ class Space
 		vector<TBody*> *BodyList;
 		vector<TObj> *VortexList;
 		vector<TObj> *HeatList;
+		vector<TObj> *StreakSourceList;
+		vector<TObj> *StreakList;
 
-
-		inline void StartStep(); //update local InfSpeed variables, 
 		inline void FinishStep(); //update time and coord variables
 
 		TVec InfSpeed() { return InfSpeed_link?InfSpeed_link(Time):TVec(0,0); }
 		double Time, dt;
 
+		void Save(const char* format, const double header[], int N);
+		void Load(const char* format);
+
 		/***************** SAVE/LOAD ******************/
 		int LoadVorticityFromFile(const char* filename);
+		int LoadVorticity_bin(const char* filename);
 		int LoadHeatFromFile(const char* filename);
 
 		int LoadBody(const char* filename);
@@ -35,7 +39,8 @@ class Space
 		int PrintVorticity_bin(const char* format);
 		int PrintHeat(const char* format);
 
-		void PrintHeader(const char* format, const char* data, streamsize size);
+		void LoadHeader(const char* filename, char* data, streamsize size);
+		void PrintHeader(const char* format, const double data[], int size);
 
 		double integral();
 		double gsum();
@@ -48,14 +53,6 @@ class Space
 
 		TVec (*InfSpeed_link)(double time);
 };
-
-inline
-void Space::StartStep()
-{
-	//InfSpeedXVar = InfSpeedX ? InfSpeedX(Time) : 0;
-	//InfSpeedYVar = InfSpeedY ? InfSpeedY(Time) : 0;
-	//Body->RotationVVar = Body->RotationV ? Body->RotationV(Time) : 0;
-}
 
 inline
 void Space::FinishStep()

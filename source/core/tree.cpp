@@ -26,6 +26,7 @@ node::node()
 	VortexLList = NULL;
 	BodyLList = NULL;
 	HeatLList = NULL;
+	StreakLList = NULL;
 	NearNodes = FarNodes = NULL;
 	ch1 = ch2 = NULL;
 	CMp.zero(); CMm.zero();
@@ -36,6 +37,7 @@ node::~node()
 	if ( VortexLList ) delete VortexLList;
 	if ( BodyLList ) delete BodyLList;
 	if ( HeatLList ) delete HeatLList;
+	if ( StreakLList ) delete StreakLList;
 	if ( NearNodes ) delete NearNodes;
 	if ( FarNodes ) delete FarNodes;
 	if ( ch1 ) delete ch1;
@@ -51,10 +53,11 @@ void TNode::DivideNode()
 		return;
 	}
 
-	long MaxListSize = max( max( 
+	long MaxListSize = max( max( max (
 	                   VortexLList->size_safe(),
 	                   BodyLList->size_safe()),
-	                   HeatLList->size_safe());
+	                   HeatLList->size_safe()),
+	                   StreakLList->size_safe());
 
 	if ( max(h,w) < Tree_MaxNodeSize )
 	if ( MaxListSize < Tree_MaxListSize ) //look for define
@@ -71,6 +74,7 @@ void TNode::DivideNode()
 	DistributeContent(VortexLList, &ch1->VortexLList, &ch2->VortexLList);
 	DistributeContent(BodyLList, &ch1->BodyLList, &ch2->BodyLList);
 	DistributeContent(HeatLList, &ch1->HeatLList, &ch2->HeatLList);
+	DistributeContent(StreakLList, &ch1->StreakLList, &ch2->StreakLList);
 
 	ch1->Stretch();
 	ch2->Stretch();
@@ -78,6 +82,7 @@ void TNode::DivideNode()
 	delete_content(VortexLList);
 	delete_content(BodyLList);
 	delete_content(HeatLList);
+	delete_content(StreakLList);
 	#undef delete_content
 
 	ch1->DivideNode(); //recursion
@@ -100,6 +105,10 @@ void TNode::Stretch()
 	if ( HeatLList )
 	{
 		tr = bl = **HeatLList->begin();
+	} else
+	if ( StreakLList )
+	{
+		tr = bl = **StreakLList->begin();
 	}
 
 	#define ResizeNode(List) \
@@ -118,6 +127,7 @@ void TNode::Stretch()
 	ResizeNode(VortexLList);
 	ResizeNode(BodyLList);
 	ResizeNode(HeatLList);
+	ResizeNode(StreakLList);
 	#undef ResizeNode
 
 	x = (bl+tr).rx * 0.5;
@@ -256,6 +266,7 @@ void BuildTree(bool includeV, bool includeB, bool includeH)
 		}
 	}
 	if (includeH) FillRootNode(Tree_S->HeatList, &Tree_RootNode->HeatLList);
+	FillRootNode(Tree_S->StreakList, &Tree_RootNode->StreakLList);
 
 	Tree_BottomNodes->clear();
 
