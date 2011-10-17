@@ -158,4 +158,45 @@ $\br{\rho}_k = \br r - \br r_k$ - и так понятно \\
 знаков --- заменяем знаменатель на циркуляцию\\
 Для $\varepsilon$ --- ограничение снизу $\varepsilon > \langle dS_k \rangle$
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\section{FlowMove}
+\subsection{Схема Эйлера (классика)}
+\begin{equation*}\begin{split}
+&\dot{\br r} = \br V (\br r, t) \\
+\Rightarrow~&\br r_{i+1} = \br r_i + \br V(\br r_i, t_i) \cdot \Delta t
+\end{split}\end{equation*}
+
+\subsection{Последовательность действий}
+\begin{enumerate}
+\item ГУ не выполнены\\
+\item Строим дерево
+\item Берем скорости набегающего потока итд, заполняем СЛАУ
+\item Решаем СЛАУ
+\item Удаляем дерево\\
+\item Сохраняемся: вихри, тела
+\item Спускаем вихри, чернила, тепло\\
+\item Строим дерево
+\item Считаем эпсилоны, объединяем вихри
+\item Считаем скорости: Convective, Diffusive, Boundary; скорости чернил, тепла
+\item Двигаем, удаляем проникшие внутрь.
+\end{enumerate}
+
+\subsection{Схема Эйлера с пересчетом}
+\begin{equation*}\begin{split}
+&\dot{\br r} = \br V (\br r, t) \\
+\Rightarrow~&\tilde{\br r}_{i+1} = \br r_i + \br V(\br r_i, t_i) \cdot \Delta t \\
+\Rightarrow~&\br r_{i+1} = \br r_i + 
+\frac{\br V(\br r_i, t_i) + \br V( \tilde{\br r}_{i+1}, t_{i+1})}{2}\cdot \Delta t \\
+\end{split}\end{equation*}
+А что бы не хранить 2 скорости (или старые координаты) для
+каждой частицы, да и вообще упростить работу с модулем,
+последюю формулу перепишем в виде
+\begin{equation*}
+\Rightarrow~\br r_{i+1} = \tilde{\br r}_{i+1} + 
+\left( -\br V(\br r_i, t_i) + \br V( \tilde{\br r}_{i+1}, t_{i+1}) \right)\cdot \frac{\Delta t}{2} \\
+\end{equation*}
+
+
+
 \end{document}
