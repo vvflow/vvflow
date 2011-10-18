@@ -57,6 +57,7 @@ void Space::Save(const char* format, const double header[], int N)
 	fseek(fout, 8*128, SEEK_SET);
 	SaveBookmark(fout, 0, "Header  "); fwrite(header, 8, N, fout);
 	time_t rawtime; time(&rawtime); fwrite(&rawtime, 8, 1, fout);
+	fwrite(&Time, 8, 1, fout);
 	SaveBookmark(fout, 1, "Vortexes"); SaveList(VortexList, fout);
 	SaveBookmark(fout, 2, "Heat    "); SaveList(HeatList, fout);
 	SaveBookmark(fout, 3, "StrkSrc "); SaveList(StreakSourceList, fout);

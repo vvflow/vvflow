@@ -50,14 +50,12 @@ int main(int argc, char** argv)
 
 	fstream fout;
 	string dir = "results_"+string(argv[1]);
-	cout << "i \t t \t n \t c \t m \n";
-
-	fout.open((dir+string("/stepdata")).c_str(), ios::out);
+	string stepdata = dir+string("_stepdata");
+	fout.open(stepdata.c_str(), ios::out | ios::app);
 	#pragma omp parallel
 	{
 		#pragma omp master
 		fout << "Running in " << omp_get_num_threads() << " threads.\n";
-		cout << "Running in " << omp_get_num_threads() << " threads.\n";
 	}
 	fout << "Time\t Fx\t Fy\t N\t A\t RotV\n";
 	fout.close();
@@ -65,10 +63,24 @@ int main(int argc, char** argv)
 	TVec ForceTmp(0, 0);
 	while (true)
 	{
-		S->StartStep();
+		dbg(BuildTree());
+		dbg(CalcCirculationFast(true));
+		dbg(DestroyTree());
 
-		dbg(BuildTree(1, 1, 0));
+		if (!(int(S->Time/dt)%5))
+		{
+			double header[] = { S->Time, body->Angle, body->RotSpeed(S->Time), 
+							    ForceTmp.rx/dt, ForceTmp.ry/dt };
+
+			S->Save((dir+string("/%06d.vb")).c_str(), header, 5);
+			ForceTmp.zero();
+		}
+
+		dbg(VortexShed());
+
+		dbg(BuildTree());
 		dbg(CalcEpsilonFast(true));
+		dbg(CalcBoundaryConvective());
 		dbg(CalcConvectiveFast());
 		dbg(CalcVortexDiffusiveFast());
 		dbg(DestroyTree());
@@ -76,35 +88,14 @@ int main(int argc, char** argv)
 		dbg(MoveAndClean(true));
 
 		S->Time += S->dt; //S->FinishStep();
-		S->StartStep();
-
-		dbg(BuildTree(1, 1, 0));
-		dbg(CalcCirculationFast(true));
-		dbg(VortexShed());
-		dbg(CalcBoundaryConvective());
-		dbg(DestroyTree());
-
 		ForceTmp+= body->Force;
-		if (!(int(S->Time/dt)%5))
-		{
-			S->PrintVorticity((dir+string("/%06d.vb")).c_str());
-			double header[] = { S->Time, body->Angle, body->RotSpeed(S->Time), 
-							    ForceTmp.rx/dt, ForceTmp.ry/dt };
-			ForceTmp.zero();
-			typedef const char * p_char;
-			S->PrintHeader("results/%06d.vb", p_char(header), 5*sizeof(double));
-			S->PrintBody((dir+string("/%06d.b")).c_str());
-		}
 
-		fout.open((dir+string("/stepdata")).c_str(), ios::out | ios::app);
+		fout.open(stepdata.c_str(), ios::out | ios::app);
 		fout << S->Time << " \t";
 		fout << body->Force/dt << " \t"; body->Force.zero();
 		fout << S->VortexList->size() << " \t";
 		fout << body->Angle << "\t";
 		fout << body->RotSpeed(S->Time) << endl;
 		fout.close();
-
-		cout << int(S->Time/S->dt) << "\t" << S->Time << " \t" << S->VortexList->size() << " \t"
-			<< CleanedV() << " \t" << Merged_count() << "\n" ;
 	}
 }
