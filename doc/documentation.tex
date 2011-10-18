@@ -16,6 +16,13 @@
 \newcommand{\br}[1]{\boldsymbol{\mathrm{#1}}}
 %\newcommand{\br}[1]{\bm{\mathrm{#1}}}
 
+\newenvironment{packed_enum}{
+\begin{enumerate}
+  \setlength{\itemsep}{1pt}
+  \setlength{\parskip}{0pt}
+  \setlength{\parsep}{0pt}
+}{\end{enumerate}}
+
 \title{VVHD}
 \author{Я. А. Дынников}
 
@@ -167,21 +174,6 @@ $\br{\rho}_k = \br r - \br r_k$ - и так понятно \\
 \Rightarrow~&\br r_{i+1} = \br r_i + \br V(\br r_i, t_i) \cdot \Delta t
 \end{split}\end{equation*}
 
-\subsection{Последовательность действий}
-\begin{enumerate}
-\item ГУ не выполнены\\
-\item Строим дерево
-\item Берем скорости набегающего потока итд, заполняем СЛАУ
-\item Решаем СЛАУ
-\item Удаляем дерево\\
-\item Сохраняемся: вихри, тела
-\item Спускаем вихри, чернила, тепло\\
-\item Строим дерево
-\item Считаем эпсилоны, объединяем вихри
-\item Считаем скорости: Convective, Diffusive, Boundary; скорости чернил, тепла
-\item Двигаем, удаляем проникшие внутрь.
-\end{enumerate}
-
 \subsection{Схема Эйлера с пересчетом}
 \begin{equation*}\begin{split}
 &\dot{\br r} = \br V (\br r, t) \\
@@ -197,6 +189,41 @@ $\br{\rho}_k = \br r - \br r_k$ - и так понятно \\
 \left( -\br V(\br r_i, t_i) + \br V( \tilde{\br r}_{i+1}, t_{i+1}) \right)\cdot \frac{\Delta t}{2} \\
 \end{equation*}
 
+\subsection{Последовательность действий}
+\begin{packed_enum}
+\item ГУ не выполнены\\
+\item Строим дерево
+\item Берем скорости набегающего потока итд, заполняем СЛАУ
+\item Решаем СЛАУ
+\item Удаляем дерево\\
+\item Сохраняемся: вихри, тела
+\item Спускаем вихри, чернила, тепло\\
+\item Строим дерево
+\item Считаем эпсилоны, объединяем вихри
+\item Считаем скорости: Convective, Diffusive, Boundary; скорости чернил, тепла
+\subitem Опционально: двигаем на пол шага, заменяем скорости на отрицательные.
+\subitem Опционально: считаем вторую половину скоростей.
+\item Двигаем, удаляем проникшие внутрь.
+\end{packed_enum}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\section{Устойчивость и выбор параметров расчета}
+Согласно статье в ЖВМ, параметры расчета выбираются исходя из
+соображений устойчивости. Параметрами, которые мы можем менять, являются:
+$N$ --- число отрезков разбиения контура;\\
+$\varepsilon_{min}$ --- ограничение на эпсилон из диффузии;\\
+$\Delta t$ --- шаг по времени;\\
+$r_d$ --- радиус дискретности, он же эпсилон в конвективной скорости.\\
+
+Дополнительные обозначения:\\
+$\Delta l_i$ --- длина i-го отрезка на теле, соответственно \\
+$\langle\Delta l \rangle=\dfrac{1}{N} \sum\limits_{i=0}^{N} \Delta l_i$ ---
+средняя длина отрезков.\\
+$N$ обычно выбирается на глаз.\\
+$\varepsilon_{min}=0.6\cdot\langle\Delta l \rangle$ --- 
+определено в модуле diffmergefast\\
+$\Delta t = \text{Re} \varepsilon_{min}^2 < 2 \text{Re} \varepsilon^2$\\
+$r_d = ?$ --- а этот вопрос остается открытым \\
 
 \end{document}
