@@ -33,8 +33,8 @@ int main(int argc, char** argv)
 	S->LoadBody("cyl_600");
 	//S->LoadBody("plate_bot");
 	//S->LoadBody("plate_top");
-	S->LoadVorticityFromFile("t380.v");
-	S->Time = 380;
+	//S->LoadVorticityFromFile("t380.v");
+	//S->Time = 380;
 	TBody* body = S->BodyList->at(0);
 	body->SetRotation(rot, TVec(0,0));
 

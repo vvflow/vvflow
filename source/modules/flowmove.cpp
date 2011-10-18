@@ -94,35 +94,11 @@ void flowmove::VortexShed()
 	}
 }
 
-void StreakShed()
+void flowmove::StreakShed()
 {
-	if (!S) {cerr << "StreakShed() is called before initialization"
-	              << endl; return; }
-
 	const_for(S->StreakSourceList, lobj)
 	{
 		S->StreakList->push_back(*lobj);
 	}
-}
-
-void HeatShed()
-{
-	if (!S) {cerr << "HeatShed() is called before initialization"
-	              << endl; return; }
-	if (!S->HeatList) return;
-/*
-	long BodyListSize = FlowMove_S->Body->List->size;
-	//double dfi = C_2PI/BodyListSize;
-	TObject ObjCopy; ZeroVortex(ObjCopy); //ObjCopy.g = dfi * dfi;
-
-	for ( long i=0; i<BodyListSize; i++ )
-	{
-		double r = 1. + double(rand())*FlowMove_ControlLayerHeight/RAND_MAX;
-		double fi= dfi * (i + double(rand())/RAND_MAX);
-		ObjCopy.rx = r*cos(fi);
-		ObjCopy.ry = r*sin(fi);
-		FlowMove_S->HeatList->Copy(&ObjCopy);
-	}
-*/
 }
 

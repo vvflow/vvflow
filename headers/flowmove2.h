@@ -10,6 +10,7 @@ class flowmove2
 		void MovePart1();
 		void MovePart2();
 		void VortexShed();
+		//void StreakShed(); //FIXME implement
 		//void HeatShed();
 
 		int CleanedV(){return CleanedV_;}
