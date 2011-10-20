@@ -12,11 +12,24 @@
 #define dbg(a) a
 using namespace std;
 
-double RotSpeed = 0;
-double rot(double t)
+/*string InfXSpeed;
+string InfYSpeed;
+string RotSpeed;
+
+double InfSpeedX(double t) 
 {
-	return RotSpeed;
-}
+	if ((!InfSpeedXsh) || (!*InfSpeedXsh)) return 0;
+	double result;
+	char *exec; exec = (char*)(malloc(strlen(InfSpeedXsh)+32));
+	sprintf(exec, "t=%lf; T=%lf; %s", t, t, InfSpeedXsh);
+
+	FILE *pipe = popen(exec,"r");
+	if (!pipe) return 0;
+	if (!fscanf(pipe, "%lf", &result)) result=0;
+	pclose(pipe);
+
+	return result;
+}*/
 
 TVec InfSpeed(double t)
 {
@@ -27,30 +40,27 @@ TVec InfSpeed(double t)
 
 int main(int argc, char** argv)
 {
-	if (argc<2) { cerr << "Not enough arguments" << endl; return -1; }
-	RotSpeed = atof(argv[1]);
-	Space *S = new Space(true, false, InfSpeed);
-	S->LoadBody("cyl_600");
-	//S->LoadBody("plate_bot");
-	//S->LoadBody("plate_top");
-	//S->LoadVorticityFromFile("t380.v");
-	//S->Time = 380;
-	TBody* body = S->BodyList->at(0);
-	body->SetRotation(rot, TVec(0,0));
+	if (argc != 2) 
+	{
+		cerr << "Not enough arguments. Use: " << argv[0] << " regime.info\n";
+		cerr << "regime info munt contain next lines (order matters ofc):\n";
+		cerr << "Name of regime (uniq, no spaces)\nBody file name\n";
+		cerr << "Rotation speed (bash command, assuming $t is time, and axis = (0,0))\n";
+		cerr << "Reynolds number\ndt\n";
+		return -1;
+	}
 
-	double dl = body->AverageSegmentLength();
-	const double dt = 2E-3;
-	const double _1_dt = 1./dt;
-
-	InitTree(S, 8, dl*20, 0.3);
-	InitConvectiveFast(S, dl*dl/25);
-	InitEpsilonFast(S, dl*dl*0.09);
-	InitDiffusiveFast(S, 200);
-	InitFlowMove(S, dt, 1E-8);
+	FILE* finfo = fopen(argv[1], "r");
+	char dir[256]; fscanf(finfo, "%s", dir); while (fgetc(finfo)!='\n'){}
+	char BodyFile[256]; fscanf(finfo, "%s", BodyFile); while (fgetc(finfo)!='\n'){}
+	fscanf(finfo, "%s", dir); while (fgetc(finfo)!='\n'){}
+	//rotspeed
+	double Re; fscanf(finfo, "%lf", &Re); while (fgetc(finfo)!='\n'){}
+	double dt; fscanf(finfo, "%lf", &dt); while (fgetc(finfo)!='\n'){}
 
 	fstream fout;
-	string dir = "results_"+string(argv[1]);
-	string stepdata = dir+string("_stepdata");
+
+	string stepdata = string(dir)+string("_stepdata");
 	fout.open(stepdata.c_str(), ios::out | ios::app);
 	#pragma omp parallel
 	{
@@ -61,13 +71,30 @@ int main(int argc, char** argv)
 	fout.close();
 
 	TVec ForceTmp(0, 0);
+
+	/**************************************************************************/
+
+	Space *S = new Space(true, false, InfSpeed);
+	S->LoadBody("cyl_600");
+	TBody* body = S->BodyList->at(0);
+	//body->SetRotation(rot, TVec(0,0));
+
+	double dl = body->AverageSegmentLength();
+	const double _1_dt = 1./dt;
+
+	InitTree(S, 8, dl*20, 0.3);
+	InitConvectiveFast(S, dl*dl/25);
+	InitEpsilonFast(S, dl*dl*0.09);
+	InitDiffusiveFast(S, 200);
+	InitFlowMove(S, dt, 1E-10);
+
 	while (true)
 	{
 		dbg(BuildTree());
 		dbg(CalcCirculationFast(true));
 		dbg(DestroyTree());
 
-		if (!(int(S->Time/dt)%5))
+		if (!(int(S->Time/dt)%10))
 		{
 			double header[] = { S->Time, body->Angle, body->RotSpeed(S->Time), 
 							    ForceTmp.rx/dt, ForceTmp.ry/dt };
