@@ -59,6 +59,7 @@ void flowmove2::VortexShed()
 			{
 				ObjCopy = *lbobj;
 				body.Force += rotl(ObjCopy) * ObjCopy.g;
+				body.Force.g += (ObjCopy-body.RotAxis).abs2() * ObjCopy.g;
 				          latt ->gsum+= 0.5*ObjCopy.g;
 				body.prev(latt)->gsum+= 0.5*ObjCopy.g;
 				vlist->push_back(ObjCopy);
@@ -79,9 +80,11 @@ void flowmove2::CheckObject(TObj*& lobj, bool remove)
 
 	if ( remove && invalid_inbody )
 	{
-		invalid_inbody->body->Force -= rotl(*lobj) * lobj->g;
+		TBody *badbody = invalid_inbody->body;
+		badbody->Force -= rotl(*lobj) * lobj->g;
+		badbody->Force.g -= (*lobj - badbody->RotAxis).abs2() * lobj->g;
 		invalid_inbody->gsum -= lobj->g;
-		invalid_inbody->body->g_dead += lobj->g;
+		badbody->g_dead += lobj->g;
 		CleanedV_++;
 		vlist->erase(lobj);
 		lobj--;

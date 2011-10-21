@@ -67,7 +67,7 @@ int main(int argc, char** argv)
 		#pragma omp master
 		fout << "Running in " << omp_get_num_threads() << " threads.\n";
 	}
-	fout << "Time\t Fx\t Fy\t N\t A\t RotV\n";
+	fout << "Time\t Fx\t Fy\t Mz\t N\t A\t RotV\n";
 	fout.close();
 
 	TVec ForceTmp(0, 0);
@@ -86,7 +86,7 @@ int main(int argc, char** argv)
 	InitConvectiveFast(S, dl*dl/25);
 	InitEpsilonFast(S, dl*dl*0.09);
 	InitDiffusiveFast(S, 200);
-	InitFlowMove(S, dt, 1E-10);
+	flowmove fm(S, dt);
 
 	while (true)
 	{
@@ -103,7 +103,7 @@ int main(int argc, char** argv)
 			ForceTmp.zero();
 		}
 
-		dbg(VortexShed());
+		dbg(fm.VortexShed());
 
 		dbg(BuildTree());
 		dbg(CalcEpsilonFast(true));
@@ -112,7 +112,8 @@ int main(int argc, char** argv)
 		dbg(CalcVortexDiffusiveFast());
 		dbg(DestroyTree());
 
-		dbg(MoveAndClean(true));
+		//FIXME move bodies 
+		dbg(fm.MoveAndClean(true));
 
 		S->Time += S->dt; //S->FinishStep();
 		ForceTmp+= body->Force;

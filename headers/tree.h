@@ -36,7 +36,7 @@ class node
 typedef node TNode;
 
 void InitTree(Space *sS, int sFarCriteria, double sMinNodeSize, double sMaxNodeSize = DBL_MAX);
-void BuildTree(bool IncludeVortexes, bool IncludeBody, bool IncludeHeat);
+void BuildTree(bool IncludeVortexes = true, bool IncludeBody = true, bool IncludeHeat = true);
 void DestroyTree();
 
 double GetAverageNearNodesPercent();

@@ -48,13 +48,14 @@ class TBody
 		double RotSpeed(double time) const { return RotSpeed_link?RotSpeed_link(time):0; }
 		double Angle;
 		TVec Position;
+		TVec RotAxis;
 		void UpdateAttach();
 
 		void calc_pressure(); // need /dt
 		//void calc_friction(); // need /Pi/Eps_min^2
 		void zero_variables();
 
-		TVec Force; //dont forget to zero it when u want
+		TObj Force; //dont forget to zero it when u want
 		double g_dead;
 
 		TObj* next(TObj* obj) const { return List->next(obj); }
@@ -73,7 +74,6 @@ class TBody
 
 	private:
 		double (*RotSpeed_link)(double time);
-		TVec RotAxis;
 };
 
 #endif /* BODY_H_ */
