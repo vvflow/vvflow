@@ -1,8 +1,8 @@
 al clean:
 
 install:
-	cp vvplot ~/.bin/
+	cp vvplot vvparse ~/.bin/
 
 uninstall:
-	rm -f ~/.bin/vvplot
+	rm -f ~/.bin/vvplot ~/.bin/vvparse
 
