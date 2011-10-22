@@ -2,6 +2,9 @@
 #include "fstream"
 #include "stdio.h"
 
+#include <sys/stat.h>
+#include <sys/types.h>
+
 #include "core.h"
 #include "epsfast.h"
 #include "convectivefast.h"
@@ -10,6 +13,7 @@
 
 #include "omp.h"
 #define dbg(a) a
+#define seek(f) while (fgetc(f)!='\n'){}
 using namespace std;
 
 /*string InfXSpeed;
@@ -42,33 +46,36 @@ int main(int argc, char** argv)
 {
 	if (argc != 2) 
 	{
-		cerr << "Not enough arguments. Use: " << argv[0] << " regime.info\n";
+		cerr << "Not enough arguments. Use: " << argv[0] << " regime.info [file.vb]\n";
 		cerr << "regime info munt contain next lines (order matters ofc):\n";
-		cerr << "Name of regime (uniq, no spaces)\nBody file name\n";
-		cerr << "Rotation speed (bash command, assuming $t is time, and axis = (0,0))\n";
-		cerr << "Reynolds number\ndt\n";
+		cerr << " - Name of regime (uniq, no spaces)\n - Body file name\n";
+//		cerr << "Rotation speed (bash command, assuming $t is time, and axis = (0,0))\n";
+		cerr << " - Reynolds number\n - dt\n";
 		return -1;
 	}
 
 	FILE* finfo = fopen(argv[1], "r");
-	char dir[256]; fscanf(finfo, "%s", dir); while (fgetc(finfo)!='\n'){}
-	char BodyFile[256]; fscanf(finfo, "%s", BodyFile); while (fgetc(finfo)!='\n'){}
-	fscanf(finfo, "%s", dir); while (fgetc(finfo)!='\n'){}
-	//rotspeed
-	double Re; fscanf(finfo, "%lf", &Re); while (fgetc(finfo)!='\n'){}
-	double dt; fscanf(finfo, "%lf", &dt); while (fgetc(finfo)!='\n'){}
+	char dir[256]; fscanf(finfo, "%s", dir); seek(finfo);
+	char BodyFile[256]; fscanf(finfo, "%s", BodyFile); seek(finfo);
+	//rotspeed seek(finfo);
+	double Re; fscanf(finfo, "%lf", &Re); seek(finfo);
+	double dt; fscanf(finfo, "%lf", &dt); seek(finfo);
 
-	fstream fout;
+	mkdir(dir, 0777);
 
 	string stepdata = string(dir)+string("_stepdata");
-	fout.open(stepdata.c_str(), ios::out | ios::app);
+	FILE *f = fopen(stepdata.c_str(), "a");
 	#pragma omp parallel
-	{
-		#pragma omp master
-		fout << "Running in " << omp_get_num_threads() << " threads.\n";
-	}
-	fout << "Time\t Fx\t Fy\t Mz\t N\t A\t RotV\n";
-	fout.close();
+	#pragma omp master
+		fprintf(f, "Running in %d threads.\n", omp_get_num_threads());
+	fprintf(f, "Working dir = %s\n", dir);
+	fprintf(f, "Body file = %s\n", BodyFile);
+	fprintf(f, "Rotataon sh = \n");
+	fprintf(f, "Reynolds = %d\n", Re);
+	fprintf(f, "dt = %g\n");
+	fprintf(f, "%-10s \t%-20s \t%-20s \t%-20s \t%-10s \t%-10s \t%-10s\n",
+			"Time", "Fx", "Fy", "Mz", "N vorts", "Angle", "RotSpeed");
+	fclose(f);
 
 	TVec ForceTmp(0, 0);
 
@@ -88,7 +95,7 @@ int main(int argc, char** argv)
 	InitDiffusiveFast(S, 200);
 	flowmove fm(S, dt);
 
-	while (true)
+	while (S->Time < 0.05)
 	{
 		dbg(BuildTree());
 		dbg(CalcCirculationFast(true));
@@ -99,7 +106,7 @@ int main(int argc, char** argv)
 			double header[] = { S->Time, body->Angle, body->RotSpeed(S->Time), 
 							    ForceTmp.rx/dt, ForceTmp.ry/dt };
 
-			S->Save((dir+string("/%06d.vb")).c_str(), header, 5);
+			S->Save((string(dir)+string("/%06d.vb")).c_str(), header, 5);
 			ForceTmp.zero();
 		}
 
@@ -115,15 +122,19 @@ int main(int argc, char** argv)
 		//FIXME move bodies 
 		dbg(fm.MoveAndClean(true));
 
-		S->Time += S->dt; //S->FinishStep();
-		ForceTmp+= body->Force;
+		FILE *f = fopen(stepdata.c_str(), "a");
+		fprintf(f, "%-10g \t%-+20e \t%-+20e \t%-+20e \t%-10ld \t%-10g \t%-10g\n",
+		             S->Time, 
+		             body->Force.rx/dt,
+		             body->Force.ry/dt,
+		             body->Force.g/dt,
+		             S->VortexList->size_safe(),
+		             body->Angle, 
+		             body->RotSpeed(S->Time));
+		fclose(f);
 
-		fout.open(stepdata.c_str(), ios::out | ios::app);
-		fout << S->Time << " \t";
-		fout << body->Force/dt << " \t"; body->Force.zero();
-		fout << S->VortexList->size() << " \t";
-		fout << body->Angle << "\t";
-		fout << body->RotSpeed(S->Time) << endl;
-		fout.close();
+		S->Time += S->dt;
+		ForceTmp+= body->Force;
+		body->Force.zero();
 	}
 }
