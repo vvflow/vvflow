@@ -78,6 +78,16 @@ void Space::Load(const char* format)
 
 }
 
+FILE* Space::OpenFile(const char* format)
+{
+	int res;
+	char fname[64]; sprintf(fname, format, int(Time/dt));
+	FILE *fout;
+	fout = fopen(fname, "w");
+	if (!fout) { perror("Error opening file"); return NULL; }
+	return fout;
+}
+
 void Space::LoadHeader(const char* fname, char* data, streamsize size)
 {
 	/*fstream fin;

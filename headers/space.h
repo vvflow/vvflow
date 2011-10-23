@@ -24,8 +24,9 @@ class Space
 		TVec InfSpeed() { return InfSpeed_link?InfSpeed_link(Time):TVec(0,0); }
 		double Time, dt;
 
-		void Save(const char* format, const double header[], int N);
+		void Save(const char* format, const double header[]=NULL, int N=0);
 		void Load(const char* format);
+		FILE* OpenFile(const char* format);
 
 		/***************** SAVE/LOAD ******************/
 		int LoadVorticityFromFile(const char* filename);

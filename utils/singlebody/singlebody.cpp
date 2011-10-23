@@ -37,7 +37,7 @@ double InfSpeedX(double t)
 
 TVec InfSpeed(double t)
 {
-	const double k=1;
+	const double k=0;
 	if (t<k) return TVec(t/k, 0);
 	else return TVec(1, 0);
 }
@@ -71,8 +71,8 @@ int main(int argc, char** argv)
 	fprintf(f, "Working dir = %s\n", dir);
 	fprintf(f, "Body file = %s\n", BodyFile);
 	fprintf(f, "Rotataon sh = \n");
-	fprintf(f, "Reynolds = %d\n", Re);
-	fprintf(f, "dt = %g\n");
+	fprintf(f, "Reynolds = %g\n", Re);
+	fprintf(f, "dt = %g\n", dt);
 	fprintf(f, "%-10s \t%-20s \t%-20s \t%-20s \t%-10s \t%-10s \t%-10s\n",
 			"Time", "Fx", "Fy", "Mz", "N vorts", "Angle", "RotSpeed");
 	fclose(f);
@@ -95,13 +95,13 @@ int main(int argc, char** argv)
 	InitDiffusiveFast(S, 200);
 	flowmove fm(S, dt);
 
-	while (S->Time < 0.05)
+	while (true)
 	{
 		dbg(BuildTree());
 		dbg(CalcCirculationFast(true));
 		dbg(DestroyTree());
 
-		if (!(int(S->Time/dt)%10))
+		if (!(int(S->Time/dt)%1))
 		{
 			double header[] = { S->Time, body->Angle, body->RotSpeed(S->Time), 
 							    ForceTmp.rx/dt, ForceTmp.ry/dt };
@@ -136,5 +136,6 @@ int main(int argc, char** argv)
 		S->Time += S->dt;
 		ForceTmp+= body->Force;
 		body->Force.zero();
+//		S->Save((string(dir)+string("/%06d_end_2.vb")).c_str());
 	}
 }
