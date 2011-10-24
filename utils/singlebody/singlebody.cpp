@@ -136,6 +136,5 @@ int main(int argc, char** argv)
 		S->Time += S->dt;
 		ForceTmp+= body->Force;
 		body->Force.zero();
-//		S->Save((string(dir)+string("/%06d_end_2.vb")).c_str());
 	}
 }

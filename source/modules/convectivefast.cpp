@@ -137,30 +137,29 @@ void CalcConvectiveFast()
 	{
 		TNode &bnode = **llbnode;
 
-		TVec DistP, DistM; //Distance between current node center and positive center of mass of far node 
-		double FuncP1, FuncM1; //Extremely complicated useless variables
-		double FuncP2, FuncM2;
-
 		double Teilor1, Teilor2, Teilor3, Teilor4;
 		Teilor1 = Teilor2 = Teilor3 = Teilor4 = 0;
 
 		const_for (bnode.FarNodes, llfnode)
 		{
-			TNode &fnode = **llfnode;
-			DistP = TVec(bnode.x, bnode.y) - fnode.CMp;
-			DistM = TVec(bnode.x, bnode.y) - fnode.CMm;
+			//TNode &fnode = **llfnode; //FIXME dangerous with O3
+			#define fnode (**llfnode)
 
-			double _1_DistPabs = 1/DistP.abs2();
-			double _1_DistMabs = 1/DistM.abs2();
-			FuncP1 = fnode.CMp.g * _1_DistPabs; //Extremely complicated useless variables
-			FuncM1 = fnode.CMm.g * _1_DistMabs;
-			FuncP2 = FuncP1 * _1_DistPabs;
-			FuncM2 = FuncM1 * _1_DistMabs;
-			
+			TVec DistP = TVec(bnode.x, bnode.y) - fnode.CMp;
+			TVec DistM = TVec(bnode.x, bnode.y) - fnode.CMm;
+
+//			double _1_DistPabs = 1./DistP.abs2();
+//			double _1_DistMabs = 1./DistM.abs2();
+			double FuncP1 = fnode.CMp.g / DistP.abs2(); //Extremely complicated useless variables
+			double FuncM1 = fnode.CMm.g / DistM.abs2();
+			double FuncP2 = fnode.CMp.g / sqr(DistP.abs2());
+			double FuncM2 = fnode.CMm.g / sqr(DistM.abs2());
+			#undef fnode
+
 			Teilor1 -= (FuncP1*DistP.ry + FuncM1*DistM.ry);
 			Teilor2 += (FuncP1*DistP.rx + FuncM1*DistM.rx);
 			Teilor3 += (FuncP2*DistP.ry*DistP.rx + FuncM2*DistM.ry*DistM.rx);
-			Teilor4 += (FuncP2 * (DistP.ry*DistP.ry - DistP.rx*DistP.rx) + FuncM2 * (DistM.ry*DistM.ry - DistM.rx*DistM.rx));
+			Teilor4 += (FuncP2 * (sqr(DistP.ry) - sqr(DistP.rx)) + FuncM2 * (sqr(DistM.ry) - sqr(DistM.rx)));
 		}
 
 		Teilor1 *= C_1_2PI;

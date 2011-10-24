@@ -370,17 +370,16 @@ int GetMaxDepth()
 	return 0;// max;
 }
 
-int PrintBottomNodes(std::ostream& os, bool PrintDepth)
+int PrintBottomNodes(FILE* f, bool PrintDepth)
 {
 	if ( !Tree_BottomNodes ) return -1;
-	auto BottomNode = Tree_BottomNodes->begin();
-	long lsize = Tree_BottomNodes->size();
-	for ( long i=0; i<lsize; i++ )
+	const_for (Tree_BottomNodes, llBN)
 	{
-		os << (*BottomNode)->x << "\t" << (*BottomNode)->y << "\t" << (*BottomNode)->w << "\t" << (*BottomNode)->h;
-		if (PrintDepth) { os << "\t" << (*BottomNode)->i; }
-		os << endl;
-		BottomNode++;
+		fprintf(f, "%g\t%g\t%g\t%g\t", (**llBN).x, (**llBN).y, (**llBN).w, (**llBN).h);
+//		fprintf(f, "%g\t%g\t%g\t", (**llBN).CMp.rx, (**llBN).CMp.ry, (**llBN).CMp.g);
+//		fprintf(f, "%g\t%g\t%g"  , (**llBN).CMm.rx, (**llBN).CMm.ry, (**llBN).CMm.g);
+		if(PrintDepth) fprintf(f, "\t%d", (**llBN).i);
+		fprintf(f, "\n");
 	}
 	return 0;
 }
