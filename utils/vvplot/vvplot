@@ -1,15 +1,21 @@
 #!/bin/bash
 
-time=$(echo $(od -j0 -N8 -tf8 -w8 -An $1) | cut -d. -f1)
-angle=0
-#$(echo $(od -j8 -N8 -tf8 -w8 -An $1))
+v_skip=$(od -j16 -N8 -An -w8 -td8 $1)
+v_size=$(od -j$v_skip -N8 -An -w8 -td8 $1)
+b_skip=$(od -j80 -N8 -An -w8 -td8 $1)
+b_size=$(od -j$b_skip -N8 -An -w8 -td8 $1)
+time=$(printf "%7.3f\n" $(od -j$(expr $v_skip - 8) -N8 -tf8 -w8 -An $1) )
+timestamp=$(od -j$(expr $v_skip - 16) -N8 -td8 -w8 -An $1)
+realtime=$(date -d "1970-01-01 $timestamp sec GMT")
+font="Free Serif"
 
 echo "unset key
-set xrange [$4: $5]
-set yrange [$6: $7]
+set xrange [$3: $4]
+set yrange [($3-$4)*9./32.: ($4-$3)*9./32.]
+
 
 set terminal jpeg giant enhanced size 1280, 720
-set output '$3'
+set output '$2'
 
 set lmargin 0; set rmargin 0; set bmargin 0; set tmargin 0;
 set border 0;
@@ -17,12 +23,12 @@ set zeroaxis;
 unset xtics; unset ytics;
 
 set label \"t = $time\" at graph 0.05, 0.90 font \"$font, 26\" 
-set style fill transparent solid 0.25 noborder 
 
 rgb(r,g,b) = 65536 * int(r) + 256 * int(g) + int(b)
 color(x) = (x>0) ? rgb(255,0,0) : rgb(0,0,255)
-plot '$1' binary skip=1024 format='%3float64' u 1:2:(\$3*10):(color(\$3)) w circles lc rgb variable, \
-'$2' using 1:2 with filledcurve lc rgb \"#cccccc\" fs transparent solid 1 border rgb \"black\"
+plot \
+'$1' binary record=$v_size skip=($v_skip+8) format='%3float64' u 1:2:(0.05):(color(\$3)) w circles lc rgb variable fs transparent solid 0.25 noborder, \
+'$1' binary record=$b_size skip=($b_skip+8) format='%3float64' u 1:2 w filledcurve lc rgb \"#808080\" fs solid
 " \
  | gnuplot
 
