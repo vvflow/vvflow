@@ -1,4 +1,4 @@
-al clean:
+all clean:
 
 install:
 	cp vvplot vvparse ~/.bin/

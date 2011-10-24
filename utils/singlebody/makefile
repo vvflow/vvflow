@@ -6,7 +6,10 @@ all:
 clean:
 	rm -f vvhd_sb
 
-install uninstall:
-	
+install:
+	cp vvhd_sb ~/.bin/
+
+uninstall:
+	rm -f ~/.bin/vvhd_sb
 
 

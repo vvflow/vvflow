@@ -37,7 +37,7 @@ double InfSpeedX(double t)
 
 TVec InfSpeed(double t)
 {
-	const double k=0;
+	const double k=1;
 	if (t<k) return TVec(t/k, 0);
 	else return TVec(1, 0);
 }
@@ -101,7 +101,7 @@ int main(int argc, char** argv)
 		dbg(CalcCirculationFast(true));
 		dbg(DestroyTree());
 
-		if (!(int(S->Time/dt)%1))
+		if (!(int(S->Time/dt)%10))
 		{
 			double header[] = { S->Time, body->Angle, body->RotSpeed(S->Time), 
 							    ForceTmp.rx/dt, ForceTmp.ry/dt };
