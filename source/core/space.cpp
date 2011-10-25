@@ -27,7 +27,7 @@ Space::Space(bool CreateVortexes,
 
 void SaveBookmark(FILE* fout, int bookmark, const char *comment)
 {
-	size_t tmp = ftell(fout);
+	int64_t tmp = ftell(fout);
 	fseek(fout, bookmark*16, SEEK_SET);
 	fwrite(&tmp, 8, 1, fout);
 	fwrite(comment, 1, 8, fout);
@@ -36,7 +36,7 @@ void SaveBookmark(FILE* fout, int bookmark, const char *comment)
 
 void SaveList(vector<TObj> *list, FILE* fout)
 {
-	size_t size = list->size_safe();
+	int64_t size = list->size_safe();
 	fwrite(&size, 8, 1, fout);
 	if (!list) return;
 	const_for (list, obj)
@@ -56,7 +56,7 @@ void Space::Save(const char* format, const double header[], int N)
 
 	fseek(fout, 8*128, SEEK_SET);
 	SaveBookmark(fout, 0, "Header  "); fwrite(header, 8, N, fout);
-	time_t rawtime; time(&rawtime); fwrite(&rawtime, 8, 1, fout);
+	time_t rt; time(&rt); int64_t rawtime=rt; fwrite(&rawtime, 8, 1, fout);
 	fwrite(&Time, 8, 1, fout);
 	SaveBookmark(fout, 1, "Vortexes"); SaveList(VortexList, fout);
 	SaveBookmark(fout, 2, "Heat    "); SaveList(HeatList, fout);

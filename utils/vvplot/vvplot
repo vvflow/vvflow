@@ -7,7 +7,7 @@ b_size=$(od -j$b_skip -N8 -An -w8 -td8 $1)
 time=$(printf "%7.3f\n" $(od -j$(expr $v_skip - 8) -N8 -tf8 -w8 -An $1) )
 timestamp=$(od -j$(expr $v_skip - 16) -N8 -td8 -w8 -An $1)
 realtime=$(date -d "1970-01-01 $timestamp sec GMT")
-font="Free Serif"
+font="Helvetica"
 
 echo "unset key
 set xrange [$3: $4]

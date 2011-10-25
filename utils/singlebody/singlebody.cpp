@@ -105,22 +105,11 @@ int main(int argc, char** argv)
 		{
 			double header[] = { S->Time, body->Angle, body->RotSpeed(S->Time), 
 							    ForceTmp.rx/dt, ForceTmp.ry/dt };
-
 			S->Save((string(dir)+string("/%06d.vb")).c_str(), header, 5);
 			ForceTmp.zero();
 		}
 
 		dbg(fm.VortexShed());
-
-		dbg(BuildTree());
-		dbg(CalcEpsilonFast(true));
-		dbg(CalcBoundaryConvective());
-		dbg(CalcConvectiveFast());
-		dbg(CalcVortexDiffusiveFast());
-		dbg(DestroyTree());
-
-		//FIXME move bodies 
-		dbg(fm.MoveAndClean(true));
 
 		FILE *f = fopen(stepdata.c_str(), "a");
 		fprintf(f, "%-10g \t%-+20e \t%-+20e \t%-+20e \t%-10ld \t%-10g \t%-10g\n",
@@ -132,9 +121,18 @@ int main(int argc, char** argv)
 		             body->Angle, 
 		             body->RotSpeed(S->Time));
 		fclose(f);
-
-		S->Time += S->dt;
 		ForceTmp+= body->Force;
 		body->Force.zero();
+
+		dbg(BuildTree());
+		dbg(CalcEpsilonFast(true));
+		dbg(CalcBoundaryConvective());
+		dbg(CalcConvectiveFast());
+		dbg(CalcVortexDiffusiveFast());
+		dbg(DestroyTree());
+
+		//FIXME move bodies 
+		dbg(fm.MoveAndClean(true));
+		S->Time += S->dt;
 	}
 }
