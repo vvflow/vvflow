@@ -11,7 +11,7 @@ flowmove::flowmove(Space *sS, double sdt, double sRemoveEps)
 	CleanedV_ = 0;
 }
 
-void flowmove::MoveAndClean(bool remove)
+void flowmove::MoveAndClean(bool remove, bool zero_speed)
 {
 	CleanedV_ = 0;
 	auto vlist = S->VortexList;
@@ -20,7 +20,7 @@ void flowmove::MoveAndClean(bool remove)
 	if ( vlist )
 	const_for (vlist, lobj)
 	{
-		*lobj += lobj->v*dt; lobj->v.zero();
+		*lobj += lobj->v*dt; if(zero_speed) lobj->v.zero();
 
 		TAtt* invalid_inbody = NULL;
 		const_for(S->BodyList, llbody)

@@ -25,7 +25,7 @@ class Space
 		double Time, dt;
 
 		void Save(const char* format, const double header[]=NULL, int N=0);
-		void Load(const char* format);
+		double* Load(const char* filename, int* N = NULL);
 		FILE* OpenFile(const char* format);
 
 		/***************** SAVE/LOAD ******************/
@@ -34,6 +34,7 @@ class Space
 		int LoadHeatFromFile(const char* filename);
 
 		int LoadBody(const char* filename);
+		void EnumerateBodies();
 
 		int PrintBody(const char* format);
 		int PrintVorticity(const char* format);

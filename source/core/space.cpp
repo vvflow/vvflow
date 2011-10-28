@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
+#include <malloc.h>
+#include <cstring>
 #include <fstream>
 #include <time.h>
 using namespace std;
@@ -45,23 +47,39 @@ void SaveList(vector<TObj> *list, FILE* fout)
 	}
 }
 
+void LoadList(vector<TObj> *list, FILE* fin)
+{
+	int64_t size; fread(&size, 8, 1, fin);
+	TObj obj;
+	if (!list) list = new vector<TObj>;
+	for (int64_t i=0; i<size; i++)
+	{
+		fread(&obj, 24, 1, fin);
+		list->push_back(obj);
+	}
+}
+
 void Space::Save(const char* format, const double header[], int N)
 {
-	int res;
 	char fname[64]; sprintf(fname, format, int(Time/dt));
-	FILE *fout;
-	fout = fopen(fname, "rb+");
+	FILE *fout = fopen(fname, "rb+");
 	if (!fout) fout = fopen(fname, "wb");
 	if (!fout) { perror("Error saving the space"); return; }
 
 	fseek(fout, 8*128, SEEK_SET);
-	SaveBookmark(fout, 0, "Header  "); fwrite(header, 8, N, fout);
-	time_t rt; time(&rt); int64_t rawtime=rt; fwrite(&rawtime, 8, 1, fout);
+	//writinh header
+	SaveBookmark(fout, 0, "Header  ");
+	fwrite(header, 8, N, fout);
+	time_t rt; time(&rt); int64_t rawtime=rt;
+	fwrite(&rawtime, 8, 1, fout);
 	fwrite(&Time, 8, 1, fout);
+
+	//writing lists
 	SaveBookmark(fout, 1, "Vortexes"); SaveList(VortexList, fout);
 	SaveBookmark(fout, 2, "Heat    "); SaveList(HeatList, fout);
 	SaveBookmark(fout, 3, "StrkSrc "); SaveList(StreakSourceList, fout);
 	SaveBookmark(fout, 4, "Streak  "); SaveList(StreakList, fout);
+	//FIXME implement Attaches
 
 	int bookmark = 4;
 	const_for(BodyList, llbody)
@@ -73,14 +91,66 @@ void Space::Save(const char* format, const double header[], int N)
 	fclose(fout);
 }
 
-void Space::Load(const char* format)
+double* Space::Load(const char* fname, int* N)
 {
+	FILE *fin = fopen(fname, "rb");
+	if (!fin) { perror("Error loading the space"); return NULL; }
+	double *header = NULL;
 
+	//loading header
+	{
+		fseek(fin, 16, SEEK_SET); //seek to the 2nd bookmark
+		int64_t tmp; fread(&tmp, 8, 1, fin); //getting its address
+		int size = (tmp-1024)/8; //conputing number of doubles in header
+		header = (double*)malloc(8*size); //allocating mem to store it
+		fseek(fin, 8*128, SEEK_SET); //seeking to begin of header
+		fread(header, 8, size, fin); //reading header
+		if (N) *N = size-2; //returning size of header
+		Time = header[size-1]; //obtaining current time from header
+	}
+
+	//loading different lists
+	int64_t tmp;
+	char comment[9]; comment[8]=0;
+	for (int i=1; i<64; i++)
+	{
+		fseek(fin, i*16, SEEK_SET);
+		fread(&tmp, 8, 1, fin);
+		fread(comment, 8, 1, fin);
+		if (!tmp) continue;
+		fseek(fin, tmp, SEEK_SET);
+
+		if (strcmp(comment, "Vortex")>=0) LoadList(VortexList, fin);
+		else if (strcmp(comment, "Heat")>=0) LoadList(HeatList, fin);
+		else if (strcmp(comment, "StrkSrc")>=0) LoadList(StreakSourceList, fin);
+		else if (strcmp(comment, "Streak")>=0) LoadList(StreakList, fin);
+		else if (strcmp(comment, "Body")>=0)
+		{
+			TBody *body = new TBody();
+			BodyList->push_back(body);
+
+			TObj obj; TAtt att(body, 0); att.zero();
+			int64_t size; fread(&size, 8, 1, fin);
+			for (int64_t i=0; i<size; i++)
+			{
+				fread(&obj, 24, 1, fin);
+				body->List->push_back(obj);
+				body->AttachList->push_back(att);
+			}
+
+			body->InsideIsValid = body->isInsideValid();
+			body->UpdateAttach();
+		}
+		else cout << "ignoring field " << comment << endl;
+	}
+
+	EnumerateBodies();
+
+	return header;
 }
 
 FILE* Space::OpenFile(const char* format)
 {
-	int res;
 	char fname[64]; sprintf(fname, format, int(Time/dt));
 	FILE *fout;
 	fout = fopen(fname, "w");
@@ -164,6 +234,22 @@ int Space::LoadBody(const char* filename)
 	int res = body->LoadFromFile(filename, N);
 	BodyList->push_back(body);
 	return res;
+}
+
+void Space::EnumerateBodies()
+{
+	int eq_no=0;
+	const_for(BodyList, llbody)
+	{
+		#define body (**llbody)
+		const_for(body.AttachList, latt)
+		{
+			latt->bc = bc::noslip;
+			latt->eq_no = eq_no++;
+		}
+		body.AttachList->begin()->bc = bc::noslip;
+		#undef body
+	}
 }
 
 /******************************** Print ***************************************/
