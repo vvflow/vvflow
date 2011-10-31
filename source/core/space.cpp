@@ -91,6 +91,15 @@ void Space::Save(const char* format, const double header[], int N)
 	fclose(fout);
 }
 
+int eq(const char *str1, const char *str2)
+{
+	for (int i=0; i<8; i++)
+	{
+		if (str1[i] != str2[i]) return i+1;
+	}
+	return 0;
+}
+
 double* Space::Load(const char* fname, int* N)
 {
 	FILE *fin = fopen(fname, "rb");
@@ -120,11 +129,11 @@ double* Space::Load(const char* fname, int* N)
 		if (!tmp) continue;
 		fseek(fin, tmp, SEEK_SET);
 
-		if (strcmp(comment, "Vortex")>=0) LoadList(VortexList, fin);
-		else if (strcmp(comment, "Heat")>=0) LoadList(HeatList, fin);
-		else if (strcmp(comment, "StrkSrc")>=0) LoadList(StreakSourceList, fin);
-		else if (strcmp(comment, "Streak")>=0) LoadList(StreakList, fin);
-		else if (strcmp(comment, "Body")>=0)
+		     if (!eq(comment, "Vortexes")) LoadList(VortexList, fin);
+		else if (!eq(comment, "Heat    ")) LoadList(HeatList, fin);
+		else if (!eq(comment, "StrkSrc ")) LoadList(StreakSourceList, fin);
+		else if (!eq(comment, "Streak  ")) LoadList(StreakList, fin);
+		else if (eq(comment, "Body    ")>=5)
 		{
 			TBody *body = new TBody();
 			BodyList->push_back(body);
@@ -244,10 +253,11 @@ void Space::EnumerateBodies()
 		#define body (**llbody)
 		const_for(body.AttachList, latt)
 		{
+			//FIXME bc
 			latt->bc = bc::noslip;
 			latt->eq_no = eq_no++;
 		}
-		body.AttachList->begin()->bc = bc::noslip;
+		body.AttachList->begin()->bc = bc::tricky;
 		#undef body
 	}
 }

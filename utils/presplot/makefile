@@ -1,4 +1,4 @@
-CC = icc -O3 -mkl=parallel -g -debug all
+CC = icc -O3 -mkl=parallel -openmp -g -debug all
 
 all:
 	$(CC) presplot.cpp -o presplot $(VVHD) -std=c++0x
