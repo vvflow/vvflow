@@ -1,13 +1,13 @@
-CC = icc -O3 -mkl=parallel -openmp -g -debug all
+CC = icc -O3 -mkl=parallel -openmp
 
 all:
-	$(CC) presplot.cpp -o presplot $(VVHD) -std=c++0x
+	$(CC) presplot.cpp -o presplot_exe $(VVHD) -std=c++0x
 
 clean:
-	rm -f presplot
+	rm -f presplot_exe
 
 install:
-	cp presplot ~/.bin
+	cp presplot_exe presplot ~/.bin
 
 uninstall:
-	rm -f ~/.bin/presplot
+	rm -f ~/.bin/presplot_exe ~/.bin/presplot

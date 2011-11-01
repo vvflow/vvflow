@@ -1,0 +1,52 @@
+#!/bin/bash
+
+v_skip=$(od -j16 -N8 -An -w8 -td8 $1)
+v_size=$(od -j$v_skip -N8 -An -w8 -td8 $1)
+b_skip=$(od -j80 -N8 -An -w8 -td8 $1)
+b_size=$(od -j$b_skip -N8 -An -w8 -td8 $1)
+time=$(printf "%7.3f\n" $(od -j$(expr $v_skip - 8) -N8 -tf8 -w8 -An $1) )
+timestamp=$(od -j$(expr $v_skip - 16) -N8 -td8 -w8 -An $1)
+realtime=$(date -d "1970-01-01 $timestamp sec GMT" +"%F %H:%M:%S")
+font="/usr/share/fonts/truetype/freefont/FreeSerif.ttf"
+
+echo "
+unset key
+set colorbox horizontal user origin .1,.02 size .8,.04
+set macros
+ymax = ($4-$3)*9./32.
+prec = ($4-$3)/500.
+set xrange [$3: $4]
+set yrange [-ymax: ymax]
+set cbrange [-1.5:1]
+
+set terminal jpeg giant enhanced size 1280, 720
+set output '$2'
+
+set lmargin 0; set rmargin 0; set bmargin 0; set tmargin 0;
+set border 0;
+set zeroaxis;
+unset xtics; unset ytics;
+
+set macros
+dot_style = \"dots lc rgb variable\"
+vortex_style = \"circles lc rgb variable fs transparent solid 0.25 noborder\"
+body_style = \"filledcurve lc rgb \\\"#adadad\\\" lw 2 fs solid border -1 \"
+
+set palette color
+set palette maxcolors 33 defined (-1.5 \"#0829d5\", -0.5 \"#1ffcff\", 0 \"#2ef62e\", 0.3 \"yellow\", 1 \"red\")
+rgb(r,g,b) = 65536 * int(r) + 256 * int(g) + int(b)
+color(x) = (x>0) ? rgb(255,255,255) : rgb(0,0,0)
+prec_c = sprintf(\"%f\", prec)
+ymax_c = sprintf(\"%f\", ymax)
+\`if test ! -e $1.map -o \"$5\" = -f; then presplot_exe $1 @prec_c $3 $4 -@ymax_c @ymax_c; fi\`
+
+set label \"t = $time\" at graph 0.05, 0.90 font \"$font, 26\"
+
+plot '$1.map' w image, \
+'$1' binary record=$b_size skip=($b_skip+8) format='%3float64' u 1:2 w @body_style
+# '$1' binary record=$v_size skip=($v_skip+8) format='%3float64' u 1:2:(color(\$3)) w @dot_style
+" \
+ | gnuplot
+
+exiv2 -M"set Exif.Photo.DateTimeOriginal $realtime" \
+      -M"set Exif.Image.DateTime $realtime" $2

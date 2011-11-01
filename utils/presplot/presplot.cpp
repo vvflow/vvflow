@@ -16,7 +16,6 @@ typedef void* pointer;
 using namespace std;
 #define dbg(a) { cerr << #a << "... "; a; cerr << "done\n"; }
 //#define dbg(a) a
-const int imax=10;
 
 TVec RotSpeed(TVec p, TVec axis, double speed)
 {
@@ -31,7 +30,6 @@ double Pressure(Space* S, TVec p, double precision)
 
 	const_for(S->BodyList, llbody)
 	{
-//		TBody &b = **llbody;
 		#define b (**llbody)
 		double gtmp = 0;
 		const_for(b.List, lobj)
@@ -41,33 +39,25 @@ double Pressure(Space* S, TVec p, double precision)
 		}
 		#undef b
 	}
-	Cp/= imax*S->dt;
+	Cp/= S->dt;
 
 	const_for(S->VortexList, lobj)
 	{
-//		Cp+= (lobj->v*rotl(p-*lobj))*lobj->g / ((p-*lobj).abs2() + Rd2);
+		Cp+= (lobj->v*rotl(p-*lobj))*lobj->g / ((p-*lobj).abs2() + Rd2);
 	}
 
 	Cp *= C_1_2PI;
-
-	//Cp += 0.5*(S->InfSpeed().abs2() - (SpeedSumFast(p)+S->InfSpeed()).abs2());
-/*	#pragma omp critical
-	{
-		TVec tmp = SpeedSumFast(p)+S->InfSpeed();
-		fprintf(fout, "%lf\t %lf\t %lf\t %lf\n", p.rx, p.ry, tmp.rx, tmp.ry);
-	}
-*/
-
+	Cp += 0.5*(S->InfSpeed().abs2() - (SpeedSumFast(p)+S->InfSpeed()).abs2());
 	return Cp*2/S->InfSpeed().abs2();
 }
 
-TVec InfSpeed(double t){return TVec(0.1, 0);}
+TVec InfSpeed(double t){return TVec(1, 0);}
 
 int main(int argc, char *argv[])
 {
 	if ( argc != 7)\
 	{
-		cout << "Error! Please use: \npresplot file.vb precission\n";
+		cout << "Error! Please use: \npresplot file.vb precission xmin xmax ymin ymax\n";
 //		     << "Also you can use enviroment variables:\n"
 //		     << "export HEATPLOT_EPS_MULT=2 to smooth picture\n"
 //		     << "export HEATPLOT_BODY_TEMP=1 to set body temperature\n";
@@ -85,7 +75,7 @@ int main(int argc, char *argv[])
 	InitConvectiveFast(S, dl*dl/25);
 	InitEpsilonFast(S, 0);
 	InitDiffusiveFast(S, 200);
-	flowmove fm(S, 0.005/imax);
+	flowmove fm(S, 0.005);
 	InitTree(S, 8, dl*20, 0.3);
 
 	/**************************** LOAD ARGUMENTS ******************************/
@@ -102,8 +92,9 @@ int main(int argc, char *argv[])
 	/******************************************/
 
 	body->zero_variables();
-	for (int i=0; i<imax; i++)
+	for (int i=0; i<1; i++)
 	{
+		S->ZeroSpeed();
 		dbg(BuildTree());
 		dbg(CalcEpsilonFast(false));
 //		dbg(CalcBoundaryConvective());
@@ -112,21 +103,13 @@ int main(int argc, char *argv[])
 		dbg(DestroyTree());
 
 		dbg(fm.MoveAndClean(true, false));
-		cerr << "Removed " << fm.CleanedV() << endl;
 		S->Time += S->dt;
+		S->RemoveList->clear();
 
 		dbg(BuildTree());
 		dbg(CalcCirculationFast(false));
 		dbg(fm.VortexShed());
 	}
-
-	S->Save("copy%d", header, N);
-	fout = S->OpenFile("vel%d");
-	const_for(body->List, lobj)
-	{
-		fprintf(fout, "%lf\t %lf\t %lf\t %lf\n", lobj->rx, lobj->ry, lobj->g, body->att(lobj)->gsum);
-	}
-	fclose(fout);
 
 	//требуется: выполнить условие непротекания, найти скорости вихрей (всех, включая присоединенные)
 	int total = int((xmax-xmin)/prec + 1)*int((ymax-ymin)/prec + 1);

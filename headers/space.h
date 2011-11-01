@@ -22,6 +22,7 @@ class Space
 		inline void FinishStep(); //update time and coord variables
 
 		TVec InfSpeed() { return InfSpeed_link?InfSpeed_link(Time):TVec(0,0); }
+		void ZeroSpeed();
 		double Time, dt;
 
 		void Save(const char* format, const double header[]=NULL, int N=0);

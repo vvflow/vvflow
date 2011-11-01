@@ -17,7 +17,7 @@ Space::Space(bool CreateVortexes,
 	VortexList = CreateVortexes ? (new vector<TObj>()) : NULL;
 	HeatList = CreateHeat ? (new vector<TObj>()) : NULL;
 	BodyList = new vector<TBody*>();
-	
+
 	StreakSourceList = new vector<TObj>();
 	StreakList = new vector<TObj>();
 
@@ -323,6 +323,14 @@ int Space::PrintHeat(const char* filename)
 /********************************* HEADERS ************************************/
 
 /********************************* INTEGRALS **********************************/
+
+void Space::ZeroSpeed()
+{
+	const_for (VortexList, lobj)
+	{
+		lobj->v.zero();
+	}
+}
 
 double Space::integral()
 {
