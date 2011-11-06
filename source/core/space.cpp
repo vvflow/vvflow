@@ -70,6 +70,8 @@ void Space::Save(const char* format, const double header[], int N)
 	//writinh header
 	SaveBookmark(fout, 0, "Header  ");
 	fwrite(header, 8, N, fout);
+	TVec inf = InfSpeed();
+	fwrite(&inf, 8, 2, fout);
 	time_t rt; time(&rt); int64_t rawtime=rt;
 	fwrite(&rawtime, 8, 1, fout);
 	fwrite(&Time, 8, 1, fout);
@@ -86,6 +88,10 @@ void Space::Save(const char* format, const double header[], int N)
 	{
 		SaveBookmark(fout, ++bookmark, "Body");
 		SaveList((**llbody).List, fout);
+		TObj rot;
+		rot = (**llbody).RotAxis;
+		rot.g = (**llbody).RotSpeed(Time);
+		fwrite(&rot, 24, 1, fout);
 	}
 
 	fclose(fout);
@@ -100,6 +106,10 @@ int eq(const char *str1, const char *str2)
 	return 0;
 }
 
+TVec infspeed_var;
+TVec infspeed(double time){return infspeed_var;}
+double rotation_var;
+double rotation(double time){return rotation_var;}
 double* Space::Load(const char* fname, int* N)
 {
 	FILE *fin = fopen(fname, "rb");
@@ -116,6 +126,7 @@ double* Space::Load(const char* fname, int* N)
 		fread(header, 8, size, fin); //reading header
 		if (N) *N = size-2; //returning size of header
 		Time = header[size-1]; //obtaining current time from header
+		infspeed_var = TVec(header[size-4], header[size-3]); InfSpeed_link = infspeed;
 	}
 
 	//loading different lists
@@ -146,6 +157,10 @@ double* Space::Load(const char* fname, int* N)
 				body->List->push_back(obj);
 				body->AttachList->push_back(att);
 			}
+
+			TObj rot; fread(&rot, 24, 1, fin);
+			rotation_var = rot.g;
+			body->SetRotation(rotation, TVec(rot));
 
 			body->InsideIsValid = body->isInsideValid();
 			body->UpdateAttach();
