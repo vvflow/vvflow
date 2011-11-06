@@ -21,7 +21,7 @@ set border 0;
 set zeroaxis;
 unset xtics; unset ytics;
 
-set label \"t = $time \`uname -n\` \" at graph 0.05, 0.90 font \"$font, 26\" 
+set label \"t = $time\" at graph 0.05, 0.90 font \"$font, 26\" 
 
 set macros
 vortex_style = \"circles lc rgb variable fs transparent solid 0.25 noborder\"

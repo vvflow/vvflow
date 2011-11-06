@@ -82,7 +82,7 @@ int main(int argc, char** argv)
 	/**************************************************************************/
 
 	Space *S = new Space(true, false, InfSpeed);
-	S->LoadBody("cyl_600");
+	S->LoadBody("BodyFile");
 	TBody* body = S->BodyList->at(0);
 	//body->SetRotation(rot, TVec(0,0));
 
@@ -92,7 +92,7 @@ int main(int argc, char** argv)
 	InitTree(S, 8, dl*20, 0.3);
 	InitConvectiveFast(S, dl*dl/25);
 	InitEpsilonFast(S, dl*dl*0.09);
-	InitDiffusiveFast(S, 200);
+	InitDiffusiveFast(S, Re);
 	flowmove fm(S, dt);
 
 	while (true)
