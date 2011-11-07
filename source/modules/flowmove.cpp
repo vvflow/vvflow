@@ -33,7 +33,7 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
 		{
 			TBody *badbody = invalid_inbody->body;
 			badbody->Force -= rotl(*lobj) * lobj->g;
-			badbody->Force.g -=  (*lobj-badbody->RotAxis).abs2() * lobj->g;
+			badbody->Force.g -=  lobj->abs2() * lobj->g;
 			invalid_inbody->gsum -= lobj->g;
 			badbody->g_dead += lobj->g;
 			CleanedV_++;
@@ -88,7 +88,7 @@ void flowmove::VortexShed()
 			{
 				ObjCopy = *lbobj;
 				body.Force += rotl(ObjCopy) * ObjCopy.g;
-				body.Force.g += (ObjCopy - body.RotAxis).abs2() * ObjCopy.g;
+				body.Force.g += ObjCopy.abs2() * ObjCopy.g;
 				          latt ->gsum+= 0.5*ObjCopy.g;
 				body.prev(latt)->gsum+= 0.5*ObjCopy.g;
 				vlist->push_back(ObjCopy);

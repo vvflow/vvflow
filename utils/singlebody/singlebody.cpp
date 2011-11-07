@@ -82,7 +82,7 @@ int main(int argc, char** argv)
 	/**************************************************************************/
 
 	Space *S = new Space(true, false, InfSpeed);
-	S->LoadBody("BodyFile");
+	S->LoadBody(BodyFile);
 	TBody* body = S->BodyList->at(0);
 	//body->SetRotation(rot, TVec(0,0));
 
