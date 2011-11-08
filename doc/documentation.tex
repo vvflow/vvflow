@@ -14,6 +14,7 @@
 
 \newcommand{\comment}[1]{}
 \newcommand{\br}[1]{\boldsymbol{\mathrm{#1}}}
+\DeclareMathOperator{\rot}{rot}
 %\newcommand{\br}[1]{\bm{\mathrm{#1}}}
 
 \newenvironment{packed_enum}{
@@ -90,6 +91,43 @@ class list
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Convective}
+\subsection{Конвективная скорость}
+Скорость, индуцированная вихрем $(\br r_i, \gamma_i)$ в точке $\br r$
+вычисляется по формуле
+\begin{equation*}
+\br V(\br r) = [\br e_z \times \br K(\br r, \br r_i)] \cdot \gamma_i
+\end{equation*}
+Причем $\br K (\br r, \br r_i)$ можно вычислять несколькми способами:
+\begin{packed_enum}
+\item Классическая формула для точечного вихря:
+$\br K_1 = \dfrac {\Delta\br r}{\Delta r^2}$
+
+\item Для вихря Рэнкина (круг постоянной завихренности):
+$\br K_2 = \begin{cases}
+\Delta\br r / r_0^2,	&\Delta r \le r_0 \\
+{\Delta\br r}/{\Delta r^2}, 	&\Delta r>r_0\\
+\end{cases}$
+
+\item Для вихря Лэмба:
+$\br K = \br K_3 = \dfrac {\Delta\br r}{\Delta r^2 + \delta^2}$
+\end{packed_enum}
+
+Мы пользуемся третьим. Эта формула удобнее и быстрее.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Линии тока}
+Линии тока можно построить двумя способами. Можно построить поле скорости,
+и загнать его в какой-нибудь TecPlot, но это черевато низкой точностью и дикими
+спиралями. А можно воспользоваться функцией тока (она же --- векторный потенциал)
+$\br\Psi: \rot\br\Psi = \br V$.
+И тогда в двумере линии уровня $\lvert\br\Psi\rvert$ будут являться линиями тока.
+
+\begin{equation*}
+\Psi(\br r) = \sum_i \ln \left(\sqrt{(\br r - \br r_i)^2 + \delta^2} \right) = 
+\dfrac{1}{2} \sum_i \ln \left({{\Delta r}^2 + \delta^2} \right).
+\end{equation*}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{ConvectiveInfluence}
 Функция вычисляет интеграл скорости, индуцируемый единичным вихрем 
 в точке $\br p$ на отрезок $[\br p_1, \br p_2]$
@@ -115,7 +153,7 @@ $z = p_x - i p_y$, $z_c = \frac{1}{2}(z_1 + z_2)$
 $(\br p_c - \br p)(\br p_2 - \br p_1 ) / \varepsilon^2$
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Pressure}
+\subsection{Давление}
 Давление в точке вычисляется по формуле:
 \begin{multline*}
 \frac{C_p}{2} = p(\br r) - p_\infty = \frac{1}{2} \left( V^2_\infty - V^2(\br r) \right) 
