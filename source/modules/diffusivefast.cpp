@@ -83,7 +83,7 @@ void CalcVortexDiffusiveFast()
 				}
 			}
 
-			if ( (sign(S1)!=sign(obj)) || (fabs(S1)<fabs(obj.g)) ) { S1 = obj.g; }
+			if ( (sign(S1)!=sign(obj)) || (fabs(S1)<fabs(0.1*obj.g)) ) { S1 = 0.1*obj.g; }
 
 			double multiplier = obj._1_eps/(Re*S1);
 			//double S2abs = S2.abs2();
