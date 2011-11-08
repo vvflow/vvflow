@@ -2,8 +2,10 @@
 
 v_skip=$(od -j16 -N8 -An -w8 -td8 $1)
 v_size=$(od -j$v_skip -N8 -An -w8 -td8 $1)
-b_skip=$(od -j80 -N8 -An -w8 -td8 $1)
-b_size=$(od -j$b_skip -N8 -An -w8 -td8 $1)
+b1_skip=$(od -j80 -N8 -An -w8 -td8 $1)
+b1_size=$(if test $b1_skip -ne 0; then od -j$b2_skip -N8 -An -w8 -td8 $1; else echo 0; fi)
+b2_skip=$(od -j96 -N8 -An -w8 -td8 $1)
+b2_size=$(if test $b2_skip -ne 0; then od -j$b2_skip -N8 -An -w8 -td8 $1; else echo 0; fi)
 time=$(printf "%7.3f\n" $(od -j$(expr $v_skip - 8) -N8 -tf8 -w8 -An $1) )
 timestamp=$(od -j$(expr $v_skip - 16) -N8 -td8 -w8 -An $1)
 realtime=$(date -d "1970-01-01 $timestamp sec GMT" +"%F %H:%M:%S")
@@ -24,14 +26,15 @@ unset xtics; unset ytics;
 set label \"t = $time\" at graph 0.05, 0.90 font \"$font, 26\" 
 
 set macros
-vortex_style = \"circles lc rgb variable fs transparent solid 0.25 noborder\"
-body_style = \"filledcurve lc rgb \\\"#808080\\\" fs solid\"
+vortex_style = \"circles lc rgb variable fs transparent solid 0.3 noborder\"
+body_style = \"filledcurve lc rgb \\\"#adadad\\\" lw 2 fs solid border -1 \"
 
 rgb(r,g,b) = 65536 * int(r) + 256 * int(g) + int(b)
 color(x) = (x>0) ? rgb(255,0,0) : rgb(0,0,255)
 plot \
 '$1' binary record=$v_size skip=($v_skip+8) format='%3float64' u 1:2:(0.05):(color(\$3)) w @vortex_style, \
-'$1' binary record=$b_size skip=($b_skip+8) format='%3float64' u 1:2 w @body_style
+'$1' binary record=$b1_size skip=($b1_skip+8) format='%3float64' u 1:2 w @body_style
+#'$1' binary record=$b2_size skip=($b2_skip+8) format='%3float64' u 1:2 w @body_style
 " \
  | gnuplot
 
