@@ -272,9 +272,10 @@ void Space::EnumerateBodies()
 			latt->bc = bc::noslip;
 			latt->eq_no = eq_no++;
 		}
-		body.AttachList->begin()->bc = bc::tricky;
+		body.AttachList->begin()->bc = bc::noperturbations;
 		#undef body
 	}
+	(**BodyList->begin()).AttachList->begin()->bc = bc::tricky;
 }
 
 /******************************** Print ***************************************/

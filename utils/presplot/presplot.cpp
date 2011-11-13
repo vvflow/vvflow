@@ -17,9 +17,13 @@ using namespace std;
 #define dbg(a) { cerr << #a << "... "; a; cerr << "done\n"; }
 //#define dbg(a) a
 
-TVec RotSpeed(TVec p, TVec axis, double speed)
+bool PointIsInvalid(Space *S, TVec p)
 {
-	return rotl(p-axis)*speed;
+	const_for(S->BodyList, llbody)
+	{
+		if ((**llbody).PointIsInvalid(p)) return true;
+	}
+	return false;
 }
 
 FILE *fout;
@@ -66,10 +70,13 @@ int main(int argc, char *argv[])
 
 //	char *mult_env = getenv("PREPLOT_EPS_MULT");
 //	double mult = mult_env ? atof(mult_env) : 2;
-	Space *S = new Space(true, false, InfSpeed);
+	Space *S = new Space(true, false, NULL);
 	int N; double *header = S->Load(argv[1], &N);
+	S->BodyList->clear();
+	S->LoadBody("naca0012_body");
+	S->LoadBody("naca0012_spoiler");
 	if (!S->BodyList->size_safe()) return -1;
-	TBody* body = S->BodyList->at(0); 
+	TBody* body = S->BodyList->at(0);
 
 	double dl = body->AverageSegmentLength(); Rd2 = dl*dl/25;
 	InitConvectiveFast(S, dl*dl/25);
@@ -91,7 +98,7 @@ int main(int argc, char *argv[])
 		dbg(fm.VortexShed());
 	/******************************************/
 
-	body->zero_variables();
+	const_for(S->BodyList, llbody) { (**llbody).zero_variables(); }
 	for (int i=0; i<1; i++)
 	{
 		S->ZeroSpeed();
@@ -102,13 +109,14 @@ int main(int argc, char *argv[])
 		dbg(CalcVortexDiffusiveFast());
 		dbg(DestroyTree());
 
+		//FIXME move bodies
 		dbg(fm.MoveAndClean(true, false));
 		S->Time += S->dt;
-		S->RemoveList->clear();
 
 		dbg(BuildTree());
 		dbg(CalcCirculationFast(false));
-		dbg(fm.VortexShed());
+		S->Save("copy");
+//		dbg(fm.VortexShed());
 	}
 
 	//требуется: выполнить условие непротекания, найти скорости вихрей (всех, включая присоединенные)
@@ -129,7 +137,7 @@ int main(int argc, char *argv[])
 		for( int j=0; j<jmax; j++)
 		{
 			double y = ymin + double(j)*prec;
-			double t = body->PointIsInvalid(TVec(x, y)) ? 
+			double t = PointIsInvalid(S, TVec(x, y)) ? 
 			           0 : Pressure(S, TVec(x, y), prec);
 
 			#pragma omp ordered

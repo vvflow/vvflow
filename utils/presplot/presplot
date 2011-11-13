@@ -2,13 +2,16 @@
 
 v_skip=$(od -j16 -N8 -An -w8 -td8 $1)
 v_size=$(od -j$v_skip -N8 -An -w8 -td8 $1)
-b_skip=$(od -j80 -N8 -An -w8 -td8 $1)
-b_size=$(od -j$b_skip -N8 -An -w8 -td8 $1)
+b1_skip=$(od -j80 -N8 -An -w8 -td8 $1)
+b1_size=$(if test $b1_skip -ne 0; then od -j$b1_skip -N8 -An -w8 -td8 $1; else echo 0; fi)
+b2_skip=$(od -j96 -N8 -An -w8 -td8 $1)
+b2_size=$(if test $b2_skip -ne 0; then od -j$b2_skip -N8 -An -w8 -td8 $1; else echo 0; fi)
 time=$(printf "%7.3f\n" $(od -j$(expr $v_skip - 8) -N8 -tf8 -w8 -An $1) )
 timestamp=$(od -j$(expr $v_skip - 16) -N8 -td8 -w8 -An $1)
 realtime=$(date -d "1970-01-01 $timestamp sec GMT" +"%F %H:%M:%S")
 font="/usr/share/fonts/truetype/freefont/FreeSerif.ttf"
 
+#FIXME check number of args
 echo "
 unset key
 set colorbox horizontal user origin .1,.02 size .8,.04
@@ -43,7 +46,8 @@ ymax_c = sprintf(\"%f\", ymax)
 set label \"t = $time\" at graph 0.05, 0.90 font \"$font, 26\"
 
 plot '$1.map' w image, \
-'$1' binary record=$b_size skip=($b_skip+8) format='%3float64' u 1:2 w @body_style
+'$1' binary record=$b1_size skip=($b1_skip+8) format='%3float64' u 1:2 w @body_style, \
+'$1' binary record=$b2_size skip=($b2_skip+8) format='%3float64' u 1:2 w @body_style
 # '$1' binary record=$v_size skip=($v_skip+8) format='%3float64' u 1:2:(color(\$3)) w @dot_style
 " \
  | gnuplot
