@@ -39,13 +39,14 @@ class TBody
 		TAtt* PointIsInvalid(TVec p);
 		double SurfaceLength();
 		double AverageSegmentLength() { return SurfaceLength() / List->size(); } //FIXME unsafe
-		void SetRotation(double (*sRotSpeed)(double time), TVec sRotAxis);
+		void SetRotation(TVec sRotAxis, double (*sRotSpeed)(double time), double sRotSpeed_const = 0);
 
 		vector<TObj> *List;
 		vector<TAtt> *AttachList;
 		bool InsideIsValid;
 		bool isInsideValid();
-		double RotSpeed(double time) const { return RotSpeed_link?RotSpeed_link(time):0; }
+		double RotSpeed(double time) const
+			{ return RotSpeed_link?RotSpeed_link(time):RotSpeed_const; }
 		double Angle;
 		TVec Position;
 		TVec RotAxis;
@@ -74,6 +75,7 @@ class TBody
 
 	private:
 		double (*RotSpeed_link)(double time);
+		double RotSpeed_const;
 };
 
 #endif /* BODY_H_ */

@@ -22,7 +22,8 @@ Space::Space(bool CreateVortexes,
 	StreakList = new vector<TObj>();
 
 	InfSpeed_link = sInfSpeed;
-	Time = dt = 0;
+	InfSpeed_const.zero();
+	Time = dt = Re = 0;
 }
 
 /********************************** SAVE/LOAD *********************************/
@@ -70,10 +71,10 @@ void Space::Save(const char* format, const double header[], int N)
 	//writinh header
 	SaveBookmark(fout, 0, "Header  ");
 	fwrite(header, 8, N, fout);
-	TVec inf = InfSpeed();
-	fwrite(&inf, 8, 2, fout);
-	time_t rt; time(&rt); int64_t rawtime=rt;
-	fwrite(&rawtime, 8, 1, fout);
+	fwrite(&dt, 8, 1, fout);
+	fwrite(&Re, 8, 1, fout);
+	TVec inf = InfSpeed(); fwrite(&inf, 8, 2, fout);
+	time_t rt; time(&rt); int64_t rawtime=rt; fwrite(&rawtime, 8, 1, fout);
 	fwrite(&Time, 8, 1, fout);
 
 	//writing lists
@@ -106,10 +107,6 @@ int eq(const char *str1, const char *str2)
 	return 0;
 }
 
-TVec infspeed_var;
-TVec infspeed(double time){return infspeed_var;}
-double rotation_var;
-double rotation(double time){return rotation_var;}
 double* Space::Load(const char* fname, int* N)
 {
 	FILE *fin = fopen(fname, "rb");
@@ -120,13 +117,15 @@ double* Space::Load(const char* fname, int* N)
 	{
 		fseek(fin, 16, SEEK_SET); //seek to the 2nd bookmark
 		int64_t tmp; fread(&tmp, 8, 1, fin); //getting its address
-		int size = (tmp-1024)/8; //conputing number of doubles in header
+		int size = (tmp-1024)/8; //computing number of doubles in header
 		header = (double*)malloc(8*size); //allocating mem to store it
 		fseek(fin, 8*128, SEEK_SET); //seeking to begin of header
 		fread(header, 8, size, fin); //reading header
 		if (N) *N = size-2; //returning size of header
 		Time = header[size-1]; //obtaining current time from header
-		infspeed_var = TVec(header[size-4], header[size-3]); InfSpeed_link = infspeed;
+		InfSpeed_const = TVec(header[size-4], header[size-3]); //get infspeed
+		Re = header[size-5]; //get Reynolds
+		dt = header[size-6]; //get dt
 	}
 
 	//loading different lists
@@ -159,8 +158,7 @@ double* Space::Load(const char* fname, int* N)
 			}
 
 			TObj rot; fread(&rot, 24, 1, fin);
-			rotation_var = rot.g;
-			body->SetRotation(rotation, TVec(rot));
+			body->SetRotation(TVec(rot), NULL, rot.g);
 
 			body->InsideIsValid = body->isInsideValid();
 			body->UpdateAttach();

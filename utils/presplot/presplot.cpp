@@ -26,8 +26,24 @@ bool PointIsInvalid(Space *S, TVec p)
 	return false;
 }
 
+void RotateAll(Space* S)
+{
+	const_for(S->BodyList, llbody)
+	{
+		(**llbody).Rotate((**llbody).RotSpeed(S->Time)*S->dt);
+	}
+}
+
 FILE *fout;
 double Rd2;
+
+inline
+TVec K(const TVec &obj, const TVec &p)
+{
+	TVec dr = p - obj;
+	return dr/(dr.abs2() + Rd2);
+}
+
 double Pressure(Space* S, TVec p, double precision)
 {
 	double Cp=0;
@@ -39,7 +55,14 @@ double Pressure(Space* S, TVec p, double precision)
 		const_for(b.List, lobj)
 		{
 			gtmp+= b.att(lobj)->gsum;
-			Cp -= b.att(lobj)->dl * rotl(p-*lobj)*gtmp/((p-*lobj).abs2() + Rd2);
+			Cp -= (b.att(lobj)->dl * rotl(K(*lobj, p))) * gtmp;
+		}
+
+		double alpha = b.RotSpeed(S->Time)*S->dt;
+		const_for(b.AttachList, latt)
+		{
+			Cp += ((latt->g*rotl(K(*latt, p)) + latt->q*K(*latt, p)) *
+			      rotl(*latt-b.RotAxis)) * alpha;
 		}
 		#undef b
 	}
@@ -51,11 +74,9 @@ double Pressure(Space* S, TVec p, double precision)
 	}
 
 	Cp *= C_1_2PI;
-	Cp += 0.5*(S->InfSpeed().abs2() - (SpeedSumFast(p)+S->InfSpeed()).abs2());
+	Cp += 0.5*(S->InfSpeed().abs2() - (SpeedSumFast(p)).abs2());
 	return Cp*2/S->InfSpeed().abs2();
 }
-
-TVec InfSpeed(double t){return TVec(1, 0);}
 
 int main(int argc, char *argv[])
 {
@@ -72,17 +93,13 @@ int main(int argc, char *argv[])
 //	double mult = mult_env ? atof(mult_env) : 2;
 	Space *S = new Space(true, false, NULL);
 	int N; double *header = S->Load(argv[1], &N);
-	S->BodyList->clear();
-	S->LoadBody("naca0012_body");
-	S->LoadBody("naca0012_spoiler");
-	if (!S->BodyList->size_safe()) return -1;
 	TBody* body = S->BodyList->at(0);
 
 	double dl = body->AverageSegmentLength(); Rd2 = dl*dl/25;
 	InitConvectiveFast(S, dl*dl/25);
 	InitEpsilonFast(S, 0);
-	InitDiffusiveFast(S, 200);
-	flowmove fm(S, 0.005);
+	InitDiffusiveFast(S, S->Re);
+	flowmove fm(S, S->dt);
 	InitTree(S, 8, dl*20, 0.3);
 
 	/**************************** LOAD ARGUMENTS ******************************/
@@ -104,19 +121,19 @@ int main(int argc, char *argv[])
 		S->ZeroSpeed();
 		dbg(BuildTree());
 		dbg(CalcEpsilonFast(false));
-//		dbg(CalcBoundaryConvective());
+		dbg(CalcBoundaryConvective());
 		dbg(CalcConvectiveFast());
 		dbg(CalcVortexDiffusiveFast());
 		dbg(DestroyTree());
 
-		//FIXME move bodies
+		RotateAll(S);
 		dbg(fm.MoveAndClean(true, false));
 		S->Time += S->dt;
 
 		dbg(BuildTree());
 		dbg(CalcCirculationFast(false));
 		S->Save("copy");
-//		dbg(fm.VortexShed());
+		dbg(fm.VortexShed());
 	}
 
 	//требуется: выполнить условие непротекания, найти скорости вихрей (всех, включая присоединенные)
@@ -150,4 +167,3 @@ int main(int argc, char *argv[])
 
 	return 0;
 }
-

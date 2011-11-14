@@ -16,6 +16,7 @@ TBody::TBody()
 	List = new vector<TObj>();
 	AttachList = new vector<TAtt>();
 	RotSpeed_link = NULL;
+	RotSpeed_const = 0;
 	RotAxis = TVec(0,0);
 	InsideIsValid = true;
 	Angle = 0;
@@ -104,9 +105,10 @@ double TBody::SurfaceLength()
 	return res;
 }
 
-void TBody::SetRotation(double (*sRotSpeed)(double time), TVec sRotAxis)
+void TBody::SetRotation(TVec sRotAxis, double (*sRotSpeed)(double time), double sRotSpeed_const)
 {
 	RotSpeed_link = sRotSpeed;
+	RotSpeed_const = sRotSpeed_const;
 	RotAxis = sRotAxis;
 }
 

@@ -21,9 +21,9 @@ class Space
 
 		inline void FinishStep(); //update time and coord variables
 
-		TVec InfSpeed() { return InfSpeed_link?InfSpeed_link(Time):TVec(0,0); }
+		TVec InfSpeed() { return InfSpeed_link?InfSpeed_link(Time):InfSpeed_const; }
 		void ZeroSpeed();
-		double Time, dt;
+		double Time, dt, Re;
 
 		void Save(const char* format, const double header[]=NULL, int N=0);
 		double* Load(const char* filename, int* N = NULL);
@@ -55,6 +55,7 @@ class Space
 		int Print_bymask(vector<TObj> *list, const char* format, ios::openmode mode = ios::out); //format is used for sprintf(filename, "format", time)
 
 		TVec (*InfSpeed_link)(double time);
+		TVec InfSpeed_const;
 };
 
 inline

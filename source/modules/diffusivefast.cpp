@@ -28,7 +28,7 @@ namespace {
 void InitDiffusiveFast(Space *sS, double sRe)
 {
 	S = sS;
-	Re = sRe;
+	S->Re = Re = sRe;
 	Nyu = 1/sRe;
 }
 

@@ -33,7 +33,7 @@ enum ParticleType {Vortex, Heat};
 int InitDiffMergeFast(Space *sS, double sRe, double sMergeSqEps)
 {
 	DiffMergeFast_S = sS;
-	DiffMergeFast_Re = sRe;
+	S->Re = DiffMergeFast_Re = sRe;
 	DiffMergeFast_MergeSqEps = sMergeSqEps;
 	EpsRestriction = (sS->Body) ? 0.6*sS->Body->AverageSegmentLength() : 0;
 	_1_EpsRestriction = 1./EpsRestriction;

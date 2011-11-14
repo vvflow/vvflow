@@ -87,8 +87,14 @@ TVec SpeedSumFast(TVec p)
 	{
 		res+= BioSavar((**llfnode).CMp, p) + BioSavar((**llfnode).CMm, p);
 	}
+	
+	const_for(S->BodyList, llbody)
+	{
+		res += BoundaryConvective(**llbody, p);
+	}
 	res *= C_1_2PI;
 	res += SpeedSum(*Node, p);
+	res += S->InfSpeed();
 
 	return res;
 }
@@ -635,4 +641,3 @@ void SaveMatrix_bin(double *matrix, const char* filename)
 	fwrite(matrix, sizeof(double), N*N, fout);
 	fclose(fout);
 }}
-
