@@ -132,7 +132,6 @@ int main(int argc, char *argv[])
 
 		dbg(BuildTree());
 		dbg(CalcCirculationFast(false));
-		S->Save("copy");
 		dbg(fm.VortexShed());
 	}
 

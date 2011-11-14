@@ -1,207 +1,121 @@
 #include <stdio.h>
-#include <math.h>
+#include <stdlib.h>
 #include <iostream>
 #include <fstream>
+#include <math.h>
 
 #include "core.h"
-#include "convectivefast.h"
 
 using namespace std;
 
-
-struct s_boundary
+bool PointIsInvalid(Space *S, TVec p)
 {
-	double xmin, xmax, ymin, ymax, step;
-}; typedef struct s_boundary boundary;
-
-int Inside(boundary* bnd, Vector p)
-{
-	return (p.rx>=bnd->xmin)&&(p.rx<=bnd->xmax)&&(p.ry>=bnd->ymin)&&(p.ry<=bnd->ymax);
-}
-
-inline double min(double a, double b)
-{
-	return (a<b)?a:b;
-}
-
-inline double abs2(Vector v)
-{
-	return v.rx*v.rx + v.ry*v.ry;
-}
-
-inline double abs_faster(Vector v)
-{
-	return fabs(v.rx) + fabs(v.ry);
-}
-
-template <bool Faster>
-double NearestTrack(TList<TList<TObject>*> *StreamLines, Vector p)
-{
-	double nearest=1E10;
-	TList<TObject>** StreamLineL = (TList<TObject>**)StreamLines->First;
-	TList<TObject>* StreamLine;
-	for (int i=0; i<StreamLines->size; i++)
+	const_for(S->BodyList, llbody)
 	{
-		StreamLine = *StreamLineL;
-		TObject* Obj = StreamLine->First;
-		for (int j=0; j<StreamLine->size; j++)
+		if ((**llbody).PointIsInvalid(p)) return true;
+	}
+	return false;
+}
+
+FILE *fout;
+double Rd2;
+
+double Psi(Space* S, TVec p)
+{
+	double psi=0;
+
+	const_for(S->BodyList, llbody)
+	{
+		#define b (**llbody)
+
+		const_for(b.List, lobj)
 		{
-			nearest = min(nearest, Faster?abs_faster(*Obj-p):abs2(*Obj-p) );
-			Obj++;
+			psi += log((p-*lobj).abs2() + Rd2) * lobj->g;
 		}
-		StreamLineL++;
-	}
-	return Faster?nearest:sqrt(nearest);
-}
-
-template <bool Faster>
-double NearestDot(TList<TObject> *StreamLine, Vector p)
-{
-	double nearest=1E10;
-
-	TObject* Obj = StreamLine->First;
-	for (int j=0; j<StreamLine->size; j++)
-	{
-		nearest = min(nearest, Faster?abs_faster(*Obj-p):abs2(*Obj-p) ); 
-		Obj++;
+		//psi*= b.RotSpeed(S->Time);
+		#undef b
 	}
 
-	return Faster?nearest:sqrt(nearest);
-}
-
-int CalculateStreamLine(Space *S, boundary* bnd, TList<TObject> *StreamLine, Vector s, double dt)
-{
-	TObject dot(s.rx, s.ry, 0);
-	int interrupt = 0;
-	double ResX1, ResY1, ResX2, ResY2;
-	Vector Res1, Res2;
-	double vabs, drabs;
-	int total = 1;
-
-	StreamLine->Add(dot);
-	while (Inside(bnd, dot) && !interrupt)
+	TNode* Node = FindNode(p);
+	if (!Node) return 0;
+	const_for (Node->FarNodes, llfnode)
 	{
-		Res1 = SpeedSumFast(dot);
-		Res2 = SpeedSumFast(dot+Res1*dt);
-		dot.v = (Res1+Res2)*0.5 + Vector(1, 0);
-		if (abs_faster(dot.v) < 0.01) interrupt = 1;
-		if ( (dot.g > 100) && (abs_faster(dot-s) < dt*0.5)) interrupt = 1;
-
-		dot += dot.v*dt;
-		dot.g++;
-		StreamLine->Add(dot);
+		TObj obj = (**llfnode).CMp;
+		psi+= log((p-obj).abs2() + Rd2)*obj.g;
+		obj = (**llfnode).CMm;
+		psi+= log((p-obj).abs2() + Rd2)*obj.g;
 	}
-	total+= dot.g;
-	/*
-	InitVortex(dot, sx, sy, 0);
-	while (Inside(bnd, dot.rx, dot.ry) && !interrupt)
+	const_for (Node->NearNodes, llnnode)
 	{
-		SpeedSum(S->VortexList, dot.rx, dot.ry, ResX1, ResY1);
-		SpeedSum(S->VortexList, dot.rx-(ResX1+1)*dt, dot.ry-ResY1*dt, ResX2, ResY2);
-		dot.vx = (ResX1+ResX2+2)*0.5;
-		dot.vy = (ResY1+ResY2)*0.5;
-		if (fabs(dot.vx)+fabs(dot.vy)<0.01) interrupt = 1;
-		dot.rx-= dot.vx*dt;
-		dot.ry-= dot.vy*dt;
-		dot.g--;
-		StreamLine->Add(dot);
-	}
-	total-= dot.g;
-*/
-	return total;
-}
+		#define vlist (**llnnode).VortexLList
+		if ( !vlist ) { continue; }
 
-int main(int argc, char **argv)
-{
-	if ( argc != 9) { cout << "Error! Please use: \n\tstreamlines file.vort file.body xmin xmax ymin ymax step lines_density\n"; return -1; }   
-	Space *S = new Space(true, false);
-	S->LoadVorticityFromFile(argv[1]);
-	S->Body->LoadFromFile(argv[2]);
-	
-	const double dl = S->Body->SurfaceLength()/S->Body->List->size;
-
-	InitTree(S, 10, dl*4);
-	InitConvectiveFast(S, dl*dl/16);
-	BuildTree(1, 0, 0);
-	TList<TList<TObject>*> *StreamLines = new TList<TList<TObject>*>;
-
-	boundary bnd;
-	double density;
-	sscanf(argv[3], "%lf", &bnd.xmin);
-	sscanf(argv[4], "%lf", &bnd.xmax);
-	sscanf(argv[5], "%lf", &bnd.ymin);
-	sscanf(argv[6], "%lf", &bnd.ymax);
-	sscanf(argv[7], "%lf", &bnd.step);
-	sscanf(argv[8], "%lf", &density);
-
-	TObject BodyRotation(0, 0, -S->gsum());
-	S->VortexList->Copy(&BodyRotation);
-
-	for ( double x=bnd.xmin; x<=bnd.xmax; x+= bnd.step )
-	{
-		for ( double y=bnd.ymin; y<=bnd.ymax; y+= bnd.step )
+		const_for (vlist, llobj)
 		{
-			if ( S->Body->PointIsValid(Vector(x, y)) && (NearestTrack <true> (StreamLines, Vector(x, y)) > density) )
-			{
-				TList<TObject> *tmpStreamLine = new TList<TObject>;
-				cout << x << " " << y << " " << CalculateStreamLine(S, &bnd, tmpStreamLine, Vector(x, y), bnd.step) << endl;
-				StreamLines->Add(tmpStreamLine);
-			}
+			if (!*llobj) continue;
+			psi+= log((p-**llobj).abs2() + Rd2)*(**llobj).g;
 		}
 	}
 
-	fstream fout;
-	char fname[256];
-	sprintf(fname, "%s.streamlines", argv[1]);
-	fout.open(fname, ios::out);
-	
-//	#define fout cout
+	return -psi*0.5/C_2PI + p*rotl(S->InfSpeed());
+}
 
-	{ //print
-		TList<TObject>** StreamLineL = (TList<TObject>**)StreamLines->First;
-		TList<TObject>* StreamLine;
-		for (int i=0; i<StreamLines->size; i++)
-		{
-			StreamLine = *StreamLineL;
-			TObject* Obj;
-
-			Obj = StreamLine->First;
-			for (int j=0; j<StreamLine->size; j++)
-			{
-				fout << Obj->rx << "\t" << Obj->ry << endl; 
-				Obj++;
-			} fout << endl;
-
-/*			Obj = StreamLine->Elements;
-			fout << "x\t";
-			for (int j=0; j<StreamLine->size; j++)
-			{
-				fout << Obj->rx << "\t"; 
-				Obj++;
-			} fout << endl;
-
-			Obj = StreamLine->Elements;
-			fout << "y\t";
-			for (int j=0; j<StreamLine->size; j++)
-			{
-				fout << Obj->ry << "\t"; 
-				Obj++;
-			} fout << endl;
-
-			Obj = StreamLine->Elements;
-			fout << "n\t";
-			for (int j=0; j<StreamLine->size; j++)
-			{
-				fout << Obj->g << "\t"; 
-				Obj++;
-			} fout << endl;
-*/
-			StreamLineL++;
-		}
+int main(int argc, char *argv[])
+{
+	if ( argc != 7)\
+	{
+		cout << "Error! Please use: \nstreamlines_exe file.vb precission xmin xmax ymin ymax\n";
+		return -1;
 	}
 
-	fout.close();
+	Space *S = new Space(true, false, NULL);
+	int N; double *header = S->Load(argv[1], &N);
+	TBody* body = S->BodyList->at(0);
+
+	double dl = body->AverageSegmentLength(); Rd2 = dl*dl/25;
+	InitTree(S, 8, dl*20, 0.3);
+
+	/**************************** LOAD ARGUMENTS ******************************/
+	double xmin, xmax, ymin, ymax, prec;
+	{
+	int i=2;
+	xmin = atof(argv[++i]);
+	xmax = atof(argv[++i]);
+	ymin = atof(argv[++i]);
+	ymax = atof(argv[++i]);
+	prec = atof(argv[2]);
+	}
+	/******************************************/
+
+	BuildTree();
+
+	int total = int((xmax-xmin)/prec + 1)*int((ymax-ymin)/prec + 1);
+	int now=0;
+
+	char fname[128];
+	sprintf(fname, "%s.map", argv[1]);
+	FILE *fout = fopen(fname, "w");
+
+	int imax = (xmax-xmin)/prec + 1;
+	int jmax = (ymax-ymin)/prec + 1;
+	for( int i=0; i<imax; i++)
+	{
+		double x = xmin + double(i)*prec;
+		#pragma omp parallel for ordered schedule(dynamic, 1)
+		for( int j=0; j<jmax; j++)
+		{
+			double y = ymin + double(j)*prec;
+			double t = PointIsInvalid(S, TVec(x, y)) ? 
+			           0 : Psi(S, TVec(x, y));
+
+			#pragma omp ordered
+			{fprintf(fout, "%lg \t%lg \t%lg\n", x, y, t);}
+			#pragma omp critical
+			cerr << (++now*100)/total << "% \r" << flush;
+		}
+		fprintf(fout, "\n");
+	}
+	fclose(fout);
 
 	return 0;
 }
-

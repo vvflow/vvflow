@@ -1,11 +1,14 @@
+CC = icc -O3 -mkl=parallel -openmp
+
 all:
-	icc streamlines.cpp -o streamlines $(VVHD) -O3
+	$(CC) streamlines.cpp -o streamlines_exe $(VVHD) -std=c++0x
+	$(CC) isoline.cpp -o isoline_exe $(VVHD) -std=c++0x
 
 clean:
-	rm -f streamlines
+	rm -f streamlines_exe isoline_exe
 
-install: streamlines
-	cp streamlines /usr/local/bin
+install:
+	cp isoline_exe streamlines_exe streamlines ~/.bin
 
 uninstall:
-	rm -f /usr/local/bin/streamlines
+	rm -f ~/.bin/streamlines_exe ~/.bin/streamlines ~/.bin/isoline_exe
