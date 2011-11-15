@@ -111,16 +111,15 @@ int main(int argc, char **argv)
 		}
 	}
 
-	FILE* flog = fopen("log", "w");
 	if (!seglist->size_safe()) {printf("0 0\n0 0\n"); return 0;}
 	dot end = seglist->begin()->p1;
-	#define print printf("%lg\t%lg\n", end.x, end.y); fprintf(flog, "%lg\t%lg\n", end.x, end.y);
-	print
+	#define print printf("%lg\t%lg\n", end.x, end.y)
+	print;
 	while (seglist->size())
 	{
 		bool updated = false;
-
-		const_for(seglist, lseg)
+		//FIXME this loop doesnt work with -O3
+		const_for (seglist, lseg)
 		{
 			if (lseg->p1 == end)
 			{
@@ -128,7 +127,7 @@ int main(int argc, char **argv)
 				seglist->erase(lseg);
 				updated = true;
 				break;
-			}
+			} else
 			if (lseg->p2 == end)
 			{
 				end = lseg->p1;
@@ -141,14 +140,12 @@ int main(int argc, char **argv)
 		if (!updated)
 		{
 			end = seglist->begin()->p1;
-			printf("\n"); fprintf(flog, "\n");
-			print
+			printf("\n");
 		}
 
-		print
+		print;
 	}
 	#undef print
 
-	fclose(flog);
 	return 0;
 }

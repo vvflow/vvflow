@@ -82,15 +82,10 @@ int main(int argc, char *argv[])
 {
 	if ( argc != 7)\
 	{
-		cout << "Error! Please use: \npresplot file.vb precission xmin xmax ymin ymax\n";
-//		     << "Also you can use enviroment variables:\n"
-//		     << "export HEATPLOT_EPS_MULT=2 to smooth picture\n"
-//		     << "export HEATPLOT_BODY_TEMP=1 to set body temperature\n";
+		cerr << "Error! Please use: \npresplot file.vb precission xmin xmax ymin ymax\n";
 		return -1;
 	}
 
-//	char *mult_env = getenv("PREPLOT_EPS_MULT");
-//	double mult = mult_env ? atof(mult_env) : 2;
 	Space *S = new Space(true, false, NULL);
 	int N; double *header = S->Load(argv[1], &N);
 	TBody* body = S->BodyList->at(0);

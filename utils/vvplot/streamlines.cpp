@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
 	int now=0;
 
 	char fname[128];
-	sprintf(fname, "%s.map", argv[1]);
+	sprintf(fname, "%s.psi", argv[1]);
 	FILE *fout = fopen(fname, "w");
 
 	int imax = (xmax-xmin)/prec + 1;
