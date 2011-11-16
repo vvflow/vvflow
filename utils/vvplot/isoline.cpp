@@ -80,6 +80,7 @@ int main(int argc, char **argv)
 	vector<seg> *seglist = new vector<seg>();
 	for (int i=0; i<(imax-1); i++)
 	{
+		#pragma omp parallel for
 		for (int j=0; j<(jmax-1); j++)
 		{
 			if (between(C, data[i][j], data[i][j+1], data[i+1][j+1]))
@@ -93,6 +94,7 @@ int main(int argc, char **argv)
 				if (between(C, p2, p3, pn[i])) i++;
 				if (between(C, p3, p1, pn[i])) i++;
 
+				#pragma omp critical
 				seglist->push_back(seg(pn[0], pn[1]));
 			}
 			if (between(C, data[i][j], data[i+1][j], data[i+1][j+1]))
@@ -106,6 +108,7 @@ int main(int argc, char **argv)
 				if (between(C, p2, p3, pn[i])) i++;
 				if (between(C, p3, p1, pn[i])) i++;
 
+				#pragma omp critical
 				seglist->push_back(seg(pn[0], pn[1]));
 			}
 		}

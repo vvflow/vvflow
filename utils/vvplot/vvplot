@@ -30,7 +30,9 @@ set colorbox horizontal user origin .1,.02 size .8,.04
 set macros
 ymax = ($4-$3)*9./32.
 prec = ($4-$3)/500.
+prec2 = ($4-$3)/200.
 prec_c = sprintf(\"%f\", prec)
+prec2_c = sprintf(\"%f\", prec2)
 ymax_c = sprintf(\"%f\", ymax)
 set xrange [$3: $4]
 set yrange [($3-$4)*9./32.: ($4-$3)*9./32.]
@@ -55,7 +57,7 @@ set palette color
 set palette maxcolors 33 defined (-1.5 \"#0829d5\", -0.5 \"#1ffcff\", 0 \"#2ef62e\", 0.3 \"yellow\", 1 \"red\")
 rgb(r,g,b) = 65536 * int(r) + 256 * int(g) + int(b)
 color(x) = (x>0) ? rgb(255,0,0) : rgb(0,0,255)
-isoline(C) = sprintf(\"< isoline_exe $1.psi %s %f $3 $4 %f %f\", C, @prec_c, -@ymax_c, @ymax_c)" >&3
+isoline(C) = sprintf(\"< isoline_exe $1.psi %s %f $3 $4 %f %f\", C, @prec2_c, -@ymax_c, @ymax_c)" >&3
 
 if test $(expr index "$options" p) != 0; then
 if test ! -e $1.map -o $(expr index "$options" f) != 0; then
@@ -64,7 +66,7 @@ fi; fi;
 
 if test $(expr index "$options" s) != 0; then
 if test ! -e $1.psi -o $(expr index "$options" f) != 0; then
-echo "\`streamlines_exe $1 @prec_c $3 $4 -@ymax_c @ymax_c\`" >&3
+echo "\`streamlines_exe $1 @prec2_c $3 $4 -@ymax_c @ymax_c\`" >&3
 fi; fi;
 
 echo -n "plot \"-\"" >&3
@@ -76,7 +78,7 @@ then
 fi
 
 if test $(expr index "$options" s) != 0; then
-echo -n ", for [i in \"$(seq -s ' ' -1 0.04 1)\"] isoline(i) w lines lw 2 lc rgb \"#000000\"" >&3
+echo -n ", for [i in \"$(seq -s ' ' -1 0.04 1) $VV_ISOLINES\"] isoline(i) w lines lw 2 lc rgb \"#000000\"" >&3
 fi
 
 if test $(expr index "$options" b) != 0; then

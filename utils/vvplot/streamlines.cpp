@@ -19,31 +19,41 @@ bool PointIsInvalid(Space *S, TVec p)
 
 FILE *fout;
 double Rd2;
+inline double atan(TVec p) {return atan(p.ry/p.rx);}
 
 double Psi(Space* S, TVec p)
 {
-	double psi=0;
+	double psi1(0), psi2(0), psi3(0), psi4(0);
 
 	const_for(S->BodyList, llbody)
 	{
 		#define b (**llbody)
 
+		double psi_g_tmp=0, psi_q_tmp=0;
+		if (b.RotSpeed(S->Time))
+		const_for(b.AttachList, latt)
+		{
+			psi_g_tmp+= log((p-*latt).abs2() + Rd2) * latt->g;
+			psi_q_tmp+= atan(p-*latt) * latt->q;
+		}
+		psi1-= (psi_g_tmp*0.5 + psi_q_tmp) * b.RotSpeed(S->Time) * C_1_2PI;
+
 		const_for(b.List, lobj)
 		{
-			psi += log((p-*lobj).abs2() + Rd2) * lobj->g;
+			psi2 += log((p-*lobj).abs2() + Rd2) * lobj->g;
 		}
-		//psi*= b.RotSpeed(S->Time);
 		#undef b
 	}
+	psi2*= -0.5*C_1_2PI;
 
 	TNode* Node = FindNode(p);
 	if (!Node) return 0;
 	const_for (Node->FarNodes, llfnode)
 	{
 		TObj obj = (**llfnode).CMp;
-		psi+= log((p-obj).abs2() + Rd2)*obj.g;
+		psi3+= log((p-obj).abs2() + Rd2)*obj.g;
 		obj = (**llfnode).CMm;
-		psi+= log((p-obj).abs2() + Rd2)*obj.g;
+		psi3+= log((p-obj).abs2() + Rd2)*obj.g;
 	}
 	const_for (Node->NearNodes, llnnode)
 	{
@@ -53,11 +63,12 @@ double Psi(Space* S, TVec p)
 		const_for (vlist, llobj)
 		{
 			if (!*llobj) continue;
-			psi+= log((p-**llobj).abs2() + Rd2)*(**llobj).g;
+			psi3+= log((p-**llobj).abs2() + Rd2)*(**llobj).g;
 		}
 	}
+	psi3*= -0.5*C_1_2PI;
 
-	return -psi*0.5/C_2PI + p*rotl(S->InfSpeed());
+	return psi1 + psi2 + psi3 + p*rotl(S->InfSpeed());
 }
 
 int main(int argc, char *argv[])
