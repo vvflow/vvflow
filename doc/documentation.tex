@@ -124,7 +124,15 @@ $\br\Psi: \rot\br\Psi = \br V$.
 
 \begin{equation*}
 \Psi(\br r) = \sum_i \ln \left(\sqrt{(\br r - \br r_i)^2 + \delta^2} \right) = 
-\dfrac{1}{2} \sum_i \ln \left({{\Delta r}^2 + \delta^2} \right).
+\dfrac{1}{2} \sum_i \ln \left({{\Delta r}^2 + \delta^2} \right) \text{--- вихрь.}
+\end{equation*}
+
+\begin{equation*}
+\Psi(\br r) = \sum_i \arctg \left(\dfrac{\Delta r_y}{\Delta r_x} \right) \text{--- источник.}
+\end{equation*}
+
+\begin{equation*}
+\Psi(\br r) = \br r \times \br V_\infty \text{--- бесконечность.}
 \end{equation*}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -297,5 +305,20 @@ $\varepsilon_{min}=0.6\cdot\langle\Delta l \rangle$ ---
 определено в модуле diffmergefast\\
 $\Delta t = \text{Re} \varepsilon_{min}^2 < 2 \text{Re} \varepsilon^2$\\
 $r_d = ?$ --- а этот вопрос остается открытым \\
+
+\subsection{Схемная вязкость}
+\begin{equation*}
+\nu_\text{сх}^I = 0.018 \cdot \Omega_0^2 r_*^2 \Delta t
+\end{equation*}
+\begin{equation*}
+\nu_\text{сх}^{II} = 5\cdot10^{-4} \cdot \dfrac{\gamma_*^2 a}{r_d^3} \cdot \Delta t
+\end{equation*}
+
+Обозначения:\\
+$r_*$ --- характерный размер вихря (диаметр)\\
+$\Omega_0 = \dfrac{\sum\gamma_i}{\pi r_*^2}$ --- характерная завихренность\\
+$\gamma_* = \langle \gamma_i \rangle$ --- средняя циркуляция доменов\\
+$a = \sqrt{\pi r_*^2 / N} $ --- характерное расстояние между доменами\\
+$r_d$ --- радиус дискретности\\
 
 \end{document}
