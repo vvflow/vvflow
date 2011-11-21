@@ -4,7 +4,7 @@ exes:= $(patsubst %,%_exe, $(names))
 
 all: $(exes)
 isoline_exe: isoline.cpp
-	icc -O0 $^ -o $@ $(VVHD) -std=c++0x
+	icc -O0 -openmp $^ -o $@ $(VVHD) -std=c++0x
 
 %_exe: %.cpp
 	$(CC) $^ -o $@ $(VVHD) -std=c++0x

@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
 {
 	if ( argc != 7)\
 	{
-		cout << "Error! Please use: \nstreamlines_exe file.vb precission xmin xmax ymin ymax\n";
+		cerr << "Error! Please use: \nstreamlines_exe file.vb precission xmin xmax ymin ymax\n";
 		return -1;
 	}
 
