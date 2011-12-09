@@ -37,23 +37,14 @@ class Space
 		int LoadBody(const char* filename);
 		void EnumerateBodies();
 
-		int PrintBody(const char* format);
-		int PrintVorticity(const char* format);
-		int PrintVorticity_bin(const char* format);
-		int PrintHeat(const char* format);
-
-		void LoadHeader(const char* filename, char* data, streamsize size);
-		void PrintHeader(const char* format, const double data[], int size);
-
+		/***************** INTEGRALS ******************/
 		double integral();
 		double gsum();
 		double gmax();
 		TVec HydroDynamicMomentum();
+		double AverageSegmentLength();
 
 	private:
-		int Print_byos(vector<TObj> *list, std::ostream& os, bool bin);
-		int Print_bymask(vector<TObj> *list, const char* format, ios::openmode mode = ios::out); //format is used for sprintf(filename, "format", time)
-
 		TVec (*InfSpeed_link)(double time);
 		TVec InfSpeed_const;
 };

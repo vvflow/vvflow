@@ -5,79 +5,55 @@
 
 using namespace std;
 
-/********************************** HEADER ************************************/
-
-namespace
-{
-	Space *S;
-	double sq_eps;
-	double eps_restriction;
-	int merged_count;
-	int merge_list(vector<TObj> *list);
-
-	void MergeVortexes(TObj **lv1, TObj **lv2);
-	double eps(const TNode &Node, TObj **lv, bool merge);
-}
-
-/****************************** MAIN FUNCTIONS ********************************/
-
-void InitEpsilonFast(Space *sS, double sSqEps)
+epsfast::epsfast(Space *sS)
 {
 	S = sS;
-	sq_eps = sSqEps;
-	merged_count = 0;
+	merged_ = 0;
 }
 
-void CalcEpsilonFast(bool merge)
-{
-	merged_count = 0;
-	if (!S)
-	{
-		cerr << "CalcEpsilonFast() is called before initialization" << endl;
-		return;
-	}
 
-	if (S->BodyList->size())
-		eps_restriction = 0.6*(**S->BodyList->begin()).AverageSegmentLength();
-	else eps_restriction = 0;
+void epsfast::CalcEpsilonFast(bool merge)
+{
+	merged_ = 0;
+	eps_restriction = 0.6*S->AverageSegmentLength();
+	merge_criteria_sq = 0.09*sqr(S->AverageSegmentLength());
 
 	auto bnodes = GetTreeBottomNodes();
-	if ( !bnodes )
-	{
-		cerr << "Tree isn't built" << endl;
-		return;
-	}
 	const_for(bnodes, llbnode)
 	{
 		TNode &bnode = **llbnode;
 
 		auto vlist = bnode.VortexLList;
-		if ( !vlist ) { continue; }
+		if (vlist)
 		const_for (vlist, llobj)
 		{
 			if (!*llobj) { continue; }
 			TObj &obj = **llobj;
 
-			obj._1_eps = 1./max(eps(bnode, llobj, merge), eps_restriction);
+			obj._1_eps = 1./max(epsv(bnode, llobj, merge), eps_restriction);
+		}
+
+		auto hlist = bnode.HeatLList;
+		if (hlist)
+		const_for (hlist, llobj)
+		{
+			if (!*llobj) { continue; }
+			TObj &obj = **llobj;
+
+			obj._1_eps = 1./max(epsh(bnode, *llobj), eps_restriction);
 		}
 	}
 }
 
-int Merged_count()
-{
-	return merged_count;
-}
-
 /******************************** NAMESPACE ***********************************/
 
-namespace {
-void MergeVortexes(TObj **lv1, TObj **lv2)
+void epsfast::MergeVortexes(TObj **lv1, TObj **lv2)
 {
 //	if (!lv1 || !lv2 || (lv1==lv2)) return;
 //	if (!*lv1 || !*lv2) return;
 	TObj &v1 = **lv1;
 	TObj &v2 = **lv2;
-	merged_count++;
+	merged_++;
 
 	if ( sign(v1) == sign(v2) )
 	{
@@ -88,10 +64,9 @@ void MergeVortexes(TObj **lv1, TObj **lv2)
 	v1.g+= v2.g;
 	v2.g = 0;
 	*lv2 = NULL;
-}}
+}
 
-namespace {
-double eps(const TNode &Node, TObj **lv, bool merge)
+double epsfast::epsv(const TNode &Node, TObj **lv, bool merge)
 {
 	if (!lv || !*lv) { return DBL_MIN; }
 	TVec dr;
@@ -134,14 +109,54 @@ double eps(const TNode &Node, TObj **lv, bool merge)
 	TObj &v1 = **lv1;
 	TObj &v2 = **lv2;
 	if ( 
-		(res1 < sq_eps)
+		(res1 < merge_criteria_sq)
 		||
 		( (sign(v1) == sign(v2)) && (sign(v1) != sign(v)) ) 
 	   )
 	{
 		MergeVortexes(lv, lv1);
-		return eps(Node, lv, false);
+		return epsv(Node, lv, false);
 	}
 
 	return sqrt(res2);
-}}
+}
+
+double epsfast::epsh(const TNode &Node, TObj *lv)
+{
+	if (!lv) { return DBL_MIN; }
+	TVec dr;
+	double res1, res2;
+	res2 = res1 = DBL_MAX;
+
+	TObj &v = *lv;
+
+	const_for(Node.NearNodes, llnnode)
+	{
+		TNode &nnode = **llnnode;
+
+		auto *hlist = nnode.HeatLList;
+		if (!hlist) {continue;}
+		const_for (hlist, llobj)
+		{
+			// if (!*llobj) { continue; } useless
+			TObj &obj = **llobj;
+			dr = v - obj;
+			double drabs2 = dr.abs2();
+			if ( drabs2 ) {
+			if ( res1 > drabs2 )
+			{
+				res2 = res1;
+				res1 = drabs2;
+			}
+			else if ( res2 > drabs2 )
+			{
+				res2 = drabs2;
+			}}
+		}
+	}
+
+	if ( res1 == DBL_MAX ) return DBL_MIN;
+	if ( res2 == DBL_MAX ) return sqrt(res1);
+	return sqrt(res2);
+}
+

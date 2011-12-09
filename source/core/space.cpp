@@ -1,4 +1,5 @@
 #include <math.h>
+#include <float.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
@@ -148,7 +149,7 @@ double* Space::Load(const char* fname, int* N)
 			TBody *body = new TBody();
 			BodyList->push_back(body);
 
-			TObj obj; TAtt att(body, 0); att.zero();
+			TObj obj; TAtt att; att.body = body; att.zero();
 			int64_t size; fread(&size, 8, 1, fin);
 			for (int64_t i=0; i<size; i++)
 			{
@@ -178,15 +179,6 @@ FILE* Space::OpenFile(const char* format)
 	fout = fopen(fname, "w");
 	if (!fout) { perror("Error opening file"); return NULL; }
 	return fout;
-}
-
-void Space::LoadHeader(const char* fname, char* data, streamsize size)
-{
-	/*fstream fin;
-
-	fin.open(fname, ios::in | ios::binary);
-	fin.read(data, min(size, 1024));
-	fin.close();*/
 }
 
 /********************************** SAVE/LOAD *********************************/
@@ -252,10 +244,25 @@ int Space::LoadHeatFromFile(const char* filename)
 int Space::LoadBody(const char* filename)
 {
 	TBody *body = new TBody();
-	size_t N=0; const_for(BodyList, llbody) N+= (**llbody).List->size();
-	int res = body->LoadFromFile(filename, N);
 	BodyList->push_back(body);
-	return res;
+
+	FILE *fin = fopen(filename, "r");
+	if (!fin) { cerr << "No file called " << filename << endl; return -1; } 
+
+	TObj obj(0, 0, 0);
+	TAtt att; att.body = body; att.zero();
+	while ( fscanf(fin, "%lf %lf %d %d", &obj.rx, &obj.ry, &att.bc, &att.hc)==4 )
+	{
+		body->List->push_back(obj);
+		body->AttachList->push_back(att);
+	}
+
+	fclose(fin);
+	body->InsideIsValid = body->isInsideValid();
+	body->UpdateAttach();
+	EnumerateBodies();
+
+	return 0;
 }
 
 void Space::EnumerateBodies()
@@ -267,80 +274,25 @@ void Space::EnumerateBodies()
 		const_for(body.AttachList, latt)
 		{
 			//FIXME bc
-			latt->bc = bc::noslip;
+			//latt->bc = bc::noslip;
 			latt->eq_no = eq_no++;
 		}
-		body.AttachList->begin()->bc = bc::noperturbations;
+		//body.AttachList->begin()->bc = bc::noperturbations;
 		#undef body
 	}
-	(**BodyList->begin()).AttachList->begin()->bc = bc::tricky;
+	//(**BodyList->begin()).AttachList->begin()->bc = bc::tricky;
 }
-
-/******************************** Print ***************************************/
-
-int Space::Print_byos(vector<TObj> *list, std::ostream& os, bool bin)
-{
-	if (!list) return -1;
-	if (!os) return -1;
-
-	const_for (list, obj)
-	{
-		if (bin) os.write((const char *)(obj), 3*sizeof(double));
-		else os << *obj << endl;
-	}
-	if (!bin) os << endl;
-	return 0;
-}
-
-int Space::Print_bymask(vector<TObj> *list, const char* format, ios::openmode mode)
-{
-	int res;
-	fstream fout;
-	char fname[64];
-
-	sprintf(fname, format, int(Time/dt));
-
-	fout.open(fname, mode);
-	if (mode & ios::binary) { fout.seekp(1024, ios::beg); }
-	res = Print_byos(list, fout, (mode & ios::binary));
-	fout.close();
-
-	return res;
-}
-
-int Space::PrintBody(const char* filename)
-{
-	ios::openmode mode = ios::out;
-	const_for(BodyList, llbody)
-	{
-		Print_bymask((**llbody).List, filename, mode);
-		mode = ios::out | ios::app;
-	}
-	return 0;
-}
-
-int Space::PrintVorticity(const char* filename)
-{
-	return Print_bymask(VortexList, filename);
-}
-
-int Space::PrintVorticity_bin(const char* filename)
-{
-	return Print_bymask(VortexList, filename, ios::out | ios::in | ios::binary);
-}
-
-int Space::PrintHeat(const char* filename)
-{
-	return Print_bymask(HeatList, filename);
-}
-
-/********************************* HEADERS ************************************/
 
 /********************************* INTEGRALS **********************************/
 
 void Space::ZeroSpeed()
 {
 	const_for (VortexList, lobj)
+	{
+		lobj->v.zero();
+	}
+
+	const_for (HeatList, lobj)
 	{
 		lobj->v.zero();
 	}
@@ -395,4 +347,18 @@ TVec Space::HydroDynamicMomentum()
 		res += obj->g * TVec(*obj);
 	}
 	return res;
+}
+
+double Space::AverageSegmentLength()
+{
+	if (!BodyList) return DBL_MIN;
+	double SurfaceLength = 0;
+	int N = 0;
+	const_for(BodyList, llbody)
+	{
+		SurfaceLength+= (**llbody).SurfaceLength();
+		N+= (**llbody).size() - 1;
+	}
+
+	return SurfaceLength / N;
 }

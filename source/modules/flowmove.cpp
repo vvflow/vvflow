@@ -15,6 +15,7 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
 {
 	CleanedV_ = 0;
 	auto vlist = S->VortexList;
+	auto hlist = S->HeatList;
 
 	//MOVING VORTEXES
 	if ( vlist )
@@ -48,6 +49,27 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
 		}
 	}
 
+	//MOVING HEAT PARTICLES
+	if ( hlist )
+	const_for (hlist, lobj)
+	{
+		*lobj += lobj->v*dt; if(zero_speed) lobj->v.zero();
+
+		TAtt* invalid_inbody = NULL;
+		const_for(S->BodyList, llbody)
+		{
+			if (!invalid_inbody)
+			invalid_inbody = (**llbody).PointIsInvalid(*lobj);
+		}
+
+		if ( invalid_inbody )
+		{
+			invalid_inbody->heat -= lobj->g;
+			*lobj = TVec(*invalid_inbody);
+		}
+		//FIXME under development
+	}
+
 	//MOVING Streak PARTICLES
 	if ( S->StreakList )
 	const_for (S->StreakList, lobj)
@@ -73,8 +95,6 @@ void flowmove::VortexShed()
 	if (!vlist) return;
 	TObj ObjCopy(0, 0, 0);
 
-	//FlowMove_CleanedV = 0;
-
 	const_for(S->BodyList, llbody)
 	{
 		TBody &body = **llbody;
@@ -93,6 +113,22 @@ void flowmove::VortexShed()
 				body.prev(latt)->gsum+= 0.5*ObjCopy.g;
 				vlist->push_back(ObjCopy);
 			}
+		}
+	}
+}
+
+void flowmove::HeatShed()
+{
+	auto hlist = S->HeatList;
+	if (!hlist) return;
+	TObj ObjCopy(0, 0, 0);
+
+	const_for(S->BodyList, llbody)
+	{
+		TBody &body = **llbody;
+		const_for(body.AttachList, latt)
+		{
+			//TODO
 		}
 	}
 }

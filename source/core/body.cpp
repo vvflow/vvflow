@@ -5,11 +5,11 @@
 #include <math.h>
 using namespace std;
 
-TAtt::TAtt(TBody *body, int eq_no)
+/*TAtt::TAtt(TBody *body, int eq_no)
 {
 	this->body = body;
 	this->eq_no = eq_no;
-}
+}*/
 
 TBody::TBody()
 {
@@ -25,7 +25,7 @@ TBody::TBody()
 	Force = TObj(0,0,0); 
 }
 
-int TBody::LoadFromFile(const char* filename, int start_eq_no)
+/*int TBody::LoadFromFile(const char* filename, int start_eq_no)
 {
 	if (!this) return -1;
 	if ( !List ) return -1;
@@ -45,7 +45,7 @@ int TBody::LoadFromFile(const char* filename, int start_eq_no)
 	InsideIsValid = isInsideValid();
 	UpdateAttach();
 	return 0;
-}
+}*/
 
 void TBody::Rotate(double angle)
 {
@@ -165,7 +165,7 @@ void TBody::zero_variables()
 
 /************************** HEAT LAYER ****************************************/
 
-void TBody::CleanHeatLayer()
+/*void TBody::CleanHeatLayer()
 {
 	if (!this) return;
 	if (!HeatLayer) return;
@@ -174,10 +174,10 @@ void TBody::CleanHeatLayer()
 	{
 		HeatLayer[i]=0;
 	}
-}
+}*/
 
-int* TBody::ObjectIsInHeatLayer(TObj &obj)
+/*int* TBody::ObjectIsInHeatLayer(TObj &obj)
 {
 	return false;
-}
+}*/
 

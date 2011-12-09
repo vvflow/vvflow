@@ -10,7 +10,7 @@ class flowmove
 		void MoveAndClean(bool remove, bool zero_speed = true);
 		void VortexShed();
 		void StreakShed();
-		//void HeatShed();
+		void HeatShed();
 
 		int CleanedV() {return CleanedV_;}
 		//int CleanedH();

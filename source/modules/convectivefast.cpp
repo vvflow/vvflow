@@ -225,6 +225,15 @@ void CalcBoundaryConvective()
 		}
 	}
 
+	if (S->HeatList)
+	const_for(S->HeatList, lobj)
+	{
+		const_for(S->BodyList, llbody)
+		{
+			lobj->v += BoundaryConvective(**llbody, *lobj)*C_1_2PI;
+		}
+	}
+
 	if (S->StreakList)
 	const_for(S->StreakList, lobj)
 	{

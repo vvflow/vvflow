@@ -294,6 +294,7 @@ void BuildTree(bool includeV, bool includeB, bool includeH)
 
 vector<TNode*>* GetTreeBottomNodes()
 {
+	if (!Tree_BottomNodes) {fprintf(stderr, "PANIC! Tree isn't built\n");}
 	return Tree_BottomNodes;
 }
 
