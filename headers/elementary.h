@@ -64,6 +64,7 @@ class TObj: public TVec
 
 		TObj() {}
 		TObj(double rx_, double ry_, double g_):TVec(rx_, ry_) { g=g_; v.zero();}
+		TObj(TVec r_, double g_){rx=r_.rx; ry=r_.ry; g=g_; v.zero();}
 
 		void zero() { rx = ry = g = 0; v.zero(); }
 		void init(double rx_, double ry_, double g_) {rx=rx_; ry=ry_; g=g_;}

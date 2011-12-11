@@ -58,16 +58,45 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
 		TAtt* invalid_inbody = NULL;
 		const_for(S->BodyList, llbody)
 		{
-			if (!invalid_inbody)
 			invalid_inbody = (**llbody).PointIsInvalid(*lobj);
+			if (invalid_inbody) break;
 		}
 
 		if ( invalid_inbody )
+		//switch (invalid_inbody->hc)
 		{
-			invalid_inbody->heat -= lobj->g;
-			*lobj = TVec(*invalid_inbody);
+//			case hc::neglect:
+				invalid_inbody->heat -= lobj->g;
+				hlist->erase(lobj);
+				lobj--; continue;
+//				break;
+//			default:
+//				*lobj = TVec(*invalid_inbody);
+//				break;
 		}
-		//FIXME under development
+
+		TAtt* inlayer = NULL;
+		const_for(S->BodyList, llbody)
+		{
+			inlayer = (**llbody).PointIsInHeatLayer(*lobj);
+			if (inlayer) break;
+		}
+
+		if ( inlayer )
+		switch (inlayer->hc)
+		{
+			case hc::const_t:
+				if (inlayer->ParticleInHeatLayer)
+				{
+					inlayer->heat -= lobj->g;
+					hlist->erase(lobj);
+					lobj--; continue;
+				} else
+				{
+					inlayer->ParticleInHeatLayer = lobj;
+				}
+				break;
+		}
 	}
 
 	//MOVING Streak PARTICLES
@@ -128,7 +157,38 @@ void flowmove::HeatShed()
 		TBody &body = **llbody;
 		const_for(body.AttachList, latt)
 		{
-			//TODO
+			switch (latt->hc)
+			{
+				case hc::isolate:
+					if (latt->heat)
+					{
+						hlist->push_back(TObj(*latt, -latt->heat));
+						latt->heat = 0;
+					}
+					break;
+				case hc::const_t:
+				{
+					double tmp_g(latt->dl.abs2() * latt->heat_const);
+					TObj *tmp_obj(latt->ParticleInHeatLayer);
+					if (tmp_obj)
+					{
+						latt->heat += tmp_g - tmp_obj->g;
+						tmp_obj->g = tmp_g;
+					} else
+					{
+						latt->heat += tmp_g;
+						hlist->push_back(TObj(*latt, tmp_g));
+					}
+				}
+					break;
+				case hc::const_W:
+				{
+					double tmp_g(latt->dl.abs2() * latt->heat_const);
+					latt->heat += tmp_g;
+					hlist->push_back(TObj(*latt, tmp_g));
+				}
+					break;
+			}
 		}
 	}
 }

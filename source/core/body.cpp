@@ -14,6 +14,7 @@ using namespace std;
 TBody::TBody()
 {
 	List = new vector<TObj>();
+	HeatLayerList = new vector<TObj>();
 	AttachList = new vector<TAtt>();
 	RotSpeed_link = NULL;
 	RotSpeed_const = 0;
@@ -58,9 +59,31 @@ void TBody::Rotate(double angle)
 	}
 	Angle += angle;
 	UpdateAttach();
+	HeatLayerList->clear();
 }
 
 TAtt* TBody::PointIsInvalid(TVec p)
+{
+	return PointIsInContour(p, List);
+}
+
+TAtt* TBody::PointIsInHeatLayer(TVec p)
+{
+	if (!this) return NULL;
+	if (!HeatLayerList->size())
+	{
+		TObj tmp(0, 0, 0);
+		const_for(List, lobj)
+		{
+			tmp = *lobj + rotl(att(lobj)->dl);
+			HeatLayerList->push_back(tmp);
+		}
+	}
+
+	return PointIsInContour(p, HeatLayerList);
+}
+
+TAtt* TBody::PointIsInContour(TVec p, vector<TObj> *list)
 {
 	if (!this) return NULL;
 
@@ -68,7 +91,7 @@ TAtt* TBody::PointIsInvalid(TVec p)
 	TAtt *nearest = NULL;
 	double nearest_dr2 = 1E10;
 
-	for (auto i = List->begin(), j = List->end()-1; i<List->end(); j=i++)
+	for (auto i = list->begin(), j = list->end()-1; i<list->end(); j=i++)
 	{
 		if ((
 			(i->ry < j->ry) && (i->ry < p.ry) && (p.ry <= j->ry) &&

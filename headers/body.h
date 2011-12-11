@@ -8,7 +8,7 @@ enum BoundaryCondition {slip, noslip, kutta, noperturbations, tricky};}
 namespace sc{
 enum SourceCondition {none, source, sink};}
 namespace hc{
-enum HeatCondition {neglect, isolate, temperature, power};}
+enum HeatCondition {neglect, isolate, const_t, const_W};}
 
 class TBody;
 class TAtt : public TVec
@@ -21,6 +21,7 @@ class TAtt : public TVec
 		TVec dl;
 		bc::BoundaryCondition bc;
 		hc::HeatCondition hc;
+		TObj *ParticleInHeatLayer;
 
 		TAtt(){}
 		//TAtt(TBody *body, int eq_no);
@@ -41,6 +42,7 @@ class TBody
 		//int LoadFromFile(const char* filename, int start_eq_no);
 		void Rotate(double angle);
 		TAtt* PointIsInvalid(TVec p);
+		TAtt* PointIsInHeatLayer(TVec p);
 		double SurfaceLength();
 		double size(){ return List->size_safe(); }
 		void SetRotation(TVec sRotAxis, double (*sRotSpeed)(double time), double sRotSpeed_const = 0);
@@ -75,6 +77,8 @@ class TBody
 		//int *ObjectIsInHeatLayer(TObj &obj); //link to element of HeatLayer array
 
 	private:
+		vector<TObj> *HeatLayerList;
+		TAtt* PointIsInContour(TVec p, vector<TObj> *list);
 		double (*RotSpeed_link)(double time);
 		double RotSpeed_const;
 };
