@@ -2,8 +2,20 @@
 #define _DIFFUSIVEFAST_H_
 #include "core.h"
 
-void InitDiffusiveFast(Space *sS, double sRe);
-void CalcVortexDiffusiveFast();
-void CalcHeatDiffusiveFast();
+class diffusivefast
+{
+	public:
+		diffusivefast(Space *sS, double sRe, double sPr);
+		void CalcVortexDiffusiveFast();
+		void CalcHeatDiffusiveFast();
+
+	private:
+		Space *S;
+		double Re;
+		double Pr;
+		enum ParticleType {Vortex, Heat};
+		void VortexInfluence(const TObj &v, const TObj &vj, TVec *i2, double *i1);
+		void SegmentInfluence(const TObj &v, TAtt *pk, TVec *i3, double *i0);
+};
 
 #endif

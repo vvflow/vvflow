@@ -204,9 +204,14 @@ $\br r_j, \gamma_j$ - координата j-го вихря и его цирк�
 $\br\rho_j = \br r - \br r_j$ - и так понятно \\
 
 \begin{equation*}
-\br V_d = -\dfrac{1}{\text{Re}} \dfrac{1}{\varepsilon} 
-\dfrac{\sum\limits_j (\br\rho_j / \lvert\rho_j\rvert)\cdot\gamma_j e^{-\lvert\rho_j\rvert/\varepsilon}}
-{\sum\limits_j \gamma_j e^{-\lvert\rho_j\rvert/\varepsilon}}
+\br I_2 = \dfrac{1}{\varepsilon}
+\sum\limits_j (\br\rho_j / \lvert\rho_j\rvert)\cdot\gamma_j e^{-\lvert\rho_j\rvert/\varepsilon},
+%\end{equation*}
+%\begin{equation*}
+I_1 = {\sum\limits_j \gamma_j e^{-\lvert\rho_j\rvert/\varepsilon}},
+%\end{equation*}
+%\begin{equation*}
+\br V_d = \dfrac{1}{\text{Re}} \dfrac{\br I_2}{I_1}
 \end{equation*}
 
 \begin{center}\setlength\fboxsep{0pt}
@@ -221,14 +226,18 @@ $\br r$ - координаты текущего вихря (для которо�
 $\br W_d$ - диффузионная скорость текущего вихря, индуцированная стенкой \\
 $\br p_k$ - k-я вершина тела \\
 $\br r_k = \frac{1}{2}(\br p_k + \br p_{k+1})$ - центр k-го отрезка тела \\
-$d \br S_k = \br n \cdot\lvert\br p_{k+1} - \br p_k \rvert$ - нормаль к k-му отрезку, с длиной, равной длине отрезка \\
+$d \br S_k = \br n \cdot\lvert\br p_{k+1} - \br p_k \rvert$ - нормаль к k-му отрезку, с длиной, равной длине отрезка (направление --- из тела в жидкость) \\
 $\br{\rho}_k = \br r - \br r_k$ - и так понятно \\
 
 \begin{equation*}
-\br W_d = -\dfrac{1}{\text{Re}} \dfrac{1}{\varepsilon^2} 
-\dfrac{\sum\limits_k d\br S_k\cdot e^{-\lvert\rho_k\rvert/\varepsilon}}
-{2\pi - \sum\limits_k \dfrac{\lvert\rho_k\rvert /\varepsilon +1}{\rho_k^2}
-\cdot(\br\rho_k \cdot d\br S_k)\cdot e^{-\lvert\rho_k\rvert/\varepsilon}}
+\br I_3 = {\sum\limits_k d\br S_k\cdot e^{-\lvert\rho_k\rvert/\varepsilon}},
+%\end{equation*}
+%\begin{equation*}
+I_0 = {\varepsilon^2\sum\limits_k \dfrac{\lvert\rho_k\rvert /\varepsilon +1}{\rho_k^2}
+\cdot(\br\rho_k \cdot d\br S_k)\cdot e^{-\lvert\rho_k\rvert/\varepsilon}},
+%\end{equation*}
+%\begin{equation*}
+\br W_d = \dfrac{1}{\text{Re}} \dfrac{\br I_3}{2\pi\varepsilon^2 - I_0}
 \end{equation*}
 
 \begin{center}\setlength\fboxsep{0pt}
@@ -237,11 +246,16 @@ $\br{\rho}_k = \br r - \br r_k$ - и так понятно \\
 \end{center}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Heat diffusive}
+
+\begin{equation*}
+{\br V_d}_\text{heat} = \frac {1}{\text{Pr}}\frac{1}{\text{Re}} \cdot\frac{\br I_2 + \br I_3}{I_1 - I_0}
+\end{equation*}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Ограничения $\br V_d$ и $\varepsilon$}
-Модуль числителя $\br V_d$ не должен превышать 100 (идиотизм)\\
-Если знаменатель $\br V_d$ и $\gamma_j$ (текущего) разных 
-знаков --- заменяем знаменатель на циркуляцию\\
-Для $\varepsilon$ --- ограничение снизу $\varepsilon > \langle dS_k \rangle$
+В новой версии все идиотизмы исправлены, и ограничение сделано максимально понятным: $I_0$ и $\gamma_i$ должны быть одного знака, и $\lvert I_0 \rvert > 0.1 \lvert\gamma_i\rvert$. 
+Для $\varepsilon$ вводится ограничение снизу $\varepsilon > \langle dS_k \rangle$
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
