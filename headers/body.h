@@ -16,8 +16,10 @@ class TAtt : public TVec
 	public:
 		double g, q;
 		double gsum;
-		double pres, fric;
-		double heat, heat_const;
+		double pres; // need /dt before printing
+		double fric; // need /Pi/Eps_min^2 before printing
+		double heat; // need 
+		double heat_const;
 		TVec dl;
 		bc::BoundaryCondition bc;
 		hc::HeatCondition hc;

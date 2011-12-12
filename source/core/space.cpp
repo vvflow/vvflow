@@ -181,11 +181,33 @@ FILE* Space::OpenFile(const char* format)
 	return fout;
 }
 
-void Space::SaveProfile(const char* fname)
+void Space::SaveProfile(const char* fname, TValues vals)
 {
-	FILE *fout = fopen(fname, "rb+");
-	if (!fout) fout = fopen(fname, "wb");
-	if (!fout) { perror("Error saving the space"); return; }
+	int32_t vals_32=vals, N=0;
+	const_for(BodyList, llbody) { N+= (**llbody).size(); }
+	
+	FILE *fout = fopen(fname, "ab");
+	if (!fout) { perror("Error saving the body profile"); return; }
+	if (!fteel(fout)) { fwrite(vals_32, 4, 1, fout); fwrite(N, 4, 1, fout); }
+	float buf[5];
+
+	const_for(BodyList, llbody)
+	{
+		TBody &body = **llbody;
+		const_for(body.AttachList, latt)
+		{
+			buf[0] = body->obj(latt).rx;
+			buf[1] = body->obj(latt).ry;
+			buf[2] = latt->pres;
+			buf[3] = latt->fric;
+			buf[4] = latt->heat;
+
+			fwrite(buf, 4, 2, fout);
+			if (vals & val::Cp) fwrite(buf+2, 4, 1, fout);
+			if (vals & val::Fr) fwrite(buf+3, 4, 1, fout);
+			if (vals & val::Nu) fwrite(buf+4, 4, 1, fout);
+		}
+	}
 }
 
 /********************************** SAVE/LOAD *********************************/

@@ -6,6 +6,14 @@
 
 using namespace std;
 
+typedef const char TValues;
+namespace val
+{
+	TValues Cp = 1;
+	TValues Fr = 2;
+	TValues Nu = 4;
+}
+
 class Space
 {
 	public:
@@ -26,9 +34,9 @@ class Space
 		double Time, dt, Re;
 
 		void Save(const char* format, const double header[]=NULL, int N=0);
-		void SaveProfile(const char* filename);
 		double* Load(const char* filename, int* N = NULL);
 		FILE* OpenFile(const char* format);
+		void SaveProfile(const char* filename, TValues vals);
 
 		/***************** SAVE/LOAD ******************/
 		int LoadVorticityFromFile(const char* filename);
