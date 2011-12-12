@@ -26,6 +26,7 @@ class Space
 		double Time, dt, Re;
 
 		void Save(const char* format, const double header[]=NULL, int N=0);
+		void SaveProfile(const char* filename);
 		double* Load(const char* filename, int* N = NULL);
 		FILE* OpenFile(const char* format);
 

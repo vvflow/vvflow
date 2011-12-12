@@ -181,6 +181,13 @@ FILE* Space::OpenFile(const char* format)
 	return fout;
 }
 
+void Space::SaveProfile(const char* fname)
+{
+	FILE *fout = fopen(fname, "rb+");
+	if (!fout) fout = fopen(fname, "wb");
+	if (!fout) { perror("Error saving the space"); return; }
+}
+
 /********************************** SAVE/LOAD *********************************/
 
 int Space::LoadVorticityFromFile(const char* filename)
