@@ -73,26 +73,26 @@ int main(int argc, char** argv)
 	fprintf(f, "Rotataon sh = \n");
 	fprintf(f, "Reynolds = %g\n", Re);
 	fprintf(f, "dt = %g\n", dt);
-	fprintf(f, "%-10s \t%-20s \t%-20s \t%-20s \t%-10s \t%-10s \t%-10s\n",
-			"Time", "Fx", "Fy", "Mz", "N vorts", "Angle", "RotSpeed");
+	fprintf(f, "%-10s \t%-20s \t%-20s \t%-20s \t%-10s \t%-10s \t%-10s \t%-10s\n",
+			"Time", "Fx", "Fy", "Mz", "N vorts", "N heats", "Angle", "RotSpeed");
 	fclose(f);
 
 	TVec ForceTmp(0, 0);
 
 	/**************************************************************************/
 
-	Space *S = new Space(true, false, InfSpeed);
+	Space *S = new Space(true, true, InfSpeed);
 	S->LoadBody(BodyFile);
 	TBody* body = S->BodyList->at(0);
 	//body->SetRotation(rot, TVec(0,0));
 
-	double dl = body->AverageSegmentLength();
+	double dl = S->AverageSegmentLength();
 	const double _1_dt = 1./dt;
 
 	InitTree(S, 8, dl*20, 0.3);
 	InitConvectiveFast(S, dl*dl/25);
-	InitEpsilonFast(S, dl*dl*0.09);
-	InitDiffusiveFast(S, Re);
+	epsfast eps(S);
+	diffusivefast diff(S, Re, 1);
 	flowmove fm(S, dt);
 
 	while (true)
@@ -101,6 +101,7 @@ int main(int argc, char** argv)
 		dbg(CalcCirculationFast(true));
 		dbg(DestroyTree());
 
+		S->SaveProfile("prof", val::Cp | val::Fr | val::Nu);
 		if (!(int(S->Time/dt)%10))
 		{
 			double header[] = { S->Time, body->Angle, body->RotSpeed(S->Time), 
@@ -110,14 +111,22 @@ int main(int argc, char** argv)
 		}
 
 		dbg(fm.VortexShed());
+		dbg(fm.HeatShed());
+
+		//save profile
+		const_for(S->BodyList, llbody)
+		{
+			(**llbody).zero_variables();
+		}
 
 		FILE *f = fopen(stepdata.c_str(), "a");
-		fprintf(f, "%-10g \t%-+20e \t%-+20e \t%-+20e \t%-10ld \t%-10g \t%-10g\n",
+		fprintf(f, "%-10g \t%-+20e \t%-+20e \t%-+20e \t%-10ld \t%-10ld \t%-10g \t%-10g\n",
 		             S->Time, 
 		             body->Force.rx/dt,
 		             body->Force.ry/dt,
 		             body->Force.g/dt,
 		             S->VortexList->size_safe(),
+		             S->HeatList->size_safe(),
 		             body->Angle, 
 		             body->RotSpeed(S->Time));
 		fclose(f);
@@ -125,10 +134,11 @@ int main(int argc, char** argv)
 		body->Force.zero();
 
 		dbg(BuildTree());
-		dbg(CalcEpsilonFast(true));
+		dbg(eps.CalcEpsilonFast(true));
 		dbg(CalcBoundaryConvective());
 		dbg(CalcConvectiveFast());
-		dbg(CalcVortexDiffusiveFast());
+		dbg(diff.CalcVortexDiffusiveFast());
+		dbg(diff.CalcHeatDiffusiveFast());
 		dbg(DestroyTree());
 
 		//FIXME move bodies 

@@ -12,7 +12,7 @@ diffusivefast::diffusivefast(Space *sS, double sRe, double sPr)
 {
 	S = sS;
 	S->Re = Re = sRe;
-	Pr = sPr;
+	S->Pr = Pr = sPr;
 }
 
 void diffusivefast::CalcVortexDiffusiveFast()
@@ -123,6 +123,7 @@ void diffusivefast::CalcHeatDiffusiveFast()
 
 			if ( (sign(S1)!=sign(obj)) || (fabs(S1)<fabs(0.1*obj.g)) ) { S1 = 0.1*obj.g; }
 
+//			cerr << obj._1_eps << " " << S2 << " " << S3 << ' ' << S1 << ' ' << S0 << endl;
 			obj.v += (obj._1_eps*S2+S3)/(S1-sqr(obj._1_eps)*S0);
 		}
 	}
@@ -135,7 +136,7 @@ void diffusivefast::VortexInfluence(const TObj &v, const TObj &vj, TVec *i2, dou
 {
 	//if ( sign(v) != sign(vj) ) { return; }
 	TVec dr = v - vj;
-	//if ( dr.iszero() ) { return; }
+	if ( dr.iszero() ) { return; }
 	double drabs = dr.abs();
 	double exparg = -drabs*v._1_eps;
 	if ( exparg < ExpArgRestriction ) return;

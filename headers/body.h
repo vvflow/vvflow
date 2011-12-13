@@ -1,7 +1,11 @@
 #ifndef BODY_H_
 #define BODY_H_
 
+class TBody;
+class TAtt;
+
 #include "elementary.h"
+#include "space.h"
 
 namespace bc{
 enum BoundaryCondition {slip, noslip, kutta, noperturbations, tricky};}
@@ -10,15 +14,14 @@ enum SourceCondition {none, source, sink};}
 namespace hc{
 enum HeatCondition {neglect, isolate, const_t, const_W};}
 
-class TBody;
 class TAtt : public TVec
 {
 	public:
 		double g, q;
 		double gsum;
-		double pres; // need /dt before printing
-		double fric; // need /Pi/Eps_min^2 before printing
-		double heat; // need 
+		double pres; // need calc_pressure() and /=dt before printing
+		double fric; // need /= (Pi*Eps_min^2) before printing
+		double heat; // need *= Re*Pr
 		double heat_const;
 		TVec dl;
 		bc::BoundaryCondition bc;
@@ -38,7 +41,7 @@ class TAtt : public TVec
 class TBody
 {
 	public:
-		TBody();
+		TBody(Space *sS);
 		~TBody();
 
 		//int LoadFromFile(const char* filename, int start_eq_no);
@@ -60,8 +63,7 @@ class TBody
 		TVec RotAxis;
 		void UpdateAttach();
 
-		void calc_pressure(); // need /dt
-		//void calc_friction(); // need /Pi/Eps_min^2
+		void calc_variables();
 		void zero_variables();
 
 		TObj Force; //dont forget to zero it when u want
@@ -79,6 +81,7 @@ class TBody
 		//int *ObjectIsInHeatLayer(TObj &obj); //link to element of HeatLayer array
 
 	private:
+		Space *S;
 		vector<TObj> *HeatLayerList;
 		TAtt* PointIsInContour(TVec p, vector<TObj> *list);
 		double (*RotSpeed_link)(double time);

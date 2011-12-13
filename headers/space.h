@@ -1,6 +1,8 @@
 #ifndef SPACE_H_
 #define SPACE_H_
 
+class Space;
+
 #include "body.h"
 #include "elementary.h"
 
@@ -31,7 +33,7 @@ class Space
 
 		TVec InfSpeed() { return InfSpeed_link?InfSpeed_link(Time):InfSpeed_const; }
 		void ZeroSpeed();
-		double Time, dt, Re;
+		double Time, dt, Re, Pr;
 
 		void Save(const char* format, const double header[]=NULL, int N=0);
 		double* Load(const char* filename, int* N = NULL);
@@ -57,17 +59,5 @@ class Space
 		TVec (*InfSpeed_link)(double time);
 		TVec InfSpeed_const;
 };
-
-inline
-void Space::FinishStep()
-{
-	const_for(BodyList, llbody)
-	{
-		TBody &body = **llbody;
-		body.Rotate(body.RotSpeed(Time) * dt);
-		body.Position -= InfSpeed() * dt;
-	}
-	Time+= dt;
-}
 
 #endif /*SPACE_H_*/

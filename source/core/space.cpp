@@ -24,7 +24,19 @@ Space::Space(bool CreateVortexes,
 
 	InfSpeed_link = sInfSpeed;
 	InfSpeed_const.zero();
-	Time = dt = Re = 0;
+	Time = dt = Re = Pr = 0;
+}
+
+inline
+void Space::FinishStep()
+{
+	const_for(BodyList, llbody)
+	{
+		TBody &body = **llbody;
+		body.Rotate(body.RotSpeed(Time) * dt);
+		body.Position -= InfSpeed() * dt;
+	}
+	Time+= dt;
 }
 
 /********************************** SAVE/LOAD *********************************/
@@ -146,7 +158,7 @@ double* Space::Load(const char* fname, int* N)
 		else if (!eq(comment, "Streak  ")) LoadList(StreakList, fin);
 		else if (eq(comment, "Body    ")>=5)
 		{
-			TBody *body = new TBody();
+			TBody *body = new TBody(this);
 			BodyList->push_back(body);
 
 			TObj obj; TAtt att; att.body = body; att.zero();
@@ -188,7 +200,7 @@ void Space::SaveProfile(const char* fname, TValues vals)
 	
 	FILE *fout = fopen(fname, "ab");
 	if (!fout) { perror("Error saving the body profile"); return; }
-	if (!fteel(fout)) { fwrite(vals_32, 4, 1, fout); fwrite(N, 4, 1, fout); }
+	if (!ftell(fout)) { fwrite(&vals_32, 4, 1, fout); fwrite(&N, 4, 1, fout); }
 	float buf[5];
 
 	const_for(BodyList, llbody)
@@ -196,8 +208,8 @@ void Space::SaveProfile(const char* fname, TValues vals)
 		TBody &body = **llbody;
 		const_for(body.AttachList, latt)
 		{
-			buf[0] = body->obj(latt).rx;
-			buf[1] = body->obj(latt).ry;
+			buf[0] = body.obj(latt)->rx;
+			buf[1] = body.obj(latt)->ry;
 			buf[2] = latt->pres;
 			buf[3] = latt->fric;
 			buf[4] = latt->heat;
@@ -272,7 +284,7 @@ int Space::LoadHeatFromFile(const char* filename)
 
 int Space::LoadBody(const char* filename)
 {
-	TBody *body = new TBody();
+	TBody *body = new TBody(this);
 	BodyList->push_back(body);
 
 	FILE *fin = fopen(filename, "r");
@@ -280,7 +292,7 @@ int Space::LoadBody(const char* filename)
 
 	TObj obj(0, 0, 0);
 	TAtt att; att.body = body; att.zero();
-	while ( fscanf(fin, "%lf %lf %d %d", &obj.rx, &obj.ry, &att.bc, &att.hc)==4 )
+	while ( fscanf(fin, "%lf %lf %d %d %lf", &obj.rx, &obj.ry, &att.bc, &att.hc, &att.heat_const)==5 )
 	{
 		body->List->push_back(obj);
 		body->AttachList->push_back(att);

@@ -162,7 +162,7 @@ void flowmove::HeatShed()
 				case hc::isolate:
 					if (latt->heat)
 					{
-						hlist->push_back(TObj(*latt, -latt->heat));
+						hlist->push_back(TObj(*latt+rotl(latt->dl)*0.5, -latt->heat));
 						latt->heat = 0;
 					}
 					break;
@@ -177,7 +177,7 @@ void flowmove::HeatShed()
 					} else
 					{
 						latt->heat += tmp_g;
-						hlist->push_back(TObj(*latt, tmp_g));
+						hlist->push_back(TObj(*latt+rotl(latt->dl)*0.5, tmp_g));
 					}
 				}
 					break;
@@ -185,7 +185,7 @@ void flowmove::HeatShed()
 				{
 					double tmp_g(latt->dl.abs2() * latt->heat_const);
 					latt->heat += tmp_g;
-					hlist->push_back(TObj(*latt, tmp_g));
+					hlist->push_back(TObj(*latt+rotl(latt->dl)*0.5, tmp_g));
 				}
 					break;
 			}
