@@ -1,7 +1,7 @@
-CC = icc -O3 -openmp -mkl=parallel
+CC = icc -O3 -openmp
 
 all:
-	$(CC) singlebody.cpp -o vvhd_sb $(VVHD) -std=c++0x
+	$(CC) singlebody.cpp -o vvhd_sb $(VVHD) -std=c++0x -mkl=parallel
 
 clean:
 	rm -f vvhd_sb

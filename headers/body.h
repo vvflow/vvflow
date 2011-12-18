@@ -7,12 +7,8 @@ class TAtt;
 #include "elementary.h"
 #include "space.h"
 
-namespace bc{
-enum BoundaryCondition {slip, noslip, kutta, noperturbations, tricky};}
-namespace sc{
-enum SourceCondition {none, source, sink};}
-namespace hc{
-enum HeatCondition {neglect, isolate, const_t, const_W};}
+namespace bc{enum BoundaryCondition {slip, noslip, kutta, steady, inf_steady};}
+namespace hc{enum HeatCondition {neglect, isolate, const_t, const_W};}
 
 class TAtt : public TVec
 {

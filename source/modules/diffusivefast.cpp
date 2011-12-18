@@ -124,7 +124,9 @@ void diffusivefast::CalcHeatDiffusiveFast()
 			if ( (sign(S1)!=sign(obj)) || (fabs(S1)<fabs(0.1*obj.g)) ) { S1 = 0.1*obj.g; }
 
 //			cerr << obj._1_eps << " " << S2 << " " << S3 << ' ' << S1 << ' ' << S0 << endl;
-			obj.v += (obj._1_eps*S2+S3)/(S1-sqr(obj._1_eps)*S0);
+			obj.v += (obj._1_eps*S2+S3)/(S1+S0/sqr(obj._1_eps))/(Pr*Re);
+//			obj.v += obj._1_eps/(Re*S1) * S2;
+//			obj.v += (sqr(obj._1_eps)/(Re*(C_2PI-S0))) * S3;
 		}
 	}
 }

@@ -154,7 +154,7 @@ void flowmove::HeatShed()
 
 	const_for(S->BodyList, llbody)
 	{
-		TBody &body = **llbody;
+		#define body (**llbody)
 		const_for(body.AttachList, latt)
 		{
 			switch (latt->hc)
@@ -172,6 +172,7 @@ void flowmove::HeatShed()
 					TObj *tmp_obj(latt->ParticleInHeatLayer);
 					if (tmp_obj)
 					{
+						if (S->Time >= 3.6) cerr << tmp_obj << flush <<  " " << *tmp_obj << endl;
 						latt->heat += tmp_g - tmp_obj->g;
 						tmp_obj->g = tmp_g;
 					} else
@@ -190,6 +191,7 @@ void flowmove::HeatShed()
 					break;
 			}
 		}
+		#undef body
 	}
 }
 

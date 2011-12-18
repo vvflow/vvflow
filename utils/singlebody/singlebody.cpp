@@ -13,6 +13,7 @@
 
 #include "omp.h"
 #define dbg(a) a
+//#define dbg(a) cerr << "Doing " << #a << "... " << flush; a; cerr << "done\n";
 #define seek(f) while (fgetc(f)!='\n'){}
 using namespace std;
 
@@ -37,6 +38,7 @@ double InfSpeedX(double t)
 
 TVec InfSpeed(double t)
 {
+	return TVec(1,0);
 	const double k=1;
 	if (t<k) return TVec(t/k, 0);
 	else return TVec(1, 0);
@@ -60,6 +62,7 @@ int main(int argc, char** argv)
 	//rotspeed seek(finfo);
 	double Re; fscanf(finfo, "%lf", &Re); seek(finfo);
 	double dt; fscanf(finfo, "%lf", &dt); seek(finfo);
+	fclose(finfo);
 
 	mkdir(dir, 0777);
 
@@ -67,7 +70,7 @@ int main(int argc, char** argv)
 	FILE *f = fopen(stepdata.c_str(), "a");
 	#pragma omp parallel
 	#pragma omp master
-		fprintf(f, "Running in %d threads.\n", omp_get_num_threads());
+		fprintf(f, "Omp num threads = %d\n", omp_get_num_threads());
 	fprintf(f, "Working dir = %s\n", dir);
 	fprintf(f, "Body file = %s\n", BodyFile);
 	fprintf(f, "Rotataon sh = \n");
@@ -75,13 +78,13 @@ int main(int argc, char** argv)
 	fprintf(f, "dt = %g\n", dt);
 	fprintf(f, "%-10s \t%-20s \t%-20s \t%-20s \t%-10s \t%-10s \t%-10s \t%-10s\n",
 			"Time", "Fx", "Fy", "Mz", "N vorts", "N heats", "Angle", "RotSpeed");
-	fclose(f);
+	//fclose(f);
 
 	TVec ForceTmp(0, 0);
 
 	/**************************************************************************/
 
-	Space *S = new Space(true, true, InfSpeed);
+	Space *S = new Space(InfSpeed);
 	S->LoadBody(BodyFile);
 	TBody* body = S->BodyList->at(0);
 	//body->SetRotation(rot, TVec(0,0));
@@ -94,6 +97,7 @@ int main(int argc, char** argv)
 	epsfast eps(S);
 	diffusivefast diff(S, Re, 1);
 	flowmove fm(S, dt);
+	S->StreakSourceList->push_back(TObj(-1.1, 0.3, 0));
 
 	while (true)
 	{
@@ -112,6 +116,7 @@ int main(int argc, char** argv)
 
 		dbg(fm.VortexShed());
 		dbg(fm.HeatShed());
+		dbg(fm.StreakShed());
 
 		//save profile
 		const_for(S->BodyList, llbody)
@@ -119,7 +124,8 @@ int main(int argc, char** argv)
 			(**llbody).zero_variables();
 		}
 
-		FILE *f = fopen(stepdata.c_str(), "a");
+//		f = fopen(stepdata.c_str(), "a");
+//		if (!f) { perror("Error opening file"); return -2; }
 		fprintf(f, "%-10g \t%-+20e \t%-+20e \t%-+20e \t%-10ld \t%-10ld \t%-10g \t%-10g\n",
 		             S->Time, 
 		             body->Force.rx/dt,
@@ -129,7 +135,8 @@ int main(int argc, char** argv)
 		             S->HeatList->size_safe(),
 		             body->Angle, 
 		             body->RotSpeed(S->Time));
-		fclose(f);
+		fflush(f);
+//		fclose(f);
 		ForceTmp+= body->Force;
 		body->Force.zero();
 
@@ -145,4 +152,6 @@ int main(int argc, char** argv)
 		dbg(fm.MoveAndClean(true));
 		S->Time += S->dt;
 	}
+
+	fclose(f);
 }

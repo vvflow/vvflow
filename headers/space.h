@@ -19,9 +19,7 @@ namespace val
 class Space
 {
 	public:
-		Space(bool CreateVortexes,
-				bool CreateHeat, 
-				TVec (*sInfSpeed)(double time) = NULL);
+		Space(TVec (*sInfSpeed)(double time) = NULL);
 
 		vector<TBody*> *BodyList;
 		vector<TObj> *VortexList;

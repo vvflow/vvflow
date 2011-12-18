@@ -11,12 +11,10 @@ using namespace std;
 
 #include "space.h"
 
-Space::Space(bool CreateVortexes,
-				bool CreateHeat,
-				TVec (*sInfSpeed)(double time))
+Space::Space(TVec (*sInfSpeed)(double time))
 {
-	VortexList = CreateVortexes ? (new vector<TObj>()) : NULL;
-	HeatList = CreateHeat ? (new vector<TObj>()) : NULL;
+	VortexList = new vector<TObj>();
+	HeatList = new vector<TObj>();
 	BodyList = new vector<TBody*>();
 
 	StreakSourceList = new vector<TObj>();
@@ -197,10 +195,14 @@ void Space::SaveProfile(const char* fname, TValues vals)
 {
 	int32_t vals_32=vals, N=0;
 	const_for(BodyList, llbody) { N+= (**llbody).size(); }
-	
+	if (!N) return;
+	if (!VortexList) vals_32 &= ~(val::Cp | val::Fr);
+	if (!HeatList) vals_32 &= ~val::Nu;
+
 	FILE *fout = fopen(fname, "ab");
 	if (!fout) { perror("Error saving the body profile"); return; }
 	if (!ftell(fout)) { fwrite(&vals_32, 4, 1, fout); fwrite(&N, 4, 1, fout); }
+	float time_tmp = Time; fwrite(&time_tmp, 4, 1, fout);
 	float buf[5];
 
 	const_for(BodyList, llbody)
@@ -220,6 +222,7 @@ void Space::SaveProfile(const char* fname, TValues vals)
 			if (vals & val::Nu) fwrite(buf+4, 4, 1, fout);
 		}
 	}
+	fclose(fout);
 }
 
 /********************************** SAVE/LOAD *********************************/

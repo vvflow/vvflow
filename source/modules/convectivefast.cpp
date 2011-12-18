@@ -250,7 +250,7 @@ TVec BoundaryConvective(const TBody &b, const TVec &p)
 	TVec dr, res(0, 0);
 	auto alist = b.AttachList;
 	double rotspeed = b.RotSpeed(S->Time);
-	if (!rotspeed) return res;
+//	if (!rotspeed) return res;
 
 	const_for(alist, latt)
 	{
@@ -431,10 +431,10 @@ void FillMatrix()
 						BodyMatrix[N*i+j] = (lobj == ibody.obj(latt)) ||
 						                    (lobj == ibody.next(ibody.obj(latt))) ?
 						                    1:0;
-					case bc::noperturbations:
+					case bc::steady:
 						BodyMatrix[N*i+j] = (llibody==lljbody)?1:0;
 						break;
-					case bc::tricky:
+					case bc::inf_steady:
 						BodyMatrix[N*i+j] = 1;
 						break;
 					}
@@ -483,19 +483,18 @@ void FillRightCol()
 			{
 			case bc::slip:
 			case bc::noslip:
-			RightCol[latt->eq_no] = rotl(S->InfSpeed())*SegDl;
-			RightCol[latt->eq_no] -= NodeInfluence(*Node, *latt, Rd);
-			RightCol[latt->eq_no] -= AttachInfluence(*latt, Rd);
-			break;
+				RightCol[latt->eq_no] = rotl(S->InfSpeed())*SegDl;
+				RightCol[latt->eq_no] -= NodeInfluence(*Node, *latt, Rd);
+				RightCol[latt->eq_no] -= AttachInfluence(*latt, Rd);
+				break;
 			case bc::kutta:
-			case bc::noperturbations:
-			RightCol[latt->eq_no] = -tmp +  body.g_dead;
-			body.g_dead = 0;
+			case bc::steady:
+				RightCol[latt->eq_no] = -tmp +  body.g_dead;
+				body.g_dead = 0;
 			break;
-			case bc::tricky:
-			RightCol[latt->eq_no] = -S->gsum() - rot_sum;
-//			cerr << "\n\t\t\t\t\t2 " << RightCol[latt->eq_no] << " \t" << rot_sum << "\t" << S->gsum() << endl;
-			break;
+			case bc::inf_steady:
+				RightCol[latt->eq_no] = -S->gsum() - rot_sum;
+				break;
 			}
 		}
 	}

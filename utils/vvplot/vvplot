@@ -9,11 +9,24 @@ done
 if test $# -lt 4
 then
 	echo "Usage: $0 [options] file.vb output.png xmin xmax"
+	echo "Possible options are:"
+	echo "-b - plot body"
+	echo "-f - update fields files even if the exist"
+	echo "-h - plot heat particles"
+	echo "-i - plot ink (streaklines)"
+	echo "-p - plot pressure field"
+	echo "-s - plot streamlines"
+	echo "-v - plot vortex domains"
 	exit 0
 fi
 
 v_skip=$(od -j16 -N8 -An -w8 -td8 $1)
 v_size=$(od -j$v_skip -N8 -An -w8 -td8 $1)
+h_skip=$(od -j32 -N8 -An -w8 -td8 $1)
+h_size=$(od -j$h_skip -N8 -An -w8 -td8 $1)
+i_skip=$(od -j64 -N8 -An -w8 -td8 $1)
+i_size=$(od -j$i_skip -N8 -An -w8 -td8 $1)
+
 
 time=$(printf "%7.3f\n" $(od -j$(expr $v_skip - 8) -N8 -tf8 -w8 -An $1) )
 timestamp=$(od -j$(expr $v_skip - 16) -N8 -td8 -w8 -An $1)
@@ -58,6 +71,8 @@ echo "
 set label \"t = $time\" at graph 0.05, 0.90 front
 dots = \"dots lc rgb variable\"
 vortex_style = \"circles lc rgb variable fs transparent solid 0.3 noborder\"
+heat_style = \"circles lc rgb 'black' fs transparent solid 0.3 noborder\"
+ink_style = \"circles lc rgb 'black' fs transparent solid 1 noborder\"
 body_style = \"filledcurve lc rgb \\\"#adadad\\\" lw 2 fs solid border -1 \"
 
 set palette color
@@ -84,6 +99,18 @@ if test $(expr index "$options" v) != 0
 then
 	echo -n ", '$1' binary record=$v_size skip=($v_skip+8) format='%3float64' " >&6
 	echo -n "u 1:2:(prec_hi):(color(\$3)) w @vortex_style" >&6
+fi
+
+if test $(expr index "$options" h) != 0
+then
+	echo -n ", '$1' binary record=$h_size skip=($h_skip+8) format='%3float64' " >&6
+	echo -n "u 1:2:(prec_hi) w @heat_style" >&6
+fi
+
+if test $(expr index "$options" i) != 0
+then
+	echo -n ", '$1' binary record=$i_size skip=($i_skip+8) format='%3float64' " >&6
+	echo -n "u 1:2:(prec_hi) w @ink_style" >&6
 fi
 
 if test $(expr index "$options" s) != 0; then
