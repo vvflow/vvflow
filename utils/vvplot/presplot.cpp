@@ -110,7 +110,7 @@ int main(int argc, char *argv[])
 		dbg(fm.VortexShed());
 	/******************************************/
 
-	const_for(S->BodyList, llbody) { (**llbody).zero_variables(); }
+	S->ZeroForces();
 	for (int i=0; i<1; i++)
 	{
 		S->ZeroSpeed();
