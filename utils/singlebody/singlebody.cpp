@@ -62,6 +62,7 @@ int main(int argc, char** argv)
 	//rotspeed seek(finfo);
 	double Re; fscanf(finfo, "%lf", &Re); seek(finfo);
 	double dt; fscanf(finfo, "%lf", &dt); seek(finfo);
+	double save_dt = 0.05;
 	fclose(finfo);
 
 	mkdir(dir, 0777);
@@ -76,8 +77,9 @@ int main(int argc, char** argv)
 	fprintf(f, "Rotataon sh = \n");
 	fprintf(f, "Reynolds = %g\n", Re);
 	fprintf(f, "dt = %g\n", dt);
-	fprintf(f, "%-10s \t%-20s \t%-20s \t%-20s \t%-10s \t%-10s \t%-10s \t%-10s\n",
-			"Time", "Fx", "Fy", "Mz", "N vorts", "N heats", "Angle", "RotSpeed");
+	fprintf(f, "save dt = %g\n", save_dt);
+	fprintf(f, "%-10s \t%-20s \t%-20s \t%-20s \t%-20s \t%-20s \t%-20s \t%-20s \t%-10s \t%-10s \t%-10s \t%-10s\n",
+			"Time", "Fx", "Fy", "Mz", "Friction_x", "Friction_y", "Friction_m", "Nusselt", "N vorts", "N heats", "Angle", "RotSpeed");
 	//fclose(f);
 
 	TVec ForceTmp(0, 0);
@@ -97,7 +99,6 @@ int main(int argc, char** argv)
 	epsfast eps(S);
 	diffusivefast diff(S, Re, 1);
 	flowmove fm(S, dt);
-	S->StreakSourceList->push_back(TObj(-1.1, 0.3, 0));
 
 	while (true)
 	{
@@ -105,33 +106,34 @@ int main(int argc, char** argv)
 		dbg(CalcCirculationFast(true));
 		dbg(DestroyTree());
 
+		dbg(fm.HeatShed());
+
 		if (!(int(S->Time/dt)%10))
 		{
-			double header[] = { S->Time, body->Angle, body->RotSpeed(S->Time), 
-							    ForceTmp.rx/dt, ForceTmp.ry/dt };
-			S->Save((string(dir)+string("/%06d.vb")).c_str(), header, 5);
-			ForceTmp.zero();
+			double header[] = { S->Time, body->Angle, body->RotSpeed(S->Time)};
+			S->Save((string(dir)+string("/%06d.vb")).c_str(), header, 3);
 		}
 
 		dbg(fm.VortexShed());
-		dbg(fm.HeatShed());
-		dbg(fm.StreakShed());
+		dbg(fm.StreakShed(save_dt));
 
-		S->SaveProfile("prof", val::Cp | val::Fr | val::Nu);
-		dbg(S->ZeroBodies());
-
-		fprintf(f, "%-10g \t%-+20e \t%-+20e \t%-+20e \t%-10ld \t%-10ld \t%-10g \t%-10g\n",
-		             S->Time, 
-		             body->Force.rx/dt,
-		             body->Force.ry/dt,
-		             body->Force.g/dt,
+		dbg(S->CalcForces());
+		S->SaveProfile("prof", save_dt, val::Cp | val::Fr | val::Nu);
+		fprintf(f, "%-10g \t%-+20e \t%-+20e \t%-+20e \t%-+20e \t%-+20e \t%-+20e \t%-+20e \t%-10ld \t%-10ld \t%-10g \t%-10g\n",
+		             S->Time,
+		             body->Force.rx,
+		             body->Force.ry,
+		             body->Force.g,
+		             body->Friction.rx,
+		             body->Friction.ry,
+		             body->Friction.g,
+		             body->Nusselt,
 		             S->VortexList->size_safe(),
 		             S->HeatList->size_safe(),
-		             body->Angle, 
+		             body->Angle,
 		             body->RotSpeed(S->Time));
 		fflush(f);
-		ForceTmp+= body->Force;
-		body->Force.zero();
+		S->ZeroForces();
 
 		dbg(BuildTree());
 		dbg(eps.CalcEpsilonFast(true));

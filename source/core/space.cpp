@@ -13,8 +13,8 @@ using namespace std;
 
 Space::Space(TVec (*sInfSpeed)(double time))
 {
-	VortexList = new vector<TObj>();
-	HeatList = new vector<TObj>();
+	VortexList = NULL; //new vector<TObj>();
+	HeatList = NULL; //new vector<TObj>();
 	BodyList = new vector<TBody*>();
 
 	StreakSourceList = new vector<TObj>();
@@ -191,8 +191,38 @@ FILE* Space::OpenFile(const char* format)
 	return fout;
 }
 
-void Space::SaveProfile(const char* fname, TValues vals)
+void Space::CalcForces()
 {
+	const double C_1_PiEpsmin = 1/(C_PI*0.6*AverageSegmentLength());
+	#define body (**llbody)
+	const_for(BodyList, llbody)
+	{
+		double tmp_gsum = 0;
+		//TObj tmp_fric(0,0,0);
+		const_for(body.AttachList, latt)
+		{
+			tmp_gsum+= latt->gsum;
+			latt->Cp += tmp_gsum;
+			latt->Fr += latt->fric * C_1_PiEpsmin;
+			latt->Nu += latt->hsum / (Re*Pr);
+
+			body.Friction += latt->dl * (latt->fric * C_1_PiEpsmin / latt->dl.abs());
+			body.Friction.g += (rotl(*latt)* latt->dl) * (latt->fric  * C_1_PiEpsmin / latt->dl.abs());
+			body.Nusselt += latt->hsum / (latt->dl.abs()*Re*Pr);
+		}
+
+		body.Force /= dt;
+		body.Force.g /= dt;
+		body.Friction /= dt;
+		body.Friction.g /= dt;
+		body.Nusselt /= dt;
+	}
+	#undef body
+}
+
+void Space::SaveProfile(const char* fname, double save_dt, TValues vals)
+{
+	if (Time - int(Time/save_dt)*save_dt > dt/10) return;
 	int32_t vals_32=vals, N=0;
 	const_for(BodyList, llbody) { N+= (**llbody).size(); }
 	if (!N) return;
@@ -212,9 +242,9 @@ void Space::SaveProfile(const char* fname, TValues vals)
 		{
 			buf[0] = body.obj(latt)->rx;
 			buf[1] = body.obj(latt)->ry;
-			buf[2] = latt->pres;
-			buf[3] = latt->fric;
-			buf[4] = latt->heat;
+			buf[2] = latt->Cp/save_dt;
+			buf[3] = latt->Fr/save_dt;
+			buf[4] = latt->Nu/save_dt;
 
 			fwrite(buf, 4, 2, fout);
 			if (vals & val::Cp) fwrite(buf+2, 4, 1, fout);
@@ -225,11 +255,32 @@ void Space::SaveProfile(const char* fname, TValues vals)
 	fclose(fout);
 }
 
+void Space::ZeroForces()
+{
+	const_for(BodyList, llbody)
+	{
+		const_for((**llbody).AttachList, latt)
+		{
+			latt->Cp =
+			latt->Fr =
+			latt->Nu =
+			latt->gsum =
+			latt->fric =
+			latt->hsum = 0;
+			latt->ParticleInHeatLayer = -1;
+		}
+
+		(**llbody).Force.zero();
+		(**llbody).Friction.zero();
+		(**llbody).Nusselt = 0;
+	}
+}
+
 /********************************** SAVE/LOAD *********************************/
 
 int Space::LoadVorticityFromFile(const char* filename)
 {
-	if ( !VortexList ) return -1;
+	if ( !VortexList ) VortexList = new vector<TObj>();
 
 	FILE *fin = fopen(filename, "r");
 	if (!fin) { cerr << "No file called \'" << filename << "\'\n"; return -1; } 
@@ -246,7 +297,7 @@ int Space::LoadVorticityFromFile(const char* filename)
 
 int Space::LoadVorticity_bin(const char* filename)
 {
-	if ( !VortexList ) return -1;
+	if ( !VortexList ) VortexList = new vector<TObj>();
 
 	fstream fin;
 	fin.open(filename, ios::in | ios::binary);
@@ -270,7 +321,7 @@ int Space::LoadVorticity_bin(const char* filename)
 
 int Space::LoadHeatFromFile(const char* filename)
 {
-	if ( !HeatList ) return -1;
+	if ( !HeatList ) HeatList = new vector<TObj>();
 
 	FILE *fin = fopen(filename, "r");
 	if (!fin) { cerr << "No file called " << filename << endl; return -1; }
@@ -301,6 +352,18 @@ int Space::LoadBody(const char* filename)
 		body->AttachList->push_back(att);
 	}
 
+	if (!VortexList)
+	const_for(body->AttachList, latt)
+	{
+		if(latt->bc == bc::noslip) { VortexList = new vector<TObj>(); break; }
+	}
+
+	if (!HeatList)
+	const_for(body->AttachList, latt)
+	{
+		if(latt->hc != hc::neglect) { HeatList = new vector<TObj>(); break; }
+	}
+
 	fclose(fin);
 	body->InsideIsValid = body->isInsideValid();
 	body->UpdateAttach();
@@ -317,14 +380,6 @@ void Space::EnumerateBodies()
 	{
 		//FIXME load bc
 		latt->eq_no = eq_no++;
-	}
-}
-
-void Space::ZeroBodies()
-{
-	const_for(BodyList, llbody)
-	{
-		(**llbody).zero_variables();
 	}
 }
 

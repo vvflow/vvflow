@@ -64,7 +64,7 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
 
 		if ( invalid_inbody )
 		{
-			invalid_inbody->heat -= lobj->g;
+			invalid_inbody->hsum -= lobj->g;
 			hlist->erase(lobj);
 			lobj--; continue;
 		}
@@ -82,7 +82,7 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
 			case hc::const_t:
 				if (inlayer->ParticleInHeatLayer >= 0)
 				{
-					inlayer->heat -= lobj->g;
+					inlayer->hsum -= lobj->g;
 					hlist->erase(lobj);
 					lobj--; continue;
 				} else
@@ -154,10 +154,10 @@ void flowmove::HeatShed()
 			switch (latt->hc)
 			{
 				case hc::isolate:
-					if (latt->heat)
+					if (latt->hsum)
 					{
-						hlist->push_back(TObj(*latt+rotl(latt->dl)*0.5, -latt->heat));
-						latt->heat = 0;
+						hlist->push_back(TObj(*latt+rotl(latt->dl)*0.5, -latt->hsum));
+						latt->hsum = 0;
 					}
 					break;
 				case hc::const_t:
@@ -166,11 +166,11 @@ void flowmove::HeatShed()
 					TObj *tmp_obj = (latt->ParticleInHeatLayer>=0)? hlist->begin()+latt->ParticleInHeatLayer : NULL;
 					if (tmp_obj)
 					{
-						latt->heat += tmp_g - tmp_obj->g;
+						latt->hsum += tmp_g - tmp_obj->g;
 						tmp_obj->g = tmp_g;
 					} else
 					{
-						latt->heat += tmp_g;
+						latt->hsum += tmp_g;
 						hlist->push_back(TObj(*latt+rotl(latt->dl)*0.5, tmp_g));
 					}
 				}
@@ -178,7 +178,7 @@ void flowmove::HeatShed()
 				case hc::const_W:
 				{
 					double tmp_g(latt->dl.abs2() * latt->heat_const);
-					latt->heat += tmp_g;
+					latt->hsum += tmp_g;
 					hlist->push_back(TObj(*latt+rotl(latt->dl)*0.5, tmp_g));
 				}
 					break;
@@ -188,8 +188,9 @@ void flowmove::HeatShed()
 	}
 }
 
-void flowmove::CropHeat()
+void flowmove::CropHeat(double scale)
 {
+	if (!S->HeatList) return;
 	TVec c(0,0), r(0,0);
 	int N=0;
 	const_for(S->BodyList, llbody)
@@ -206,9 +207,9 @@ void flowmove::CropHeat()
 		r.rx = max(r.rx, (lobj->rx - c.rx));
 		r.ry = max(r.ry, (lobj->ry - c.ry));
 	}
-	r *= 5;
+	r *= scale;
 
-	TVec bl(c+r), tr(c-r);
+	TVec bl(c-r), tr(c+r);
 	const_for(S->HeatList, lobj)
 	{
 		if ((lobj->rx > tr.rx) || (lobj->rx < bl.rx) ||
@@ -217,8 +218,9 @@ void flowmove::CropHeat()
 	}
 }
 
-void flowmove::StreakShed()
+void flowmove::StreakShed(double shed_dt)
 {
+	if (S->Time - int(S->Time/shed_dt)*shed_dt > S->dt/10) return;
 	const_for(S->StreakSourceList, lobj)
 	{
 		S->StreakList->push_back(*lobj);

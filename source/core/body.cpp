@@ -169,29 +169,6 @@ void TBody::UpdateAttach()
 	}
 }
 
-void TBody::calc_variables()
-{
-	double res =0;
-	const double C_1_PiEpsmin = 1/(C_PI*0.6*S->AverageSegmentLength());
-	const double C_1_RePr = 1/(S->Re*S->Pr);
-	const_for(AttachList, latt)
-	{
-		res+= latt->gsum;
-		latt->pres = res/S->dt;
-		latt->fric *= C_1_PiEpsmin;
-		latt->heat *= C_1_RePr;
-	}
-}
-
-void TBody::zero_variables()
-{
-	const_for(AttachList, latt)
-	{
-		latt->pres = latt->gsum = latt->fric = latt->heat = 0;
-		latt->ParticleInHeatLayer = -1;
-	}
-}
-
 /************************** HEAT LAYER ****************************************/
 
 /*void TBody::CleanHeatLayer()

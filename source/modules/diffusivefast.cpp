@@ -136,7 +136,7 @@ void diffusivefast::CalcHeatDiffusiveFast()
 inline
 void diffusivefast::VortexInfluence(const TObj &v, const TObj &vj, TVec *i2, double *i1)
 {
-	//if ( sign(v) != sign(vj) ) { return; }
+	if ( sign(v) != sign(vj) ) { return; }
 	TVec dr = v - vj;
 	if ( dr.iszero() ) { return; }
 	double drabs = dr.abs();

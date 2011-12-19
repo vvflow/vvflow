@@ -14,10 +14,13 @@ class TAtt : public TVec
 {
 	public:
 		double g, q;
-		double gsum;
-		double pres; // need calc_pressure() and /=dt before printing
-		double fric; // need /= (Pi*Eps_min^2) before printing
-		double heat; // need *= Re*Pr
+		double gsum; //filled by different modules
+		double hsum; //filled by different modules
+		double fric; //filled by different modules
+		double Cp; // computed by S->CalcForces, need /=dt before print (its implemented in SaveProfile);
+		double Fr; // computed by S->CalcForces, need /=dt before print (its implemented in SaveProfile);
+		double Nu; // computed by S->CalcForces, need /=dt before print (its implemented in SaveProfile);
+
 		double heat_const;
 		TVec dl;
 		bc::BoundaryCondition bc;
@@ -26,7 +29,7 @@ class TAtt : public TVec
 
 		TAtt(){}
 		//TAtt(TBody *body, int eq_no);
-		void zero() { rx = ry = g = q = pres = fric = gsum = heat = 0; }
+		void zero() { rx = ry = g = q = gsum = hsum = Cp = Fr = Nu = 0; }
 		TAtt& operator= (const TVec& p) { rx=p.rx; ry=p.ry; return *this; }
 
 	public:
@@ -59,10 +62,8 @@ class TBody
 		TVec RotAxis;
 		void UpdateAttach();
 
-		void calc_variables();
-		void zero_variables();
-
-		TObj Force; //dont forget to zero it when u want
+		TObj Force, Friction; //computed by S->CalcForces
+		double Nusselt; //computed by S->CalcForces
 		double g_dead;
 
 		TObj* next(TObj* obj) const { return List->next(obj); }

@@ -36,7 +36,9 @@ class Space
 		void Save(const char* format, const double header[]=NULL, int N=0);
 		double* Load(const char* filename, int* N = NULL);
 		FILE* OpenFile(const char* format);
-		void SaveProfile(const char* filename, TValues vals);
+		void CalcForces();
+		void SaveProfile(const char* filename, double dt, TValues vals);
+		void ZeroForces(); //zero all att-> Cp, Fr, Nu, gsum, fric, hsum variables.
 
 		/***************** SAVE/LOAD ******************/
 		int LoadVorticityFromFile(const char* filename);
