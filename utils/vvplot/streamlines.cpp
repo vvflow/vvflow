@@ -79,11 +79,11 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
-	Space *S = new Space(true, false, NULL);
+	Space *S = new Space();
 	int N; double *header = S->Load(argv[1], &N);
 	TBody* body = S->BodyList->at(0);
 
-	double dl = body->AverageSegmentLength(); Rd2 = dl*dl/25;
+	double dl = S->AverageSegmentLength(); Rd2 = dl*dl/25;
 	InitTree(S, 8, dl*20, 0.3);
 
 	/**************************** LOAD ARGUMENTS ******************************/

@@ -45,6 +45,7 @@ class Space
 
 		int LoadBody(const char* filename);
 		void EnumerateBodies();
+		void ZeroBodies(); //zero Cp, Fr, Nu variables.
 
 		/***************** INTEGRALS ******************/
 		double integral();

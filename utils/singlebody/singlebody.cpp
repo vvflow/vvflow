@@ -105,7 +105,6 @@ int main(int argc, char** argv)
 		dbg(CalcCirculationFast(true));
 		dbg(DestroyTree());
 
-		S->SaveProfile("prof", val::Cp | val::Fr | val::Nu);
 		if (!(int(S->Time/dt)%10))
 		{
 			double header[] = { S->Time, body->Angle, body->RotSpeed(S->Time), 
@@ -118,14 +117,9 @@ int main(int argc, char** argv)
 		dbg(fm.HeatShed());
 		dbg(fm.StreakShed());
 
-		//save profile
-		const_for(S->BodyList, llbody)
-		{
-			(**llbody).zero_variables();
-		}
+		S->SaveProfile("prof", val::Cp | val::Fr | val::Nu);
+		dbg(S->ZeroBodies());
 
-//		f = fopen(stepdata.c_str(), "a");
-//		if (!f) { perror("Error opening file"); return -2; }
 		fprintf(f, "%-10g \t%-+20e \t%-+20e \t%-+20e \t%-10ld \t%-10ld \t%-10g \t%-10g\n",
 		             S->Time, 
 		             body->Force.rx/dt,
@@ -136,7 +130,6 @@ int main(int argc, char** argv)
 		             body->Angle, 
 		             body->RotSpeed(S->Time));
 		fflush(f);
-//		fclose(f);
 		ForceTmp+= body->Force;
 		body->Force.zero();
 
@@ -150,6 +143,7 @@ int main(int argc, char** argv)
 
 		//FIXME move bodies 
 		dbg(fm.MoveAndClean(true));
+		dbg(fm.CropHeat());
 		S->Time += S->dt;
 	}
 

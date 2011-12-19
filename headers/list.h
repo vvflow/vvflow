@@ -21,6 +21,7 @@ class list
 		void erase(T* item);
 		void clear();
 		T& at(size_t i);
+		size_t find(T* item);
 		T* begin();
 		T* end();
 		size_t size();
@@ -72,6 +73,9 @@ void list<T>::clear() { size_=0; end_ = begin_; }
 
 template <class T> inline
 T& list<T>::at(size_t i) { return begin_[i]; }
+
+template <class T> inline
+size_t list<T>::find(T* item) { return item-begin_;}
 
 template <class T> inline
 T* list<T>::begin() { return begin_; }

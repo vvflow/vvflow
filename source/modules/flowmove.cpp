@@ -63,16 +63,10 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
 		}
 
 		if ( invalid_inbody )
-		//switch (invalid_inbody->hc)
 		{
-//			case hc::neglect:
-				invalid_inbody->heat -= lobj->g;
-				hlist->erase(lobj);
-				lobj--; continue;
-//				break;
-//			default:
-//				*lobj = TVec(*invalid_inbody);
-//				break;
+			invalid_inbody->heat -= lobj->g;
+			hlist->erase(lobj);
+			lobj--; continue;
 		}
 
 		TAtt* inlayer = NULL;
@@ -86,14 +80,14 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
 		switch (inlayer->hc)
 		{
 			case hc::const_t:
-				if (inlayer->ParticleInHeatLayer)
+				if (inlayer->ParticleInHeatLayer >= 0)
 				{
 					inlayer->heat -= lobj->g;
 					hlist->erase(lobj);
 					lobj--; continue;
 				} else
 				{
-					inlayer->ParticleInHeatLayer = lobj;
+					inlayer->ParticleInHeatLayer = hlist->find(lobj);
 				}
 				break;
 		}
@@ -169,10 +163,9 @@ void flowmove::HeatShed()
 				case hc::const_t:
 				{
 					double tmp_g(latt->dl.abs2() * latt->heat_const);
-					TObj *tmp_obj(latt->ParticleInHeatLayer);
+					TObj *tmp_obj = (latt->ParticleInHeatLayer>=0)? hlist->begin()+latt->ParticleInHeatLayer : NULL;
 					if (tmp_obj)
 					{
-						if (S->Time >= 3.6) cerr << tmp_obj << flush <<  " " << *tmp_obj << endl;
 						latt->heat += tmp_g - tmp_obj->g;
 						tmp_obj->g = tmp_g;
 					} else
@@ -192,6 +185,35 @@ void flowmove::HeatShed()
 			}
 		}
 		#undef body
+	}
+}
+
+void flowmove::CropHeat()
+{
+	TVec c(0,0), r(0,0);
+	int N=0;
+	const_for(S->BodyList, llbody)
+	const_for((**llbody).List, lobj)
+	{
+		c+= *lobj;
+		N++;
+	}
+	c/= N;
+
+	const_for(S->BodyList, llbody)
+	const_for((**llbody).List, lobj)
+	{
+		r.rx = max(r.rx, (lobj->rx - c.rx));
+		r.ry = max(r.ry, (lobj->ry - c.ry));
+	}
+	r *= 5;
+
+	TVec bl(c+r), tr(c-r);
+	const_for(S->HeatList, lobj)
+	{
+		if ((lobj->rx > tr.rx) || (lobj->rx < bl.rx) ||
+		    (lobj->ry > tr.ry) || (lobj->ry < bl.ry))
+			S->HeatList->erase(lobj);
 	}
 }
 

@@ -22,7 +22,7 @@ class TAtt : public TVec
 		TVec dl;
 		bc::BoundaryCondition bc;
 		hc::HeatCondition hc;
-		TObj *ParticleInHeatLayer;
+		long ParticleInHeatLayer;
 
 		TAtt(){}
 		//TAtt(TBody *body, int eq_no);

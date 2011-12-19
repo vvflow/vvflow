@@ -313,18 +313,19 @@ void Space::EnumerateBodies()
 {
 	int eq_no=0;
 	const_for(BodyList, llbody)
+	const_for((**llbody).AttachList, latt)
 	{
-		#define body (**llbody)
-		const_for(body.AttachList, latt)
-		{
-			//FIXME bc
-			//latt->bc = bc::noslip;
-			latt->eq_no = eq_no++;
-		}
-		//body.AttachList->begin()->bc = bc::noperturbations;
-		#undef body
+		//FIXME load bc
+		latt->eq_no = eq_no++;
 	}
-	//(**BodyList->begin()).AttachList->begin()->bc = bc::tricky;
+}
+
+void Space::ZeroBodies()
+{
+	const_for(BodyList, llbody)
+	{
+		(**llbody).zero_variables();
+	}
 }
 
 /********************************* INTEGRALS **********************************/

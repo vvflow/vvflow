@@ -11,6 +11,7 @@ class flowmove
 		void VortexShed();
 		void StreakShed();
 		void HeatShed();
+		void CropHeat();
 
 		int CleanedV() {return CleanedV_;}
 		//int CleanedH();

@@ -188,7 +188,7 @@ void TBody::zero_variables()
 	const_for(AttachList, latt)
 	{
 		latt->pres = latt->gsum = latt->fric = latt->heat = 0;
-		latt->ParticleInHeatLayer = NULL;
+		latt->ParticleInHeatLayer = -1;
 	}
 }
 
