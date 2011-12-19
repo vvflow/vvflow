@@ -38,7 +38,6 @@ double InfSpeedX(double t)
 
 TVec InfSpeed(double t)
 {
-	return TVec(1,0);
 	const double k=1;
 	if (t<k) return TVec(t/k, 0);
 	else return TVec(1, 0);
@@ -108,7 +107,7 @@ int main(int argc, char** argv)
 
 		dbg(fm.HeatShed());
 
-		if (!(int(S->Time/dt)%10))
+		if (!(int(S->Time/dt)%int(save_dt/dt)))
 		{
 			double header[] = { S->Time, body->Angle, body->RotSpeed(S->Time)};
 			S->Save((string(dir)+string("/%06d.vb")).c_str(), header, 3);
