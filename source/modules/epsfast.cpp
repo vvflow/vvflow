@@ -40,7 +40,7 @@ void epsfast::CalcEpsilonFast(bool merge)
 			if (!*llobj) { continue; }
 			TObj &obj = **llobj;
 
-			obj._1_eps = 1./max(epsh(bnode, *llobj), eps_restriction);
+			obj._1_eps = 1./max(epsh(bnode, llobj, merge), eps_restriction);
 		}
 	}
 }
@@ -121,14 +121,25 @@ double epsfast::epsv(const TNode &Node, TObj **lv, bool merge)
 	return sqrt(res2);
 }
 
-double epsfast::epsh(const TNode &Node, TObj *lv)
+double epsfast::epsh(const TNode &Node, TObj **lv, bool merge)
 {
-	if (!lv) { return DBL_MIN; }
+	if (!lv || !*lv) { return DBL_MIN; }
 	TVec dr;
 	double res1, res2;
 	res2 = res1 = DBL_MAX;
 
-	TObj &v = *lv;
+	TObj &v = **lv;
+	TObj **lv1 = NULL;
+
+	double h2=DBL_MAX; //distance to body surface 
+	const_for(S->BodyList, llbody)
+	const_for((**llbody).List, lobj)
+	{
+		h2 = min(h2, (*lobj-TVec(Node.x, Node.y)).abs2());
+	}
+	if (h2 == DBL_MAX) h2 = 0;
+	double dl = sqr(S->AverageSegmentLength());
+	double criteria_sq = sqrt(h2)*dl;
 
 	const_for(Node.NearNodes, llnnode)
 	{
@@ -138,7 +149,7 @@ double epsfast::epsh(const TNode &Node, TObj *lv)
 		if (!hlist) {continue;}
 		const_for (hlist, llobj)
 		{
-			// if (!*llobj) { continue; } useless
+			if (!*llobj) { continue; }
 			TObj &obj = **llobj;
 			dr = v - obj;
 			double drabs2 = dr.abs2();
@@ -147,6 +158,7 @@ double epsfast::epsh(const TNode &Node, TObj *lv)
 			{
 				res2 = res1;
 				res1 = drabs2;
+				lv1 = llobj;
 			}
 			else if ( res2 > drabs2 )
 			{
@@ -157,6 +169,14 @@ double epsfast::epsh(const TNode &Node, TObj *lv)
 
 	if ( res1 == DBL_MAX ) return DBL_MIN;
 	if ( res2 == DBL_MAX ) return sqrt(res1);
+
+	TObj &v1 = **lv1;
+	if (res1 < criteria_sq)
+	{
+		MergeVortexes(lv, lv1);
+		return epsh(Node, lv, false);
+	}
+
 	return sqrt(res2);
 }
 

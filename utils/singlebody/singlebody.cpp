@@ -78,7 +78,7 @@ int main(int argc, char** argv)
 	fprintf(f, "dt = %g\n", dt);
 	fprintf(f, "save dt = %g\n", save_dt);
 	fprintf(f, "%-10s \t%-20s \t%-20s \t%-20s \t%-20s \t%-20s \t%-20s \t%-20s \t%-10s \t%-10s \t%-10s \t%-10s\n",
-			"Time", "Fx", "Fy", "Mz", "Friction_x", "Friction_y", "Friction_m", "Nusselt", "N vorts", "N heats", "Angle", "RotSpeed");
+			"Time", "Fx", "Fy", "Mz", "Friction_x", "Friction_y", "Friction_m", "Nusselt/L", "N vorts", "N heats", "Angle", "RotSpeed");
 	//fclose(f);
 
 	TVec ForceTmp(0, 0);

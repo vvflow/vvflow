@@ -202,9 +202,9 @@ void Space::CalcForces()
 		const_for(body.AttachList, latt)
 		{
 			tmp_gsum+= latt->gsum;
-			latt->Cp += tmp_gsum / S->dt;
+			latt->Cp += tmp_gsum;
 			latt->Fr += latt->fric * C_1_PiEpsmin; //FIXME wrong formula
-			latt->Nu += latt->hsum * (Re*Pr / S->dt / latt->dl);
+			latt->Nu += latt->hsum * (Re*Pr / latt->dl.abs());
 
 			body.Friction += latt->dl * (latt->fric * C_1_PiEpsmin / latt->dl.abs()); //FIXME wrong formula
 			body.Friction.g += (rotl(*latt)* latt->dl) * (latt->fric  * C_1_PiEpsmin / latt->dl.abs());

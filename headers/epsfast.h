@@ -17,7 +17,7 @@ class epsfast
 		
 		void MergeVortexes(TObj **lv1, TObj **lv2);
 		double epsv(const TNode &Node, TObj **lv, bool merge);
-		double epsh(const TNode &Node, TObj *lv);
+		double epsh(const TNode &Node, TObj **lv, bool merge);
 };
 
 #endif

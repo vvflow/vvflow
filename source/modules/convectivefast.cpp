@@ -138,6 +138,7 @@ void CalcConvectiveFast()
 	if (!BottomNodes) {cerr << "CalcConvectiveFast() is called before tree is built"
 	                        << endl; return; }
 
+	TVec InfSpeed_tmp = S->InfSpeed();
 	#pragma omp parallel for
 	const_for (BottomNodes, llbnode)
 	{
@@ -182,7 +183,7 @@ void CalcConvectiveFast()
 				if (!*llobj) {continue;}
 				TObj &obj = **llobj;
 				dr_local = obj - TVec(bnode.x, bnode.y);
-				obj.v += TVec(Teilor1, Teilor2) + S->InfSpeed() + SpeedSum(bnode, obj) +
+				obj.v += TVec(Teilor1, Teilor2) + InfSpeed_tmp + SpeedSum(bnode, obj) +
 				         TVec(TVec(Teilor3,  Teilor4)*dr_local,
 				              TVec(Teilor4, -Teilor3)*dr_local);
 			}
@@ -192,9 +193,10 @@ void CalcConvectiveFast()
 		{
 			const_for (bnode.HeatLList, llobj)
 			{
+				if (!*llobj) {continue;}
 				TObj &obj = **llobj;
 				dr_local = obj - TVec(bnode.x, bnode.y);
-				obj.v += TVec(Teilor1, Teilor2) + S->InfSpeed() + SpeedSum(bnode, obj) +
+				obj.v += TVec(Teilor1, Teilor2) + InfSpeed_tmp + SpeedSum(bnode, obj) +
 				         TVec(TVec(Teilor3,  Teilor4)*dr_local,
 				              TVec(Teilor4, -Teilor3)*dr_local);
 			}
@@ -206,7 +208,7 @@ void CalcConvectiveFast()
 			{
 				TObj &obj = **llobj;
 				dr_local = obj - TVec(bnode.x, bnode.y);
-				obj.v += TVec(Teilor1, Teilor2) + S->InfSpeed() + SpeedSum(bnode, obj) +
+				obj.v += TVec(Teilor1, Teilor2) + InfSpeed_tmp + SpeedSum(bnode, obj) +
 				         TVec(TVec(Teilor3,  Teilor4)*dr_local,
 				              TVec(Teilor4, -Teilor3)*dr_local);
 			}
@@ -461,6 +463,7 @@ void FillRightCol()
 		rot_sum+= tmp;
 	}
 
+	TVec InfSpeed_tmp = S->InfSpeed();
 	const_for (S->BodyList, llbody)
 	{
 		TBody &body = **llbody;
@@ -483,7 +486,7 @@ void FillRightCol()
 			{
 			case bc::slip:
 			case bc::noslip:
-				RightCol[latt->eq_no] = rotl(S->InfSpeed())*SegDl;
+				RightCol[latt->eq_no] = rotl(InfSpeed_tmp)*SegDl;
 				RightCol[latt->eq_no] -= NodeInfluence(*Node, *latt, Rd);
 				RightCol[latt->eq_no] -= AttachInfluence(*latt, Rd);
 				break;
