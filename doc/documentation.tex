@@ -15,6 +15,10 @@
 \newcommand{\comment}[1]{}
 \newcommand{\br}[1]{\boldsymbol{\mathrm{#1}}}
 \DeclareMathOperator{\rot}{rot}
+\newcommand{\Reyn}{\text{Re}}
+\newcommand{\Pran}{\text{Pr}}
+\newcommand{\Nuss}{\text{Nu}}
+
 %\newcommand{\br}[1]{\bm{\mathrm{#1}}}
 
 \newenvironment{packed_enum}{
@@ -193,18 +197,17 @@ $\Delta \gamma_i$ --- инзменение циркуляции в данной 
 $\Delta q_i$ --- аналогично для интенсивности.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Давление на поверхности}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Число Нуссельта}
 
-Локальный:
-$\text{Nu}_\text{loc} = \frac{\text{Re} \cdot \text{Pr}}{\Delta t \Delta l \Delta T} \sum q_i$
-Суммирование ведется по частицам, рожденным и умершим на данном отрезке.
-
-Средний:
-$\text{Nu}_\text{loc} = \dfrac{\sum \text{Nu}}{\sum \Delta l}$
-Суммирование по всем отрезкам
-
+Локальный: Суммирование ведется по частицам, рожденным и умершим на данном отрезке.
+$$\Nuss_\text{loc} = \dfrac{\Reyn \cdot \Pran}{\Delta t \Delta l \Delta T} \sum q_i$$
+Средний: Суммирование по всем отрезкам. Для каждого тела свой.
+$$\Nuss_\text{avg} = \dfrac{\sum (\Delta l_i \cdot \Nuss_\text{loc})}{\sum \Delta l_i}$$
 Интегральный:
-$\text{Nu}_\text{int} = \sum \text{Nu}$
+$$\Nuss_\text{int} = \sum ( \Delta l_i \cdot \Nuss_\text{loc})$$
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -226,7 +229,7 @@ $\br\rho_j = \br r - \br r_j$ - и так понятно \\
 I_1 = {\sum\limits_j \gamma_j e^{-\lvert\rho_j\rvert/\varepsilon}},
 %\end{equation*}
 %\begin{equation*}
-\br V_d = \dfrac{1}{\text{Re}} \dfrac{\br I_2}{I_1}
+\br V_d = \dfrac{1}{\Reyn} \dfrac{\br I_2}{I_1}
 \end{equation*}
 
 \begin{center}\setlength\fboxsep{0pt}
@@ -252,7 +255,7 @@ I_0 = {\varepsilon^2\sum\limits_k \dfrac{\lvert\rho_k\rvert /\varepsilon +1}{\rh
 \cdot(\br\rho_k \cdot d\br S_k)\cdot e^{-\lvert\rho_k\rvert/\varepsilon}},
 %\end{equation*}
 %\begin{equation*}
-\br W_d = \dfrac{1}{\text{Re}} \dfrac{\br I_3}{2\pi\varepsilon^2 - I_0}
+\br W_d = \dfrac{1}{\Reyn} \dfrac{\br I_3}{2\pi\varepsilon^2 - I_0}
 \end{equation*}
 
 \begin{center}\setlength\fboxsep{0pt}
@@ -264,7 +267,7 @@ I_0 = {\varepsilon^2\sum\limits_k \dfrac{\lvert\rho_k\rvert /\varepsilon +1}{\rh
 \subsection{Heat diffusive}
 
 \begin{equation*}
-{\br V_d}_\text{heat} = \frac {1}{\text{Pr}}\frac{1}{\text{Re}} \cdot\frac{\br I_2 + \br I_3}{I_1 - I_0}
+{\br V_d}_\text{heat} = \frac {1}{\Pran}\frac{1}{\Reyn} \cdot\frac{\br I_2 + \br I_3}{I_1 - I_0}
 \end{equation*}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -332,7 +335,7 @@ $\langle\Delta l \rangle=\dfrac{1}{N} \sum\limits_{i=0}^{N} \Delta l_i$ ---
 $N$ обычно выбирается на глаз.\\
 $\varepsilon_{min}=0.6\cdot\langle\Delta l \rangle$ --- 
 определено в модуле diffmergefast\\
-$\Delta t = \text{Re} \varepsilon_{min}^2 < 2 \text{Re} \varepsilon^2$\\
+$\Delta t = \Reyn \varepsilon_{min}^2 < 2 \Reyn \varepsilon^2$\\
 $r_d = ?$ --- а этот вопрос остается открытым \\
 
 \subsection{Схемная вязкость}
