@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <string.h>
+#include <time.h>
 
 #include "core.h"
 #include "epsfast.h"
@@ -150,6 +151,7 @@ int main(int argc, char** argv)
 
 	while (true)
 	{
+		time_t begining = clock();
 		dbg(BuildTree());
 		dbg(CalcCirculationFast(true));
 		dbg(DestroyTree());
@@ -195,6 +197,7 @@ int main(int argc, char** argv)
 		dbg(fm.MoveAndClean(true));
 		dbg(fm.CropHeat());
 		S->Time += S->dt;
+		fprintf(stderr, "%-5g %-7d %-7d %4.2lfs\r", S->Time, S->VortexList->size_safe(), S->HeatList->size_safe(), double(clock()-begining)/CLOCKS_PER_SEC);
 	}
 
 	fclose(f);

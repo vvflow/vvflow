@@ -13,8 +13,8 @@ clean:
 	rm -f $(exes)
 
 install:
-	cp vvplot vvparse $(exes) ~/.bin
+	cp vvplot vvxtract $(exes) ~/.bin
 
 uninstall:
-	rm -f $(patsubst  %,~/.bin/%, $(exes) vvplot vvparse)
+	rm -f $(patsubst  %,~/.bin/%, $(exes) vvplot vvxtract)
 
