@@ -143,7 +143,7 @@ int main(int argc, char** argv)
 	fprintf(f, "%-10s \t%-10s\n", "N vorts", "N heats");
 
 	double dl = S->AverageSegmentLength();
-	InitTree(S, 8, dl*20, 0.3);
+	InitTree(S, 8, dl*20, 0.1);
 	InitConvectiveFast(S, dl*dl/25);
 	epsfast eps(S);
 	diffusivefast diff(S, _1_nyu, Pr);
@@ -179,7 +179,7 @@ int main(int argc, char** argv)
 		             (**llbody).Friction.ry,
 		             (**llbody).Friction.g,
 		             (**llbody).Nusselt);
-		fprintf(f, "%-10ld \t%-10ld\n",
+		fprintf(f, "%-10ld \t%-10ld\t",
 		             S->VortexList->size_safe(),
 		             S->HeatList->size_safe());
 		fflush(f);
@@ -197,7 +197,10 @@ int main(int argc, char** argv)
 		dbg(fm.MoveAndClean(true));
 		dbg(fm.CropHeat());
 		S->Time += S->dt;
-		fprintf(stderr, "%-5g %-7d %-7d %4.2lfs\r", S->Time, S->VortexList->size_safe(), S->HeatList->size_safe(), double(clock()-begining)/CLOCKS_PER_SEC);
+		
+		double steptime = double(clock()-begining)/CLOCKS_PER_SEC;
+		fprintf(f, "%-10ld \n", steptime); fflush(f);
+		fprintf(stderr, "%-10g \t%-10d \t%-10d \t%6.2lfs\r", S->Time, S->VortexList->size_safe(), S->HeatList->size_safe(), steptime);
 	}
 
 	fclose(f);

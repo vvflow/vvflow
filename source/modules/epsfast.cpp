@@ -77,6 +77,17 @@ double epsfast::epsv(const TNode &Node, TObj **lv, bool merge)
 	TObj **lv1, **lv2;
 	lv1 = lv2 = NULL;
 
+	double h2=DBL_MAX; //distance to body surface 
+	const_for(S->BodyList, llbody)
+	const_for((**llbody).List, lobj)
+	{
+		h2 = min(h2, (*lobj-TVec(Node.x, Node.y)).abs2());
+		lobj+= 10; //approx body with less segments than it has
+	}
+	if (h2 == DBL_MAX) h2 = 0;
+	double dl = sqr(S->AverageSegmentLength());
+	double criteria_sq = 0.5*sqrt(h2)*dl;
+
 	const_for(Node.NearNodes, llnnode)
 	{
 		TNode &nnode = **llnnode;
@@ -109,7 +120,7 @@ double epsfast::epsv(const TNode &Node, TObj **lv, bool merge)
 	TObj &v1 = **lv1;
 	TObj &v2 = **lv2;
 	if ( 
-		(res1 < merge_criteria_sq)
+		(res1 < criteria_sq)
 		||
 		( (sign(v1) == sign(v2)) && (sign(v1) != sign(v)) ) 
 	   )

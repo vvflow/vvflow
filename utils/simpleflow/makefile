@@ -1,4 +1,4 @@
-CC = icc -O0 -openmp -g -debug all
+CC = icc -O3 -openmp
 
 all:
 	$(CC) simpleflow.cpp -o vvhd_sf $(VVHD) -std=c++0x -mkl=parallel
