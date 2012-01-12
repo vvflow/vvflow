@@ -25,7 +25,6 @@ modules_objects := flowmove flowmove2 epsfast diffusivefast convective convectiv
 VPATH := $(addprefix source/, $(parts) ) 
 # VPATH is special make var 
 
-optimization 	:= 
 warnings 		:= -Wall
 INCLUDE 		:= headers/
 
