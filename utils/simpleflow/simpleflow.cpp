@@ -199,7 +199,7 @@ int main(int argc, char** argv)
 		S->Time += S->dt;
 		
 		double steptime = double(clock()-begining)/CLOCKS_PER_SEC;
-		fprintf(f, "%-10ld \n", steptime); fflush(f);
+		fprintf(f, "%-10lf \n", steptime); fflush(f);
 		fprintf(stderr, "%-10g \t%-10d \t%-10d \t%6.2lfs\r", S->Time, S->VortexList->size_safe(), S->HeatList->size_safe(), steptime);
 	}
 
