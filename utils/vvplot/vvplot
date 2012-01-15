@@ -120,7 +120,7 @@ fi
 if test $(expr index "$options" b) != 0; then
 for ((i=5; i<10; i++)); do
 	BMname=$(head -c$(expr $i \* 16 + 16)  $1 | tail -c8);
-	if test "$BMname" = "Body"
+	if test "$BMname" = "Body" -o "$BMname" = "Body    "
 	then
 		beg=$(od -j$(expr $i \* 16) -N8 -An -w8 -td8 $1)
 		N=$(od -j$beg -N8 -An -w8 -td8 $1)

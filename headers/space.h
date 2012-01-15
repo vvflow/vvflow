@@ -46,7 +46,7 @@ class Space
 		int LoadHeatFromFile(const char* filename);
 
 		int LoadBody(const char* filename);
-		void EnumerateBodies();
+		void EnumerateBodies(bool cheat = false);
 		void ZeroBodies(); //zero Cp, Fr, Nu variables.
 
 		/***************** INTEGRALS ******************/

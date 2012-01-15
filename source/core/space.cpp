@@ -174,7 +174,7 @@ double* Space::Load(const char* fname, int* N)
 			body->InsideIsValid = body->isInsideValid();
 			body->UpdateAttach();
 		}
-		else cout << "S->Load(): ignoring field " << comment << endl;
+		else cout << "S->Load(): ignoring field \"" << comment << "\"\n";
 	}
 
 	EnumerateBodies();
@@ -372,14 +372,19 @@ int Space::LoadBody(const char* filename)
 	return 0;
 }
 
-void Space::EnumerateBodies()
+void Space::EnumerateBodies(bool cheat)
 {
 	int eq_no=0;
 	const_for(BodyList, llbody)
-	const_for((**llbody).AttachList, latt)
 	{
-		//FIXME load bc
-		latt->eq_no = eq_no++;
+		const_for((**llbody).AttachList, latt)
+		{
+			//FIXME load bc
+			if (cheat) latt->bc = bc::noslip;
+			latt->eq_no = eq_no++;
+		}
+
+		if (cheat) (**llbody).AttachList->begin()->bc = bc::steady;
 	}
 }
 
