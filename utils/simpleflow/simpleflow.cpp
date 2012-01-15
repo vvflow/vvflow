@@ -64,9 +64,9 @@ void getenv_alert(bool warning, const char* var)
 
 int main(int argc, char** argv)
 {
-	if (argc != 1) 
+	if (argc > 2)
 	{
-		cerr << "No arguments needed.\n";
+		cerr << "The only possible arg is filename to load.\n";
 		cerr << "All regime info is read from environment variables:\n";
 		cerr << "VV_name - Name of regime (uniq, no spaces)\n";
 		cerr << "VV_body - Bodies file names (different filenames are separated with space)\n";
@@ -128,6 +128,8 @@ int main(int argc, char** argv)
 	/**************************************************************************/
 
 	Space *S = new Space(InfSpeed);
+	if (argc>=2) S->Load(argv[1]);
+	delete *S->BodyList->begin(); S->BodyList->clear();
 	S->StreakList->push_back(TObj(1000, 0, 0));
 
 	{char tmp[256], mask[256];

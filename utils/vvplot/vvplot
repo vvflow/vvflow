@@ -95,19 +95,19 @@ fi; fi;
 echo -n "plot \"-\"" >&6
 
 if test $(expr index "$options" p) != 0; then echo -n ", '$1.map' w image" >&6; fi
-if test $(expr index "$options" v) != 0
+if test $(expr index "$options" v) != 0 -a $v_size -gt 0
 then
 	echo -n ", '$1' binary record=$v_size skip=($v_skip+8) format='%3float64' " >&6
 	echo -n "u 1:2:(prec_hi):(color(\$3)) w @vortex_style" >&6
 fi
 
-if test $(expr index "$options" h) != 0
+if test $(expr index "$options" h) != 0 -a $h_size -gt 0
 then
 	echo -n ", '$1' binary record=$h_size skip=($h_skip+8) format='%3float64' " >&6
 	echo -n "u 1:2:(prec_hi) w @heat_style" >&6
 fi
 
-if test $(expr index "$options" i) != 0
+if test $(expr index "$options" i) != 0 -a $i_size -gt 0
 then
 	echo -n ", '$1' binary record=$i_size skip=($i_skip+8) format='%3float64' " >&6
 	echo -n "u 1:2:(prec_hi) w @ink_style" >&6

@@ -27,6 +27,13 @@ TBody::TBody(Space *sS)
 	Force = TObj(0,0,0); 
 }
 
+TBody::~TBody()
+{
+	delete List;
+	delete HeatLayerList;
+	delete AttachList;
+}
+
 /*int TBody::LoadFromFile(const char* filename, int start_eq_no)
 {
 	if (!this) return -1;

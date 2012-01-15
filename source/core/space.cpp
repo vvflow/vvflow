@@ -59,7 +59,7 @@ void SaveList(vector<TObj> *list, FILE* fout)
 	}
 }
 
-void LoadList(vector<TObj> *list, FILE* fin)
+void LoadList(vector<TObj> *&list, FILE* fin)
 {
 	int64_t size; fread(&size, 8, 1, fin);
 	TObj obj;
@@ -98,7 +98,7 @@ void Space::Save(const char* format, const double header[], int N)
 	int bookmark = 4;
 	const_for(BodyList, llbody)
 	{
-		SaveBookmark(fout, ++bookmark, "Body");
+		SaveBookmark(fout, ++bookmark, "Body    ");
 		SaveList((**llbody).List, fout);
 		TObj rot;
 		rot = (**llbody).RotAxis;
@@ -115,7 +115,7 @@ int eq(const char *str1, const char *str2)
 	{
 		if (str1[i] != str2[i]) return i+1;
 	}
-	return 0;
+	return 9;
 }
 
 double* Space::Load(const char* fname, int* N)
@@ -150,11 +150,11 @@ double* Space::Load(const char* fname, int* N)
 		if (!tmp) continue;
 		fseek(fin, tmp, SEEK_SET);
 
-		     if (!eq(comment, "Vortexes")) LoadList(VortexList, fin);
-		else if (!eq(comment, "Heat    ")) LoadList(HeatList, fin);
-		else if (!eq(comment, "StrkSrc ")) LoadList(StreakSourceList, fin);
-		else if (!eq(comment, "Streak  ")) LoadList(StreakList, fin);
-		else if (eq(comment, "Body    ")>=5)
+		     if (eq(comment, "Vortexes")>8) LoadList(VortexList, fin);
+		else if (eq(comment, "Heat    ")>8) LoadList(HeatList, fin);
+		else if (eq(comment, "StrkSrc ")>8) LoadList(StreakSourceList, fin);
+		else if (eq(comment, "Streak  ")>8) LoadList(StreakList, fin);
+		else if (eq(comment, "Body    ")>4)
 		{
 			TBody *body = new TBody(this);
 			BodyList->push_back(body);
@@ -174,7 +174,7 @@ double* Space::Load(const char* fname, int* N)
 			body->InsideIsValid = body->isInsideValid();
 			body->UpdateAttach();
 		}
-		else cout << "ignoring field " << comment << endl;
+		else cout << "S->Load(): ignoring field " << comment << endl;
 	}
 
 	EnumerateBodies();
