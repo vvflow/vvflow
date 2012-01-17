@@ -114,7 +114,9 @@ then
 fi
 
 if test $(expr index "$options" s) != 0; then
-echo -n ", for [i in \"$(seq -s ' ' -1 0.04 1) $VV_ISOLINES\"] isoline(i) w lines lw 2 lc rgb \"#000000\"" >&6
+#echo -n ", for [i in \"$(seq -s ' ' -1 0.04 1) $VV_ISOLINES\"] isoline(i) w lines lw 2 lc rgb \"#000000\"" >&6
+echo -n ",\"< isoline_exe $1.psi $(seq -s ' ' -1 0.04 1)\" w dots lw 2 lc rgb \"#000000\"" >&6
+echo -n ",\"< isoline_exe $1.psi 0\" w lines lw 2 lc rgb \"#00FF00\"" >&6
 fi
 
 if test $(expr index "$options" b) != 0; then
