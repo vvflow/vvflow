@@ -1,5 +1,5 @@
 CC = icc -O3 -openmp
-names:= presplot isoline streamlines
+names:= presplot isoline streamlines heatplot
 exes:= $(patsubst %,%_exe, $(names))
 
 all: $(exes)

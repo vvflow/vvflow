@@ -180,6 +180,7 @@ double epsfast::epsh(const TNode &Node, TObj **lv, bool merge)
 
 	if ( res1 == DBL_MAX ) return DBL_MIN;
 	if ( res2 == DBL_MAX ) return sqrt(res1);
+	if (!merge) return sqrt(res2);
 
 	TObj &v1 = **lv1;
 	if (res1 < criteria_sq)

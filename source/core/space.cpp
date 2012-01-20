@@ -465,5 +465,6 @@ double Space::AverageSegmentLength()
 		N+= (**llbody).size() - 1;
 	}
 
+	if (!N) return DBL_MIN;
 	return SurfaceLength / N;
 }
