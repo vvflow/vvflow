@@ -1,5 +1,6 @@
 #include "stdio.h"
 #include "stdlib.h"
+#include "float.h"
 #include "iostream"
 #include "malloc.h"
 #include <time.h>
@@ -21,14 +22,14 @@ void ProcessRect(double x1, double x2, double y1, double y2, double z11,
 	Vec vecs[4];
 	int N=0;
 
-	if ( (z11<C && C<z12) || (z12<C && C<z11) )
+	if ( (z11<=C && C<=z12) || (z12<=C && C<=z11) )
 	{
 		vecs[N].x = x1;
 		vecs[N].y = y1 + (C-z11)*(y2-y1)/(z12-z11);
 		N++;
 	}
 
-	if ( (z22<C && C<z21) || (z21<C && C<z22) )
+	if ( (z22<=C && C<=z21) || (z21<=C && C<=z22) )
 	{
 		vecs[N].x = x2;
 		vecs[N].y = y1 + (C-z21)*(y2-y1)/(z22-z21);
@@ -49,24 +50,24 @@ void ProcessRect(double x1, double x2, double y1, double y2, double z11,
 		N++;
 	}
 
-	if (N==1 || N==3) {cerr << "Fanatactic!\n"; exit(-4); }
-	if (N==2)
+	/*if (N==1 || N==3)
 	{
-		//#pragma omp critical(print)
-		{
-			printf("%lg\t%lg\n", vecs[0].x, vecs[0].y);
-			printf("%lg\t%lg\n", vecs[1].x, vecs[1].y);
-			printf("\n");
-		}
+		fprintf(stderr, "%lf %lf %lf %lf\n", x1, y1, x2, y2);
+		fprintf(stderr, "%lf %lf %lf %lf %lf\n", z11, z12, z21, z22, C);
+		cerr << ((C==z22)?1:0) << endl;
+		cerr << "Fantastic! N=="<<N<<"!\n"; exit(-4);
+	}*/
+	if (N>=2)
+	{
+		printf("%lg\t%lg\n", vecs[0].x, vecs[0].y);
+		printf("%lg\t%lg\n", vecs[1].x, vecs[1].y);
+		printf("\n");
 	}
 	if (N==4)
 	{
-		//#pragma omp critical(print)
-		{
-			printf("%lg\t%lg\n", vecs[2].x, vecs[2].y);
-			printf("%lg\t%lg\n", vecs[3].x, vecs[3].y);
-			printf("\n");
-		}
+		printf("%lg\t%lg\n", vecs[2].x, vecs[2].y);
+		printf("%lg\t%lg\n", vecs[3].x, vecs[3].y);
+		printf("\n");
 	}
 }
 
@@ -88,13 +89,14 @@ int main(int argc, char **argv)
 	yaxis = (double*) malloc(sizeof(double));
 	data = (double*) malloc(sizeof(double));
 
-	double x, y, z;
+	double x, y, z, zmin=DBL_MAX, zmax=-DBL_MAX;
+	#define fixz() zmin=min(zmin, z); zmax=max(zmax, z)
 	int imax=0, jmax=0;
 
 	if (fscanf(fin, "%lf %lf %lf", &x, &y, &z) != 3) Panic;
 	xaxis[0] = x;
 	yaxis[0] = y;
-	data[0] = z;
+	data[0] = z; fixz();
 
 	while(true)
 	{
@@ -105,7 +107,7 @@ int main(int argc, char **argv)
 		yaxis = (double*)realloc(yaxis, (jmax+1)*sizeof(double));
 		data = (double*)realloc(data, (jmax+1)*sizeof(double));
 		yaxis[jmax] = y;
-		data[jmax] = z;
+		data[jmax] = z; fixz();
 	}
 
 	bool go = true;
@@ -122,7 +124,7 @@ int main(int argc, char **argv)
 				xaxis[imax] = x;
 			}
 
-			data[(jmax+1)*imax + j] = z;
+			data[(jmax+1)*imax + j] = z; fixz();
 
 			if (fscanf(fin, "%lf %lf %lf", &x, &y, &z) != 3)
 				if (j==jmax) {go=false;}
@@ -144,6 +146,7 @@ int main(int argc, char **argv)
 	for (int c=2; c<argc; c++)
 	{
 		double C = atof(argv[c]);
+		if (C<zmin || C>zmax) continue;
 		for (int i=0; i<=(imax-1); i++)
 		{
 			//#pragma omp parallel for

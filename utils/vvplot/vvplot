@@ -21,19 +21,14 @@ then
 	exit 0
 fi
 
+if test ! -e $1; then echo "No such file or directory: $1" >&2; exit -2; fi
+
 v_skip=$(od -j16 -N8 -An -w8 -td8 $1)
 v_size=$(od -j$v_skip -N8 -An -w8 -td8 $1)
 h_skip=$(od -j32 -N8 -An -w8 -td8 $1)
 h_size=$(od -j$h_skip -N8 -An -w8 -td8 $1)
 i_skip=$(od -j64 -N8 -An -w8 -td8 $1)
 i_size=$(od -j$i_skip -N8 -An -w8 -td8 $1)
-
-if test $i_size -eq 1
-then
-x_offset=$(od -j$(expr $i_skip + 8) -N8 -w8 -An -tf8 $1)
-else
-x_offset=1000
-fi
 
 time=$(printf "%7.3f\n" $(od -j$(expr $v_skip - 8) -N8 -tf8 -w8 -An $1) )
 timestamp=$(od -j$(expr $v_skip - 16) -N8 -td8 -w8 -An $1)
@@ -42,6 +37,13 @@ dt=$(printf "%g" $(od -j$(expr $v_skip - 48) -N8 -tf8 -w8 -An $1) )
 Re=$(printf "%g" $(od -j$(expr $v_skip - 40) -N8 -tf8 -w8 -An $1) )
 vx=$(printf "%g" $(od -j$(expr $v_skip - 32) -N8 -tf8 -w8 -An $1) )
 vy=$(printf "%g" $(od -j$(expr $v_skip - 24) -N8 -tf8 -w8 -An $1) )
+
+if test $i_size -eq 1
+then
+x_offset=$(od -j$(expr $i_skip + 8) -N8 -w8 -An -tf8 $1)
+else
+x_offset="1000 + $time"
+fi
 
 pipe="/tmp/pipe.$$.tmp"
 mkfifo $pipe
@@ -92,6 +94,8 @@ isoline(C) = sprintf(\"< isoline_exe $1.psi %s %f %f %f %f %f\", C, prec_lo, xmi
 
 if test $(expr index "$options" p) != 0; then
 echo "set cbrange [-1.5:1]" >&6
+echo "set label \"-1.5\" at graph 0.096, 0.039 right front" >&6
+echo "set label \"1\" at graph 0.904, 0.039 left front" >&6
 echo "set palette maxcolors 33 defined (-1.5 \"#0829d5\", -0.5 \"#1ffcff\", 0 \"#2ef62e\", 0.3 \"yellow\", 1 \"red\")" >&6
 if test ! -e $1.map -o $(expr index "$options" f) != 0; then
 echo "\`presplot_exe $1 @prec_hi_c @xmin_c @xmax_c @ymin_c @ymax_c\`" >&6
@@ -135,7 +139,7 @@ fi
 
 if test $(expr index "$options" s) != 0; then
 #echo -n ", for [i in \"$(seq -s ' ' -1 0.04 1) $VV_ISOLINES\"] isoline(i) w lines lw 2 lc rgb \"#000000\"" >&6
-echo -n ",\"< isoline_exe $1.psi $(seq -s ' ' -5 0.1 5)\" w lines lw 2 lc rgb \"#000000\"" >&6
+echo -n ",\"< isoline_exe $1.psi $(seq -s ' ' -10 0.1 10)\" w lines lw 2 lc rgb \"#000000\"" >&6
 #echo -n ",\"< isoline_exe $1.psi 0\" w lines lw 2 lc rgb \"#00FF00\"" >&6
 fi
 
