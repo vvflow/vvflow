@@ -247,9 +247,9 @@ void Space::SaveProfile(const char* fname, double save_dt, TValues vals)
 			buf[4] = latt->Nu/save_dt;
 
 			fwrite(buf, 4, 2, fout);
-			if (vals & val::Cp) fwrite(buf+2, 4, 1, fout);
-			if (vals & val::Fr) fwrite(buf+3, 4, 1, fout);
-			if (vals & val::Nu) fwrite(buf+4, 4, 1, fout);
+			if (vals_32 & val::Cp) fwrite(buf+2, 4, 1, fout);
+			if (vals_32 & val::Fr) fwrite(buf+3, 4, 1, fout);
+			if (vals_32 & val::Nu) fwrite(buf+4, 4, 1, fout);
 		}
 	}
 	fclose(fout);

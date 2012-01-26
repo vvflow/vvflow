@@ -1,5 +1,6 @@
-CC = icc -O3 -openmp
-names:= presplot isoline streamlines heatplot
+CC = icc -O0 -openmp -g -debug all
+names:= presplot isoline streamlines heatplot vvdistrib
+scripts:= vvplot vvxtract vvjoin
 exes:= $(patsubst %,%_exe, $(names))
 
 all: $(exes)
@@ -11,8 +12,8 @@ clean:
 	rm -f $(exes)
 
 install:
-	cp vvplot vvxtract $(exes) ~/.bin
+	cp $(scripts) $(exes) ~/.bin
 
 uninstall:
-	rm -f $(patsubst  %,~/.bin/%, $(exes) vvplot vvxtract)
+	rm -f $(patsubst  %,~/.bin/%, $(exes) $(scripts))
 
