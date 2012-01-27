@@ -33,34 +33,39 @@ int main(int argc, char** argv)
 	int Fr = 1;//(vals & val::Fr)?1:0; //bug is already fixed, but results arent
 	int Nu = 1;//(vals & val::Nu)?1:0;
 
-	if (argc >= 2)
-	{
-		fprintf(stderr, "Available values: %c%c%c\n", Cp?'p':'-', Nu?'n':'-', Fr?'f':'-');
-		fprintf(stderr, "Available time intervals: ");
-
-		int count=0;
-		float tmp, dt=0, start=-FLT_MAX, prev=-FLT_MAX/2;
-		while ( fread(&tmp, 4, 1, fin)==1)
+	if (argc != 5)
+	{ 
+		if (argc >= 2)
 		{
-			if (!dt && (start!=prev)) start = tmp; else
-			if (start == prev) dt = tmp-prev; else
-			if (tmp != prev+dt)
+			fprintf(stderr, "Body segments: %d\n", N);
+			fprintf(stderr, "Available values: %c%c%c\n", Cp?'p':'-', Nu?'n':'-', Fr?'f':'-');
+			fprintf(stderr, "Available time intervals:\n");
+
+			int count=0;
+			float tmp, dt=0, start=-FLT_MAX, prev=-FLT_MAX/2;
+			while ( fread(&tmp, 4, 1, fin)==1)
 			{
-				fprintf(stderr, "[%g, %g]/%g; ", start, prev, dt);
-				start = tmp;
-				dt = 0;
+				if (!dt && (start!=prev)) start = tmp; else
+				if (start == prev) dt = tmp-prev; else
+				if (abs(prev+dt-tmp)>0.1*dt)
+				{
+					fprintf(stderr, "[%g, %g] / %g; \n", start, prev, dt);
+					start = tmp;
+					dt = 0;
+				}
+
+				prev = tmp;
+				fseek(fin, N*4*(2+Cp+Fr+Nu), SEEK_CUR);
+				count++;
 			}
+			fprintf(stderr, "[%g, %g] / %g; \n", start, prev, dt);
+			fprintf(stderr, "Total records: %d\n", count);
 
-			prev = tmp;
-			fseek(fin, N*4*(2+Cp+Fr+Nu), SEEK_CUR);
-			count++;
+			fseek(fin, 8, SEEK_SET);
+		
 		}
-		fprintf(stderr, "Total records: %d\n", count);
-
-		fseek(fin, 8, SEEK_SET);
+	return -1;
 	}
-
-	if (argc != 5) return -1;
 
 	float t_min = atof(argv[2]);
 	float t_max = atof(argv[3]);
