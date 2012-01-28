@@ -142,7 +142,7 @@ int main(int argc, char** argv)
 	for (int i=0; i<S->BodyList->size(); i++)
 	fprintf(f, "%-20s \t%-20s \t%-20s \t%-20s \t%-20s \t%-20s \t%-20s \t",
 			"Fx", "Fy", "Mz", "Friction_x", "Friction_y", "Friction_m", "Nusselt/L");
-	fprintf(f, "%-10s \t%-10s\n", "N vorts", "N heats");
+	fprintf(f, "%-10s \t%-10s \t%-10s\n", "N vorts", "N heats", "time");
 
 	double dl = S->AverageSegmentLength();
 	InitTree(S, 8, dl*20, 0.1);

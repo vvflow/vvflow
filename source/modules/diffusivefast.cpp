@@ -161,7 +161,7 @@ void diffusivefast::SegmentInfluence(const TObj &v, TAtt *rk,
 	*i3 += dS * expres;
 	*i0 += (drabs*v._1_eps+1)/drabs2*(dr*dS)*expres;
 
-	rk->fric += sqr(v._1_eps) * v.g * expres;
+	rk->fric += sqr(v._1_eps) * v.g * expres * dS.abs();
 }
 
 

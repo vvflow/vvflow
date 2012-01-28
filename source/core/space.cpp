@@ -193,7 +193,8 @@ FILE* Space::OpenFile(const char* format)
 
 void Space::CalcForces()
 {
-	const double C_1_PiEpsmin = 1/(C_PI*0.6*AverageSegmentLength());
+	const double C_NyuDt_Pi = dt/(C_PI*Re);
+	const double C_Nyu_Pi = 1./(C_PI*Re);
 	#define body (**llbody)
 	const_for(BodyList, llbody)
 	{
@@ -203,18 +204,18 @@ void Space::CalcForces()
 		{
 			tmp_gsum+= latt->gsum;
 			latt->Cp += tmp_gsum;
-			latt->Fr += latt->fric * C_1_PiEpsmin; //FIXME wrong formula
+			latt->Fr += latt->fric * C_NyuDt_Pi;
 			latt->Nu += latt->hsum * (Re*Pr / latt->dl.abs());
 
-			body.Friction += latt->dl * (latt->fric * C_1_PiEpsmin / latt->dl.abs()); //FIXME wrong formula
-			body.Friction.g += (rotl(*latt)* latt->dl) * (latt->fric  * C_1_PiEpsmin / latt->dl.abs());
+			body.Friction += latt->dl * (latt->fric * C_Nyu_Pi / latt->dl.abs());
+			body.Friction.g += (rotl(*latt)* latt->dl) * (latt->fric  * C_Nyu_Pi / latt->dl.abs());
 			body.Nusselt += latt->hsum * (Re*Pr);
 		}
 
 		body.Force /= dt;
 		body.Force.g /= dt;
-		body.Friction /= dt;
-		body.Friction.g /= dt;
+		//body.Friction /= dt;
+		//body.Friction.g /= dt;
 		body.Nusselt /= dt;
 	}
 	#undef body
@@ -250,6 +251,8 @@ void Space::SaveProfile(const char* fname, double save_dt, TValues vals)
 			if (vals_32 & val::Cp) fwrite(buf+2, 4, 1, fout);
 			if (vals_32 & val::Fr) fwrite(buf+3, 4, 1, fout);
 			if (vals_32 & val::Nu) fwrite(buf+4, 4, 1, fout);
+
+			latt->Cp = latt->Fr = latt->Nu = 0;
 		}
 	}
 	fclose(fout);
@@ -261,9 +264,6 @@ void Space::ZeroForces()
 	{
 		const_for((**llbody).AttachList, latt)
 		{
-			latt->Cp =
-			latt->Fr =
-			latt->Nu =
 			latt->gsum =
 			latt->fric =
 			latt->hsum = 0;
