@@ -60,7 +60,7 @@ void diffusivefast::CalcVortexDiffusiveFast()
 						     (*lljobj <  (**llbody).List->end()) )
 							body = *llbody;
 					if (!body) { continue; }
-					SegmentInfluence(obj, body->att(*lljobj), &S3, &S0);
+					SegmentInfluence(obj, body->att(*lljobj), &S3, &S0, true);
 				}
 			}
 
@@ -117,7 +117,7 @@ void diffusivefast::CalcHeatDiffusiveFast()
 						     (*lljobj <  (**llbody).List->end()) )
 							body = *llbody;
 					if (!body) { continue; }
-					SegmentInfluence(obj, body->att(*lljobj), &S3, &S0);
+					SegmentInfluence(obj, body->att(*lljobj), &S3, &S0, false);
 				}
 			}
 
@@ -149,7 +149,7 @@ void diffusivefast::VortexInfluence(const TObj &v, const TObj &vj, TVec *i2, dou
 
 inline
 void diffusivefast::SegmentInfluence(const TObj &v, TAtt *rk,
-                                     TVec *i3, double *i0)
+                                     TVec *i3, double *i0, bool calc_friction)
 {
 	TVec dr = v - *rk;
 	double drabs2 = dr.abs2();
@@ -161,7 +161,8 @@ void diffusivefast::SegmentInfluence(const TObj &v, TAtt *rk,
 	*i3 += dS * expres;
 	*i0 += (drabs*v._1_eps+1)/drabs2*(dr*dS)*expres;
 
-	rk->fric += sqr(v._1_eps) * v.g * expres * dS.abs();
+	if (calc_friction)
+		rk->fric += sqr(v._1_eps) * v.g * expres * dS.abs();
 }
 
 

@@ -90,6 +90,12 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
 					inlayer->ParticleInHeatLayer = hlist->find(lobj);
 				}
 				break;
+		} else
+		if ( fabs(lobj->g) < RemoveEps )
+		{
+			//remove merged particles
+			hlist->erase(lobj);
+			lobj--;
 		}
 	}
 

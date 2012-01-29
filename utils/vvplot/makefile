@@ -1,4 +1,4 @@
-CC = icc -O0 -openmp -g -debug all
+CC = icc -O3 -openmp
 names:= presplot isoline streamlines heatplot vvdistrib
 scripts:= vvplot vvxtract vvjoin
 exes:= $(patsubst %,%_exe, $(names))

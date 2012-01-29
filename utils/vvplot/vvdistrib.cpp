@@ -29,9 +29,9 @@ int main(int argc, char** argv)
 	int32_t vals; fread(&vals, 4, 1, fin);
 	int32_t N; fread(&N, 4, 1, fin);
 
-	int Cp = 1;//(vals & val::Cp)?1:0; //remove it when you dont plot bugged results
-	int Fr = 1;//(vals & val::Fr)?1:0; //bug is already fixed, but results arent
-	int Nu = 1;//(vals & val::Nu)?1:0;
+	int Cp = (vals & val::Cp)?1:0; //remove it when you dont plot bugged results
+	int Fr = (vals & val::Fr)?1:0; //bug is already fixed, but results arent
+	int Nu = (vals & val::Nu)?1:0;
 
 	if (argc != 5)
 	{ 
