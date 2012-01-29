@@ -40,9 +40,16 @@ vy=$(printf "%g" $(od -j$(expr $v_skip - 24) -N8 -tf8 -w8 -An $1) )
 
 if test $i_size -eq 1
 then
-x_offset=$(od -j$(expr $i_skip + 8) -N8 -w8 -An -tf8 $1)
+	x_offset=$(od -j$(expr $i_skip + 8) -N8 -w8 -An -tf8 $1)
 else
-x_offset="1000 + $time"
+	x_offset="1000 + $time"
+fi
+
+if test -z "$5"
+then
+	y_offset="0"
+else
+	y_offset="$5"
 fi
 
 pipe="/tmp/pipe.$$.tmp"
@@ -69,8 +76,8 @@ echo "
 set macros
 xmin = $3 + ($x_offset - 1000 - $time);    xmin_c = sprintf(\"%f\", xmin);
 xmax = $4 + ($x_offset - 1000 - $time);    xmax_c = sprintf(\"%f\", xmax);
-ymin = -($4-$3)*9./32. + $5; ymin_c = sprintf(\"%f\", ymin);
-ymax =  ($4-$3)*9./32. + $5; ymax_c = sprintf(\"%f\", ymax);
+ymin = -($4-$3)*9./32. - $y_offset; ymin_c = sprintf(\"%f\", ymin);
+ymax =  ($4-$3)*9./32. - $y_offset; ymax_c = sprintf(\"%f\", ymax);
 prec_hi = ($4-$3)/500.;      prec_hi_c = sprintf(\"%f\", prec_hi);
 prec_lo = ($4-$3)/200.;      prec_lo_c = sprintf(\"%f\", prec_lo);
 set xrange [xmin: xmax]

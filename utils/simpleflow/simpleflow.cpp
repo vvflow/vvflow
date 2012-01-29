@@ -128,9 +128,14 @@ int main(int argc, char** argv)
 	/**************************************************************************/
 
 	Space *S = new Space(InfSpeed);
-	if (argc>=2) S->Load(argv[1]);
-	delete *S->BodyList->begin(); S->BodyList->clear();
-	S->StreakList->push_back(TObj(1000, 0, 0));
+	if (argc>=2)
+	{
+		S->Load(argv[1]);
+		const_for(S->BodyList, llbody)
+			delete *llbody;
+		S->BodyList->clear();
+	} else
+		S->StreakList->push_back(TObj(1000, 0, 0));
 
 	{char tmp[256], mask[256];
 	while(sscanf(body_env, gen_mask(mask, S->BodyList->size()), tmp) > 0)
