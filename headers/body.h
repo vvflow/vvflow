@@ -29,7 +29,7 @@ class TAtt : public TVec
 
 		TAtt(){}
 		//TAtt(TBody *body, int eq_no);
-		void zero() { rx = ry = g = q = gsum = hsum = Cp = Fr = Nu = 0; }
+		void zero() { rx = ry = g = q = gsum = hsum = Cp = Fr = Nu = 0; ParticleInHeatLayer = -1; }
 		TAtt& operator= (const TVec& p) { rx=p.rx; ry=p.ry; return *this; }
 
 	public:
