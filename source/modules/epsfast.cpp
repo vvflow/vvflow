@@ -16,12 +16,21 @@ void epsfast::CalcEpsilonFast(bool merge)
 {
 	merged_ = 0;
 	eps_restriction = 0.6*S->AverageSegmentLength();
-	merge_criteria_sq = 0.09*sqr(S->AverageSegmentLength());
+	double tmp_merge_criteria_sq = 0.16*sqr(S->AverageSegmentLength());
 
 	auto bnodes = GetTreeBottomNodes();
 	const_for(bnodes, llbnode)
 	{
 		TNode &bnode = **llbnode;
+
+		double h2=DBL_MAX; //distance to body surface 
+		const_for(S->BodyList, llbody)
+		const_for((**llbody).List, lobj)
+		{
+			h2 = min(h2, (*lobj-TVec(bnode.x, bnode.y)).abs2());
+			lobj+= 10; //speed up
+		}
+		merge_criteria_sq = (h2==DBL_MAX)?0:(h2+1) * tmp_merge_criteria_sq;
 
 		auto vlist = bnode.VortexLList;
 		if (vlist)
@@ -77,18 +86,6 @@ double epsfast::epsv(const TNode &Node, TObj **lv, bool merge)
 	TObj **lv1, **lv2;
 	lv1 = lv2 = NULL;
 
-	/*
-	double h2=DBL_MAX; //distance to body surface 
-	const_for(S->BodyList, llbody)
-	const_for((**llbody).List, lobj)
-	{
-		h2 = min(h2, (*lobj-TVec(Node.x, Node.y)).abs2());
-		lobj+= 10; //approx body with less segments than it has
-	}
-	if (h2 == DBL_MAX) h2 = 0;
-	double criteria_sq = 0.5*sqrt(h2)*S->AverageSegmentLength();
-	*/
-	
 	const_for(Node.NearNodes, llnnode)
 	{
 		TNode &nnode = **llnnode;
@@ -143,15 +140,6 @@ double epsfast::epsh(const TNode &Node, TObj **lv, bool merge)
 	TObj &v = **lv;
 	TObj **lv1 = NULL;
 
-	double h2=DBL_MAX; //distance to body surface 
-	const_for(S->BodyList, llbody)
-	const_for((**llbody).List, lobj)
-	{
-		h2 = min(h2, (*lobj-TVec(Node.x, Node.y)).abs2());
-	}
-	if (h2 == DBL_MAX) h2 = 0;
-	double criteria_sq = sqrt(h2)*S->AverageSegmentLength();
-
 	const_for(Node.NearNodes, llnnode)
 	{
 		TNode &nnode = **llnnode;
@@ -183,7 +171,7 @@ double epsfast::epsh(const TNode &Node, TObj **lv, bool merge)
 	if (!merge) return sqrt(res2);
 
 	TObj &v1 = **lv1;
-	if (res1 < criteria_sq)
+	if (res1 < merge_criteria_sq)
 	{
 		MergeVortexes(lv, lv1);
 		return epsh(Node, lv, false);

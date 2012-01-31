@@ -164,8 +164,6 @@ int main(int argc, char *argv[])
 	dl = S->AverageSegmentLength();
 	InitTree(S, 8, dl*20, DBL_MAX);
 	BuildTree();
-	FILE  *tree = fopen("tree", "w");
-	PrintBottomNodes(tree);
 
 	#pragma omp parallel for
 	const_for(GetTreeBottomNodes(), llbnode)
