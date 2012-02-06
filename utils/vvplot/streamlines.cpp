@@ -115,8 +115,7 @@ int main(int argc, char *argv[])
 		for( int j=0; j<jmax; j++)
 		{
 			double y = ymin + double(j)*prec;
-			double t = PointIsInvalid(S, TVec(x, y)) ? 
-			           0./0. : Psi(S, TVec(x, y));
+			double t = Psi(S, TVec(x, y));
 
 			#pragma omp ordered
 			{fprintf(fout, "%lg \t%lg \t%lg\n", x, y, t);}

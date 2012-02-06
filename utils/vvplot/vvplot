@@ -14,10 +14,15 @@ then
 	echo "-f - update fields files even if the exist"
 	echo "-h - plot heat particles"
 	echo "-t - plot temperature field"
+	echo "-o - plot isotherms"
 	echo "-i - plot ink (streaklines)"
 	echo "-p - plot pressure field"
 	echo "-s - plot streamlines"
 	echo "-v - plot vortex domains"
+
+	echo "Additional environmental variables:"
+	echo 'VV_ISOPSI - streamlines levels (default $(seq -s ' ' -10 0.1 10))'
+	echo 'VV_ISOTHERMS - temperature isolines (default $(seq -s ' ' 0.05 0.05 0.95))'
 	exit 0
 fi
 
@@ -113,6 +118,9 @@ echo "set cbrange [0:1]" >&6
 echo "set label \"0\" at graph 0.096, 0.039 right front" >&6
 echo "set label \"1\" at graph 0.904, 0.039 left front" >&6
 echo "set palette maxcolors 33 defined (0 \"#0829d5\", 0.3 \"#1ffcff\", 0.5 \"red\", 1 \"yellow\", 2 \"white\")" >&6
+fi
+
+if test $(expr index "$options" o) != 0 -o  $(expr index "$options" t) != 0; then
 if test ! -e $1.heat -o $(expr index "$options" f) != 0; then
 echo "\`heatplot_exe $1 @prec_hi_c @xmin_c @xmax_c @ymin_c @ymax_c\`" >&6
 fi; fi;
@@ -145,9 +153,13 @@ then
 fi
 
 if test $(expr index "$options" s) != 0; then
-#echo -n ", for [i in \"$(seq -s ' ' -1 0.04 1) $VV_ISOLINES\"] isoline(i) w lines lw 2 lc rgb \"#000000\"" >&6
-echo -n ",\"< isoline_exe $1.psi $(seq -s ' ' -10 0.1 10)\" w lines lw 2 lc rgb \"#000000\"" >&6
-#echo -n ",\"< isoline_exe $1.psi 0\" w lines lw 2 lc rgb \"#00FF00\"" >&6
+if test -z "$VV_ISOPSI"; then VV_ISOPSI=$(seq -s ' ' -10 0.1 10); fi
+echo -n ",\"< isoline_exe $1.psi $VV_ISOPSI\" w lines lw 2 lc rgb \"#000000\"" >&6
+fi
+
+if test $(expr index "$options" o) != 0; then
+if test -z "$VV_ISOTHERMS"; then VV_ISOTHERMS=$(seq -s ' ' 0.05 0.05 0.95); fi
+echo -n ",\"< isoline_exe $1.heat $VV_ISOTHERMS\" w lines lw 2 lc rgb \"#000000\"" >&6
 fi
 
 if test $(expr index "$options" b) != 0; then
