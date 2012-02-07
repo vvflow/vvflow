@@ -96,7 +96,7 @@ int main(int argc, char** argv)
 
 	for (int i=0; i<N; i++)
 	{
-		printf("%g \t%g \t %g\n", x[i], y[i], z[i]);
+		printf("%g \t%g \t %g\n", x[i], y[i], z[i]/count);
 	}
 
 	return 0;
