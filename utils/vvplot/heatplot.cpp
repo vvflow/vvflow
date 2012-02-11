@@ -55,7 +55,7 @@ double eps2h(const TNode &Node, TVec p)
 	}
 
 	if ( res1 == DBL_MAX ) return DBL_MIN;
-	if ( res2 == DBL_MAX ) return sqrt(res1);
+	if ( res2 == DBL_MAX ) return res1;
 
 	return res2;
 }
@@ -127,7 +127,7 @@ double Temperature(Space* S, TVec p)
 		const_for (hlist, llobj)
 		{
 			double exparg = -(p-**llobj).abs2() * (**llobj).v.rx; // v.rx stores eps^(-2)
-			T+= (exparg>-100) ? (**llobj).v.ry * exp(exparg) : 0; // v.ry stores g*eps(-2)
+			T+= (exparg>-10) ? (**llobj).v.ry * exp(exparg) : 0; // v.ry stores g*eps(-2)
 		}
 		#undef nnode
 	}
@@ -171,7 +171,7 @@ int main(int argc, char *argv[])
 		if (!(**llbnode).HeatLList) continue;
 		const_for((**llbnode).HeatLList, llobj)
 		{
-			(**llobj).v.rx = 1./(sqr(EPS_MULT)*max(eps2h(**llbnode, **llobj), 0.6*dl));
+			(**llobj).v.rx = 1./(sqr(EPS_MULT)*max(eps2h(**llbnode, **llobj), sqr(0.6*dl)));
 			(**llobj).v.ry = (**llobj).v.rx*(**llobj).g;
 		}
 	}
