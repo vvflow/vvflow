@@ -11,7 +11,7 @@ class flowmove
 		void VortexShed();
 		void StreakShed(double shed_dt);
 		void HeatShed();
-		void CropHeat(double scale = 15);
+		void CropHeat(double scale = 16);
 
 		int CleanedV() {return CleanedV_;}
 		//int CleanedH();

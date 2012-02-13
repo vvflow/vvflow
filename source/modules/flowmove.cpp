@@ -197,29 +197,9 @@ void flowmove::HeatShed()
 void flowmove::CropHeat(double scale)
 {
 	if (!S->HeatList) return;
-	TVec c(0,0), r(0,0);
-	int N=0;
-	const_for(S->BodyList, llbody)
-	const_for((**llbody).List, lobj)
-	{
-		c+= *lobj;
-		N++;
-	}
-	c/= N;
-
-	const_for(S->BodyList, llbody)
-	const_for((**llbody).List, lobj)
-	{
-		r.rx = max(r.rx, (lobj->rx - c.rx));
-		r.ry = max(r.ry, (lobj->ry - c.ry));
-	}
-	r *= scale;
-
-	TVec bl(c-r), tr(c+r);
 	const_for(S->HeatList, lobj)
 	{
-		if ((lobj->rx > tr.rx) || (lobj->rx < bl.rx) ||
-		    (lobj->ry > tr.ry) || (lobj->ry < bl.ry))
+		if (lobj->rx > scale)
 			S->HeatList->erase(lobj);
 	}
 }
