@@ -70,7 +70,7 @@ int main(int argc, char** argv)
 		cerr << "All regime info is read from environment variables:\n";
 		cerr << "VV_name - Name of regime (uniq, no spaces)\n";
 		cerr << "VV_body - Bodies file names (different filenames are separated with space)\n";
-		cerr << "VV_infx - InfSpeedX (gnuplot command, assuming $t is time)\n";
+		cerr << "VV_infx - InfSpeedX (bash command, assuming $t is time)\n";
 		cerr << "VV_infy - InfSpeedY --||--\n";
 		cerr << "VV_1_nyu - \\frac{1}{\\nyu}\n";
 		cerr << "VV_Pr (optional) - Prandtl Number (default = 1)\n";
@@ -95,7 +95,9 @@ int main(int argc, char** argv)
 	if (!infx_env) { getenv_alert(false, "VV_infx"); error = true; }
 	if (!infy_env) { getenv_alert(false, "VV_infy"); error = true; }
 	if (!nyu_env) { getenv_alert(false, "VV_1_nyu"); error = true; }
+	if (!Pr_env) { getenv_alert(true, "VV_Pr"); }
 	if (!dt_env) { getenv_alert(false, "VV_dt"); error = true; }
+	if (!save_dt_env) { getenv_alert(true, "VV_save_dt"); }
 	if (error) { cerr << "Exiting.\n"; return -1; }
 
 	char dir[256]; sprintf(dir, "results_%s", name_env);
@@ -165,7 +167,7 @@ int main(int argc, char** argv)
 
 		dbg(fm.HeatShed());
 
-		if (!(int(S->Time/dt)%int(save_dt/dt)))
+		if (divisible(S->Time, save_dt, dt/2))
 		{
 			char tmp[256]; sprintf(tmp, "%s/%%06d.vb", dir);
 			S->Save(tmp);

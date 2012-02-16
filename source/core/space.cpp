@@ -223,7 +223,7 @@ void Space::CalcForces()
 
 void Space::SaveProfile(const char* fname, double save_dt, TValues vals)
 {
-	if (Time - int(Time/save_dt)*save_dt > dt/10) return;
+	if (!divisible(Time, save_dt, dt/2)) return;
 	int32_t vals_32=vals, N=0;
 	const_for(BodyList, llbody) { N+= (**llbody).size(); }
 	if (!N) return;

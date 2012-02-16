@@ -1,5 +1,6 @@
 #!/bin/bash
 
+exif_cmd="$0 $*"
 while test "${1:0:1}" = "-"
 do
 	options="$options${1:1}"
@@ -180,7 +181,8 @@ exec 6>&-
 rm $pipe
 wait
 
-comment="time = $time; dt = $dt; Re = $Re; Vx = $vx; Vy = $vy;"
+comment=$(echo -en "time = $time; dt = $dt; Re = $Re; Vx = $vx; Vy = $vy;
+Command = '$exif_cmd'")
 exiv2 \
 -M"set Exif.Photo.DateTimeOriginal $realtime" \
 -M"set Exif.Image.DateTime $realtime" \

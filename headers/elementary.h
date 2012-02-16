@@ -21,6 +21,14 @@ inline double sign(double x) { return (x>0) ? 1 : ((x<0) ? -1 : 0); }
 inline double sqr(double x) { return x*x; }
 inline double max(double a, double b) { return(a>b)?a:b; }
 inline double min(double a, double b) { return(a<b)?a:b; }
+inline bool divisible(double dividend, double divisor, double precision) {
+	return (fabs(dividend-int(dividend/divisor+0.5)*divisor) < precision);
+	// divisible = кратно
+	// dividend = делимое
+	// divisor = делитель
+	// precision = точность
+	// возвращает true если первый аргумент кратен второму с заданной точностью
+}
 
 class TVec
 {
