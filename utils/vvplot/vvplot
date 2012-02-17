@@ -24,6 +24,8 @@ then
 	echo "Additional environmental variables:"
 	echo 'VV_ISOPSI - streamlines levels (default $(seq -s ' ' -10 0.1 10))'
 	echo 'VV_ISOTHERMS - temperature isolines (default $(seq -s ' ' 0.05 0.05 0.95))'
+	echo 'HEATPLOT_EPS_MULT - smooth temperature field picture (default 2)'
+	echo 'HEATPLOT_BODY_TEMP - body surface temperature (default 1)'
 	exit 0
 fi
 

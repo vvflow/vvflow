@@ -73,7 +73,7 @@ void LoadList(vector<TObj> *&list, FILE* fin)
 
 void Space::Save(const char* format, const double header[], int N)
 {
-	char fname[64]; sprintf(fname, format, int(Time/dt));
+	char fname[64]; sprintf(fname, format, int(Time/dt+0.5));
 	FILE *fout = fopen(fname, "rb+");
 	if (!fout) fout = fopen(fname, "wb");
 	if (!fout) { perror("Error saving the space"); return; }
@@ -184,7 +184,7 @@ double* Space::Load(const char* fname, int* N)
 
 FILE* Space::OpenFile(const char* format)
 {
-	char fname[64]; sprintf(fname, format, int(Time/dt));
+	char fname[64]; sprintf(fname, format, int(Time/dt+0.5));
 	FILE *fout;
 	fout = fopen(fname, "w");
 	if (!fout) { perror("Error opening file"); return NULL; }
