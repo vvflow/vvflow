@@ -44,6 +44,8 @@ class Space
 		int LoadVorticityFromFile(const char* filename);
 		int LoadVorticity_bin(const char* filename);
 		int LoadHeatFromFile(const char* filename);
+		int LoadStreak(const char* filename);
+		int LoadStreakSource(const char* filename);
 
 		int LoadBody(const char* filename);
 		void EnumerateBodies(bool cheat = false);

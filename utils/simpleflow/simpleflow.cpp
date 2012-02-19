@@ -76,6 +76,8 @@ int main(int argc, char** argv)
 		cerr << "VV_Pr (optional) - Prandtl Number (default = 1)\n";
 		cerr << "VV_dt - dt\n";
 		cerr << "VV_save_dt (optional) - dt between saves (default = 0.05)\n";
+		cerr << "VV_streak (optional) - file with streak particles\n";
+		cerr << "VV_streak_source (optional) - file with streak sources\n";
 		cerr << "\ninfx example:\n";
 		cerr << "echo \"print(\\\"%g\\\", $t<1?$t:1)\" | gnuplot - smooth start\n";
 		return -1;
@@ -90,6 +92,8 @@ int main(int argc, char** argv)
 	char *Pr_env = getenv("VV_Pr");
 	char *dt_env = getenv("VV_dt");
 	char *save_dt_env = getenv("VV_save_dt");
+	char *streak_env = getenv("VV_streak");
+	char *streak_source_env = getenv("VV_streak_source");
 	if (!name_env) { getenv_alert(false, "VV_name"); error = true; }
 	if (!body_env) { getenv_alert(false, "VV_body"); error = true; }
 	if (!infx_env) { getenv_alert(false, "VV_infx"); error = true; }
@@ -98,6 +102,8 @@ int main(int argc, char** argv)
 	if (!Pr_env) { getenv_alert(true, "VV_Pr"); }
 	if (!dt_env) { getenv_alert(false, "VV_dt"); error = true; }
 	if (!save_dt_env) { getenv_alert(true, "VV_save_dt"); }
+	if (!streak_env) { getenv_alert(true, "VV_streak"); }
+	if (!streak_source_env) { getenv_alert(true, "VV_streak_source"); }
 	if (error) { cerr << "Exiting.\n"; return -1; }
 
 	char dir[256]; sprintf(dir, "results_%s", name_env);
@@ -136,8 +142,16 @@ int main(int argc, char** argv)
 		const_for(S->BodyList, llbody)
 			delete *llbody;
 		S->BodyList->clear();
+		if (S->StreakList->size() < 2)
+			if (streak_env) S->LoadStreak(streak_env);
+		if (!S->StreakSourceList->size())
+			if (streak_source_env) S->LoadStreakSource(streak_source_env);
 	} else
+	{
 		S->StreakList->push_back(TObj(1000, 0, 0));
+		if (streak_env) S->LoadStreak(streak_env);
+		if (streak_source_env) S->LoadStreakSource(streak_source_env);
+	}
 
 	{char tmp[256], mask[256];
 	while(sscanf(body_env, gen_mask(mask, S->BodyList->size()), tmp) > 0)

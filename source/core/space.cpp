@@ -336,6 +336,36 @@ int Space::LoadHeatFromFile(const char* filename)
 	return 0;
 }
 
+int Space::LoadStreak(const char* filename)
+{
+	FILE *fin = fopen(filename, "r");
+	if (!fin) { perror("Error opening streak file"); return -1; }
+
+	TObj obj(0, 0, 0);
+	while ( fscanf(fin, "%lf %lf %lf", &obj.rx, &obj.ry, &obj.g)==3 )
+	{
+		StreakList->push_back(obj);
+	}
+
+	fclose(fin);
+	return 0;
+}
+
+int Space::LoadStreakSource(const char* filename)
+{
+	FILE *fin = fopen(filename, "r");
+	if (!fin) { perror("Error opening streak source file"); return -1; }
+
+	TObj obj(0, 0, 0);
+	while ( fscanf(fin, "%lf %lf %lf", &obj.rx, &obj.ry, &obj.g)==3 )
+	{
+		StreakSourceList->push_back(obj);
+	}
+
+	fclose(fin);
+	return 0;
+}
+
 int Space::LoadBody(const char* filename)
 {
 	TBody *body = new TBody(this);
