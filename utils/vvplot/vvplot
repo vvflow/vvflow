@@ -9,17 +9,20 @@ done
 
 if test $# -lt 4
 then
-	echo "Usage: $0 [options] file.vb output.png xmin xmax [y_offset]"
+	echo "Usage: $0 -[bfhiopstv01] file.vb output.png xmin xmax [y_offset]"
 	echo "Possible options are:"
-	echo "-b - plot body"
-	echo "-f - update fields files even if the exist"
-	echo "-h - plot heat particles"
-	echo "-t - plot temperature field"
-	echo "-o - plot isotherms"
-	echo "-i - plot ink (streaklines)"
-	echo "-p - plot pressure field"
-	echo "-s - plot streamlines"
-	echo "-v - plot vortex domains"
+	echo "-b - plot Body"
+	echo "-f - update Fields files even if the exist"
+	echo "-h - plot Heat particles"
+	echo "-i - plot Ink (streaklines)"
+	echo "-o - plot isOtherms"
+	echo "-p - plot Pressure field"
+	echo "-s - plot Streamlines"
+	echo "-t - plot Temperature field"
+	echo "-v - plot Vortex domains"
+	echo "-0 - change reference frame connected with fluid"
+	echo "-1 - reference frame, steady moving relative fluid at rate (-1, 0)"
+	echo "if neither -0 nor -1 are mentioned - body reference frame is present (as in computation)"
 
 	echo "Additional environmental variables:"
 	echo 'VV_ISOPSI - streamlines levels (default $(seq -s ' ' -10 0.1 10))'
@@ -46,11 +49,17 @@ Re=$(printf "%g" $(od -j$(expr $v_skip - 40) -N8 -tf8 -w8 -An $1) )
 vx=$(printf "%g" $(od -j$(expr $v_skip - 32) -N8 -tf8 -w8 -An $1) )
 vy=$(printf "%g" $(od -j$(expr $v_skip - 24) -N8 -tf8 -w8 -An $1) )
 
-if test $i_size -eq 1
+x_offset=0
+if test $i_size -ge 1
 then
-	x_offset=$(od -j$(expr $i_skip + 8) -N8 -w8 -An -tf8 $1)
-else
-	x_offset="1000 + $time"
+	x_marker=$(od -j$(expr $i_skip + 8) -N8 -w8 -An -tf8 $1)
+	if test $(expr index "$options" 0) -ne 0
+	then
+		x_offset="$x_marker - 1000"
+	elif test $(expr index "$options" 1) -ne 0
+	then
+		x_offset="$x_marker - 1000 - $time"
+	fi
 fi
 
 if test -z "$5"
@@ -82,10 +91,10 @@ unset ytics
 
 echo "
 set macros
-xmin = $3 + ($x_offset - 1000 - $time);    xmin_c = sprintf(\"%f\", xmin);
-xmax = $4 + ($x_offset - 1000 - $time);    xmax_c = sprintf(\"%f\", xmax);
-ymin = -($4-$3)*9./32. - $y_offset; ymin_c = sprintf(\"%f\", ymin);
-ymax =  ($4-$3)*9./32. - $y_offset; ymax_c = sprintf(\"%f\", ymax);
+xmin = $3 - ($x_offset);    xmin_c = sprintf(\"%f\", xmin);
+xmax = $4 - ($x_offset);    xmax_c = sprintf(\"%f\", xmax);
+ymin = -($4-$3)*9./32. - ($y_offset); ymin_c = sprintf(\"%f\", ymin);
+ymax =  ($4-$3)*9./32. - ($y_offset); ymax_c = sprintf(\"%f\", ymax);
 prec_hi = ($4-$3)/500.;      prec_hi_c = sprintf(\"%f\", prec_hi);
 prec_lo = ($4-$3)/200.;      prec_lo_c = sprintf(\"%f\", prec_lo);
 set xrange [xmin: xmax]

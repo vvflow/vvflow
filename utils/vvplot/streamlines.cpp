@@ -68,7 +68,7 @@ double Psi(Space* S, TVec p)
 	}
 	psi3*= -0.5*C_1_2PI;
 
-	return psi1 + psi2 + psi3 + p*rotl(S->InfSpeed());
+	return psi1 + psi2 + psi3;// + p*rotl(S->InfSpeed());
 }
 
 int main(int argc, char *argv[])
