@@ -1,0 +1,109 @@
+#!/usr/bin/python
+
+import sys
+import math
+import os
+import struct
+
+def printHelp():
+	print "Usage: %s -[ bBfhHiopstv01 ] input.vb output.png xmin xmax [y_offset]" % sys.argv[0]
+	print "\nPossible options are:"
+	print "  -b - plot Body"
+	print "  -B - choose body reference frame (default among -0 and -1)"
+	print "  -f - update fields files even if the exist"
+	print "  -h - display this message and exit"
+	print "  -H - plot Heat particles"
+	print "  -i - plot Ink (streaklines)"
+	print "  -o - plot isOtherms"
+	print "  -p - plot Pressure field"
+	print "  -s - plot streamlines"
+	print "  -t - plot Temperature field"
+	print "  -v - plot vortex domains"
+	print "  -0 - choose reference frame, strictly connected to fluid"
+	print "  -1 - choose reference frame, moving respectively fluid at rate (-1, 0)"
+
+	print "\nAdditional environmental variables:"
+	print "  VV_ISOPSI - streamlines levels (default $(seq -s \' \' -10 0.1 10))"
+	print "  VV_ISOTHERMS - temperature isolines (default $(seq -s \' \' 0.05 0.05 0.95))"
+	print "  HEATPLOT_EPS_MULT - smooth temperature field picture (default 2)"
+	print "  HEATPLOT_BODY_TEMP - body surface temperature (default 1)"
+
+########################### PARSING COMMAND LINE ###############################
+argv = sys.argv
+
+opts = ""
+while len(sys.argv)>1 and sys.argv[1][0] == '-':
+	opts+= sys.argv[1][1:]
+	del sys.argv[1]
+
+if opts.find('h')>=0 or len(opts)==0: printHelp(); exit();
+if len(sys.argv) < 5: print "Not enough arguments. See -h for help."; exit();
+if len(sys.argv) > 6: print "Too many arguments. See -h for help."; exit();
+
+try: fin = open(sys.argv[1]);
+except IOError: print "Can not open file: %s" %sys.argv[1]; exit();
+
+fout = sys.argv[2]
+
+try: xmin = float(sys.argv[3]);
+except ValueError: print "Bad xmin value: %s" % sys.argv[3]; exit();
+
+try: xmax = float(sys.argv[4]);
+except ValueError: print "Bad xmax value: %s" % sys.argv[4]; exit();
+
+if len(sys.argv) > 5: y_offset = float(sys.argv[5]);
+else: y_offset = 0.0
+
+#now we've got (argv, opts, fin, fout, xmin, xmax, y_offset
+
+############################ PARSING OPTIONS ###################################
+
+v_skip, h_skip, i_skip = struct.unpack("16xq8xq24xq", fin.read(72))
+fin.seek(v_skip); v_size = struct.unpack("q", fin.read(8))[0]
+fin.seek(h_skip); h_size = struct.unpack("q", fin.read(8))[0]
+fin.seek(i_skip); i_size = struct.unpack("q", fin.read(8))[0]
+
+print v_skip, v_size, h_skip, h_size,i_skip, i_size
+
+fin.seek(v_skip-48);
+dt, Re, vx, vy, timestamp, time = struct.unpack("ddddqd", fin.read(48))
+realtime = os.popen("date -d \"1970-01-01 %d sec GMT\" +\"%%F %%H:%%M:%%S\"" % timestamp).read()
+fin.seek(i_skip); marker_x, marker_y = struct.unpack("8x2d", fin.read(24));
+
+############################## CALC OFFSETS ####################################
+
+if (opts.count('B') + opts.count('0') + opts.count('1')) > 1:
+	print "Too many reference frames options -{B|0|1}"
+	exit()
+elif opts.find('B')>=0:
+	print "Body RF"
+	x_offset = 0.0
+elif opts.find('0')>=0:
+	print "0 RF"
+	x_offset = marker_x - 1000
+	y_offset+= marker_y
+else: #'1'
+	print "-1 RF"
+	x_offset = marker_x - 1000 - time
+	y_offset+= marker_y
+
+print v_skip, v_size, h_skip, h_size,i_skip, i_size
+print x_offset, y_offset
+
+xmin+= x_offset
+ymin = -(xmax-xmin)*9.0/32.0 - y_offset
+ymax =  (xmax-xmin)*9.0/32.0 - y_offset
+prec_hi = (xmax-xmin)/500.0;
+prec_lo = (xmax-xmin)/200.0;
+
+############################## CALL GNUPLOT ####################################
+
+gp = os.popen("gnuplot", "w")
+gp.write("set terminal pngcairo enhanced size 1280, 720 font \"FreeSerif, 26\"\n")
+gp.write("set output '%s'\n" % fout)
+gp.write("set lmargin 0; set rmargin 0; set bmargin 0; set tmargin 0;\n")
+gp.write("unset key; set border 0; set zeroaxis; unset xtics; unset ytics\n")
+gp.write("set xrange [%f: %f]; set yrange [%f: %f]\n" % (xmin, xmax, ymin, ymax))
+gp.write("set colorbox horizontal user origin .1,.02 size .8,.04\n")
+
+
