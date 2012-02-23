@@ -5,6 +5,18 @@ import math
 import os
 import struct
 
+class delimiter:
+	"""First time it prints 'plot', else it prints comma
+	"""
+	def __init__(self):
+		self.first = True;
+	def get(self):
+		if self.first:
+			self.first = False
+			return "plot"
+		else:
+			return ","
+
 def printHelp():
 	print "Usage: %s -[ bBfhHiopstv01 ] input.vb output.png xmin xmax [y_offset]" % sys.argv[0]
 	print "\nPossible options are:"
@@ -29,7 +41,9 @@ def printHelp():
 	print "  HEATPLOT_BODY_TEMP - body surface temperature (default 1)"
 
 ########################### PARSING COMMAND LINE ###############################
-argv = sys.argv
+argv = "";
+for i in sys.argv:
+	argv+= i+" "
 
 opts = ""
 while len(sys.argv)>1 and sys.argv[1][0] == '-':
@@ -40,9 +54,10 @@ if opts.find('h')>=0 or len(opts)==0: printHelp(); exit();
 if len(sys.argv) < 5: print "Not enough arguments. See -h for help."; exit();
 if len(sys.argv) > 6: print "Too many arguments. See -h for help."; exit();
 
-try: fin = open(sys.argv[1]);
-except IOError: print "Can not open file: %s" %sys.argv[1]; exit();
+try: ffin = open(sys.argv[1]);
+except IOError: print "Can not open file: %s" % sys.argv[1]; exit();
 
+fin = sys.argv[1]
 fout = sys.argv[2]
 
 try: xmin = float(sys.argv[3]);
@@ -51,24 +66,32 @@ except ValueError: print "Bad xmin value: %s" % sys.argv[3]; exit();
 try: xmax = float(sys.argv[4]);
 except ValueError: print "Bad xmax value: %s" % sys.argv[4]; exit();
 
-if len(sys.argv) > 5: y_offset = float(sys.argv[5]);
+if len(sys.argv) > 5: y_offset = -float(sys.argv[5]);
 else: y_offset = 0.0
 
-#now we've got (argv, opts, fin, fout, xmin, xmax, y_offset
+#now we've got (argv, opts, fin, fout, ffin namein, nameout, xmin, xmax, y_offset
 
 ############################ PARSING OPTIONS ###################################
 
-v_skip, h_skip, i_skip = struct.unpack("16xq8xq24xq", fin.read(72))
-fin.seek(v_skip); v_size = struct.unpack("q", fin.read(8))[0]
-fin.seek(h_skip); h_size = struct.unpack("q", fin.read(8))[0]
-fin.seek(i_skip); i_size = struct.unpack("q", fin.read(8))[0]
+v_skip, h_skip, i_skip = struct.unpack("16xq8xq24xq", ffin.read(72))
+ffin.seek(v_skip); v_size = struct.unpack("q", ffin.read(8))[0]
+ffin.seek(h_skip); h_size = struct.unpack("q", ffin.read(8))[0]
+ffin.seek(i_skip); i_size = struct.unpack("q", ffin.read(8))[0]
 
-print v_skip, v_size, h_skip, h_size,i_skip, i_size
+bodies = list()
+for i in range(5, 11):
+	ffin.seek(i*16); buf = ffin.read(16);
+	if buf[8:].startswith("Body"):
+		b_skip = struct.unpack("q", buf[0:8])[0]
+		ffin.seek(b_skip); b_size = struct.unpack("q", ffin.read(8))[0]
+		bodies.append( (b_skip, b_size) );
 
-fin.seek(v_skip-48);
-dt, Re, vx, vy, timestamp, time = struct.unpack("ddddqd", fin.read(48))
+ffin.seek(v_skip-48);
+dt, Re, vx, vy, timestamp, time = struct.unpack("ddddqd", ffin.read(48))
 realtime = os.popen("date -d \"1970-01-01 %d sec GMT\" +\"%%F %%H:%%M:%%S\"" % timestamp).read()
-fin.seek(i_skip); marker_x, marker_y = struct.unpack("8x2d", fin.read(24));
+ffin.seek(i_skip); marker_x, marker_y = struct.unpack("8x2d", ffin.read(24));
+
+ffin.close()
 
 ############################## CALC OFFSETS ####################################
 
@@ -76,34 +99,138 @@ if (opts.count('B') + opts.count('0') + opts.count('1')) > 1:
 	print "Too many reference frames options -{B|0|1}"
 	exit()
 elif opts.find('B')>=0:
-	print "Body RF"
+	#print "Body RF"
 	x_offset = 0.0
 elif opts.find('0')>=0:
-	print "0 RF"
+	#print "0 RF"
 	x_offset = marker_x - 1000
 	y_offset+= marker_y
 else: #'1'
-	print "-1 RF"
+	#print "-1 RF"
 	x_offset = marker_x - 1000 - time
 	y_offset+= marker_y
 
-print v_skip, v_size, h_skip, h_size,i_skip, i_size
-print x_offset, y_offset
-
 xmin+= x_offset
+xmax+= x_offset
 ymin = -(xmax-xmin)*9.0/32.0 - y_offset
 ymax =  (xmax-xmin)*9.0/32.0 - y_offset
-prec_hi = (xmax-xmin)/500.0;
-prec_lo = (xmax-xmin)/200.0;
+prec_hi = (xmax-xmin)/500.0
+prec_lo = (xmax-xmin)/200.0
+
+############################## CALC FIELDS #####################################
+
+#PRESS FIELD
+#if test ! -e $1.map -o $(expr index "$options" f) != 0; then
+#echo "\`presplot_exe $1 @prec_hi_c @xmin_c @xmax_c @ymin_c @ymax_c\`" >&6
+#fi; fi;
+
+#TEMP FIELD
+#if test $(expr index "$options" o) != 0 -o  $(expr index "$options" t) != 0; then
+#if test ! -e $1.heat -o $(expr index "$options" f) != 0; then
+#echo "\`heatplot_exe $1 @prec_hi_c @xmin_c @xmax_c @ymin_c @ymax_c\`" >&6
+#fi; fi;
+
+#PSI FIELD
+#if test $(expr index "$options" s) != 0; then
+#if test ! -e $1.psi -o $(expr index "$options" f) != 0; then
+#echo "\`streamlines_exe $1 @prec_lo_c @xmin_c @xmax_c @ymin_c @ymax_c\`" >&6
+#fi; fi;
 
 ############################## CALL GNUPLOT ####################################
 
 gp = os.popen("gnuplot", "w")
-gp.write("set terminal pngcairo enhanced size 1280, 720 font \"FreeSerif, 26\"\n")
-gp.write("set output '%s'\n" % fout)
-gp.write("set lmargin 0; set rmargin 0; set bmargin 0; set tmargin 0;\n")
-gp.write("unset key; set border 0; set zeroaxis; unset xtics; unset ytics\n")
-gp.write("set xrange [%f: %f]; set yrange [%f: %f]\n" % (xmin, xmax, ymin, ymax))
-gp.write("set colorbox horizontal user origin .1,.02 size .8,.04\n")
+gp.write("""
+set terminal pngcairo enhanced size 1280, 720 font "FreeSerif, 26"
+set output '%s'
+""" % fout)
+
+gp.write("""
+set lmargin 0
+set rmargin 0
+set bmargin 0
+set tmargin 0
+unset key
+set border 0
+set zeroaxis
+unset xtics
+unset ytics
+set xrange [%f: %f]
+set yrange [%f: %f]
+""" % (xmin, xmax, ymin, ymax))
+
+gp.write("""
+set colorbox horizontal user origin .1,.02 size .8,.04
+set label "t = %f" at graph 0.05, 0.90 front
+set macros
+dots = "dots lc rgb variable"
+vortex_style = "circles lc rgb variable fs transparent solid 0.3 noborder"
+heat_style = "circles lc rgb 'black' fs transparent solid 0.3 noborder"
+ink_style = "circles lc rgb 'black' fs transparent solid 1 noborder"
+body_style = "filledcurve lc rgb '#adadad' lw 2 fs solid border -1"
+""" % time)
+
+gp.write("""
+color(x) = (x>0) ? 0xFF0000 : 0x0000FF
+isoline(C) = sprintf("< isoline_exe %s.psi %%s %f %f %f %f %f", C)
+""" % (fin, prec_lo, xmin, xmax, ymin, ymax))
+
+if opts.count('p') > 0:
+	gp.write("""
+	set cbrange [-1.5:1]
+	set label "-1.5" at graph 0.096, 0.039 right front
+	set label "1" at graph 0.904, 0.039 left front
+	set palette maxcolors 33 defined (-1.5 "#0829d5", -0.5 "#1ffcff", 0 "#2ef62e", 0.3 "yellow", 1 "red")
+	""")
+
+if opts.count('t') > 0:
+	gp.write("""
+	set cbrange [0:1]
+	set label "0" at graph 0.096, 0.039 right front
+	set label "1" at graph 0.904, 0.039 left front
+	set palette maxcolors 33 defined (0 "#0829d5", 0.3 "#1ffcff", 0.5 "red", 1 "yellow", 2 "white")
+	""")
+
+delim = delimiter()
+if opts.count('p') > 0: gp.write("""%s '$1.map' w image""" % delim.get())
+if opts.count('t') > 0: gp.write("""%s '$1.heat' w image""" % delim.get())
+if opts.count('v') > 0 and v_size > 0:
+	gp.write("""%s '%s' binary record=%d skip=%d format='%%3float64'""" % (delim.get(), fin, v_size, v_skip+8))
+	gp.write(""" u 1:2:(%f):(color($3)) w @vortex_style""" % prec_hi)
+if opts.count('H') > 0 and h_size > 0:
+	gp.write("""%s '%s' binary record=%d skip=%d format='%%3float64' """ % (delim.get(), fin, h_size, h_skip+8))
+	gp.write(""" u 1:2:(%f) w @heat_style""" % prec_hi)
+if opts.count('i') > 0 and i_size > 1:
+	gp.write("""%s '%s' binary record=%d skip=%d format='%%3float64' """ % (delim.get(), fin, i_size-1, i_skip+16))
+	gp.write(""" u 1:2:(%f) w @ink_style""" % prec_hi)
+if opts.count('s') > 0:
+	vv_isopsi = os.getenv("VV_ISOPSI") or os.popen("seq -s ' ' -10 0.1 10").read()
+	gp.write("""%s "< isoline_exe %s.psi %s" w lines lw 2 lc rgb 'black'""" % (delim.get(), fin, vv_isopsi))
+if opts.count('o') > 0:
+	vv_isotherms = os.getenv("VV_ISOTHERMS") or os.popen("seq -s ' ' 0.05 0.05 0.95").read()
+	gp.write("""%s "< isoline_exe %s.heat %s" w lines lw 2 lc rgb 'black'""" % (delim.get(), fin, vv_isotherms))
+if opts.count('b') > 0:
+	for b in bodies:
+		gp.write("""%s '%s' binary record=%d skip=%d format='%%3float64' u 1:2 w @body_style""" % (delim.get(), fin, b[1], b[0]+8))
+
+gp.write("\n")
+gp.flush()
+gp.close()
+
+############################ WRITE EXIF DATA ###################################
+
+comment = """argv = %s
+time = %g
+realtime = %s
+dt = %g
+Re = %g
+V = (%g, %g)
+offset = (%g, %g)
+xrange = [%g, %g]
+yrange = [%g, %g]""" % (argv, time, realtime, dt, Re, vx, vy, x_offset, y_offset, xmin, xmax, ymin, ymax)
+
+executable = """exiv2 -M"set Exif.Photo.DateTimeOriginal %s" """ % realtime
+executable+= """      -M"set Exif.Image.DateTime %s" """ % realtime
+executable+= """      -M"set Exif.Photo.UserComment charset=Ascii %s" """ % comment
+os.popen("%s %s" % (executable, fout))
 
 

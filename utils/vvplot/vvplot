@@ -110,9 +110,7 @@ heat_style = \"circles lc rgb 'black' fs transparent solid 0.3 noborder\"
 ink_style = \"circles lc rgb 'black' fs transparent solid 1 noborder\"
 body_style = \"filledcurve lc rgb \\\"#adadad\\\" lw 2 fs solid border -1 \"
 
-set palette color
-rgb(r,g,b) = 65536 * int(r) + 256 * int(g) + int(b)
-color(x) = (x>0) ? rgb(255,0,0) : rgb(0,0,255)
+color(x) = (x>0) ? 0xFF0000 : 0x0000FF
 isoline(C) = sprintf(\"< isoline_exe $1.psi %s %f %f %f %f %f\", C, prec_lo, xmin, xmax, ymin, ymax)
 " >&6
 
