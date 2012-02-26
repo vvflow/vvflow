@@ -1,12 +1,25 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <iostream>
 #include <fstream>
 #include <math.h>
+#include <time.h>
 
 #include "core.h"
 
-using namespace std;
+class printer
+{
+	public:
+		printer() {last=0;}
+		void go(int percent)
+		{
+			if (clock()-last < CLOCKS_PER_SEC) return;
+			fprintf(stderr, "%3d%%\r", percent);
+			fflush(stderr);
+			last = clock();
+		}
+	private:
+		clock_t last;
+};
 
 bool PointIsInvalid(Space *S, TVec p)
 {
@@ -82,6 +95,7 @@ int main(int argc, char *argv[])
 
 	Space *S = new Space();
 	S->Load(argv[1]);
+	printer my_printer;
 
 	double dl = S->AverageSegmentLength(); Rd2 = dl*dl/25;
 	InitTree(S, 8, dl*20, 0.3);
@@ -129,7 +143,7 @@ int main(int argc, char *argv[])
 			#pragma omp ordered
 			{fprintf(fout, "%lg \t%lg \t%lg\n", x, y, t);}
 			#pragma omp critical
-			cerr << (++now*100)/total << "% \r" << flush;
+			my_printer.go(++now*100/total);
 		}
 		fprintf(fout, "\n");
 	}
