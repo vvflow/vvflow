@@ -1,200 +1,251 @@
-#!/bin/bash
+#!/usr/bin/python
 
-exif_cmd="$0 $*"
-while test "${1:0:1}" = "-"
-do
-	options="$options${1:1}"
-	shift
-done
+import sys
+import math
+import os
+import struct
 
-if test $# -lt 4
-then
-	echo "Usage: $0 -[bfhiopstv01] file.vb output.png xmin xmax [y_offset]"
-	echo "Possible options are:"
-	echo "-b - plot Body"
-	echo "-f - update Fields files even if the exist"
-	echo "-h - plot Heat particles"
-	echo "-i - plot Ink (streaklines)"
-	echo "-o - plot isOtherms"
-	echo "-p - plot Pressure field"
-	echo "-s - plot Streamlines"
-	echo "-t - plot Temperature field"
-	echo "-v - plot Vortex domains"
-	echo "-0 - change reference frame connected with fluid"
-	echo "-1 - reference frame, steady moving relative fluid at rate (-1, 0)"
-	echo "if neither -0 nor -1 are mentioned - body reference frame is present (as in computation)"
+class delimiter:
+	"""First time it prints 'plot', else it prints comma
+	"""
+	def __init__(self):
+		self.first = True;
+	def get(self):
+		if self.first:
+			self.first = False
+			return "plot"
+		else:
+			return ","
 
-	echo "Additional environmental variables:"
-	echo 'VV_ISOPSI - streamlines levels (default $(seq -s ' ' -10 0.1 10))'
-	echo 'VV_ISOTHERMS - temperature isolines (default $(seq -s ' ' 0.05 0.05 0.95))'
-	echo 'HEATPLOT_EPS_MULT - smooth temperature field picture (default 2)'
-	echo 'HEATPLOT_BODY_TEMP - body surface temperature (default 1)'
-	exit 0
-fi
+def file_exists(fname):
+	return 0 == os.spawnvp(os.P_WAIT, "test", ("test", "-e", fname))
 
-if test ! -e $1; then echo "No such file or directory: $1" >&2; exit -2; fi
+def printHelp():
+	print "Usage: %s -[ bBfhHiopstv01 ] input.vb output.png xmin xmax [y_offset]" % sys.argv[0]
+	print "\nPossible options are:"
+	print "  -b - plot Body"
+	print "  -B - choose body reference frame (default among -0 and -1)"
+	print "  -f - update fields files even if the exist"
+	print "  -h - display this message and exit"
+	print "  -H - plot Heat particles"
+	print "  -i - plot Ink (streaklines)"
+	print "  -o - plot isOtherms"
+	print "  -p - plot Pressure field"
+	print "  -s - plot streamlines"
+	print "  -t - plot Temperature field"
+	print "  -v - plot vortex domains"
+	print "  -0 - choose reference frame, strictly connected to fluid"
+	print "  -1 - choose reference frame, moving respectively fluid at rate (-1, 0)"
 
-v_skip=$(od -j16 -N8 -An -w8 -td8 $1)
-v_size=$(od -j$v_skip -N8 -An -w8 -td8 $1)
-h_skip=$(od -j32 -N8 -An -w8 -td8 $1)
-h_size=$(od -j$h_skip -N8 -An -w8 -td8 $1)
-i_skip=$(od -j64 -N8 -An -w8 -td8 $1)
-i_size=$(od -j$i_skip -N8 -An -w8 -td8 $1)
+	print "\nAdditional environmental variables:"
+	print "  VV_ISOPSI - streamlines levels (default $(seq -s \' \' -10 0.1 10))"
+	print "  VV_ISOTHERMS - temperature isolines (default $(seq -s \' \' 0.05 0.05 0.95))"
+	print "  HEATPLOT_EPS_MULT - smooth temperature field picture (default 2)"
+	print "  HEATPLOT_BODY_TEMP - body surface temperature (default 1)"
 
-time=$(printf "%7.3f\n" $(od -j$(expr $v_skip - 8) -N8 -tf8 -w8 -An $1) )
-timestamp=$(od -j$(expr $v_skip - 16) -N8 -td8 -w8 -An $1)
-realtime=$(date -d "1970-01-01 $timestamp sec GMT" +"%F %H:%M:%S")
-dt=$(printf "%g" $(od -j$(expr $v_skip - 48) -N8 -tf8 -w8 -An $1) )
-Re=$(printf "%g" $(od -j$(expr $v_skip - 40) -N8 -tf8 -w8 -An $1) )
-vx=$(printf "%g" $(od -j$(expr $v_skip - 32) -N8 -tf8 -w8 -An $1) )
-vy=$(printf "%g" $(od -j$(expr $v_skip - 24) -N8 -tf8 -w8 -An $1) )
+########################### PARSING COMMAND LINE ###############################
+argv = "";
+for i in sys.argv:
+	argv+= i+" "
 
-x_offset=0
-if test $i_size -ge 1
-then
-	x_marker=$(od -j$(expr $i_skip + 8) -N8 -w8 -An -tf8 $1)
-	if test $(expr index "$options" 0) -ne 0
-	then
-		x_offset="$x_marker - 1000"
-	elif test $(expr index "$options" 1) -ne 0
-	then
-		x_offset="$x_marker - 1000 - $time"
-	fi
-fi
+opts = ""
+while len(sys.argv)>1 and sys.argv[1][0] == '-':
+	opts+= sys.argv[1][1:]
+	del sys.argv[1]
 
-if test -z "$5"
-then
-	y_offset="0"
-else
-	y_offset="$5"
-fi
+if opts.find('h')>=0 or len(opts)==0: printHelp(); exit();
+if len(sys.argv) < 5: print "Not enough arguments. See -h for help."; exit();
+if len(sys.argv) > 6: print "Too many arguments. See -h for help."; exit();
 
-pipe="/tmp/pipe.$$.tmp"
-mkfifo $pipe
-gnuplot $pipe &
-exec 6>$pipe #its very important to work through fd, because else it doesnt work
+try: ffin = open(sys.argv[1]);
+except IOError: print "Can not open file: %s" % sys.argv[1]; exit();
 
-echo "set terminal pngcairo enhanced size 1280, 720 font \"FreeSerif, 26\"" >&6
-echo "set output '$2'" >&6
+fin = sys.argv[1]
+fout = sys.argv[2]
 
-echo "
-unset key
+try: xmin = float(sys.argv[3]);
+except ValueError: print "Bad xmin value: %s" % sys.argv[3]; exit();
+
+try: xmax = float(sys.argv[4]);
+except ValueError: print "Bad xmax value: %s" % sys.argv[4]; exit();
+
+if len(sys.argv) > 5: y_offset = float(sys.argv[5]);
+else: y_offset = 0.0
+
+#now we've got (argv, opts, fin, fout, ffin, xmin, xmax, y_offset
+
+############################ PARSING OPTIONS ###################################
+
+v_skip, h_skip, i_skip = struct.unpack("16xq8xq24xq", ffin.read(72))
+ffin.seek(v_skip); v_size = struct.unpack("q", ffin.read(8))[0]
+ffin.seek(h_skip); h_size = struct.unpack("q", ffin.read(8))[0]
+ffin.seek(i_skip); i_size = struct.unpack("q", ffin.read(8))[0]
+
+bodies = list()
+for i in range(5, 11):
+	ffin.seek(i*16); buf = ffin.read(16);
+	if buf[8:].startswith("Body"):
+		b_skip = struct.unpack("q", buf[0:8])[0]
+		ffin.seek(b_skip); b_size = struct.unpack("q", ffin.read(8))[0]
+		bodies.append( (b_skip, b_size) );
+
+ffin.seek(v_skip-48);
+dt, Re, vx, vy, timestamp, time = struct.unpack("ddddqd", ffin.read(48))
+realtime = os.popen("date -d \"1970-01-01 %d sec GMT\" +\"%%F %%H:%%M:%%S\"" % timestamp).read()
+ffin.seek(i_skip); marker_x, marker_y = struct.unpack("8x2d", ffin.read(24));
+
+ffin.close()
+
+############################## CALC OFFSETS ####################################
+
+if (opts.count('B') + opts.count('0') + opts.count('1')) > 1:
+	print "Too many reference frames options -{B|0|1}"
+	exit()
+elif opts.find('B')>=0:
+	#print "Body RF"
+	RefFrame = 'B'
+	x_offset = 0.0
+elif opts.find('0')>=0:
+	#print "0 RF"
+	RefFrame = '0'
+	x_offset = marker_x - 1000
+	y_offset+= marker_y
+else: #'1'
+	#print "-1 RF"
+	RefFrame = '1'
+	x_offset = marker_x - 1000 - time
+	y_offset+= marker_y
+
+xmin+= x_offset
+xmax+= x_offset
+ymin = -(xmax-xmin)*9.0/32.0 - y_offset
+ymax =  (xmax-xmin)*9.0/32.0 - y_offset
+prec_hi = (xmax-xmin)/500.0
+prec_lo = (xmax-xmin)/200.0
+
+############################## CALC FIELDS #####################################
+
+boundaries = (str(xmin-prec_lo), str(xmax+prec_lo), str(ymin-prec_lo), str(ymax+prec_lo))
+
+pids = list()
+#PRESS FIELD
+if opts.count('p') > 0:
+	if not file_exists("%s.map" % fin) or opts.count('f') > 0:
+		pids.append(os.spawnvp(os.P_NOWAIT, "presplot_exe", \
+		("presplot_exe", str(fin), str(prec_hi)) + boundaries));
+
+#TEMPERATURE FIELD
+if opts.count('t') + opts.count('o') > 0:
+	if not file_exists("%s.heat" % fin) or opts.count('f') > 0:
+		pids.append(os.spawnvp(os.P_NOWAIT, "heatplot_exe", \
+		("heatplot_exe", str(fin), str(prec_hi)) + boundaries));
+
+#PSI FUNCTION FIELD
+if opts.count('s') > 0:
+	if not file_exists("%s.psi" % fin) or opts.count('f') > 0:
+		pids.append(os.spawnvp(os.P_NOWAIT, "streamlines_exe", \
+		("streamlines_exe", str(fin), str(prec_lo)) + boundaries + tuple(RefFrame)));
+
+#TODO learn try/except/finally
+
+for i in pids:
+	os.waitpid(i, 0)
+
+############################## CALL GNUPLOT ####################################
+
+gp = os.popen("gnuplot", "w")
+gp.write("""
+set terminal pngcairo enhanced size 1280, 720 font "FreeSerif, 26"
+set output '%s'
+""" % fout)
+
+gp.write("""
 set lmargin 0
 set rmargin 0
 set bmargin 0
 set tmargin 0
+unset key
 set border 0
 set zeroaxis
 unset xtics
 unset ytics
-" >&6
+set xrange [%f: %f]
+set yrange [%f: %f]
+""" % (xmin, xmax, ymin, ymax))
 
-echo "
-set macros
-xmin = $3 - ($x_offset);    xmin_c = sprintf(\"%f\", xmin);
-xmax = $4 - ($x_offset);    xmax_c = sprintf(\"%f\", xmax);
-ymin = -($4-$3)*9./32. - ($y_offset); ymin_c = sprintf(\"%f\", ymin);
-ymax =  ($4-$3)*9./32. - ($y_offset); ymax_c = sprintf(\"%f\", ymax);
-prec_hi = ($4-$3)/500.;      prec_hi_c = sprintf(\"%f\", prec_hi);
-prec_lo = ($4-$3)/200.;      prec_lo_c = sprintf(\"%f\", prec_lo);
-set xrange [xmin: xmax]
-set yrange [ymin: ymax]
+gp.write("""
 set colorbox horizontal user origin .1,.02 size .8,.04
-" >&6
+set label "t = %f" at graph 0.05, 0.90 front
+set macros
+dots = "dots lc rgb variable"
+vortex_style = "circles lc rgb variable fs transparent solid 0.3 noborder"
+heat_style = "circles lc rgb 'black' fs transparent solid 0.3 noborder"
+ink_style = "circles lc rgb 'black' fs transparent solid 1 noborder"
+body_style = "filledcurve lc rgb '#adadad' lw 2 fs solid border -1"
+""" % time)
 
-echo "
-set label \"t = $time\" at graph 0.05, 0.90 front
-dots = \"dots lc rgb variable\"
-vortex_style = \"circles lc rgb variable fs transparent solid 0.3 noborder\"
-heat_style = \"circles lc rgb 'black' fs transparent solid 0.3 noborder\"
-ink_style = \"circles lc rgb 'black' fs transparent solid 1 noborder\"
-body_style = \"filledcurve lc rgb \\\"#adadad\\\" lw 2 fs solid border -1 \"
-
+gp.write("""
 color(x) = (x>0) ? 0xFF0000 : 0x0000FF
-isoline(C) = sprintf(\"< isoline_exe $1.psi %s %f %f %f %f %f\", C, prec_lo, xmin, xmax, ymin, ymax)
-" >&6
+isoline(C) = sprintf("< isoline_exe %s.psi %%s %f %f %f %f %f", C)
+""" % (fin, prec_lo, xmin, xmax, ymin, ymax))
 
-if test $(expr index "$options" p) != 0; then
-echo "set cbrange [-1.5:1]" >&6
-echo "set label \"-1.5\" at graph 0.096, 0.039 right front" >&6
-echo "set label \"1\" at graph 0.904, 0.039 left front" >&6
-echo "set palette maxcolors 33 defined (-1.5 \"#0829d5\", -0.5 \"#1ffcff\", 0 \"#2ef62e\", 0.3 \"yellow\", 1 \"red\")" >&6
-if test ! -e $1.map -o $(expr index "$options" f) != 0; then
-echo "\`presplot_exe $1 @prec_hi_c @xmin_c @xmax_c @ymin_c @ymax_c\`" >&6
-fi; fi;
+if opts.count('p') > 0:
+	gp.write("""
+	set cbrange [-1.5:1]
+	set label "-1.5" at graph 0.096, 0.039 right front
+	set label "1" at graph 0.904, 0.039 left front
+	set palette maxcolors 33 defined (-1.5 "#0829d5", -0.5 "#1ffcff", 0 "#2ef62e", 0.3 "yellow", 1 "red")
+	""")
 
-if test $(expr index "$options" t) != 0; then
-echo "set cbrange [0:1]" >&6
-echo "set label \"0\" at graph 0.096, 0.039 right front" >&6
-echo "set label \"1\" at graph 0.904, 0.039 left front" >&6
-echo "set palette maxcolors 33 defined (0 \"#0829d5\", 0.3 \"#1ffcff\", 0.5 \"red\", 1 \"yellow\", 2 \"white\")" >&6
-fi
+if opts.count('t') > 0:
+	gp.write("""
+	set cbrange [0:1]
+	set label "0" at graph 0.096, 0.039 right front
+	set label "1" at graph 0.904, 0.039 left front
+	set palette maxcolors 33 defined (0 "#0829d5", 0.3 "#1ffcff", 0.5 "red", 1 "yellow", 2 "white")
+	""")
 
-if test $(expr index "$options" o) != 0 -o  $(expr index "$options" t) != 0; then
-if test ! -e $1.heat -o $(expr index "$options" f) != 0; then
-echo "\`heatplot_exe $1 @prec_hi_c @xmin_c @xmax_c @ymin_c @ymax_c\`" >&6
-fi; fi;
+delim = delimiter()
+if opts.count('p') > 0: gp.write("""%s '%s.map' w image""" % (delim.get(), fin))
+if opts.count('t') > 0: gp.write("""%s '%s.heat' w image""" % (delim.get(), fin))
+if opts.count('v') > 0 and v_size > 0:
+	gp.write("""%s '%s' binary record=%d skip=%d format='%%3float64'""" % (delim.get(), fin, v_size, v_skip+8))
+	gp.write(""" u 1:2:(%f):(color($3)) w @vortex_style""" % prec_hi)
+if opts.count('H') > 0 and h_size > 0:
+	gp.write("""%s '%s' binary record=%d skip=%d format='%%3float64' """ % (delim.get(), fin, h_size, h_skip+8))
+	gp.write(""" u 1:2:(%f) w @heat_style""" % prec_hi)
+if opts.count('i') > 0 and i_size > 1:
+	gp.write("""%s '%s' binary record=%d skip=%d format='%%3float64' """ % (delim.get(), fin, i_size-1, i_skip+16))
+	gp.write(""" u 1:2:(%f) w @ink_style""" % prec_hi)
+if opts.count('s') > 0:
+	vv_isopsi = os.getenv("VV_ISOPSI") or os.popen("seq -s ' ' -10 0.1 10").read()[:-1]
+	gp.write("""%s "< isoline_exe %s.psi %s" w lines lw 2 lc rgb 'black'""" % (delim.get(), fin, vv_isopsi))
+if opts.count('o') > 0:
+	vv_isotherms = os.getenv("VV_ISOTHERMS") or os.popen("seq -s ' ' 0.05 0.05 0.95").read()[:-1]
+	gp.write("""%s "< isoline_exe %s.heat %s" w lines lw 2 lc rgb 'black'""" % (delim.get(), fin, vv_isotherms))
+if opts.count('b') > 0:
+	for b in bodies:
+		gp.write("""%s '%s' binary record=%d skip=%d format='%%3float64' u 1:2 w @body_style""" % (delim.get(), fin, b[1], b[0]+8))
 
-if test $(expr index "$options" s) != 0; then
-if test ! -e $1.psi -o $(expr index "$options" f) != 0; then
-echo "\`streamlines_exe $1 @prec_lo_c @xmin_c @xmax_c @ymin_c @ymax_c B\`" >&6
-fi; fi;
+gp.write("\n")
+gp.flush()
+gp.close()
 
-echo -n "plot \"-\"" >&6
+############################ WRITE EXIF DATA ###################################
 
-if test $(expr index "$options" p) != 0; then echo -n ", '$1.map' w image" >&6; fi
-if test $(expr index "$options" t) != 0; then echo -n ", '$1.heat' w image" >&6; fi
-if test $(expr index "$options" v) != 0 -a $v_size -gt 0
-then
-	echo -n ", '$1' binary record=$v_size skip=($v_skip+8) format='%3float64' " >&6
-	echo -n "u 1:2:(prec_hi):(color(\$3)) w @vortex_style" >&6
-fi
+comment = """argv = %s
+time = %g
+realtime = %s
+dt = %g
+Re = %g
+V = (%g, %g)
+offset = (%g, %g)
+xrange = [%g, %g]
+yrange = [%g, %g]""" % (argv, time, realtime, dt, Re, vx, vy, x_offset, y_offset, xmin, xmax, ymin, ymax)
 
-if test $(expr index "$options" h) != 0 -a $h_size -gt 0
-then
-	echo -n ", '$1' binary record=$h_size skip=($h_skip+8) format='%3float64' " >&6
-	echo -n "u 1:2:(prec_hi) w @heat_style" >&6
-fi
-
-if test $(expr index "$options" i) != 0 -a $i_size -gt 0
-then
-	echo -n ", '$1' binary record=$i_size skip=($i_skip+8) format='%3float64' " >&6
-	echo -n "u 1:2:(prec_hi) w @ink_style" >&6
-fi
-
-if test $(expr index "$options" s) != 0; then
-if test -z "$VV_ISOPSI"; then VV_ISOPSI=$(seq -s ' ' -10 0.1 10); fi
-echo -n ",\"< isoline_exe $1.psi $VV_ISOPSI\" w lines lw 2 lc rgb \"#000000\"" >&6
-fi
-
-if test $(expr index "$options" o) != 0; then
-if test -z "$VV_ISOTHERMS"; then VV_ISOTHERMS=$(seq -s ' ' 0.05 0.05 0.95); fi
-echo -n ",\"< isoline_exe $1.heat $VV_ISOTHERMS\" w lines lw 2 lc rgb \"#000000\"" >&6
-fi
-
-if test $(expr index "$options" b) != 0; then
-for ((i=5; i<10; i++)); do
-	BMname=$(head -c$(expr $i \* 16 + 16)  $1 | tail -c8);
-	if test "$BMname" = "Body" -o "$BMname" = "Body    "
-	then
-		beg=$(od -j$(expr $i \* 16) -N8 -An -w8 -td8 $1)
-		N=$(od -j$beg -N8 -An -w8 -td8 $1)
-		echo -n ", '$1' binary record=$N skip=($beg+8) format='%3float64' u 1:2 w @body_style" >&6
-	fi
-done
-fi
-
-echo -e "\n0 0\ne\nquit\n" >&6
-
-exec 6>&-
-rm $pipe
-wait
-
-comment=$(echo -en "time = $time; dt = $dt; Re = $Re; Vx = $vx; Vy = $vy;
-Command = '$exif_cmd'")
-exiv2 \
--M"set Exif.Photo.DateTimeOriginal $realtime" \
--M"set Exif.Image.DateTime $realtime" \
--M"set Exif.Photo.UserComment charset=Ascii $comment" $2
+executable = """exiv2 -M"set Exif.Photo.DateTimeOriginal %s" """ % realtime
+executable+= """      -M"set Exif.Image.DateTime %s" """ % realtime
+executable+= """      -M"set Exif.Photo.UserComment charset=Ascii %s" """ % comment
+os.popen("%s %s" % (executable, fout))
 
 
