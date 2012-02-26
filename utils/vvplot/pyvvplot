@@ -147,13 +147,9 @@ if opts.count('s') > 0:
 		("streamlines_exe", str(fin), str(prec_lo)) + boundaries + tuple(RefFrame)));
 
 #TODO learn try/except/finally
-#TODO fix strange temperature regions
-#TODO fix streamlines (smooth)
-pids.reverse()
-print pids
+
 for i in pids:
 	os.waitpid(i, 0)
-	print "Finished %d" % i
 
 ############################## CALL GNUPLOT ####################################
 

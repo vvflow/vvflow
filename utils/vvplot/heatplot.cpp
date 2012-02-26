@@ -12,6 +12,21 @@ double dl;
 double EPS_MULT, BODY_TEMP;
 using namespace std;
 
+class printer
+{
+	public:
+		printer() {last=0;}
+		void go(int percent)
+		{
+			if (clock()-last < CLOCKS_PER_SEC) return;
+			fprintf(stderr, "%3d%%\r", percent);
+			fflush(stderr);
+			last = clock();
+		}
+	private:
+		clock_t last;
+};
+
 bool PointIsInvalid(Space *S, TVec p)
 {
 	const_for(S->BodyList, llbody)
@@ -55,7 +70,7 @@ double eps2h(const TNode &Node, TVec p)
 	}
 
 	if ( res1 == DBL_MAX ) return DBL_MIN;
-	if ( res2 == DBL_MAX ) return res1;
+	if ( res2 == DBL_MAX ) return DBL_MIN;//res1;
 
 	return res2;
 }
@@ -88,9 +103,9 @@ TObj* Nearest(TNode &Node, TVec p)
 	return res;
 }
 
-double h(TNode &Node, TVec p)
+double h2(TNode &Node, TVec p)
 {
-	double resh = DBL_MAX;
+	double resh2 = DBL_MAX;
 
 	const_for(Node.NearNodes, llnnode)
 	{
@@ -100,11 +115,11 @@ double h(TNode &Node, TVec p)
 		if ( !blist ) { continue; }
 		const_for (blist, llobj)
 		{
-			resh = min(resh, (p-**llobj).abs());
+			resh2 = min(resh2, (p-**llobj).abs2());
 		}
 	}
 
-	return resh;
+	return resh2;
 }
 
 double Temperature(Space* S, TVec p)
@@ -134,7 +149,7 @@ double Temperature(Space* S, TVec p)
 
 	T*= C_1_PI;
 
-	double erfarg = h(*bnode, p)*nrst->v.rx; //bnode->CMp.g stores h
+	double erfarg = h2(*bnode, p)/sqr(dl*EPS_MULT);
 	T+= (erfarg<3) ? 0.5*(1-erf(erfarg)) : 0;
 
 	return T;
@@ -159,6 +174,7 @@ int main(int argc, char *argv[])
 
 	Space *S = new Space();
 	S->Load(argv[1]);
+	printer my_printer;
 	S->VortexList = NULL;
 
 	dl = S->AverageSegmentLength();
@@ -207,8 +223,8 @@ int main(int argc, char *argv[])
 
 			#pragma omp ordered
 			{fout << x << "\t" << y << "\t" << t << endl;}
-			//#pragma omp critical
-			//cerr << (++now*100)/total << "% \r" << flush;
+			#pragma omp critical
+			my_printer.go(++now*100/total);
 		}
 	}
 	fout.close();
