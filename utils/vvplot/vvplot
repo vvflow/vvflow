@@ -137,7 +137,7 @@ fi; fi;
 
 if test $(expr index "$options" s) != 0; then
 if test ! -e $1.psi -o $(expr index "$options" f) != 0; then
-echo "\`streamlines_exe $1 @prec_lo_c @xmin_c @xmax_c @ymin_c @ymax_c\`" >&6
+echo "\`streamlines_exe $1 @prec_lo_c @xmin_c @xmax_c @ymin_c @ymax_c B\`" >&6
 fi; fi;
 
 echo -n "plot \"-\"" >&6

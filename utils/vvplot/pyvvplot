@@ -17,6 +17,9 @@ class delimiter:
 		else:
 			return ","
 
+def file_exists(fname):
+	return 0 == os.spawnvp(os.P_WAIT, "test", ("test", "-e", fname))
+
 def printHelp():
 	print "Usage: %s -[ bBfhHiopstv01 ] input.vb output.png xmin xmax [y_offset]" % sys.argv[0]
 	print "\nPossible options are:"
@@ -66,10 +69,10 @@ except ValueError: print "Bad xmin value: %s" % sys.argv[3]; exit();
 try: xmax = float(sys.argv[4]);
 except ValueError: print "Bad xmax value: %s" % sys.argv[4]; exit();
 
-if len(sys.argv) > 5: y_offset = -float(sys.argv[5]);
+if len(sys.argv) > 5: y_offset = float(sys.argv[5]);
 else: y_offset = 0.0
 
-#now we've got (argv, opts, fin, fout, ffin namein, nameout, xmin, xmax, y_offset
+#now we've got (argv, opts, fin, fout, ffin, xmin, xmax, y_offset
 
 ############################ PARSING OPTIONS ###################################
 
@@ -100,13 +103,16 @@ if (opts.count('B') + opts.count('0') + opts.count('1')) > 1:
 	exit()
 elif opts.find('B')>=0:
 	#print "Body RF"
+	RefFrame = 'B'
 	x_offset = 0.0
 elif opts.find('0')>=0:
 	#print "0 RF"
+	RefFrame = '0'
 	x_offset = marker_x - 1000
 	y_offset+= marker_y
 else: #'1'
 	#print "-1 RF"
+	RefFrame = '1'
 	x_offset = marker_x - 1000 - time
 	y_offset+= marker_y
 
@@ -119,22 +125,35 @@ prec_lo = (xmax-xmin)/200.0
 
 ############################## CALC FIELDS #####################################
 
+boundaries = (str(xmin-prec_lo), str(xmax+prec_lo), str(ymin-prec_lo), str(ymax+prec_lo))
+
+pids = list()
 #PRESS FIELD
-#if test ! -e $1.map -o $(expr index "$options" f) != 0; then
-#echo "\`presplot_exe $1 @prec_hi_c @xmin_c @xmax_c @ymin_c @ymax_c\`" >&6
-#fi; fi;
+if opts.count('p') > 0:
+	if not file_exists("%s.map" % fin) or opts.count('f') > 0:
+		pids.append(os.spawnvp(os.P_NOWAIT, "presplot_exe", \
+		("presplot_exe", str(fin), str(prec_hi)) + boundaries));
 
-#TEMP FIELD
-#if test $(expr index "$options" o) != 0 -o  $(expr index "$options" t) != 0; then
-#if test ! -e $1.heat -o $(expr index "$options" f) != 0; then
-#echo "\`heatplot_exe $1 @prec_hi_c @xmin_c @xmax_c @ymin_c @ymax_c\`" >&6
-#fi; fi;
+#TEMPERATURE FIELD
+if opts.count('t') + opts.count('o') > 0:
+	if not file_exists("%s.heat" % fin) or opts.count('f') > 0:
+		pids.append(os.spawnvp(os.P_NOWAIT, "heatplot_exe", \
+		("heatplot_exe", str(fin), str(prec_hi)) + boundaries));
 
-#PSI FIELD
-#if test $(expr index "$options" s) != 0; then
-#if test ! -e $1.psi -o $(expr index "$options" f) != 0; then
-#echo "\`streamlines_exe $1 @prec_lo_c @xmin_c @xmax_c @ymin_c @ymax_c\`" >&6
-#fi; fi;
+#PSI FUNCTION FIELD
+if opts.count('s') > 0:
+	if not file_exists("%s.psi" % fin) or opts.count('f') > 0:
+		pids.append(os.spawnvp(os.P_NOWAIT, "streamlines_exe", \
+		("streamlines_exe", str(fin), str(prec_lo)) + boundaries + tuple(RefFrame)));
+
+#TODO learn try/except/finally
+#TODO fix strange temperature regions
+#TODO fix streamlines (smooth)
+pids.reverse()
+print pids
+for i in pids:
+	os.waitpid(i, 0)
+	print "Finished %d" % i
 
 ############################## CALL GNUPLOT ####################################
 
@@ -191,8 +210,8 @@ if opts.count('t') > 0:
 	""")
 
 delim = delimiter()
-if opts.count('p') > 0: gp.write("""%s '$1.map' w image""" % delim.get())
-if opts.count('t') > 0: gp.write("""%s '$1.heat' w image""" % delim.get())
+if opts.count('p') > 0: gp.write("""%s '%s.map' w image""" % (delim.get(), fin))
+if opts.count('t') > 0: gp.write("""%s '%s.heat' w image""" % (delim.get(), fin))
 if opts.count('v') > 0 and v_size > 0:
 	gp.write("""%s '%s' binary record=%d skip=%d format='%%3float64'""" % (delim.get(), fin, v_size, v_skip+8))
 	gp.write(""" u 1:2:(%f):(color($3)) w @vortex_style""" % prec_hi)
@@ -203,10 +222,10 @@ if opts.count('i') > 0 and i_size > 1:
 	gp.write("""%s '%s' binary record=%d skip=%d format='%%3float64' """ % (delim.get(), fin, i_size-1, i_skip+16))
 	gp.write(""" u 1:2:(%f) w @ink_style""" % prec_hi)
 if opts.count('s') > 0:
-	vv_isopsi = os.getenv("VV_ISOPSI") or os.popen("seq -s ' ' -10 0.1 10").read()
+	vv_isopsi = os.getenv("VV_ISOPSI") or os.popen("seq -s ' ' -10 0.1 10").read()[:-1]
 	gp.write("""%s "< isoline_exe %s.psi %s" w lines lw 2 lc rgb 'black'""" % (delim.get(), fin, vv_isopsi))
 if opts.count('o') > 0:
-	vv_isotherms = os.getenv("VV_ISOTHERMS") or os.popen("seq -s ' ' 0.05 0.05 0.95").read()
+	vv_isotherms = os.getenv("VV_ISOTHERMS") or os.popen("seq -s ' ' 0.05 0.05 0.95").read()[:-1]
 	gp.write("""%s "< isoline_exe %s.heat %s" w lines lw 2 lc rgb 'black'""" % (delim.get(), fin, vv_isotherms))
 if opts.count('b') > 0:
 	for b in bodies:

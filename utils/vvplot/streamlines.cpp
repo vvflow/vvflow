@@ -19,6 +19,7 @@ bool PointIsInvalid(Space *S, TVec p)
 
 FILE *fout;
 double Rd2;
+TVec RefFrame_Speed;
 inline double atan(TVec p) {return atan(p.ry/p.rx);}
 
 double Psi(Space* S, TVec p)
@@ -68,14 +69,14 @@ double Psi(Space* S, TVec p)
 	}
 	psi3*= -0.5*C_1_2PI;
 
-	return psi1 + psi2 + psi3;// + p*rotl(S->InfSpeed());
+	return psi1 + psi2 + psi3 + p*rotl(RefFrame_Speed);
 }
 
 int main(int argc, char *argv[])
 {
-	if ( argc != 7)\
+	if ( argc != 8)\
 	{
-		cerr << "Error! Please use: \nstreamlines_exe file.vb precission xmin xmax ymin ymax\n";
+		cerr << "Error! Please use: \nstreamlines_exe file.vb precission xmin xmax ymin ymax {0|1|B}\n";
 		return -1;
 	}
 
@@ -94,6 +95,14 @@ int main(int argc, char *argv[])
 	ymin = atof(argv[++i]);
 	ymax = atof(argv[++i]);
 	prec = atof(argv[2]);
+	}
+	char RF = argv[7][1]?0:argv[7][0];
+	switch (RF)
+	{
+		case '0': RefFrame_Speed = TVec(0, 0); break;
+		case '1': RefFrame_Speed = TVec(1, 0); break;
+		case 'B': RefFrame_Speed = S->InfSpeed(); break;
+		default: cerr << "Bad reference frame" << endl; return -2;
 	}
 	/******************************************/
 
