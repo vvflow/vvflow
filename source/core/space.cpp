@@ -416,6 +416,7 @@ void Space::EnumerateBodies(bool cheat)
 
 		if (cheat) (**llbody).AttachList->begin()->bc = bc::steady;
 	}
+	if (cheat) (**BodyList->begin()).AttachList->begin()->bc = bc::inf_steady;
 }
 
 /********************************* INTEGRALS **********************************/

@@ -122,7 +122,7 @@ int main(int argc, char** argv)
 	FILE *f = fopen(stepdata, "a");
 	#pragma omp parallel
 	#pragma omp master
-		fprintf(f, "Omp num threads = \t%d\n", omp_get_num_threads());
+		fprintf(f, "\nOmp num threads = \t%d\n", omp_get_num_threads());
 	fprintf(f, "Working dir = \t%s\n", dir);
 	fprintf(f, "Body file = \t%s\n", body_env);
 	fprintf(f, "InfSpeedX sh = \t%s\n", infx_env);
