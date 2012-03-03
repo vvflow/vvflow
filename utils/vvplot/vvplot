@@ -31,6 +31,7 @@ def printHelp():
 	print "  -i - plot Ink (streaklines)"
 	print "  -o - plot isOtherms"
 	print "  -p - plot Pressure field"
+	print "  -P - plot Pressure isolines (includes -p)"
 	print "  -s - plot streamlines"
 	print "  -t - plot Temperature field"
 	print "  -v - plot vortex domains"
@@ -38,6 +39,7 @@ def printHelp():
 	print "  -1 - choose reference frame, moving respectively fluid at rate (-1, 0)"
 
 	print "\nAdditional environmental variables:"
+	print "  VV_PREC_HI - horiz resolution of temperature and pressure fields (default 500)"
 	print "  VV_ISOPSI - streamlines levels (default $(seq -s \' \' -10 0.1 10))"
 	print "  VV_ISOTHERMS - temperature isolines (default $(seq -s \' \' 0.05 0.05 0.95))"
 	print "  HEATPLOT_EPS_MULT - smooth temperature field picture (default 2)"
@@ -120,7 +122,8 @@ xmin+= x_offset
 xmax+= x_offset
 ymin = -(xmax-xmin)*9.0/32.0 - y_offset
 ymax =  (xmax-xmin)*9.0/32.0 - y_offset
-prec_hi = (xmax-xmin)/500.0
+vv_prec_hi = os.getenv("VV_PREC_HI") or 500.0
+prec_hi = (xmax-xmin)/float(vv_prec_hi)
 prec_lo = (xmax-xmin)/200.0
 
 ############################## CALC FIELDS #####################################
@@ -129,7 +132,7 @@ boundaries = (str(xmin-prec_lo), str(xmax+prec_lo), str(ymin-prec_lo), str(ymax+
 
 pids = list()
 #PRESS FIELD
-if opts.count('p') > 0:
+if opts.count('p') + opts.count('P') > 0:
 	if not file_exists("%s.map" % fin) or opts.count('f') > 0:
 		pids.append(os.spawnvp(os.P_NOWAIT, "presplot_exe", \
 		("presplot_exe", str(fin), str(prec_hi)) + boundaries));
@@ -189,7 +192,7 @@ color(x) = (x>0) ? 0xFF0000 : 0x0000FF
 isoline(C) = sprintf("< isoline_exe %s.psi %%s %f %f %f %f %f", C)
 """ % (fin, prec_lo, xmin, xmax, ymin, ymax))
 
-if opts.count('p') > 0:
+if opts.count('p') + opts.count('P') > 0:
 	gp.write("""
 	set cbrange [-1.5:1]
 	set label "-1.5" at graph 0.096, 0.039 right front
@@ -206,23 +209,35 @@ if opts.count('t') > 0:
 	""")
 
 delim = delimiter()
-if opts.count('p') > 0: gp.write("""%s '%s.map' w image""" % (delim.get(), fin))
-if opts.count('t') > 0: gp.write("""%s '%s.heat' w image""" % (delim.get(), fin))
+if opts.count('p') + opts.count('P') > 0:
+	gp.write("""%s '%s.map' w image""" % (delim.get(), fin))
+	if opts.count('P') > 0:
+		vv_isopres = os.popen("seq -s ' ' -1.5 0.075757576 1").read()[:-1]
+		gp.write("""%s "< isoline_exe %s.map %s" w lines lw 1 lc rgb '#9999cc'""" % (delim.get(), fin, vv_isopres))
+
+if opts.count('t') > 0:
+	gp.write("""%s '%s.heat' w image""" % (delim.get(), fin))
+
 if opts.count('v') > 0 and v_size > 0:
 	gp.write("""%s '%s' binary record=%d skip=%d format='%%3float64'""" % (delim.get(), fin, v_size, v_skip+8))
 	gp.write(""" u 1:2:(%f):(color($3)) w @vortex_style""" % prec_hi)
+
 if opts.count('H') > 0 and h_size > 0:
 	gp.write("""%s '%s' binary record=%d skip=%d format='%%3float64' """ % (delim.get(), fin, h_size, h_skip+8))
 	gp.write(""" u 1:2:(%f) w @heat_style""" % prec_hi)
+
 if opts.count('i') > 0 and i_size > 1:
 	gp.write("""%s '%s' binary record=%d skip=%d format='%%3float64' """ % (delim.get(), fin, i_size-1, i_skip+16))
 	gp.write(""" u 1:2:(%f) w @ink_style""" % prec_hi)
+
 if opts.count('s') > 0:
 	vv_isopsi = os.getenv("VV_ISOPSI") or os.popen("seq -s ' ' -10 0.1 10").read()[:-1]
-	gp.write("""%s "< isoline_exe %s.psi %s" w lines lw 2 lc rgb 'black'""" % (delim.get(), fin, vv_isopsi))
+	gp.write("""%s "< isoline_exe %s.psi %s" w lines lw 1.5 lc rgb 'black'""" % (delim.get(), fin, vv_isopsi))
+
 if opts.count('o') > 0:
 	vv_isotherms = os.getenv("VV_ISOTHERMS") or os.popen("seq -s ' ' 0.05 0.05 0.95").read()[:-1]
 	gp.write("""%s "< isoline_exe %s.heat %s" w lines lw 2 lc rgb 'black'""" % (delim.get(), fin, vv_isotherms))
+
 if opts.count('b') > 0:
 	for b in bodies:
 		gp.write("""%s '%s' binary record=%d skip=%d format='%%3float64' u 1:2 w @body_style""" % (delim.get(), fin, b[1], b[0]+8))
