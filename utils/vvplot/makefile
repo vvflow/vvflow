@@ -1,5 +1,5 @@
 CC = icc -O3 -openmp
-names:= presplot isoline streamlines heatplot vvdistrib slowstart
+names:= presplot isoline streamlines heatplot vorticity vvdistrib slowstart
 scripts:= vvplot vvxtract vvjoin
 exes:= $(patsubst %,%_exe, $(names))
 

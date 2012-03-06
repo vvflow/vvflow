@@ -9,7 +9,7 @@
 
 const double ExpArgRestriction = -8.;
 double dl;
-double EPS_MULT, BODY_TEMP;
+double EPS_MULT;
 using namespace std;
 
 class printer
@@ -46,9 +46,9 @@ double eps2h(const TNode &Node, TVec p)
 	{
 		#define nnode (**llnnode)
 
-		auto *hlist = nnode.HeatLList;
-		if (!hlist) {continue;}
-		const_for (hlist, llobj)
+		auto *vlist = nnode.VortexLList;
+		if (!vlist) {continue;}
+		const_for (vlist, llobj)
 		{
 			if (!*llobj) { continue; }
 			#define obj (**llobj)
@@ -85,7 +85,7 @@ TObj* Nearest(TNode &Node, TVec p)
 	{
 		TNode &nnode = **llnnode;
 
-		auto list = nnode.HeatLList;
+		auto list = nnode.VortexLList;
 		if ( !list ) { continue; }
 		const_for (list, llobj)
 		{
@@ -122,10 +122,10 @@ double h2(TNode &Node, TVec p)
 	return resh2;
 }
 
-double Temperature(Space* S, TVec p)
+double Vorticity(Space* S, TVec p)
 {
 	double T=0;
-	auto *hlist = S->HeatList;
+	auto *hlist = S->VortexList;
 	TNode* bnode = FindNode(p);
 
 	//return  bnode->NearNodes->size_safe();
@@ -137,9 +137,9 @@ double Temperature(Space* S, TVec p)
 	{
 		#define nnode (**llnnode)
 
-		auto *hlist = nnode.HeatLList;
-		if (!hlist) {continue;}
-		const_for (hlist, llobj)
+		auto *vlist = nnode.VortexLList;
+		if (!vlist) {continue;}
+		const_for (vlist, llobj)
 		{
 			double exparg = -(p-**llobj).abs2() * (**llobj).v.rx; // v.rx stores eps^(-2)
 			T+= (exparg>-10) ? (**llobj).v.ry * exp(exparg) : 0; // v.ry stores g*eps(-2)
@@ -159,23 +159,20 @@ int main(int argc, char *argv[])
 {
 	if ( argc != 7)\
 	{
-		cerr << "Error! Please use: \nheatplot file.vb "
+		cerr << "Error! Please use: \nvorticity file.vb "
 		     << "precision xmin xmax ymin ymax \n"
 		     << "Also you can use enviroment variables:\n"
-		     << "export VV_EPS_MULT=2 to smooth picture\n"
-		     << "export VV_BODY_TEMP=1 to set body temperature\n";
+		     << "export VV_EPS_MULT=2 to smooth picture\n";
 		return -1;
 	}
 
 	char *mult_env = getenv("VV_EPS_MULT");
 	EPS_MULT = mult_env ? atof(mult_env) : 2;
-	char *body_t_env = getenv("VV_BODY_TEMP");
-	BODY_TEMP = body_t_env ? atof(body_t_env) : 1;
 
 	Space *S = new Space();
 	S->Load(argv[1]);
 	printer my_printer;
-	S->VortexList = NULL;
+	S->HeatList = NULL;
 
 	dl = S->AverageSegmentLength();
 	InitTree(S, 8, dl*20, DBL_MAX);
@@ -184,15 +181,15 @@ int main(int argc, char *argv[])
 	#pragma omp parallel for
 	const_for(GetTreeBottomNodes(), llbnode)
 	{
-		if (!(**llbnode).HeatLList) continue;
-		const_for((**llbnode).HeatLList, llobj)
+		if (!(**llbnode).VortexLList) continue;
+		const_for((**llbnode).VortexLList, llobj)
 		{
 			(**llobj).v.rx = 1./(sqr(EPS_MULT)*max(eps2h(**llbnode, **llobj), sqr(0.6*dl)));
 			(**llobj).v.ry = (**llobj).v.rx*(**llobj).g;
 		}
 	}
 
-	/************** CROP FIELD ****************/
+	/************** READ ARGUMENTS ****************/
 	double prec = atof(argv[2]);
 	double xmin = atof(argv[3]);
 	double xmax = atof(argv[4]);
@@ -205,7 +202,7 @@ int main(int argc, char *argv[])
 
 	fstream fout;
 	char fname[128];
-	sprintf(fname, "%s.heat", argv[1]);
+	sprintf(fname, "%s.vrtc", argv[1]);
 	fout.open(fname, ios::out);
 
 	int imax = (xmax-xmin)/prec + 1;
@@ -218,8 +215,7 @@ int main(int argc, char *argv[])
 		{
 			double y = ymin + double(j)*prec;
 			double t = PointIsInvalid(S, TVec(x, y)) ?
-			           BODY_TEMP :
-			           Temperature(S, TVec(x, y));
+			           0 : Vorticity(S, TVec(x, y));
 
 			#pragma omp ordered
 			{fout << x << "\t" << y << "\t" << t << endl;}

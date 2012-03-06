@@ -21,11 +21,12 @@ def file_exists(fname):
 	return 0 == os.spawnvp(os.P_WAIT, "test", ("test", "-e", fname))
 
 def printHelp():
-	print "Usage: %s -[ bBfhHiopstv01 ] input.vb output.png xmin xmax [y_offset]" % sys.argv[0]
+	print "Usage: %s -[ bBfghHiopstv01 ] input.vb output.png xmin xmax [y_offset]" % sys.argv[0]
 	print "\nPossible options are:"
 	print "  -b - plot Body"
 	print "  -B - choose body reference frame (default among -0 and -1)"
 	print "  -f - update fields files even if the exist"
+	print "  -g - plot vorticity field"
 	print "  -h - display this message and exit"
 	print "  -H - plot Heat particles"
 	print "  -i - plot Ink (streaklines)"
@@ -39,11 +40,12 @@ def printHelp():
 	print "  -1 - choose reference frame, moving respectively fluid at rate (-1, 0)"
 
 	print "\nAdditional environmental variables:"
-	print "  VV_PREC_HI - horiz resolution of temperature and pressure fields (default 500)"
-	print "  VV_ISOPSI - streamlines levels (default $(seq -s \' \' -10 0.1 10))"
-	print "  VV_ISOTHERMS - temperature isolines (default $(seq -s \' \' 0.05 0.05 0.95))"
-	print "  HEATPLOT_EPS_MULT - smooth temperature field picture (default 2)"
-	print "  HEATPLOT_BODY_TEMP - body surface temperature (default 1)"
+	print "  VV_PREC_HI - horiz resolution of temperature and pressure fields (default 500; affects -opPt)"
+	print "  VV_ISOPSI - streamlines levels (default $(seq -s \' \' -10 0.1 10); affects -s)"
+	print "  VV_ISOTHERMS - temperature isolines (default $(seq -s \' \' 0.05 0.05 0.95); affects -o)"
+	print "  VV_VORT_RANGE - change contrast of vorticity field (default 50; affects -g)"
+	print "  VV_EPS_MULT - smooth temperature field (default 2; affects -gt)"
+	print "  VV_BODY_TEMP - body surface temperature (default 1; affects -t)"
 
 ########################### PARSING COMMAND LINE ###############################
 argv = "";
@@ -103,20 +105,20 @@ ffin.close()
 if (opts.count('B') + opts.count('0') + opts.count('1')) > 1:
 	print "Too many reference frames options -{B|0|1}"
 	exit()
-elif opts.find('B')>=0:
-	#print "Body RF"
-	RefFrame = 'B'
-	x_offset = 0.0
 elif opts.find('0')>=0:
 	#print "0 RF"
 	RefFrame = '0'
 	x_offset = marker_x - 1000
 	y_offset+= marker_y
-else: #'1'
+elif opts.find('1')>=0:
 	#print "-1 RF"
 	RefFrame = '1'
 	x_offset = marker_x - 1000 - time
 	y_offset+= marker_y
+else: #B - default
+	#print "Body RF"
+	RefFrame = 'B'
+	x_offset = 0.0
 
 xmin+= x_offset
 xmax+= x_offset
@@ -125,6 +127,8 @@ ymax =  (xmax-xmin)*9.0/32.0 - y_offset
 vv_prec_hi = os.getenv("VV_PREC_HI") or 500.0
 prec_hi = (xmax-xmin)/float(vv_prec_hi)
 prec_lo = (xmax-xmin)/200.0
+vv_vort_range = os.getenv("VV_VORT_RANGE") or 50.
+vv_vort_range = float(vv_vort_range)
 
 ############################## CALC FIELDS #####################################
 
@@ -142,6 +146,12 @@ if opts.count('t') + opts.count('o') > 0:
 	if not file_exists("%s.heat" % fin) or opts.count('f') > 0:
 		pids.append(os.spawnvp(os.P_NOWAIT, "heatplot_exe", \
 		("heatplot_exe", str(fin), str(prec_hi)) + boundaries));
+
+#VORTICITY FIELD
+if opts.count('g') > 0:
+	if not file_exists("%s.vrtc" % fin) or opts.count('f') > 0:
+		pids.append(os.spawnvp(os.P_NOWAIT, "vorticity_exe", \
+		("vorticity_exe", str(fin), str(prec_hi)) + boundaries));
 
 #PSI FUNCTION FIELD
 if opts.count('s') > 0:
@@ -200,6 +210,15 @@ if opts.count('p') + opts.count('P') > 0:
 	set palette maxcolors 33 defined (-1.5 "#0829d5", -0.5 "#1ffcff", 0 "#2ef62e", 0.3 "yellow", 1 "red")
 	""")
 
+if opts.count('g') > 0:
+	gp.write("""
+	set cbrange [%f:%f]
+	#set label "-1.5" at graph 0.096, 0.039 right front
+	#set label "1" at graph 0.904, 0.039 left front
+	set palette maxcolors 33 defined (-1 "#0000ff", 0 "#ffffff", 1 "#ff0000")
+	#set palette maxcolors 33 defined (-1 "#000000", 0 "#808080", 1 "#ffffff")
+	""" % (-vv_vort_range, vv_vort_range))
+
 if opts.count('t') > 0:
 	gp.write("""
 	set cbrange [0:1]
@@ -217,6 +236,9 @@ if opts.count('p') + opts.count('P') > 0:
 
 if opts.count('t') > 0:
 	gp.write("""%s '%s.heat' w image""" % (delim.get(), fin))
+
+if opts.count('g') > 0:
+	gp.write("""%s '%s.vrtc' w image""" % (delim.get(), fin))
 
 if opts.count('v') > 0 and v_size > 0:
 	gp.write("""%s '%s' binary record=%d skip=%d format='%%3float64'""" % (delim.get(), fin, v_size, v_skip+8))
