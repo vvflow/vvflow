@@ -17,6 +17,12 @@ class delimiter:
 		else:
 			return ","
 
+def ternary(cond, a, b):
+	if cond:
+		return a
+	else:
+		return b
+
 def file_exists(fname):
 	return 0 == os.spawnvp(os.P_WAIT, "test", ("test", "-e", fname))
 
@@ -36,6 +42,7 @@ def printHelp():
 	print "  -s - plot streamlines"
 	print "  -t - plot Temperature field"
 	print "  -v - plot vortex domains"
+	print "  -w - Black and White mode"
 	print "  -0 - choose reference frame, strictly connected to fluid"
 	print "  -1 - choose reference frame, moving respectively fluid at rate (-1, 0)"
 
@@ -122,8 +129,8 @@ else: #B - default
 
 xmin+= x_offset
 xmax+= x_offset
-ymin = -(xmax-xmin)*9.0/32.0 - y_offset
-ymax =  (xmax-xmin)*9.0/32.0 - y_offset
+ymin = -(xmax-xmin)*9.0/32.0 + y_offset
+ymax =  (xmax-xmin)*9.0/32.0 + y_offset
 vv_prec_hi = os.getenv("VV_PREC_HI") or 500.0
 prec_hi = (xmax-xmin)/float(vv_prec_hi)
 prec_lo = (xmax-xmin)/200.0
@@ -168,9 +175,9 @@ for i in pids:
 
 gp = os.popen("gnuplot", "w")
 gp.write("""
-set terminal pngcairo enhanced size 1280, 720 font "FreeSerif, 26"
+set terminal pngcairo enhanced %s size 1280, 720 font "FreeSerif, 26"
 set output '%s'
-""" % fout)
+""" % (ternary(opts.count('w')>0, "mono", "color"), fout))
 
 gp.write("""
 set lmargin 0
@@ -207,17 +214,28 @@ if opts.count('p') + opts.count('P') > 0:
 	set cbrange [-1.5:1]
 	set label "-1.5" at graph 0.096, 0.039 right front
 	set label "1" at graph 0.904, 0.039 left front
-	set palette maxcolors 33 defined (-1.5 "#0829d5", -0.5 "#1ffcff", 0 "#2ef62e", 0.3 "yellow", 1 "red")
 	""")
+	if opts.count('w') > 0:
+		gp.write("""
+		set palette maxcolors 33 defined (-1.5 "#000000", 0 "#c8c8c8", 0.5 "#f0f0f0", 1 "#ffffff")
+		""")
+	else:
+		gp.write("""
+		set palette maxcolors 33 defined (-1.5 "#0829d5", -0.5 "#1ffcff", 0 "#2ef62e", 0.3 "yellow", 1 "red")
+		""")
 
 if opts.count('g') > 0:
 	gp.write("""
 	set cbrange [%f:%f]
-	#set label "-1.5" at graph 0.096, 0.039 right front
-	#set label "1" at graph 0.904, 0.039 left front
-	set palette maxcolors 33 defined (-1 "#0000ff", 0 "#ffffff", 1 "#ff0000")
-	#set palette maxcolors 33 defined (-1 "#000000", 0 "#808080", 1 "#ffffff")
 	""" % (-vv_vort_range, vv_vort_range))
+	if opts.count('w') > 0:
+		gp.write("""
+		set palette maxcolors 33 defined (-1 "#000000", 0 "#808080", 1 "#ffffff")
+		""")
+	else:
+		gp.write("""
+		set palette maxcolors 33 defined (-1 "#0000ff", 0 "#ffffff", 1 "#ff0000")
+		""")
 
 if opts.count('t') > 0:
 	gp.write("""
@@ -226,6 +244,8 @@ if opts.count('t') > 0:
 	set label "1" at graph 0.904, 0.039 left front
 	set palette maxcolors 33 defined (0 "#0829d5", 0.3 "#1ffcff", 0.5 "red", 1 "yellow", 2 "white")
 	""")
+	if opts.count('w') > 0:
+		print "Black/white mode isnt implemented for temperature yet."
 
 delim = delimiter()
 if opts.count('p') + opts.count('P') > 0:
