@@ -269,7 +269,7 @@ if opts.count('H') > 0 and h_size > 0:
 	gp.write(""" u 1:2:(%f) w @heat_style""" % prec_hi)
 
 if opts.count('i') > 0 and i_size > 1:
-	gp.write("""%s '%s' binary record=%d skip=%d format='%%3float64' """ % (delim.get(), fin, i_size-1, i_skip+16))
+	gp.write("""%s '%s' binary record=%d skip=%d format='%%3float64' """ % (delim.get(), fin, i_size-1, i_skip+32))
 	gp.write(""" u 1:2:(%f) w @ink_style""" % prec_hi)
 
 if opts.count('s') > 0:
