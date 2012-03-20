@@ -45,8 +45,8 @@ void MergeVortexes(TObj **lv1, TObj **lv2)
 {
 	if (!lv1 || !lv2 || (lv1==lv2)) return;
 	if (!*lv1 || !*lv2) return;
-	TObj &v1 = **lv1;
-	TObj &v2 = **lv2;
+	bugfix TObj &v1 = **lv1;
+	bugfix TObj &v2 = **lv2;
 	//if (fabs(v1.g + v2.g) > GRestriction) return -1;
 	DiffMergeFast_MergedV++;
 
@@ -75,13 +75,13 @@ double Epsilon(const TNode &Node, TObj **lv, bool merge)
 	double res1, res2;
 	res2 = res1 = 1E10;
 
-	TObj &v = **lv;
+	bugfix TObj &v = **lv;
 	TObj **lv1, **lv2;
 	lv1 = lv2 = NULL;
 
 	const_for(Node.NearNodes, llnnode)
 	{
-		TNode &nnode = **llnnode;
+		bugfix TNode &nnode = **llnnode;
 
 		TNode::content *list;
 		list = (pt==Vortex) ? nnode.VortexLList : nnode.HeatLList;
@@ -89,7 +89,7 @@ double Epsilon(const TNode &Node, TObj **lv, bool merge)
 		const_for (list, llobj)
 		{
 			if (!*llobj) { continue; }
-			TObj &obj = **llobj;
+			bugfix TObj &obj = **llobj;
 			dr = v - obj;
 			double drabs2 = dr.abs2();
 			if (!drabs2) continue;
@@ -103,8 +103,8 @@ double Epsilon(const TNode &Node, TObj **lv, bool merge)
 
 	if ( (pt == Vortex) && merge)
 	{
-		TObj &v1 = **lv1;
-		TObj &v2 = **lv2;
+		bugfix TObj &v1 = **lv1;
+		bugfix TObj &v2 = **lv2;
 		if ( 
 			((*lv<*lv1) && (res1 < DiffMergeFast_MergeSqEps))
 			||
@@ -129,7 +129,7 @@ void Division(const TNode &Node, const TObj &v, double _1_eps, TVec* ResP, doubl
 	ResP->zero(); *ResD = 0.;
 
 	TNode **lNNode = Node.NearNodes->begin();
-	TNode **&LastNNode = Node.NearNodes->end();
+	bugfix TNode **&LastNNode = Node.NearNodes->end();
 	for ( ; lNNode<LastNNode; lNNode++ )
 	{
 		TNode &NNode = **lNNode;
@@ -149,12 +149,12 @@ void Division(const TNode &Node, const TObj &v, double _1_eps, TVec* ResP, doubl
 				lLastObj = &NNode.HeatLList->end();
 				break;
 		}
-		TObj **&LastObj = *lLastObj;
+		bugfix TObj **&LastObj = *lLastObj;
 
 		for ( ; lObj<LastObj; lObj++ )
 		{
 			if (!*lObj) { continue; }
-			TObj &Obj = **lObj;
+			bugfix TObj &Obj = **lObj;
 			dr = v - Obj;
 			if ( dr.iszero() ) { continue; }
 			double drabs = dr.abs();
@@ -223,14 +223,14 @@ int CalcVortexDiffMergeFast()
 	#pragma omp parallel for schedule(dynamic, 10)
 	const_for(BottomNodes, llbnode)
 	{
-		TNode &bnode = **llbnode;
+		bugfix TNode &bnode = **llbnode;
 
 		auto vlist = bnode.VortexLList;
 		if ( !vlist ) { continue; }
 		const_for (vlist, llobj)
 		{
 			if (!*llobj) { continue; }
-			TObj &obj = **llobj;
+			bugfix TObj &obj = **llobj;
 
 			double eps, _1_eps;
 			eps = Epsilon<Vortex>(bnode, llobj, true);
@@ -243,13 +243,13 @@ int CalcVortexDiffMergeFast()
 			auto nnodes = bnode.NearNodes;
 			const_for(nnodes, llnnode)
 			{
-				TNode &nnode = **llnnode;
+				bugfix TNode &nnode = **llnnode;
 				auto jlist = nnode.VortexLList;
 				if ( jlist )
 				const_for (jlist, lljobj)
 				{
 					if (!*lljobj) { continue; }
-					TObj &jobj = **lljobj;
+					bugfix TObj &jobj = **lljobj;
 					VortexInfluence(obj, jobj, _1_eps, &S2, &S1);
 				}
 

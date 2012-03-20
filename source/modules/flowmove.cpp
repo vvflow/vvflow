@@ -126,7 +126,7 @@ void flowmove::VortexShed()
 
 	const_for(S->BodyList, llbody)
 	{
-		TBody &body = **llbody;
+		#define body (**llbody)
 		const_for(body.List, lbobj)
 		{
 			TAtt *latt = body.att(lbobj);
@@ -143,6 +143,7 @@ void flowmove::VortexShed()
 				vlist->push_back(ObjCopy);
 			}
 		}
+		#undef body
 	}
 }
 

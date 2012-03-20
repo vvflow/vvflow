@@ -142,14 +142,13 @@ void CalcConvectiveFast()
 	#pragma omp parallel for
 	const_for (BottomNodes, llbnode)
 	{
-		TNode &bnode = **llbnode;
+		#define bnode (**llbnode)
 
 		double Teilor1, Teilor2, Teilor3, Teilor4;
 		Teilor1 = Teilor2 = Teilor3 = Teilor4 = 0;
 
 		const_for (bnode.FarNodes, llfnode)
 		{
-			//TNode &fnode = **llfnode; //FIXME dangerous with O3
 			#define fnode (**llfnode)
 
 			TVec DistP = TVec(bnode.x, bnode.y) - fnode.CMp;
@@ -181,11 +180,12 @@ void CalcConvectiveFast()
 			const_for (bnode.VortexLList, llobj)
 			{
 				if (!*llobj) {continue;}
-				TObj &obj = **llobj;
+				#define obj (**llobj)
 				dr_local = obj - TVec(bnode.x, bnode.y);
 				obj.v += TVec(Teilor1, Teilor2) + InfSpeed_tmp + SpeedSum(bnode, obj) +
 				         TVec(TVec(Teilor3,  Teilor4)*dr_local,
 				              TVec(Teilor4, -Teilor3)*dr_local);
+				#undef obj
 			}
 		}
 
@@ -194,11 +194,12 @@ void CalcConvectiveFast()
 			const_for (bnode.HeatLList, llobj)
 			{
 				if (!*llobj) {continue;}
-				TObj &obj = **llobj;
+				#define obj (**llobj)
 				dr_local = obj - TVec(bnode.x, bnode.y);
 				obj.v += TVec(Teilor1, Teilor2) + InfSpeed_tmp + SpeedSum(bnode, obj) +
 				         TVec(TVec(Teilor3,  Teilor4)*dr_local,
 				              TVec(Teilor4, -Teilor3)*dr_local);
+				#undef obj
 			}
 		}
 
@@ -206,13 +207,15 @@ void CalcConvectiveFast()
 		{
 			const_for (bnode.StreakLList, llobj)
 			{
-				TObj &obj = **llobj;
+				#define obj (**llobj)
 				dr_local = obj - TVec(bnode.x, bnode.y);
 				obj.v += TVec(Teilor1, Teilor2) + InfSpeed_tmp + SpeedSum(bnode, obj) +
 				         TVec(TVec(Teilor3,  Teilor4)*dr_local,
 				              TVec(Teilor4, -Teilor3)*dr_local);
+				#undef obj
 			}
 		}
+		#undef bnode
 	}
 }
 
@@ -284,11 +287,12 @@ void CalcCirculationFast(bool use_inverse)
 
 	const_for (S->BodyList, llbody)
 	{
-		TBody &body = **llbody;
+		#define body (**llbody)
 		const_for(body.List, lobj)
 		{
 			lobj->g = Solution[body.att(lobj)->eq_no];
 		}
+		#undef body
 	}
 }
 
@@ -355,9 +359,10 @@ double NodeInfluence(const TNode &Node, const TAtt &seg, double rd)
 
 	const_for(Node.FarNodes, llfnode)
 	{
-		TNode &fnode = **llfnode;
+		#define fnode (**llfnode)
 		res+= ConvectiveInfluence(fnode.CMp, seg, rd) * fnode.CMp.g;
 		res+= ConvectiveInfluence(fnode.CMm, seg, rd) * fnode.CMm.g;
+		#undef fnode
 	}
 
 	return res*C_1_2PI;
@@ -370,7 +375,7 @@ double AttachInfluence(const TAtt &seg, double rd)
 
 	const_for(S->BodyList, llbody)
 	{
-		TBody &body = **llbody;
+		#define body (**llbody)
 		if (!body.AttachList->size_safe()) continue;
 		double RotSpeed_tmp = body.RotSpeed(S->Time);
 		if (!RotSpeed_tmp) continue;
@@ -386,6 +391,7 @@ double AttachInfluence(const TAtt &seg, double rd)
 			res_tmp+= ConvectiveInfluence(*latt, seg_tmp, rd) * latt->q;
 		}
 		res+= res_tmp * RotSpeed_tmp;
+		#undef body
 	}
 
 	return res * C_1_2PI;
@@ -398,7 +404,7 @@ void FillMatrix()
 
 	const_for(S->BodyList, llbody)
 	{
-		TBody &body = **llbody;
+		#define body (**llbody)
 		const_for(body.List, lbvort)
 		{
 			//temporarily vort->g stores eps info.
@@ -406,11 +412,12 @@ void FillMatrix()
 			            (*body.prev(lbvort)-*lbvort).abs();
 			lbvort->g *= 0.25;
 		}
+		#undef body
 	}
 
 	const_for(S->BodyList, llibody)
 	{
-		TBody &ibody = **llibody;
+		#define ibody (**llibody)
 		#pragma omp parallel for
 
 		const_for(ibody.AttachList, latt)
@@ -418,7 +425,7 @@ void FillMatrix()
 			int i = latt->eq_no;
 			const_for(S->BodyList, lljbody)
 			{
-				TBody &jbody = **lljbody;
+				#define jbody (**lljbody)
 				const_for(jbody.List, lobj)
 				{
 					int j=jbody.att(lobj)->eq_no;
@@ -441,8 +448,10 @@ void FillMatrix()
 						break;
 					}
 				}
+				#undef jbody
 			}
 		}
+		#undef ibody
 	}
 
 	BodyMatrixOK = true;
@@ -453,7 +462,7 @@ void FillRightCol()
 	double rot_sum = 0;
 	const_for (S->BodyList, llbody)
 	{
-		TBody &body = **llbody;
+		#define body (**llbody)
 		double tmp = 0;
 		const_for(body.AttachList, latt)
 		{
@@ -461,12 +470,13 @@ void FillRightCol()
 		}
 		tmp*= body.RotSpeed(S->Time);
 		rot_sum+= tmp;
+		#undef body
 	}
 
 	TVec InfSpeed_tmp = S->InfSpeed();
 	const_for (S->BodyList, llbody)
 	{
-		TBody &body = **llbody;
+		#define body (**llbody)
 		double tmp = 0;
 		const_for(body.AttachList, latt)
 		{
@@ -500,6 +510,7 @@ void FillRightCol()
 				break;
 			}
 		}
+		#undef body
 	}
 }
 
@@ -569,12 +580,13 @@ void SolveMatrix_inv()
 	for (size_t i=0; i<N; i++)
 	{
 		double *RowI = InverseMatrix + N*i;
-		double &SolI = Solution[i];
+		#define SolI Solution[i]
 		SolI = 0;
 		for (size_t j=0; j<N; j++)
 		{
 			SolI+= RowI[j]*RightCol[j];
 		}
+		#undef SolI
 	}
 }}
 

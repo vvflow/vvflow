@@ -25,14 +25,14 @@ void diffusivefast::CalcVortexDiffusiveFast()
 	#pragma omp parallel for schedule(dynamic, 10)
 	const_for(bnodes, llbnode)
 	{
-		TNode &bnode = **llbnode;
+		#define bnode (**llbnode)
 
 		auto vlist = bnode.VortexLList;
 		if ( !vlist ) { continue; }
 		const_for (vlist, llobj)
 		{
 			if (!*llobj) { continue; }
-			TObj &obj = **llobj;
+			#define obj (**llobj)
 
 			TVec S2(0,0), S3(0,0);
 			double S1 = 0, S0 = 0;
@@ -40,7 +40,7 @@ void diffusivefast::CalcVortexDiffusiveFast()
 			auto nnodes = bnode.NearNodes;
 			const_for(nnodes, llnnode)
 			{
-				TNode &nnode = **llnnode;
+				#define nnode (**llnnode)
 				auto jlist = nnode.VortexLList;
 				if ( jlist )
 				const_for (jlist, lljobj)
@@ -62,13 +62,16 @@ void diffusivefast::CalcVortexDiffusiveFast()
 					if (!body) { continue; }
 					SegmentInfluence(obj, body->att(*lljobj), &S3, &S0, true);
 				}
+				#undef nnode
 			}
 
 			if ( (sign(S1)!=sign(obj)) || (fabs(S1)<fabs(0.1*obj.g)) ) { S1 = 0.1*obj.g; }
 
 			obj.v += obj._1_eps/(Re*S1) * S2;
 			obj.v += (sqr(obj._1_eps)/(Re*(C_2PI-S0))) * S3;
+			#undef obj
 		}
+		#undef bnode
 	}
 }
 
@@ -82,14 +85,14 @@ void diffusivefast::CalcHeatDiffusiveFast()
 	#pragma omp parallel for schedule(dynamic, 10)
 	const_for(bnodes, llbnode)
 	{
-		TNode &bnode = **llbnode;
+		#define bnode (**llbnode)
 
 		auto hlist = bnode.HeatLList;
 		if ( !hlist ) { continue; }
 		const_for (hlist, llobj)
 		{
 			if (!*llobj) { continue; }
-			TObj &obj = **llobj;
+			#define obj (**llobj)
 
 			TVec S2(0,0), S3(0,0);
 			double S1 = 0, S0 = 0;
@@ -97,7 +100,7 @@ void diffusivefast::CalcHeatDiffusiveFast()
 			auto nnodes = bnode.NearNodes;
 			const_for(nnodes, llnnode)
 			{
-				TNode &nnode = **llnnode;
+				#define nnode (**llnnode)
 				auto jlist = nnode.HeatLList;
 				if ( jlist )
 				const_for (jlist, lljobj)
@@ -119,6 +122,7 @@ void diffusivefast::CalcHeatDiffusiveFast()
 					if (!body) { continue; }
 					SegmentInfluence(obj, body->att(*lljobj), &S3, &S0, false);
 				}
+				#undef nnode
 			}
 
 			if ( (sign(S1)!=sign(obj)) || (fabs(S1)<fabs(0.1*obj.g)) ) { S1 = 0.1*obj.g; }
@@ -128,6 +132,7 @@ void diffusivefast::CalcHeatDiffusiveFast()
 //			obj.v += obj._1_eps/(Re*S1) * S2;
 //			obj.v += (sqr(obj._1_eps)/(Re*(C_2PI-S0))) * S3;
 		}
+		#undef bnode
 	}
 }
 

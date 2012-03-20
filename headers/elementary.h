@@ -6,6 +6,8 @@
 #include "list.h"
 using namespace std;
 
+#define bugfix volatile
+
 typedef void* pointer;
 typedef char* pchar;
 const double C_PI =		3.14159265358979323846;
