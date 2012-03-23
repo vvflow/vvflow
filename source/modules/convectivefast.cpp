@@ -138,7 +138,6 @@ void CalcConvectiveFast()
 	if (!BottomNodes) {cerr << "CalcConvectiveFast() is called before tree is built"
 	                        << endl; return; }
 
-	TVec InfSpeed_tmp = S->InfSpeed();
 	#pragma omp parallel for
 	const_for (BottomNodes, llbnode)
 	{
@@ -182,7 +181,7 @@ void CalcConvectiveFast()
 				if (!*llobj) {continue;}
 				#define obj (**llobj)
 				dr_local = obj - TVec(bnode.x, bnode.y);
-				obj.v += TVec(Teilor1, Teilor2) + InfSpeed_tmp + SpeedSum(bnode, obj) +
+				obj.v += TVec(Teilor1, Teilor2) + S->InfSpeed() + SpeedSum(bnode, obj) +
 				         TVec(TVec(Teilor3,  Teilor4)*dr_local,
 				              TVec(Teilor4, -Teilor3)*dr_local);
 				#undef obj
@@ -196,7 +195,7 @@ void CalcConvectiveFast()
 				if (!*llobj) {continue;}
 				#define obj (**llobj)
 				dr_local = obj - TVec(bnode.x, bnode.y);
-				obj.v += TVec(Teilor1, Teilor2) + InfSpeed_tmp + SpeedSum(bnode, obj) +
+				obj.v += TVec(Teilor1, Teilor2) + S->InfSpeed() + SpeedSum(bnode, obj) +
 				         TVec(TVec(Teilor3,  Teilor4)*dr_local,
 				              TVec(Teilor4, -Teilor3)*dr_local);
 				#undef obj
@@ -209,7 +208,7 @@ void CalcConvectiveFast()
 			{
 				#define obj (**llobj)
 				dr_local = obj - TVec(bnode.x, bnode.y);
-				obj.v += TVec(Teilor1, Teilor2) + InfSpeed_tmp + SpeedSum(bnode, obj) +
+				obj.v += TVec(Teilor1, Teilor2) + S->InfSpeed() + SpeedSum(bnode, obj) +
 				         TVec(TVec(Teilor3,  Teilor4)*dr_local,
 				              TVec(Teilor4, -Teilor3)*dr_local);
 				#undef obj
@@ -473,7 +472,6 @@ void FillRightCol()
 		#undef body
 	}
 
-	TVec InfSpeed_tmp = S->InfSpeed();
 	const_for (S->BodyList, llbody)
 	{
 		#define body (**llbody)
@@ -496,7 +494,7 @@ void FillRightCol()
 			{
 			case bc::slip:
 			case bc::noslip:
-				RightCol[latt->eq_no] = rotl(InfSpeed_tmp)*SegDl;
+				RightCol[latt->eq_no] = rotl(S->InfSpeed())*SegDl;
 				RightCol[latt->eq_no] -= NodeInfluence(*Node, *latt, Rd);
 				RightCol[latt->eq_no] -= AttachInfluence(*latt, Rd);
 				break;

@@ -22,7 +22,9 @@ Space::Space(TVec (*sInfSpeed)(double time))
 
 	InfSpeed_link = sInfSpeed;
 	InfSpeed_const.zero();
-	Time = dt = Re = Pr = 0;
+	Time = dt = Re = Pr = cache_time = cache2_time = 0;
+	InfSpeed_cache.zero();
+	InfSpeed_cache2.zero();
 }
 
 inline
@@ -35,6 +37,25 @@ void Space::FinishStep()
 		body.Position -= InfSpeed() * dt;
 	}
 	Time+= dt;
+}
+
+TVec Space::InfSpeed()
+{
+	if (cache_time != Time)
+	{
+		cache2_time = cache_time;
+		InfSpeed_cache2 = InfSpeed_cache;
+		cache_time = Time;
+		InfSpeed_cache = (Time>0)?(InfSpeed_link?InfSpeed_link(Time):InfSpeed_const):TVec(0,0);
+	}
+
+	return InfSpeed_cache;
+}
+
+TVec Space::InfSpeed(double t)
+{
+	if (t == cache2_time) return InfSpeed_cache2;
+	return (Time>0)?(InfSpeed_link?InfSpeed_link(t):InfSpeed_const):TVec(0,0);
 }
 
 /********************************** SAVE/LOAD *********************************/
@@ -212,6 +233,7 @@ void Space::CalcForces()
 			body.Nusselt += latt->hsum * (Re*Pr);
 		}
 
+		body.Force -= body.Area() * (InfSpeed() - InfSpeed(Time-dt));
 		body.Force /= dt;
 		body.Force.g /= dt;
 		//body.Friction /= dt;

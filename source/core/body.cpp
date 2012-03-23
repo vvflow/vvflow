@@ -24,7 +24,8 @@ TBody::TBody(Space *sS)
 	Angle = 0;
 	g_dead = 0;
 	Position = TVec(0,0);
-	Force = TObj(0,0,0); 
+	Force = TObj(0,0,0);
+	area = 0;
 }
 
 TBody::~TBody()
@@ -134,6 +135,19 @@ double TBody::SurfaceLength()
 	}
 
 	return res;
+}
+
+double TBody::Area()
+{
+	if (!area)
+	{
+		const_for (AttachList, latt)
+		{
+			area+= latt->ry*latt->dl.rx;
+		}
+	}
+
+	return area;
 }
 
 void TBody::SetRotation(TVec sRotAxis, double (*sRotSpeed)(double time), double sRotSpeed_const)

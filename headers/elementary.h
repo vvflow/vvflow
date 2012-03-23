@@ -62,6 +62,7 @@ class TVec
 
 		friend double operator* (const TVec &p1, const TVec &p2) 	{ return p1.rx*p2.rx + p1.ry*p2.ry; }
 		friend const TVec rotl(const TVec &p) { return TVec(-p.ry, p.rx); }
+		//NB: double * rotl(vec) = (in terms of math) (e_z*double) \times vec
 		friend const TVec operator- (const TVec &p) { return TVec(-p.rx, -p.ry); }
 };
 

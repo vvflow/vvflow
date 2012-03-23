@@ -29,7 +29,8 @@ class Space
 
 		inline void FinishStep(); //update time and coord variables
 
-		TVec InfSpeed() { return InfSpeed_link?InfSpeed_link(Time):InfSpeed_const; }
+		TVec InfSpeed();
+		TVec InfSpeed(double t);
 		void ZeroSpeed();
 		double Time, dt, Re, Pr;
 
@@ -61,6 +62,10 @@ class Space
 	private:
 		TVec (*InfSpeed_link)(double time);
 		TVec InfSpeed_const;
+		TVec InfSpeed_cache;
+		double cache_time;
+		TVec InfSpeed_cache2;
+		double cache2_time;
 };
 
 #endif /*SPACE_H_*/

@@ -48,6 +48,7 @@ class TBody
 		TAtt* PointIsInvalid(TVec p);
 		TAtt* PointIsInHeatLayer(TVec p);
 		double SurfaceLength();
+		double Area();
 		double size(){ return List->size_safe(); }
 		void SetRotation(TVec sRotAxis, double (*sRotSpeed)(double time), double sRotSpeed_const = 0);
 
@@ -79,6 +80,7 @@ class TBody
 
 	private:
 		Space *S;
+		double area;
 		vector<TObj> *HeatLayerList;
 		TAtt* PointIsInContour(TVec p, vector<TObj> *list);
 		double (*RotSpeed_link)(double time);
