@@ -207,7 +207,7 @@ void flowmove::CropHeat(double scale)
 
 void flowmove::StreakShed(double shed_dt)
 {
-	if (S->Time - int(S->Time/shed_dt)*shed_dt > S->dt/10) return;
+	if (!divisible(S->Time, shed_dt, dt/2)) return;
 	const_for(S->StreakSourceList, lobj)
 	{
 		S->StreakList->push_back(*lobj);
