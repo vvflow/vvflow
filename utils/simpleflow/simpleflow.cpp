@@ -13,6 +13,7 @@
 #include "diffusivefast.h"
 #include "flowmove.h"
 
+#include "sensors.cpp"
 #include "omp.h"
 #define dbg(a) a
 //#define dbg(a) cerr << "Doing " << #a << "... " << flush; a; cerr << "done\n";
@@ -78,6 +79,8 @@ int main(int argc, char** argv)
 		cerr << "VV_save_dt (optional) - dt between saves (default = 0.05)\n";
 		cerr << "VV_streak (optional) - file with streak particles\n";
 		cerr << "VV_streak_source (optional) - file with streak sources\n";
+		cerr << "VV_streak_dt (optional) - dt between ink shedding (default = VV_save_dt)\n";
+		cerr << "VV_sensors (optional) - file with coordinates of velocity sensors (2 cols)\n";
 		cerr << "\ninfx example:\n";
 		cerr << "echo \"print(\\\"%g\\\", $t<1?$t:1)\" | gnuplot - smooth start\n";
 		return -1;
@@ -94,6 +97,8 @@ int main(int argc, char** argv)
 	char *save_dt_env = getenv("VV_save_dt");
 	char *streak_env = getenv("VV_streak");
 	char *streak_source_env = getenv("VV_streak_source");
+	char *streak_dt_env = getenv("VV_streak_dt");
+	char *sensors_env = getenv("VV_sensors");
 	if (!name_env) { getenv_alert(false, "VV_name"); error = true; }
 	if (!body_env) { getenv_alert(false, "VV_body"); error = true; }
 	if (!infx_env) { getenv_alert(false, "VV_infx"); error = true; }
@@ -104,11 +109,14 @@ int main(int argc, char** argv)
 	if (!save_dt_env) { getenv_alert(true, "VV_save_dt"); }
 	if (!streak_env) { getenv_alert(true, "VV_streak"); }
 	if (!streak_source_env) { getenv_alert(true, "VV_streak_source"); }
+	if (!streak_dt_env) { getenv_alert(true, "VV_streak_dt"); }
+	if (!sensors_env) { getenv_alert(true, "VV_sensors"); }
 	if (error) { cerr << "Exiting.\n"; return -1; }
 
 	char dir[256]; sprintf(dir, "results_%s", name_env);
 	char stepdata[256]; sprintf(stepdata, "stepdata_%s", name_env);
 	char profile[256]; sprintf(profile, "profile_%s", name_env);
+	char sensors_output[256]; sprintf(sensors_output, "velocity_%s", name_env);
 	infx_sh = infx_env ? infx_env : NULL;
 	infy_sh = infy_env ? infy_env : NULL;
 
@@ -116,6 +124,7 @@ int main(int argc, char** argv)
 	double Pr = Pr_env?atof(Pr_env):1;
 	double dt = atof(dt_env);
 	double save_dt = save_dt_env?atof(save_dt_env):0.05;
+	double streak_dt = streak_dt_env?atof(streak_dt_env):save_dt;
 
 	mkdir(dir, 0777);
 
@@ -131,6 +140,7 @@ int main(int argc, char** argv)
 	fprintf(f, "Pr = \t%g\n", Pr);
 	fprintf(f, "dt = \t%g\n", dt);
 	fprintf(f, "save dt = \t%g\n", save_dt);
+	fprintf(f, "streak dt = \t%g\n", streak_dt);
 	fflush(f);
 
 	/**************************************************************************/
@@ -171,6 +181,7 @@ int main(int argc, char** argv)
 	epsfast eps(S);
 	diffusivefast diff(S, _1_nyu, Pr);
 	flowmove fm(S, dt);
+	sensors sens(S, sensors_env, sensors_output);
 
 	while (true)
 	{
@@ -188,7 +199,7 @@ int main(int argc, char** argv)
 		}
 
 		dbg(fm.VortexShed());
-		dbg(fm.StreakShed(save_dt));
+		dbg(fm.StreakShed(streak_dt));
 
 		dbg(S->CalcForces());
 		S->SaveProfile(profile, save_dt, val::Cp | val::Fr | val::Nu);
@@ -212,6 +223,7 @@ int main(int argc, char** argv)
 		dbg(eps.CalcEpsilonFast(true));
 		dbg(CalcBoundaryConvective());
 		dbg(CalcConvectiveFast());
+		dbg(sens.output());
 		dbg(diff.CalcVortexDiffusiveFast());
 		dbg(diff.CalcHeatDiffusiveFast());
 		dbg(DestroyTree());
