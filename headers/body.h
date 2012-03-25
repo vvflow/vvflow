@@ -49,6 +49,8 @@ class TBody
 		TAtt* PointIsInHeatLayer(TVec p);
 		double SurfaceLength();
 		double Area();
+		TVec Com(); // center of mass
+		double Moi_c(); // moment of inertia about rotation axis
 		double size(){ return List->size_safe(); }
 		void SetRotation(TVec sRotAxis, double (*sRotSpeed)(double time), double sRotSpeed_const = 0);
 
@@ -80,7 +82,12 @@ class TBody
 
 	private:
 		Space *S;
+		void FillProperties();
 		double area;
+		TVec com; //center of mass in body ref frame (Oxbyb)
+		double moi_com; //moment of inertia about com;
+		double moi_c; //moi about rotation axis
+
 		vector<TObj> *HeatLayerList;
 		TAtt* PointIsInContour(TVec p, vector<TObj> *list);
 		double (*RotSpeed_link)(double time);

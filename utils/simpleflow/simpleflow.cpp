@@ -213,9 +213,10 @@ int main(int argc, char** argv)
 		             (**llbody).Friction.ry,
 		             (**llbody).Friction.g,
 		             (**llbody).Nusselt);
-		fprintf(f, "%-10ld \t%-10ld\t",
+		fprintf(f, "%-10ld \t%-10ld \t%-10e\t",
 		             S->VortexList->size_safe(),
-		             S->HeatList->size_safe());
+		             S->HeatList->size_safe(),
+		             S->InfSpeed().rx);
 		fflush(f);
 		S->ZeroForces();
 
