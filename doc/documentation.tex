@@ -148,15 +148,17 @@ q_{\text{att}~i} = -[\br V_{\text{att}~i} \times \Delta \br l]
 
 Для вычисления центра масс удобно использовать формулу Грина.
 \begin{equation*}
-\br r_c = \dfrac{1}{S}\int \br r dS = \dfrac{1}{2S}\int\nabla r^2 dS = -\dfrac{1}{2S}\int \br n r^2 dl = -\dfrac{1}{2S} \sum r^2 [\br e_z \times \Delta \br l]
+\br r_\text{com} = \dfrac{1}{S}\int \br r dS = \dfrac{1}{2S}\int\nabla r^2 dS = -\dfrac{1}{2S}\int \br n r^2 dl = \dfrac{1}{2S} \sum r^2 [\br e_z \times \Delta \br l]
 \end{equation*}
 
-Аналогичный алгоритм можно использовать для момента инерции. Здесь используется теорема Стокса.
+Минус в последнем равенстве пропал из-за того, что в комплексе заложена ориентация контура для внешней области (для жидкости), а здесь нам нужна внутренность контура.
+
+Аналогичный алгоритм можно использовать для момента инерции. Здесь используется теорема Стокса. Минус в конце появляется по той-же причине.
 \begin{equation*}
-J = \rho \int r^2 dS = \dfrac{\rho}{4}\int(\rot([\br e_z \times \br r] r^2) dS = \dfrac{\rho}{4}\int r^2 ([\br e_z \times \br r] \cdot d \br S)
+J_0 = \rho \int r^2 dS = \dfrac{\rho}{4}\int(\rot([\br e_z \times \br r] r^2) dS = \dfrac{\rho}{4}\int r^2 ([\br e_z \times \br r] \cdot d \br l) = -\dfrac{\rho}{4} \sum r^2 \cdot ([\br e_z \times \br r] \cdot \Delta \br l)
 \end{equation*}
 
-
+Этот момент инерции вычислен относительно центра основной системы координат. Пересчитать его относительно центра масс или оси вращения легко: $J_\text{com} = J_0 - S r_\text{com}^2$, $J_c = J_\text{com} + S (r_c - r_\text{com})^2$
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Convective}

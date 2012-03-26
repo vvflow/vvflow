@@ -26,6 +26,8 @@ TBody::TBody(Space *sS)
 	Position = TVec(0,0);
 	Force = TObj(0,0,0);
 	area = 0;
+	com.zero();
+	moi_c = moi_com = 0;
 }
 
 TBody::~TBody()
@@ -157,11 +159,13 @@ double TBody::Moi_c()
 
 void TBody::FillProperties()
 {
+	area = moi_c = moi_com = 0;
+	com.zero();
 	const_for (AttachList, latt)
 	{
 		area+= latt->ry*latt->dl.rx;
 		com+= latt->abs2() * rotl(latt->dl);
-		moi_com-= latt->abs2() * rotl(latt->dl) * (*latt);
+		moi_com-= latt->abs2() * latt->dl * rotl(*latt);
 	}
 	com = 0.5*com/area - Position;
 	moi_com = 0.25*moi_com - area*(com+Position).abs2();
