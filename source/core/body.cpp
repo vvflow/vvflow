@@ -187,14 +187,8 @@ inline double atan2(const TVec &p)
 bool TBody::isInsideValid()
 {
 	if (!this) return true;
-
-	auto min = List->begin();
-	const_for (List, obj)
-	{
-		min = (obj->rx < min->rx) ? obj : min;
-	}
-
-	return ((atan2(*prev(min)-*min) - atan2(*next(min)-*min)) > 0);
+	if (!area) { FillProperties(); }
+	return (area<=0);
 }
 
 void TBody::UpdateAttach()
