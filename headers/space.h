@@ -47,7 +47,7 @@ class Space
 		int LoadStreak(const char* filename);
 		int LoadStreakSource(const char* filename);
 
-		int LoadBody(const char* filename);
+		int LoadBody(const char* filename, int cols=5);
 		void EnumerateBodies(bool cheat = false);
 		void ZeroBodies(); //zero Cp, Fr, Nu variables.
 

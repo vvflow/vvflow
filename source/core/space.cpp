@@ -366,7 +366,7 @@ int Space::LoadStreakSource(const char* filename)
 	return 0;
 }
 
-int Space::LoadBody(const char* filename)
+int Space::LoadBody(const char* filename, int cols)
 {
 	TBody *body = new TBody(this);
 	BodyList->push_back(body);
@@ -376,7 +376,16 @@ int Space::LoadBody(const char* filename)
 
 	TObj obj(0, 0, 0);
 	TAtt att; att.body = body; att.zero();
-	while ( fscanf(fin, "%lf %lf %d %d %lf", &obj.rx, &obj.ry, &att.bc, &att.hc, &att.heat_const)==5 )
+	char *pattern;
+	switch (cols)
+	{
+		case 2: pattern = "%lf %lf \n"; break;
+		case 3: pattern = "%lf %lf %d \n"; break;
+		case 5: pattern = "%lf %lf %d %d %lf \n"; break;
+		default: fprintf(stderr, "Bad columns number. Only 2 3 or 5 supported\n"); return -1;
+	}
+
+	while ( fscanf(fin, pattern, &obj.rx, &obj.ry, &att.bc, &att.hc, &att.heat_const)==cols )
 	{
 		body->List->push_back(obj);
 		body->AttachList->push_back(att);
