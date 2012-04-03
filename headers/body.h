@@ -10,10 +10,13 @@ class TAtt;
 namespace bc{enum BoundaryCondition {slip, noslip, kutta, steady, inf_steady};}
 namespace hc{enum HeatCondition {neglect, isolate, const_t, const_W};}
 
-class TAtt : public TVec
+class TAtt : public TObj
 {
 	public:
-		double g, q;
+		//rx, ry: center coordinates
+		//g: unkonown circulation
+		TVec corner;
+		double gatt, qatt; // attached g&q due to rotation and motion
 		double gsum; //filled by different modules
 		double hsum; //filled by different modules
 		double fric; //filled by different modules
@@ -29,8 +32,8 @@ class TAtt : public TVec
 
 		TAtt(){}
 		//TAtt(TBody *body, int eq_no);
-		void zero() { rx = ry = g = q = gsum = hsum = Cp = Fr = Nu = 0; ParticleInHeatLayer = -1; }
-		TAtt& operator= (const TVec& p) { rx=p.rx; ry=p.ry; return *this; }
+		void zero() { rx = ry = g = gatt = qatt = gsum = hsum = /*FIXME fric?*/ Cp = Fr = Nu = 0; ParticleInHeatLayer = -1; }
+		//TAtt& operator= (const TVec& p) { rx=p.rx; ry=p.ry; return *this; }
 
 	public:
 		int eq_no;
@@ -44,37 +47,38 @@ class TBody
 		~TBody();
 
 		//int LoadFromFile(const char* filename, int start_eq_no);
-		void Rotate(double angle);
-		TAtt* PointIsInvalid(TVec p);
-		TAtt* PointIsInHeatLayer(TVec p);
-		double SurfaceLength();
-		double Area();
-		TVec Com(); // center of mass
-		double Moi_c(); // moment of inertia about rotation axis
-		double size(){ return List->size_safe(); }
-		void SetRotation(TVec sRotAxis, double (*sRotSpeed)(double time), double sRotSpeed_const = 0);
+		void setRotation(double (*sRotSpeed)(double time), double sRotSpeed_const = 0);
+		void setMotion(TVec (*sMotSpeed)(double time), TVec sMotSpeed_const);
+		double getRotation(double time) const
+			{ return RotSpeed_link ? RotSpeed_link(time):RotSpeed_const; }
+		TVec   getMotion(double time) const
+			{ return MotSpeed_link ? MotSpeed_link(time):MotSpeed_const; }
+		void doRotation(double angle);
+		void doMotion(TVec delta);
+		void doUpdateAttach();
 
-		vector<TObj> *List;
-		vector<TAtt> *AttachList;
-		bool InsideIsValid;
-		bool isInsideValid();
-		double RotSpeed(double time) const
-			{ return RotSpeed_link?RotSpeed_link(time):RotSpeed_const; }
-		double Angle;
-		TVec Position;
-		TVec RotAxis;
-		void UpdateAttach();
+		TAtt* isPointInvalid(TVec p);
+		TAtt* isPointInHeatLayer(TVec p);
+		bool isInsideValid() {return _area<=0;}
+
+		void doFillProperties();
+		double getSurface() {return _surface;}
+		double getArea()    {return _area;}
+		TVec   getCom()     {return _com;} // center of mass
+		double getMoi_c()   {return _moi_c;} // moment of inertia about rotation axis
+		double size()       {return List->size_safe();}
+
+		vector<TAtt> *List;
+
+		double Angle; // in documentation = $\alpha$
+		TVec   Position; // = $r_c$
 
 		TObj Force, Friction; //computed by S->CalcForces
 		double Nusselt; //computed by S->CalcForces
 		double g_dead;
 
-		TObj* next(TObj* obj) const { return List->next(obj); }
-		TObj* prev(TObj* obj) const { return List->prev(obj); }
-		TAtt* next(TAtt* att) const { return AttachList->next(att); }
-		TAtt* prev(TAtt* att) const { return AttachList->prev(att); }
-		TAtt* att(const TObj* obj) const { return &AttachList->at(obj - List->begin());}
-		TObj* obj(const TAtt* att) const { return &List->at(att - AttachList->begin());}
+		TAtt* next(TAtt* att) const { return List->next(att); }
+		TAtt* prev(TAtt* att) const { return List->prev(att); }
 
 		//Heat layer
 		//void CleanHeatLayer();
@@ -82,16 +86,19 @@ class TBody
 
 	private:
 		Space *S;
-		void FillProperties();
-		double area;
-		TVec com; //center of mass in body ref frame (Oxbyb)
-		double moi_com; //moment of inertia about com;
-		double moi_c; //moi about rotation axis
+
+		double _surface;
+		double _area;
+		TVec   _com; //center of mass in body ref frame (Oxbyb)
+		double _moi_com; //moment of inertia about com;
+		double _moi_c; //moi about rotation axis
 
 		vector<TObj> *HeatLayerList;
 		TAtt* PointIsInContour(TVec p, vector<TObj> *list);
 		double (*RotSpeed_link)(double time);
 		double RotSpeed_const;
+		TVec   (*MotSpeed_link)(double time);
+		TVec   MotSpeed_const;
 };
 
 #endif /* BODY_H_ */
