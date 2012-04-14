@@ -33,7 +33,9 @@ void Space::FinishStep()
 	const_for(BodyList, llbody)
 	{
 		TBody &body = **llbody;
-		body.Rotate(body.RotSpeed(Time) * dt);
+		body.doRotation(body.getRotation(Time) * dt);
+		body.doMotion(body.getMotion(Time) * dt);
+		
 		body.Position -= InfSpeed() * dt;
 	}
 	Time+= dt;
@@ -119,12 +121,26 @@ void Space::Save(const char* format, const double header[], int N)
 	int bookmark = 4;
 	const_for(BodyList, llbody)
 	{
+		#define body (**llbody)
+		SaveBookmark(fout, ++bookmark, "BData   ");
+		fwrite(&Angle, 8, 1, fout);
+		fwrite(&Position, 16, 1, fout);
+		double RotSpeed_tmp = body.getRotSpeed(Time);
+		TVec   MotSpeed_tmp = body.getMotSpeed(Time);
+		fwrite(&RotSpeed_tmp, 8, 1, fout);
+		fwrite(&MotSpeed_tmp, 16, 1, fout);
+
 		SaveBookmark(fout, ++bookmark, "Body    ");
-		SaveList((**llbody).List, fout);
-		TObj rot;
-		rot = (**llbody).RotAxis;
-		rot.g = (**llbody).RotSpeed(Time);
-		fwrite(&rot, 24, 1, fout);
+		int64_t size = body.size();
+		fwrite(&size, 8, 1, fout);
+		const_for (body.List, latt)
+		{
+			fwrite(pointer(&latt->corner), 16, 1, fout);
+			fwrite(pointer(&latt->bc), 8, 1, fout);
+			fwrite(pointer(&latt->hc), 8, 1, fout);
+			fwrite(pointer(&latt->heat_const), 8, 1, fout);
+		}
+		#undef body
 	}
 
 	fclose(fout);
@@ -175,7 +191,7 @@ double* Space::Load(const char* fname, int* N)
 		else if (eq(comment, "Heat    ")>8) LoadList(HeatList, fin);
 		else if (eq(comment, "StrkSrc ")>8) LoadList(StreakSourceList, fin);
 		else if (eq(comment, "Streak  ")>8) LoadList(StreakList, fin);
-		else if (eq(comment, "Body    ")>4)
+		else if (eq(comment, "Body    ")>8)
 		{
 			TBody *body = new TBody(this);
 			BodyList->push_back(body);

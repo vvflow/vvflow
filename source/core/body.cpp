@@ -59,6 +59,18 @@ TBody::~TBody()
 	return 0;
 }*/
 
+void TBody::setRotation(double (*sRotSpeed)(double time), double sRotSpeed_const)
+{
+	RotSpeed_link = sRotSpeed;
+	RotSpeed_const = sRotSpeed_const;
+}
+
+void TBody::setMotion(TVec (*sMotSpeed)(double time), TVec sMotSpeed_const)
+{
+	MotSpeed_link = sMotSpeed;
+	MotSpeed_const = sMotSpeed_const;
+}
+
 void TBody::Rotate(double angle)
 {
 	if (!this) return;
@@ -126,57 +138,20 @@ TAtt* TBody::PointIsInContour(TVec p, vector<TObj> *list)
 	return nearest;
 }
 
-double TBody::SurfaceLength()
-{
-	if (!this || !List->size()) return 0;
-	double res=0;
-
-	const_for (List, obj)
-	{
-		res += (*obj - *next(obj)).abs();
-	}
-
-	return res;
-}
-
-double TBody::Area()
-{
-	if (!area) { FillProperties(); }
-	return area;
-}
-
-TVec TBody::Com()
-{
-	if (!area) { FillProperties(); }
-	return com;
-}
-
-double TBody::Moi_c()
-{
-	if (!area) { FillProperties(); }
-	return moi_c;
-}
-
 void TBody::FillProperties()
 {
-	area = moi_c = moi_com = 0;
-	com.zero();
+	_surface = _area = _moi_c = _moi_com = 0;
+	_com.zero();
 	const_for (AttachList, latt)
 	{
-		area+= latt->ry*latt->dl.rx;
-		com+= latt->abs2() * rotl(latt->dl);
-		moi_com-= latt->abs2() * latt->dl * rotl(*latt);
+		_surface+= latt->dl.abs();
+		_area+= latt->ry*latt->dl.rx;
+		_com+= latt->abs2() * rotl(latt->dl);
+		_moi_com-= latt->abs2() * latt->dl * rotl(*latt);
 	}
-	com = 0.5*com/area - Position;
-	moi_com = 0.25*moi_com - area*(com+Position).abs2();
-	moi_c = moi_com + area*com.abs2();
-}
-
-void TBody::SetRotation(TVec sRotAxis, double (*sRotSpeed)(double time), double sRotSpeed_const)
-{
-	RotSpeed_link = sRotSpeed;
-	RotSpeed_const = sRotSpeed_const;
-	RotAxis = sRotAxis;
+	_com = 0.5*com/area - Position;
+	_moi_com = 0.25*_moi_com - _area*(_com+Position).abs2();
+	_moi_c = _moi_com + _area*com.abs2();
 }
 
 inline double atan2(const TVec &p)
