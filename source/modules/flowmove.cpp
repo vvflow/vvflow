@@ -27,7 +27,7 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
 		const_for(S->BodyList, llbody)
 		{
 			if (!invalid_inbody)
-			invalid_inbody = (**llbody).PointIsInvalid(*lobj);
+			invalid_inbody = (**llbody).isPointInvalid(*lobj);
 		}
 
 		if ( remove && invalid_inbody )
@@ -58,7 +58,7 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
 		TAtt* invalid_inbody = NULL;
 		const_for(S->BodyList, llbody)
 		{
-			invalid_inbody = (**llbody).PointIsInvalid(*lobj);
+			invalid_inbody = (**llbody).isPointInvalid(*lobj);
 			if (invalid_inbody) break;
 		}
 
@@ -72,7 +72,7 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
 		TAtt* inlayer = NULL;
 		const_for(S->BodyList, llbody)
 		{
-			inlayer = (**llbody).PointIsInHeatLayer(*lobj);
+			inlayer = (**llbody).isPointInHeatLayer(*lobj);
 			if (inlayer) break;
 		}
 
@@ -108,7 +108,7 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
 		TAtt* invalid_inbody = NULL;
 		const_for(S->BodyList, llbody)
 		{
-			if ((**llbody).PointIsInvalid(*lobj))
+			if ((**llbody).isPointInvalid(*lobj))
 			{
 				S->StreakList->erase(lobj);
 				lobj--;
@@ -127,19 +127,16 @@ void flowmove::VortexShed()
 	const_for(S->BodyList, llbody)
 	{
 		#define body (**llbody)
-		const_for(body.List, lbobj)
+		const_for(body.List, latt)
 		{
-			TAtt *latt = body.att(lbobj);
-			if (fabs(lbobj->g) < RemoveEps)
-				{ CleanedV_++; body.g_dead+= lbobj->g; }
-			else if ( (latt->bc == bc::noslip)
-			       || ((**llbody).prev(latt)->bc == bc::noslip) )
+			if (fabs(latt->g) < RemoveEps)
+				{ CleanedV_++; body.g_dead+= latt->g; }
+			else if ( latt->bc == bc::noslip )
 			{
-				ObjCopy = *lbobj;
+				ObjCopy = *latt;
 				body.Force += rotl(ObjCopy) * ObjCopy.g;
-				body.Force.g += ObjCopy.abs2() * ObjCopy.g;
-				          latt ->gsum+= 0.5*ObjCopy.g;
-				body.prev(latt)->gsum+= 0.5*ObjCopy.g;
+				body.Force.g += (ObjCopy-body.Position).abs2() * ObjCopy.g;
+				latt->gsum+= ObjCopy.g;
 				vlist->push_back(ObjCopy);
 			}
 		}
@@ -156,7 +153,7 @@ void flowmove::HeatShed()
 	const_for(S->BodyList, llbody)
 	{
 		#define body (**llbody)
-		const_for(body.AttachList, latt)
+		const_for(body.List, latt)
 		{
 			switch (latt->hc)
 			{

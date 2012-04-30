@@ -6,23 +6,11 @@ using namespace std;
 
 const int Tree_MaxListSize = 16;
 
-/********************* HEADER ****************************/
-namespace {
-
-Space *Tree_S;
-int Tree_FarCriteria;
-double Tree_MinNodeSize;
-double Tree_MaxNodeSize;
-//double Tree_MaxNodeSize;
-
-TNode *Tree_RootNode;
-vector<TNode*> *Tree_BottomNodes;
-}
-
 /********************* TNode class *****************************/
 
-node::node()
+node::node(tree *sParent)
 {
+	parent = sParent;
 	VortexLList = NULL;
 	BodyLList = NULL;
 	HeatLList = NULL;
@@ -46,10 +34,10 @@ node::~node()
 
 void TNode::DivideNode()
 {
-	if ( max(h,w) < Tree_MaxNodeSize )
-	if ( min(h,w) < Tree_MinNodeSize )
+	if ( max(h,w) < parent->maxNodeSize )
+	if ( min(h,w) < parent->minNodeSize )
 	{
-		Tree_BottomNodes->push_back(this);
+		parent->bottomNodes->push_back(this);
 		return;
 	}
 
@@ -59,15 +47,15 @@ void TNode::DivideNode()
 	                   HeatLList->size_safe()),
 	                   StreakLList->size_safe());
 
-	if ( max(h,w) < Tree_MaxNodeSize )
+	if ( max(h,w) < parent->maxNodeSize )
 	if ( MaxListSize < Tree_MaxListSize ) //look for define
 	{
-		Tree_BottomNodes->push_back(this);
+		parent->bottomNodes->push_back(this);
 		return;
 	}
 
-	ch1 = new TNode();
-	ch2 = new TNode();
+	ch1 = new TNode(parent);
+	ch2 = new TNode(parent);
 	ch1->i = ch2->i = i+1; //DEBUG
 	ch1->j = j*2; ch2->j = j*2+1; //DEBUG
 
@@ -211,7 +199,7 @@ void TNode::FindNearNodes(TNode* top)
 	dr.ry = top->y - y;
 	double HalfPerim = top->h + top->w + h + w;
 
-	if ( dr.abs2() > Tree_FarCriteria*HalfPerim*HalfPerim )
+	if ( dr.abs2() > parent->farCriteria*sqr(HalfPerim) )
 	{
 		//Far
 		FarNodes->push_back(top);
@@ -227,86 +215,65 @@ void TNode::FindNearNodes(TNode* top)
 }
 
 
-/************************** REST SOURCE ***************************************/
+/************************** TTree SOURCE **************************************/
 
-void InitTree(Space *sS, int sFarCriteria, double sMinNodeSize, double sMaxNodeSize)
+tree::tree(Space *sS, int sFarCriteria, double sMinNodeSize, double sMaxNodeSize)
 {
-	Tree_S = sS;
-	Tree_FarCriteria = sFarCriteria;
-	Tree_MinNodeSize = sMinNodeSize;
-	Tree_MaxNodeSize = sMaxNodeSize;
-	Tree_RootNode = NULL;
-	Tree_BottomNodes = new vector<TNode*>();
+	S = sS;
+	farCriteria = sFarCriteria;
+	minNodeSize = sMinNodeSize;
+	maxNodeSize = sMaxNodeSize;
+	rootNode = NULL;
+	bottomNodes = new vector<TNode*>();
 }
 
-namespace {
-void FillRootNode(vector<TObj> *src, node::content **dst)
+void tree::build(bool includeV, bool includeB, bool includeH)
 {
-	if (!src->size_safe()) return;
-	if (!(*dst))
-		*dst = new node::content();
+	if (rootNode) { fprintf(stderr, "Tree is already built\n"); return; }
+	rootNode = new TNode(this);
+	rootNode->i = rootNode->j = 0; //DEBUG
 
-	const_for (src, lobj)
-	{
-		(**dst).push_back(lobj);
-	}
-}}
-
-void BuildTree(bool includeV, bool includeB, bool includeH)
-{
-	Tree_RootNode = new TNode();
-	Tree_RootNode->i = Tree_RootNode->j = 0; //DEBUG
-
-	if (includeV) FillRootNode(Tree_S->VortexList, &Tree_RootNode->VortexLList);
+	if (includeV) fillRootNode(S->VortexList, &rootNode->VortexLList);
 	if (includeB)
 	{
-		const_for(Tree_S->BodyList, llbody)
+		const_for(S->BodyList, llbody)
 		{
-			FillRootNode((**llbody).List, &Tree_RootNode->BodyLList);
+			fillRootNode((**llbody).List, &rootNode->BodyLList);
 		}
 	}
-	if (includeH) FillRootNode(Tree_S->HeatList, &Tree_RootNode->HeatLList);
-	FillRootNode(Tree_S->StreakList, &Tree_RootNode->StreakLList);
+	if (includeH) fillRootNode(S->HeatList, &rootNode->HeatLList);
+	fillRootNode(S->StreakList, &rootNode->StreakLList);
 
-	Tree_BottomNodes->clear();
+	bottomNodes->clear();
 
-	Tree_RootNode->Stretch();
-	Tree_RootNode->DivideNode(); //recursive
+	rootNode->Stretch();
+	rootNode->DivideNode(); //recursive
 
-	Tree_RootNode->CalculateCMass();
-	const_for (Tree_BottomNodes, llbnode)
+	rootNode->CalculateCMass();
+	const_for (bottomNodes, llbnode)
 	{
 		TNode &bnode = **llbnode;
 		bnode.NearNodes = new vector<TNode*>();
 		bnode.FarNodes = new vector<TNode*>();
-		/*if ( bnode.VortexLList && (bnode.VortexLList->size_safe() < 3) &&
-		    !bnode.BodyLList && !bnode.HeatLList )
-		{
-			const_for(bnode.VortexLList, llobj) { (**llobj).g = 0; }
-			delete bnode.VortexLList; bnode.VortexLList=NULL;
-			Tree_BottomNodes->erase(llbnode);
-			llbnode--;
-			continue;
-		}*/
-		bnode.FindNearNodes(Tree_RootNode);
+		bnode.FindNearNodes(rootNode);
 	}
 }
 
-vector<TNode*>* GetTreeBottomNodes()
+void tree::destroy()
 {
-	if (!Tree_BottomNodes) {fprintf(stderr, "PANIC! Tree isn't built\n");}
-	return Tree_BottomNodes;
+	if ( rootNode ) delete rootNode; rootNode = 0;
+	bottomNodes->clear();
 }
 
-void DestroyTree()
+vector<TNode*>* tree::getBottomNodes()
 {
-	if ( Tree_RootNode ) delete Tree_RootNode; Tree_RootNode = 0;
-	Tree_BottomNodes->clear();
+	if (!bottomNodes) {fprintf(stderr, "PANIC! Tree isn't built\n");}
+	return bottomNodes;
 }
 
-TNode* FindNode(TVec p)
+TNode* tree::findNode(TVec p)
 {
-	TNode *Node = Tree_RootNode;
+	TNode *Node = rootNode;
 
 	while (Node->ch1)
 	{
@@ -322,59 +289,10 @@ TNode* FindNode(TVec p)
 	return Node;
 }
 
-/************************** GARBAGE ******************************************/
-
-double GetAverageNearNodesPercent()
+void tree::printBottomNodes(FILE* f, bool PrintDepth)
 {
-	//FIXME
-	/*long sum = 0;
-
-	long lsize = Tree_BottomNodes->size; 
-	TNode** BottomNode = Tree_BottomNodes->First;
-	TNode** &Last = Tree_BottomNodes->Last;
-	for ( ; BottomNode<Last; BottomNode++ )
-	{
-		sum+= (*BottomNode)->NearNodes->size;
-	}
-	sum-= lsize; */
-	return 0;//(sum/((lsize-1.)*lsize));
-}
-
-double GetAverageNearNodesCount()
-{
-	//FIXME
-	/*double sum = 0;
-
-	TNode** BottomNode = Tree_BottomNodes->First;
-	TNode** &Last = Tree_BottomNodes->Last;
-	long lsize = Tree_BottomNodes->size;
-	for ( ; BottomNode<Last; BottomNode++ )
-	{
-		sum+= (*BottomNode)->NearNodes->size;
-	}
-	sum-= lsize;*/
-	return 0;//(sum/lsize);
-}
-
-int GetMaxDepth()
-{
-	/*//FIXME
-	int max = 0;
-	if ( !Tree_BottomNodes ) return 0;
-	TNode** BottomNode = Tree_BottomNodes->First;
-	long lsize = Tree_BottomNodes->size;
-	for ( long i=0; i<lsize; i++ )
-	{
-		if (max < (*BottomNode)->i) max = (*BottomNode)->i;
-		BottomNode++;
-	}*/
-	return 0;// max;
-}
-
-int PrintBottomNodes(FILE* f, bool PrintDepth)
-{
-	if ( !Tree_BottomNodes ) return -1;
-	const_for (Tree_BottomNodes, llBN)
+	if ( !bottomNodes ) return;
+	const_for (bottomNodes, llBN)
 	{
 		fprintf(f, "%g\t%g\t%g\t%g\t", (**llBN).x, (**llBN).y, (**llBN).w, (**llBN).h);
 //		fprintf(f, "%g\t%g\t%g\t", (**llBN).CMp.rx, (**llBN).CMp.ry, (**llBN).CMp.g);
@@ -382,24 +300,18 @@ int PrintBottomNodes(FILE* f, bool PrintDepth)
 		if(PrintDepth) fprintf(f, "\t%d", (**llBN).i);
 		fprintf(f, "\n");
 	}
-	return 0;
 }
 
-namespace {
-void PrintNode(std::ostream& os, int level, TNode* Node)
+template <class T>
+void fillRootNode(vector<T> *src, node::content **dst)
 {
-	/*if (!Node) return;
-	if (Node->i == level)
-	{
-		os << Node->x << "\t" << Node->y << "\t" << Node->w << "\t" << Node->h << endl;
-	} else {
-		PrintNode(os, level, Node->Child1);
-		PrintNode(os, level, Node->Child2);
-	}*/
-}}
+	if (!src->size_safe()) return;
+	if (!(*dst))
+		*dst = new node::content();
 
-void PrintLevel(std::ostream& os, int level)
-{
-	/*PrintNode(os, level, Tree_RootNode);*/
+	const_for (src, lobj)
+	{
+		(**dst).push_back(lobj);
+	}
 }
 
