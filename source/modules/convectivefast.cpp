@@ -95,12 +95,7 @@ TVec convectivefast::SpeedSum(const TNode &Node, const TVec &p)
 
 void convectivefast::CalcConvectiveFast()
 {
-	if (!S) {cerr << "CalcConvectiveFast() is called before initialization"
-	              << endl; return; }
-
 	auto BottomNodes = S->Tree->getBottomNodes();
-	if (!BottomNodes) {cerr << "CalcConvectiveFast() is called before tree is built"
-	                        << endl; return; }
 
 	#pragma omp parallel for
 	const_for (BottomNodes, llbnode)
