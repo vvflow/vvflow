@@ -13,10 +13,10 @@ namespace hc{enum HeatCondition {neglect, isolate, const_t, const_W};}
 class TAtt : public TObj
 {
 	public:
-		//rx, ry: center coordinates
-		//g: unkonown circulation
-		TVec corner;
-		double gatt, qatt; // attached g&q due to rotation and motion
+		//rx, ry: center coordinates ; $\vec r$ in doc
+		//g: unkonown circulation $\gamma$ in doc
+		TVec corner; //$\vec c$ in doc
+		double gatt, qatt; //$q_\att, \gamma_\att$ in doc
 
 		double gsum; //filled by different modules
 		double hsum; //filled by different modules
@@ -26,7 +26,7 @@ class TAtt : public TObj
 		double Nu; // computed by S->CalcForces, need /=dt before print (its implemented in SaveProfile);
 
 		double heat_const;
-		TVec dl;
+		TVec dl; //$\Delta \vec l$ in doc
 		bc::BoundaryCondition bc;
 		hc::HeatCondition hc;
 		long ParticleInHeatLayer;
@@ -47,6 +47,16 @@ class TBody
 		TBody(Space *sS);
 		~TBody();
 
+		vector<TAtt> *List;
+
+		double Angle; // in documentation = $\alpha$
+		TVec   Position; // = $r_c$
+
+		TObj Force, Friction; //computed by S->CalcForces
+		double Nusselt; //computed by S->CalcForces
+		double g_dead;
+
+	public:
 		//int LoadFromFile(const char* filename, int start_eq_no);
 		void setRotation(double (*sRotSpeed)(double time), double sRotSpeed_const = 0);
 		void setMotion(TVec (*sMotSpeed)(double time), TVec sMotSpeed_const = TVec(0,0));
@@ -68,15 +78,6 @@ class TBody
 		TVec   getCom()     {return _com;} // center of mass
 		double getMoi_c()   {return _moi_c;} // moment of inertia about rotation axis
 		double size()       {return List->size_safe();}
-
-		vector<TAtt> *List;
-
-		double Angle; // in documentation = $\alpha$
-		TVec   Position; // = $r_c$
-
-		TObj Force, Friction; //computed by S->CalcForces
-		double Nusselt; //computed by S->CalcForces
-		double g_dead;
 
 		TAtt* next(TAtt* att) const { return List->next(att); }
 		TAtt* prev(TAtt* att) const { return List->prev(att); }
