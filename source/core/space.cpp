@@ -25,6 +25,7 @@ Space::Space(TVec (*sInfSpeed)(double time))
 	Time = dt = Re = Pr = cache_time = cache2_time = 0;
 	InfSpeed_cache.zero();
 	InfSpeed_cache2.zero();
+	InfMarker.zero();
 }
 
 inline
@@ -94,22 +95,26 @@ void LoadList(vector<TObj> *&list, FILE* fin)
 	}
 }
 
-void Space::Save(const char* format, const double header[], int N)
+void Space::Save(const char* format)
 {
 	char fname[64]; sprintf(fname, format, int(Time/dt+0.5));
 	FILE *fout = fopen(fname, "rb+");
 	if (!fout) fout = fopen(fname, "wb");
 	if (!fout) { perror("Error saving the space"); return; }
 
-	fseek(fout, 8*128, SEEK_SET);
-	//writinh header
+	fseek(fout, 1024, SEEK_SET);
+
 	SaveBookmark(fout, 0, "Header  ");
-	fwrite(header, 8, N, fout);
-	fwrite(&dt, 8, 1, fout);
-	fwrite(&Re, 8, 1, fout);
-	TVec inf = InfSpeed(); fwrite(&inf, 8, 2, fout);
-	time_t rt; time(&rt); int64_t rawtime=rt; fwrite(&rawtime, 8, 1, fout);
-	fwrite(&Time, 8, 1, fout);
+	{
+		fwrite(current_version, 8, 1, fout);
+		fwrite(&Time, 8, 1, fout);
+		fwrite(&dt, 8, 1, fout);
+		fwrite(&Re, 8, 1, fout);
+		fwrite(&Pr, 8, 1, fout);
+		fwrite(&InfMarker, 16, 1, fout);
+		TVec inf = InfSpeed(); fwrite(&inf, 16, 1, fout);
+		time_t rt; time(&rt); int64_t rawtime=rt; fwrite(&rawtime, 8, 1, fout);
+	}
 
 	//writing lists
 	SaveBookmark(fout, 1, "Vortexes"); SaveList(VortexList, fout);
@@ -123,10 +128,10 @@ void Space::Save(const char* format, const double header[], int N)
 	{
 		#define body (**llbody)
 		SaveBookmark(fout, ++bookmark, "BData   ");
-		fwrite(&Angle, 8, 1, fout);
-		fwrite(&Position, 16, 1, fout);
-		double RotSpeed_tmp = body.getRotSpeed(Time);
-		TVec   MotSpeed_tmp = body.getMotSpeed(Time);
+		fwrite(&body.Angle, 8, 1, fout);
+		fwrite(&body.Position, 16, 1, fout);
+		double RotSpeed_tmp = body.getRotation(Time);
+		TVec   MotSpeed_tmp = body.getMotion(Time);
 		fwrite(&RotSpeed_tmp, 8, 1, fout);
 		fwrite(&MotSpeed_tmp, 16, 1, fout);
 
@@ -136,6 +141,7 @@ void Space::Save(const char* format, const double header[], int N)
 		const_for (body.List, latt)
 		{
 			fwrite(pointer(&latt->corner), 16, 1, fout);
+			fwrite(pointer(&latt->g), 8, 1, fout);
 			fwrite(pointer(&latt->bc), 8, 1, fout);
 			fwrite(pointer(&latt->hc), 8, 1, fout);
 			fwrite(pointer(&latt->heat_const), 8, 1, fout);
@@ -155,31 +161,15 @@ int eq(const char *str1, const char *str2)
 	return 9;
 }
 
-double* Space::Load(const char* fname, int* N)
+void Space::Load(const char* fname)
 {
 	FILE *fin = fopen(fname, "rb");
-	if (!fin) { perror("Error loading the space"); return NULL; }
-	double *header = NULL;
-
-	//loading header
-	{
-		fseek(fin, 16, SEEK_SET); //seek to the 2nd bookmark
-		int64_t tmp; fread(&tmp, 8, 1, fin); //getting its address
-		int size = (tmp-1024)/8; //computing number of doubles in header
-		header = (double*)malloc(8*size); //allocating mem to store it
-		fseek(fin, 8*128, SEEK_SET); //seeking to begin of header
-		fread(header, 8, size, fin); //reading header
-		if (N) *N = size-2; //returning size of header
-		Time = header[size-1]; //obtaining current time from header
-		InfSpeed_const = TVec(header[size-4], header[size-3]); //get infspeed
-		Re = header[size-5]; //get Reynolds
-		dt = header[size-6]; //get dt
-	}
+	if (!fin) { perror("Error loading the space"); return; }
 
 	//loading different lists
 	int64_t tmp;
 	char comment[9]; comment[8]=0;
-	for (int i=1; i<64; i++)
+	for (int i=0; i<64; i++)
 	{
 		fseek(fin, i*16, SEEK_SET);
 		fread(&tmp, 8, 1, fin);
@@ -187,36 +177,63 @@ double* Space::Load(const char* fname, int* N)
 		if (!tmp) continue;
 		fseek(fin, tmp, SEEK_SET);
 
-		     if (eq(comment, "Vortexes")>8) LoadList(VortexList, fin);
+		if (eq(comment, "Header  ")>8)
+		{
+			char version[8]; fread(&version, 8, 1, fin);
+			if (eq(version, current_version) <= 8)
+			{
+				fprintf(stderr, "Cant read version \"%s\". Current version is \"%s\"", version, current_version);
+				exit(1);
+			}
+
+			fread(&Time, 8, 1, fin);
+			fread(&dt, 8, 1, fin);
+			fread(&Re, 8, 1, fin);
+			fread(&Pr, 8, 1, fin);
+			fread(&InfMarker, 16, 1, fin);
+			fread(&InfSpeed_const, 16, 1, fin);
+		}
+		else if (eq(comment, "Vortexes")>8) LoadList(VortexList, fin);
 		else if (eq(comment, "Heat    ")>8) LoadList(HeatList, fin);
 		else if (eq(comment, "StrkSrc ")>8) LoadList(StreakSourceList, fin);
 		else if (eq(comment, "Streak  ")>8) LoadList(StreakList, fin);
-		else if (eq(comment, "Body    ")>8)
+		else if (eq(comment, "BData   ")>8)
 		{
 			TBody *body = new TBody(this);
 			BodyList->push_back(body);
 
-			TObj obj; TAtt att; att.body = body; att.zero();
+			fread(&body->Angle, 8, 1, fin);
+			fread(&body->Position, 16, 1, fin);
+			double rot_tmp; fread(&rot_tmp, 8, 1, fin);
+			TVec mot_tmp; fread(&mot_tmp, 16, 1, fin);
+			body->setRotation(NULL, rot_tmp);
+			body->setMotion(NULL, mot_tmp);
+		}
+		else if (eq(comment, "Body    ")>8)
+		{
+			TBody *body = *BodyList->end();
+
+			TAtt att; att.body = body; att.zero();
 			int64_t size; fread(&size, 8, 1, fin);
 			for (int64_t i=0; i<size; i++)
 			{
-				fread(&obj, 24, 1, fin);
-				body->List->push_back(obj);
-				body->AttachList->push_back(att);
+				fread(&att.corner, 16, 1, fin);
+				fread(&att.g, 8, 1, fin);
+				fread(&att.bc, 8, 1, fin);
+				fread(&att.hc, 8, 1, fin);
+				fread(&att.heat_const, 8, 1, fin);
+
+				body->List->push_back(att);
 			}
-
-			TObj rot; fread(&rot, 24, 1, fin);
-			body->SetRotation(TVec(rot), NULL, rot.g);
-
-			body->InsideIsValid = body->isInsideValid();
-			body->UpdateAttach();
+			body->doFillProperties();
+			body->doUpdateAttach();
 		}
-		else cout << "S->Load(): ignoring field \"" << comment << "\"\n";
+		else fprintf(stderr, "S->Load(): ignoring field \"%s\"", comment);
 	}
 
 	EnumerateBodies();
 
-	return header;
+	return;
 }
 
 FILE* Space::OpenFile(const char* format)
@@ -237,7 +254,7 @@ void Space::CalcForces()
 	{
 		double tmp_gsum = 0;
 		//TObj tmp_fric(0,0,0);
-		const_for(body.AttachList, latt)
+		const_for(body.List, latt)
 		{
 			tmp_gsum+= latt->gsum;
 			latt->Cp += tmp_gsum;
@@ -249,7 +266,7 @@ void Space::CalcForces()
 			body.Nusselt += latt->hsum * (Re*Pr);
 		}
 
-		body.Force -= body.Area() * (InfSpeed() - InfSpeed(Time-dt));
+		body.Force -= body.getArea() * (InfSpeed() - InfSpeed(Time-dt));
 		body.Force /= dt;
 		body.Force.g /= dt;
 		//body.Friction /= dt;
@@ -276,11 +293,10 @@ void Space::SaveProfile(const char* fname, double save_dt, TValues vals)
 
 	const_for(BodyList, llbody)
 	{
-		TBody &body = **llbody;
-		const_for(body.AttachList, latt)
+		const_for((**llbody).List, latt)
 		{
-			buf[0] = body.obj(latt)->rx;
-			buf[1] = body.obj(latt)->ry;
+			buf[0] = latt->corner.rx;
+			buf[1] = latt->corner.ry;
 			buf[2] = latt->Cp/save_dt;
 			buf[3] = latt->Fr/save_dt;
 			buf[4] = latt->Nu/save_dt;
@@ -300,7 +316,7 @@ void Space::ZeroForces()
 {
 	const_for(BodyList, llbody)
 	{
-		const_for((**llbody).AttachList, latt)
+		const_for((**llbody).List, latt)
 		{
 			latt->gsum =
 			latt->fric =
@@ -412,49 +428,42 @@ int Space::LoadBody(const char* filename)
 	FILE *fin = fopen(filename, "r");
 	if (!fin) { cerr << "No file called " << filename << endl; return -1; } 
 
-	TObj obj(0, 0, 0);
 	TAtt att; att.body = body; att.zero();
-	while ( fscanf(fin, "%lf %lf %d %d %lf", &obj.rx, &obj.ry, &att.bc, &att.hc, &att.heat_const)==5 )
+	while ( fscanf(fin, "%lf %lf %d %d %lf", &att.corner.rx, &att.corner.ry, &att.bc, &att.hc, &att.heat_const)==5 )
 	{
-		body->List->push_back(obj);
-		body->AttachList->push_back(att);
+		body->List->push_back(att);
 	}
 
 	if (!VortexList)
-	const_for(body->AttachList, latt)
+	const_for(body->List, latt)
 	{
 		if(latt->bc == bc::noslip) { VortexList = new vector<TObj>(); break; }
 	}
 
 	if (!HeatList)
-	const_for(body->AttachList, latt)
+	const_for(body->List, latt)
 	{
 		if(latt->hc != hc::neglect) { HeatList = new vector<TObj>(); break; }
 	}
 
 	fclose(fin);
-	body->InsideIsValid = body->isInsideValid();
-	body->UpdateAttach();
+	body->doFillProperties();
+	body->doUpdateAttach();
 	EnumerateBodies();
 
 	return 0;
 }
 
-void Space::EnumerateBodies(bool cheat)
+void Space::EnumerateBodies()
 {
 	int eq_no=0;
 	const_for(BodyList, llbody)
 	{
-		const_for((**llbody).AttachList, latt)
+		const_for((**llbody).List, latt)
 		{
-			//FIXME load bc
-			if (cheat) latt->bc = bc::noslip;
 			latt->eq_no = eq_no++;
 		}
-
-		if (cheat) (**llbody).AttachList->begin()->bc = bc::steady;
 	}
-	if (cheat) (**BodyList->begin()).AttachList->begin()->bc = bc::inf_steady;
 }
 
 /********************************* INTEGRALS **********************************/
@@ -530,7 +539,7 @@ double Space::AverageSegmentLength()
 	int N = 0;
 	const_for(BodyList, llbody)
 	{
-		SurfaceLength+= (**llbody).SurfaceLength();
+		SurfaceLength+= (**llbody).getSurface();
 		N+= (**llbody).size() - 1;
 	}
 

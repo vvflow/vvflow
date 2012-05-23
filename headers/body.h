@@ -17,6 +17,7 @@ class TAtt : public TObj
 		//g: unkonown circulation
 		TVec corner;
 		double gatt, qatt; // attached g&q due to rotation and motion
+
 		double gsum; //filled by different modules
 		double hsum; //filled by different modules
 		double fric; //filled by different modules
@@ -33,7 +34,7 @@ class TAtt : public TObj
 		TAtt(){}
 		//TAtt(TBody *body, int eq_no);
 		void zero() { rx = ry = g = gatt = qatt = gsum = hsum = /*FIXME fric?*/ Cp = Fr = Nu = 0; ParticleInHeatLayer = -1; }
-		//TAtt& operator= (const TVec& p) { rx=p.rx; ry=p.ry; return *this; }
+		TAtt& operator= (const TVec& p) { rx=p.rx; ry=p.ry; return *this; }
 
 	public:
 		int eq_no;
@@ -48,7 +49,7 @@ class TBody
 
 		//int LoadFromFile(const char* filename, int start_eq_no);
 		void setRotation(double (*sRotSpeed)(double time), double sRotSpeed_const = 0);
-		void setMotion(TVec (*sMotSpeed)(double time), TVec sMotSpeed_const);
+		void setMotion(TVec (*sMotSpeed)(double time), TVec sMotSpeed_const = TVec(0,0));
 		double getRotation(double time) const
 			{ return RotSpeed_link ? RotSpeed_link(time):RotSpeed_const; }
 		TVec   getMotion(double time) const
@@ -93,8 +94,9 @@ class TBody
 		double _moi_com; //moment of inertia about com;
 		double _moi_c; //moi about rotation axis
 
-		vector<TObj> *HeatLayerList;
-		TAtt* PointIsInContour(TVec p, vector<TObj> *list);
+		vector<TVec> *HeatLayerList;
+		template <class T>
+		TAtt* isPointInContour(TVec p, vector<T> *list);
 		double (*RotSpeed_link)(double time);
 		double RotSpeed_const;
 		TVec   (*MotSpeed_link)(double time);

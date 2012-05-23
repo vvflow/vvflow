@@ -11,76 +11,43 @@ using namespace std;
 //#define dbg(func) cout << "Doing " << #func << "... " << flush; func; cout << "done\n";
 #define dbg(func) func;
 
-/********************************** HEADER ************************************/
-
-namespace {
-
-Space *S;
-double Rd2; //radius of discrete ^2
-double Rd;
-
-inline
-TVec BioSavar(const TObj &obj, const TVec &p);
-TVec SpeedSum(const TNode &Node, const TVec &p);
-
-TVec BoundaryConvective(const TBody &b, const TVec &p);
-
-size_t N; // BodySize;
-double *BodyMatrix;
-double *InverseMatrix;
-double *RightCol;
-double *Solution;
-int *ipvt; //technical variable for lapack
-void inverse(double* A, int N, double *workspace); //workspace is being spoiled;
-void transpose(double* A, int N);
-void SolveMatrix_inv();
-
-bool BodyMatrixOK;
-bool InverseMatrixOK;
-
-double ConvectiveInfluence(TVec p, const TAtt &seg, double rd);
-double NodeInfluence(const TNode &Node, const TAtt &seg, double rd);
-double AttachInfluence(const TAtt &seg, double rd);
-
-size_t LoadMatrix(double *matrix, const char* filename);
-void SaveMatrix(double *matrix, const char* filename);
-size_t LoadMatrix_bin(double *matrix, const char* filename);
-void SaveMatrix_bin(double *matrix, const char* filename);
-
-}
-
 /****************************** MAIN FUNCTIONS ********************************/
 
-void InitConvectiveFast(Space *sS, double sRd2)
+convectivefast::convectivefast(Space *sS, double sRd2)
 {
 	S = sS;
 	Rd2 = sRd2;
 	Rd = sqrt(Rd2);
 
-	N = 0; const_for(sS->BodyList, llbody){ N+=(**llbody).List->size(); }
-	BodyMatrix = new double[N*N]; //(double*)malloc(N*N*sizeof(double));
-	InverseMatrix = new double[N*N]; //(double*)malloc(N*N*sizeof(double));
-	RightCol = new double[N]; //(double*)malloc(N*sizeof(double));
-	Solution = new double[N]; //(double*)malloc(N*sizeof(double));
-	ipvt = new int[N+1]; //(int*)malloc((N+1)*sizeof(int));
+	MatrixSize = 0; 
+	const_for(sS->BodyList, llbody)
+	{
+		MatrixSize+=(**llbody).size();
+	}
+
+	BodyMatrix = new double[sqr(MatrixSize)]; //(double*)malloc(N*N*sizeof(double));
+	InverseMatrix = new double[sqr(MatrixSize)]; //(double*)malloc(N*N*sizeof(double));
+	RightCol = new double[MatrixSize]; //(double*)malloc(N*sizeof(double));
+	Solution = new double[MatrixSize]; //(double*)malloc(N*sizeof(double));
+	ipvt = new int[MatrixSize+1]; //(int*)malloc((N+1)*sizeof(int));
 	BodyMatrixOK = InverseMatrixOK = false;
 }
 
-double *MatrixLink()
+double *convectivefast::MatrixLink()
 {
 	if (!BodyMatrixOK) {dbg(FillMatrix());} 
 	return BodyMatrix;
 }
-double *InvMatrixLink()
+double *convectivefast::InvMatrixLink()
 {
 	if (!InverseMatrixOK) {dbg(FillInverseMatrix());} 
 	return InverseMatrix;
 }
 
-TVec SpeedSumFast(TVec p)
+TVec convectivefast::SpeedSumFast(TVec p)
 {
 	TVec res(0, 0);
-	TNode* Node = FindNode(p);
+	TNode* Node = S->Tree->findNode(p);
 	if (!Node) return res;
 
 	const_for (Node->FarNodes, llfnode)
@@ -99,17 +66,14 @@ TVec SpeedSumFast(TVec p)
 	return res;
 }
 
-namespace {
 inline
-TVec BioSavar(const TObj &obj, const TVec &p)
+TVec convectivefast::BioSavar(const TObj &obj, const TVec &p)
 {
 	TVec dr = p - obj;
 	return rotl(dr)*(obj.g / (dr.abs2() + Rd2) );
-}}
+}
 
-
-namespace {
-TVec SpeedSum(const TNode &Node, const TVec &p)
+TVec convectivefast::SpeedSum(const TNode &Node, const TVec &p)
 {
 	TVec dr, res(0, 0);
 
@@ -127,16 +91,11 @@ TVec SpeedSum(const TNode &Node, const TVec &p)
 
 	res *= C_1_2PI;
 	return res;
-}}
+}
 
-void CalcConvectiveFast()
+void convectivefast::CalcConvectiveFast()
 {
-	if (!S) {cerr << "CalcConvectiveFast() is called before initialization"
-	              << endl; return; }
-
-	auto BottomNodes = GetTreeBottomNodes();
-	if (!BottomNodes) {cerr << "CalcConvectiveFast() is called before tree is built"
-	                        << endl; return; }
+	auto BottomNodes = S->Tree->getBottomNodes();
 
 	#pragma omp parallel for
 	const_for (BottomNodes, llbnode)
@@ -218,7 +177,7 @@ void CalcConvectiveFast()
 	}
 }
 
-void CalcBoundaryConvective()
+void convectivefast::CalcBoundaryConvective()
 {
 	if (S->VortexList)
 	const_for(S->VortexList, lobj)
@@ -248,28 +207,27 @@ void CalcBoundaryConvective()
 	}
 }
 
-namespace {
-TVec BoundaryConvective(const TBody &b, const TVec &p)
+TVec convectivefast::BoundaryConvective(const TBody &b, const TVec &p)
 {
 	TVec dr, res(0, 0);
-	auto alist = b.AttachList;
-	double rotspeed = b.RotSpeed(S->Time);
+	auto alist = b.List;
+	double rotspeed = b.getRotation(S->Time);
 //	if (!rotspeed) return res;
 
 	const_for(alist, latt)
 	{
 		dr = p - *latt;
-		res += (dr*latt->q + rotl(dr)*latt->g) * (rotspeed/( dr.abs2() + Rd2 ));
+		res += (dr*latt->qatt + rotl(dr)*latt->gatt) * (rotspeed/( dr.abs2() + Rd2 ));
 		if (latt->bc == bc::slip)
 		{
-			res += BioSavar(*b.next(b.obj(latt)), p);
+			res += BioSavar(*latt, p);
 		}
 	}
 
 	return res;
-}}
+}
 
-void CalcCirculationFast(bool use_inverse)
+void convectivefast::CalcCirculationFast(bool use_inverse)
 {
 	dbg(FillRightCol());
 	if (!BodyMatrixOK) {dbg(FillMatrix());}
@@ -287,24 +245,23 @@ void CalcCirculationFast(bool use_inverse)
 	const_for (S->BodyList, llbody)
 	{
 		#define body (**llbody)
-		const_for(body.List, lobj)
+		const_for(body.List, latt)
 		{
-			lobj->g = Solution[body.att(lobj)->eq_no];
+			latt->g = Solution[latt->eq_no];
 		}
 		#undef body
 	}
 }
 
-void FillInverseMatrix()
+void convectivefast::FillInverseMatrix()
 {
-	memcpy(InverseMatrix, BodyMatrix, N*N*sizeof(double));
-	dbg(inverse(InverseMatrix, N, BodyMatrix));
+	memcpy(InverseMatrix, BodyMatrix, sqr(MatrixSize)*sizeof(double));
+	dbg(inverse(InverseMatrix, MatrixSize, BodyMatrix));
 	InverseMatrixOK = true;
 	BodyMatrixOK = false;
 }
 
-namespace {
-double ConvectiveInfluence(TVec p, const TAtt &seg, double rd)
+double convectivefast::ConvectiveInfluence(TVec p, const TAtt &seg, double rd)
 {
 	complex<double> z(p.rx, -p.ry);
 	complex<double> zc(seg.rx,-seg.ry);
@@ -337,10 +294,9 @@ double ConvectiveInfluence(TVec p, const TAtt &seg, double rd)
 			return -log((z-z1)/(z-z3)).real() +
 			       (((z3+z2)*0.5-z)*conj(z2-z3)).real()/(rd*rd);
 	}
-}}
+}
 
-namespace {
-double NodeInfluence(const TNode &Node, const TAtt &seg, double rd)
+double convectivefast::NodeInfluence(const TNode &Node, const TAtt &seg, double rd)
 {
 	double res = 0;
 
@@ -365,38 +321,37 @@ double NodeInfluence(const TNode &Node, const TAtt &seg, double rd)
 	}
 
 	return res*C_1_2PI;
-}}
+}
 
-namespace {
-double AttachInfluence(const TAtt &seg, double rd)
+double convectivefast::AttachInfluence(const TAtt &seg, double rd)
 {
 	double res = 0;
 
 	const_for(S->BodyList, llbody)
 	{
 		#define body (**llbody)
-		if (!body.AttachList->size_safe()) continue;
-		double RotSpeed_tmp = body.RotSpeed(S->Time);
+		if (!body.List->size_safe()) continue;
+		double RotSpeed_tmp = body.getRotation(S->Time);
 		if (!RotSpeed_tmp) continue;
 
 		double res_tmp=0;
-		const_for(body.AttachList, latt)
+		const_for(body.List, latt)
 		{
-			if (latt == &seg) { res_tmp+= seg.q*0.5; continue; }
+			if (latt == &seg) { res_tmp+= seg.qatt*0.5; continue; }
 			res_tmp+= ConvectiveInfluence(*latt, seg, rd) * latt->g;
 			TAtt seg_tmp = seg;
 			seg_tmp = rotl(TVec(seg));
 			seg_tmp.dl = rotl(seg.dl);
-			res_tmp+= ConvectiveInfluence(*latt, seg_tmp, rd) * latt->q;
+			res_tmp+= ConvectiveInfluence(*latt, seg_tmp, rd) * latt->qatt;
 		}
 		res+= res_tmp * RotSpeed_tmp;
 		#undef body
 	}
 
 	return res * C_1_2PI;
-}}
+}
 
-void FillMatrix()
+void convectivefast::FillMatrix()
 {
 	//BodyMatrix[N*i+j]
 	//RightCol[i]
@@ -419,7 +374,7 @@ void FillMatrix()
 		#define ibody (**llibody)
 		#pragma omp parallel for
 
-		const_for(ibody.AttachList, latt)
+		const_for(ibody.List, latt)
 		{
 			int i = latt->eq_no;
 			const_for(S->BodyList, lljbody)
@@ -427,23 +382,21 @@ void FillMatrix()
 				#define jbody (**lljbody)
 				const_for(jbody.List, lobj)
 				{
-					int j=jbody.att(lobj)->eq_no;
+					int j=lobj->eq_no;
 					switch (latt->bc)
 					{
 					case bc::slip:
 					case bc::noslip:
-						BodyMatrix[N*i+j] = ConvectiveInfluence(*lobj, *latt, lobj->g)*C_1_2PI;
+						BodyMatrix[MatrixSize*i+j] = ConvectiveInfluence(*lobj, *latt, lobj->g)*C_1_2PI;
 						// lobj->g TEMPORARILY stores rd info. Assignment made 30 lines earlier.
 						break;
 					case bc::kutta:
-						BodyMatrix[N*i+j] = (lobj == ibody.obj(latt)) ||
-						                    (lobj == ibody.next(ibody.obj(latt))) ?
-						                    1:0;
+						BodyMatrix[MatrixSize*i+j] = (lobj == latt) ? 1:0;
 					case bc::steady:
-						BodyMatrix[N*i+j] = (llibody==lljbody)?1:0;
+						BodyMatrix[MatrixSize*i+j] = (llibody==lljbody)?1:0;
 						break;
 					case bc::inf_steady:
-						BodyMatrix[N*i+j] = 1;
+						BodyMatrix[MatrixSize*i+j] = 1;
 						break;
 					}
 				}
@@ -456,18 +409,18 @@ void FillMatrix()
 	BodyMatrixOK = true;
 }
 
-void FillRightCol()
+void convectivefast::FillRightCol()
 {
 	double rot_sum = 0;
 	const_for (S->BodyList, llbody)
 	{
 		#define body (**llbody)
 		double tmp = 0;
-		const_for(body.AttachList, latt)
+		const_for(body.List, latt)
 		{
-			tmp+= latt->g;
+			tmp+= latt->gatt;
 		}
-		tmp*= body.RotSpeed(S->Time);
+		tmp*= body.getRotation(S->Time);
 		rot_sum+= tmp;
 		#undef body
 	}
@@ -476,16 +429,16 @@ void FillRightCol()
 	{
 		#define body (**llbody)
 		double tmp = 0;
-		const_for(body.AttachList, latt)
+		const_for(body.List, latt)
 		{
 			tmp+= latt->g;
 		}
-		tmp*= body.RotSpeed(S->Time) - body.RotSpeed(S->Time-S->dt);
+		tmp*= body.getRotation(S->Time) - body.getRotation(S->Time-S->dt);
 
 		#pragma omp parallel for
-		const_for (body.AttachList, latt)
+		const_for (body.List, latt)
 		{
-			TNode* Node = FindNode(*latt);
+			TNode* Node = S->Tree->findNode(*latt);
 			if (!Node) { continue; }
 
 			TVec SegDl = latt->dl;
@@ -512,7 +465,7 @@ void FillRightCol()
 	}
 }
 
-void SolveMatrix()
+void convectivefast::SolveMatrix()
 {
 	if (!BodyMatrixOK)
 	{
@@ -520,8 +473,8 @@ void SolveMatrix()
 		return;
 	}
 
-	int info, one=1, N_int=N;
-	transpose(BodyMatrix, N);
+	int info, one=1, N_int=MatrixSize;
+	transpose(BodyMatrix, MatrixSize);
 	dgesv_(&N_int,&one,BodyMatrix,&N_int,ipvt,RightCol,&N_int,&info);
 
 	if (info)
@@ -530,17 +483,16 @@ void SolveMatrix()
 		return;
 	}
 
-	for (size_t i=0; i<N; i++)
+	for (size_t i=0; i<MatrixSize; i++)
 	{
 		Solution[i] = RightCol[i];
 	}
 }
 
-void SpoilBodyMatrix() {BodyMatrixOK=false;}
-void SpoilInverseMatrix() {InverseMatrixOK=false;}
+void convectivefast::SpoilBodyMatrix() {BodyMatrixOK=false;}
+void convectivefast::SpoilInverseMatrix() {InverseMatrixOK=false;}
 
-namespace {
-void inverse(double* A, int N, double* workspace)
+void convectivefast::inverse(double* A, int N, double* workspace)
 {
 	int LWORK = N*N;
 	int info;
@@ -549,25 +501,23 @@ void inverse(double* A, int N, double* workspace)
 	if (info) { cerr << "dgetrf_() failed with info=" << info << endl; return; }
 	dgetri_(&N,A,&N,ipvt,workspace,&LWORK,&info);
 	if (info) { cerr << "dgetri_() failed with info=" << info << endl; return; }
-}}
+}
 
-namespace {
-void transpose(double* A, int N)
+void convectivefast::transpose(double* A, int N)
 {
 	#pragma omp parallel for
-	for (int i=0; i<N; i++)
+	for (int i=0; i<MatrixSize; i++)
 	{
-		for (int j=i+1; j<N; j++)
+		for (int j=i+1; j<MatrixSize; j++)
 		{
 			double tmp = A[i*N+j];
 			A[i*N+j] = A[j*N+i];
 			A[j*N+i] = tmp;
 		}
 	}
-}}
+}
 
-namespace {
-void SolveMatrix_inv()
+void convectivefast::SolveMatrix_inv()
 {
 	if (!InverseMatrixOK)
 	{
@@ -575,32 +525,31 @@ void SolveMatrix_inv()
 	}
 
 	#pragma omp parallel for
-	for (size_t i=0; i<N; i++)
+	for (size_t i=0; i<MatrixSize; i++)
 	{
-		double *RowI = InverseMatrix + N*i;
+		double *RowI = InverseMatrix + MatrixSize*i;
 		#define SolI Solution[i]
 		SolI = 0;
-		for (size_t j=0; j<N; j++)
+		for (size_t j=0; j<MatrixSize; j++)
 		{
 			SolI+= RowI[j]*RightCol[j];
 		}
 		#undef SolI
 	}
-}}
+}
 
 /****** LOAD/SAVE MATRIX *******/
 
-bool LoadBodyMatrix(const char* filename)
-{ BodyMatrixOK = (LoadMatrix(BodyMatrix, filename) == N*N); return BodyMatrixOK; }
-bool LoadInverseMatrix(const char* filename)
-{ InverseMatrixOK = (LoadMatrix(InverseMatrix, filename) == N*N); return InverseMatrixOK; }
-void SaveBodyMatrix(const char* filename)
+bool convectivefast::LoadBodyMatrix(const char* filename)
+{ BodyMatrixOK = (LoadMatrix(BodyMatrix, filename) == sqr(MatrixSize)); return BodyMatrixOK; }
+bool convectivefast::LoadInverseMatrix(const char* filename)
+{ InverseMatrixOK = (LoadMatrix(InverseMatrix, filename) == sqr(MatrixSize)); return InverseMatrixOK; }
+void convectivefast::SaveBodyMatrix(const char* filename)
 { SaveMatrix(BodyMatrix, filename); }
-void SaveInverseMatrix(const char* filename)
+void convectivefast::SaveInverseMatrix(const char* filename)
 { SaveMatrix(InverseMatrix, filename); }
 
-namespace {
-size_t LoadMatrix(double *matrix, const char* filename)
+size_t convectivefast::LoadMatrix(double *matrix, const char* filename)
 {
 	FILE *fin;
 
@@ -613,52 +562,50 @@ size_t LoadMatrix(double *matrix, const char* filename)
 	}
 	fclose(fin);
 	return (dst - matrix);
-}}
+}
 
-namespace {
-void SaveMatrix(double *matrix, const char* filename)
+void convectivefast::SaveMatrix(double *matrix, const char* filename)
 {
 	FILE *fout;
 
 	fout = fopen(filename, "w");
 	if (!fout) { cerr << "Error opening file \'" << filename << "\'\n"; return; } 
 	double *src = matrix;
-	for (size_t i=0; i<N*N; i++)
+	for (size_t i=0; i<sqr(MatrixSize); i++)
 	{
 		fprintf(fout, "%f ", src[i]);
-		if (!((i+1)%N)) fprintf(fout, "\n");
+		if (!((i+1)%MatrixSize)) fprintf(fout, "\n");
 	}
 	fclose(fout);
-}}
+}
 
 /****** BINARY LOAD/SAVE *******/
 
-bool LoadBodyMatrix_bin(const char* filename)
-{ BodyMatrixOK = (LoadMatrix_bin(BodyMatrix, filename) == N*N); return BodyMatrixOK; }
-bool LoadInverseMatrix_bin(const char* filename)
-{ InverseMatrixOK = (LoadMatrix_bin(InverseMatrix, filename) == N*N); return InverseMatrixOK; }
-void SaveBodyMatrix_bin(const char* filename)
+bool convectivefast::LoadBodyMatrix_bin(const char* filename)
+{ BodyMatrixOK = (LoadMatrix_bin(BodyMatrix, filename) == sqr(MatrixSize)); return BodyMatrixOK; }
+bool convectivefast::LoadInverseMatrix_bin(const char* filename)
+{ InverseMatrixOK = (LoadMatrix_bin(InverseMatrix, filename) == sqr(MatrixSize)); return InverseMatrixOK; }
+void convectivefast::SaveBodyMatrix_bin(const char* filename)
 { SaveMatrix_bin(BodyMatrix, filename); }
-void SaveInverseMatrix_bin(const char* filename)
+void convectivefast::SaveInverseMatrix_bin(const char* filename)
 { SaveMatrix_bin(InverseMatrix, filename); }
 
-namespace {
-size_t LoadMatrix_bin(double *matrix, const char* filename)
+size_t convectivefast::LoadMatrix_bin(double *matrix, const char* filename)
 {
 	FILE *fin = fopen(filename, "rb");
 	if (!fin) { return 0; }
-	size_t result = fread(matrix, sizeof(double), N*N, fin);
+	size_t result = fread(matrix, sizeof(double), sqr(MatrixSize), fin);
 	fclose(fin);
 
 	return result;
-}}
+}
 
-namespace {
-void SaveMatrix_bin(double *matrix, const char* filename)
+void convectivefast::SaveMatrix_bin(double *matrix, const char* filename)
 {
 	FILE *fout;
 
 	fout = fopen(filename, "wb");
-	fwrite(matrix, sizeof(double), N*N, fout);
+	fwrite(matrix, sizeof(double), sqr(MatrixSize), fout);
 	fclose(fout);
-}}
+}
+

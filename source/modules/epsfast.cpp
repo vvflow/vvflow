@@ -18,7 +18,7 @@ void epsfast::CalcEpsilonFast(bool merge)
 	eps_restriction = 0.6*S->AverageSegmentLength();
 	double tmp_merge_criteria_sq = 0.16*sqr(S->AverageSegmentLength());
 
-	auto bnodes = GetTreeBottomNodes();
+	auto bnodes = S->Tree->getBottomNodes();
 	const_for(bnodes, llbnode)
 	{
 		#define bnode (**llbnode)

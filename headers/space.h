@@ -4,6 +4,7 @@
 class Space;
 
 #include "body.h"
+#include "tree.h"
 #include "elementary.h"
 
 using namespace std;
@@ -16,6 +17,8 @@ namespace val
 	TValues Nu = 4;
 }
 
+const char *current_version = "v: 1.1  "; //binary file format
+
 class Space
 {
 	public:
@@ -26,16 +29,18 @@ class Space
 		vector<TObj> *HeatList;
 		vector<TObj> *StreakSourceList;
 		vector<TObj> *StreakList;
+		TTree *Tree;
 
 		inline void FinishStep(); //update time and coord variables
 
 		TVec InfSpeed();
 		TVec InfSpeed(double t);
+		TVec InfMarker;
 		void ZeroSpeed();
 		double Time, dt, Re, Pr;
 
-		void Save(const char* format, const double header[]=NULL, int N=0);
-		double* Load(const char* filename, int* N = NULL);
+		void Save(const char* format);
+		void Load(const char* filename);
 		FILE* OpenFile(const char* format);
 		void CalcForces();
 		void SaveProfile(const char* filename, double dt, TValues vals);
@@ -49,7 +54,7 @@ class Space
 		int LoadStreakSource(const char* filename);
 
 		int LoadBody(const char* filename);
-		void EnumerateBodies(bool cheat = false);
+		void EnumerateBodies();
 		void ZeroBodies(); //zero Cp, Fr, Nu variables.
 
 		/***************** INTEGRALS ******************/
