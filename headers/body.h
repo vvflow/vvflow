@@ -50,7 +50,9 @@ class TBody
 		vector<TAtt> *List;
 
 		double Angle; // in documentation = $\alpha$
-		TVec   Position; // = $r_c$
+		TVec   Position; // = $\vec R$
+		double deltaAngle; // in doc $\Delta \alpha$
+		TVec   deltaPosition; //in doc $\Delta \vec R$
 
 		TObj Force, Friction; //computed by S->CalcForces
 		double Nusselt; //computed by S->CalcForces
