@@ -22,7 +22,7 @@ TBody::TBody(Space *sS)
 	MotSpeed_link = NULL;
 	MotSpeed_const = TVec(0,0);
 
-	Angle = 0; Position = TVec(0,0);
+	Angle = deltaAngle = 0; Position = deltaPosition = TVec(0,0);
 	g_dead = 0;
 	Position = TVec(0,0);
 	Force = TObj(0,0,0);
@@ -71,34 +71,42 @@ void TBody::setMotion(TVec (*sMotSpeed)(double time), TVec sMotSpeed_const)
 	MotSpeed_const = sMotSpeed_const;
 }
 
-void TBody::doRotation(double angle)
+void TBody::doRotationAndMotion()
 {
 	if (!this) return;
 
+	doRotation();
+	doMotion();
+	doUpdateAttach();
+}
+
+void TBody::doRotation()
+{
+	double angle_slae = RotationSpeed_slae * S->dt; //in doc \omega_? \Delta t
+	double angle_solid = getRotation(S->Time) * S->dt // in doc \omega \Delta t
 	const_for (List, lobj)
 	{
-		TVec dr = lobj->corner - Position;
-		lobj->corner = Position + dr*cos(angle) + rotl(dr)*sin(angle);
+		TVec dr = lobj->corner - (Position + deltaPosition);
+		lobj->corner = Position + deltaPosition + dr*cos(angle_slae) + rotl(dr)*sin(angle_slae);
 	}
-	Angle += angle;
-	doUpdateAttach();
-	HeatLayerList->clear();
+	Angle += angle_solid;
+	deltaAngle += angle_slae - angle_solid;
+	
 }
 
 void TBody::doMotion(TVec delta)
 {
-	if (!this) return;
-
+	TVec delta_slae = MotionSpeed_slae * S->dt;
+	TVec delta_solid = getMotion(S->Time) * S->dt;
 	const_for (List, lobj)
 	{
-		lobj->corner += delta;
+		lobj->corner += delta_slae;
 	}
-	Position += delta;
-	doUpdateAttach();
-	HeatLayerList->clear();
+	Position += delta_solid;
+	deltaPosition += delta_slae - delta_solid;
 }
 
-void TBody::doUpdateAttach()
+void TBody::doUpdateSegments()
 {
 	if (!this) return;
 
@@ -106,8 +114,6 @@ void TBody::doUpdateAttach()
 	{
 		lobj->dl = (lobj+1)->corner - lobj->corner;
 		*lobj = 0.5*((lobj+1)->corner + lobj->corner);
-
-		//TODO what to do with attaches?
 	}
 }
 

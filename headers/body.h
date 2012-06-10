@@ -16,7 +16,7 @@ class TAtt : public TObj
 		//rx, ry: center coordinates ; $\vec r$ in doc
 		//g: unkonown circulation $\gamma$ in doc
 		TVec corner; //$\vec c$ in doc
-		double gatt, qatt; //$q_\att, \gamma_\att$ in doc
+		//double gatt, qatt; //$q_\att, \gamma_\att$ in doc
 
 		double gsum; //filled by different modules
 		double hsum; //filled by different modules
@@ -53,22 +53,28 @@ class TBody
 		TVec   Position; // = $\vec R$
 		double deltaAngle; // in doc $\Delta \alpha$
 		TVec   deltaPosition; //in doc $\Delta \vec R$
+		double RotationSpeed_slae; //in doc \omega_?
+		TVec   MotionSpeed_slae; // in doc \vec V_?
 
 		TObj Force, Friction; //computed by S->CalcForces
 		double Nusselt; //computed by S->CalcForces
 		double g_dead;
 
 	public:
-		//int LoadFromFile(const char* filename, int start_eq_no);
+		//set \omega, \vec V
 		void setRotation(double (*sRotSpeed)(double time), double sRotSpeed_const = 0);
 		void setMotion(TVec (*sMotSpeed)(double time), TVec sMotSpeed_const = TVec(0,0));
+
+		//get \omega, \vec V 
 		double getRotation(double time) const
 			{ return RotSpeed_link ? RotSpeed_link(time):RotSpeed_const; }
 		TVec   getMotion(double time) const
 			{ return MotSpeed_link ? MotSpeed_link(time):MotSpeed_const; }
-		void doRotation(double angle);
-		void doMotion(TVec delta);
-		void doUpdateAttach();
+
+		//see \vec c_s \vert_Rotation
+		void doRotationAndMotion();
+		//update TAtt-> rx, ry, dl after doRotationAndMotion()
+		void doUpdateSegments();
 
 		TAtt* isPointInvalid(TVec p);
 		TAtt* isPointInHeatLayer(TVec p);
@@ -104,6 +110,9 @@ class TBody
 		double RotSpeed_const;
 		TVec   (*MotSpeed_link)(double time);
 		TVec   MotSpeed_const;
+
+		void doRotation();
+		void doMotion();
 };
 
 #endif /* BODY_H_ */

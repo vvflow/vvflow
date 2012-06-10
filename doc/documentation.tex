@@ -195,13 +195,32 @@ sin(\alpha) & \cos(\alpha) \end{array}\right) \cdot \br r_b
 \end{packed_itemize}
 
 Функции getRotation, setRotation, getMotion, setMotion манипуляруют с детерминированной скоростью тела (точнее державки), угловой и поступательной.
+Функции doRotation, doMotion принимают в качестве аргумента величины ($\vec V_{b?} \Delta t$), ($\omega_{b?} \Delta t$). Изменения, которые они вносят, описываются следующими формулами:\\
+$\alpha = \alpha + \omega \cdot \Delta t$\\
+$\vec R = \vec R + \vec V \cdot \Delta t$\\
+$\Delta \alpha = \Delta \alpha + (\omega_{?} - \omega) \cdot \Delta t$\\
+$\Delta \vec R = \Delta \vec R + (\vec V_{?} - \vec V) \cdot \Delta t$\\
+
+Помимо изменений общих координат, изменяются все углы тела, вектора отрезков и координаты центров. Как следует из формул, порядок выполнения поворота или сдвига значения не имеет.
+\begin{equation*}
+\begin{split}
+\vec c_s \vert_\text{Rotation}
+& = (\vec R + \Delta \vec R) +
+\begin{pmatrix}
+\cos & -\sin \\ \sin & \cos
+\end{pmatrix}
+(\omega_? \Delta t) \cdot \underbrace{(\vec c_s - (\vec R + \Delta \vec R))}_{\vec r_*}\\
+& = (\vec R + \Delta \vec R) + \vec r_* \cos(\omega_? \Delta t) + [\vec e_z \times \vec r_*] \sin(\omega_? \Delta t)
+\\ \vec c_s \vert_\text{Motion} &= \vec c_s + \vec V_? \Delta t
+\end{split}
+\end{equation*}
 
 Для моделирования двигающегося тела используется понятие присоединенных вихрей и источников. Они располагаются в центре каждого отрезка и имитируют разрыв скорости на поверхности. %FIXME I need help.
 Интенсивность присоединенного источника и циркуляция присоединенного вихря зависят от скорости отрезка, к которому они привязаны.
 \begin{equation*}
-\vec V_{sb} = \lbrace\vec V_? + \omega_? \cdot [\vec e_z \times (\vec r_s - (\vec R + \Delta \vec R))]\rbrace_b,
+\vec V_s = \vec V_? + \omega_? \cdot [\vec e_z \times (\vec r_s - (\vec R + \Delta \vec R))],
 \end{equation*}
-где $\lbrace\vec R + \Delta \vec R\rbrace_b$ --- ось вращения данного тела\footnote{Заметьте, осью вращения является не державка, а место крепления пружины. Другими словами операция смещения имеет приоритет над вращением.}. Здесь сделано предположение о малости отрезка и об однородности скорости по всей длине. В таком случае формулы для вычисления присоединенной циркуляции и интенсивности будут иметь вид.
+где $\lbrace\vec R + \Delta \vec R\rbrace_b$ --- ось вращения данного тела\footnote{Заметьте, осью вращения является не державка, а место крепления пружины к телу.}. Здесь сделано предположение о малости отрезка и об однородности скорости по всей длине. В таком случае формулы для вычисления присоединенной циркуляции и интенсивности будут иметь вид.
 \begin{equation*}
 \gamma_{\att~s} = -\vec V_s \cdot \Delta \vec l_s
 \end{equation*}
@@ -209,6 +228,7 @@ sin(\alpha) & \cos(\alpha) \end{array}\right) \cdot \br r_b
 q_{\att~s} = -[\vec V_s \times \Delta \vec l_s]
 \end{equation*}
 
+Присоединенные вихреисточники должны учитываться при вычислении конвективной скорости, при вычислении давления, при заполнении СЛАУ.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Geometry formulae}
