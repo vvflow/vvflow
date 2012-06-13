@@ -209,26 +209,38 @@ $\Delta \vec R = \Delta \vec R + (\vec V_{?} - \vec V) \cdot \Delta t$\\
 \begin{pmatrix}
 \cos & -\sin \\ \sin & \cos
 \end{pmatrix}
-(\omega_? \Delta t) \cdot \underbrace{(\vec c_s - (\vec R + \Delta \vec R))}_{\vec r_*}\\
-& = (\vec R + \Delta \vec R) + \vec r_* \cos(\omega_? \Delta t) + [\vec e_z \times \vec r_*] \sin(\omega_? \Delta t)
+(\omega_? \Delta t) \cdot \underbrace{(\vec c_s - (\vec R + \Delta \vec R))}_{\vec c_*}\\
+& = (\vec R + \Delta \vec R) + \vec c_* \cos(\omega_? \Delta t) + [\vec e_z \times \vec c_*] \sin(\omega_? \Delta t)
 \\ \vec c_s \vert_\text{Motion} &= \vec c_s + \vec V_? \Delta t
 \end{split}
 \end{equation*}
 
 Для моделирования двигающегося тела используется понятие присоединенных вихрей и источников. Они располагаются в центре каждого отрезка и имитируют разрыв скорости на поверхности. %FIXME I need help.
 Интенсивность присоединенного источника и циркуляция присоединенного вихря зависят от скорости отрезка, к которому они привязаны.
-\begin{equation*}
-\vec V_s = \vec V_? + \omega_? \cdot [\vec e_z \times (\vec r_s - (\vec R + \Delta \vec R))],
-\end{equation*}
+\begin{equation}
+\label{eq_SegmentVelocity}
+\vec V_s = \vec V_? + \omega_? \cdot [\vec e_z \times \underbrace{(\vec r_s - (\vec R + \Delta \vec R))}_{r_*}],
+\end{equation}
 где $\lbrace\vec R + \Delta \vec R\rbrace_b$ --- ось вращения данного тела\footnote{Заметьте, осью вращения является не державка, а место крепления пружины к телу.}. Здесь сделано предположение о малости отрезка и об однородности скорости по всей длине. В таком случае формулы для вычисления присоединенной циркуляции и интенсивности будут иметь вид.
-\begin{equation*}
-\gamma_{\att~s} = -\vec V_s \cdot \Delta \vec l_s
-\end{equation*}
-\begin{equation*}
-q_{\att~s} = -[\vec V_s \times \Delta \vec l_s]
-\end{equation*}
+\begin{equation}
+\label{eq_AttachIntensity}
+\begin{split}
+\gamma_{\att~s} &= -\vec V_s \cdot \Delta \vec l_s \\
+q_{\att~s} &= -[\vec V_s \times \Delta \vec l_s] \\
+\end{split}
+\end{equation}
 
 Присоединенные вихреисточники должны учитываться при вычислении конвективной скорости, при вычислении давления, при заполнении СЛАУ.
+Если расписать формулы~\ref{eq_AttachIntensity} с учетом~\ref{eq_SegmentVelocity}, то получится
+\begin{equation}
+\label{eq_AttachIntensityLong}
+\begin{split}
+\gamma_{\att~s} &=
+-V_{?x} \cdot (\Delta l_{sx}) - V_{?y} \cdot (\Delta l_{sy}) - \omega_? \cdot [\Delta \vec l_s \times \vec r_*]\\
+q_{\att~s} &=
+-V_{?x} \cdot (\Delta l_{sy}) + V_{?y} \cdot (\Delta l_{sx}) + \omega_? \cdot (\Delta \vec l_s \cdot \vec r_*)\\
+\end{split}
+\end{equation}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Geometry formulae}
@@ -254,47 +266,73 @@ J_0 = \rho \int r^2 dS = \dfrac{\rho}{4}\int(\rot([\br e_z \times \br r] r^2) dS
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Convective}
 \subsection{Конвективная скорость}
-Скорость, индуцированная вихрем $(\br r_i, \gamma_i)$ в точке $\br r$
+Скорость, индуцированная вихрем $(\vec r_\gamma, \gamma)$ в точке $\vec r$
 вычисляется по формуле
-\begin{equation*}
-\br V(\br r) = [\br e_z \times \br K(\br r, \br r_i)] \cdot \gamma_i
-\end{equation*}
-Причем $\br K (\br r, \br r_i)$ можно вычислять несколькми способами:
+\begin{equation}
+\label{eq_VortexConvective}
+\vec V_\gamma(\vec r) = [\vec e_z \times \vec K(\vec r, \vec r_\gamma)] \cdot \gamma,
+\end{equation}
+а скорость, индуцированная источником $(\vec r_q, q)$ --- по формуле
+\begin{equation}
+\label{eq_SourceInfluence}
+\vec V_q(\vec r) = \vec K(\vec r, \vec r_q) \cdot q.
+\end{equation}
+
+
+$\br K (\br r, \br r_i)$ можно вычислять несколькми способами:
 \begin{packed_enum}
 \item Классическая формула для точечного вихря:
 $\br K_1 = \dfrac {\Delta\br r}{\Delta r^2}$
+, $\Delta \vec r = \vec r - \vec r_i$
 
-\item Для вихря Рэнкина (круг постоянной завихренности):
+\item Для вихря Рэнкина:
 $\br K_2 = \begin{cases}
 \Delta\br r / r_0^2,	&\Delta r \le r_0 \\
 {\Delta\br r}/{\Delta r^2}, 	&\Delta r>r_0\\
 \end{cases}$
+\\ (круг постоянной завихренности)
 
 \item Для вихря Лэмба:
 $\br K = \br K_3 = \dfrac {\Delta\br r}{\Delta r^2 + \delta^2}$
 \end{packed_enum}
 
-Мы пользуемся третьим. Эта формула удобнее и быстрее.
+Мы пользуемся третьим способом. Эта формула удобнее и быстрее.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{ConvectiveInfluence}
+\label{ConvectiveInfluence}
+Функция вычисляет интеграл скорости, индуцируемый единичным вихрем 
+в точке $\vec r_\gamma$ на отрезок $[\vec c_1, \vec c_2]$.
+В комплексных переменных координаты следующие:
+$z = (r_{\gamma x}) - i (r_{\gamma y})$, $z_{1,2} = (c_{1,2~x}) - i (c_{1,2~y})$, $z_s = (r_{sx}) - i (r_{sy}) = \frac{1}{2}(z_1 + z_2)$
 
-\subsection{Линии тока}
-Линии тока можно построить двумя способами. Можно построить поле скорости,
-и загнать его в какой-нибудь TecPlot, но это черевато низкой точностью и дикими
-спиралями. А можно воспользоваться функцией тока (она же --- векторный потенциал)
-$\br\Psi: \rot\br\Psi = \br V$.
-И тогда в двумере линии уровня $\lvert\br\Psi\rvert$ будут являться линиями тока.
 
-\begin{equation*}
-\Psi(\br r) = -\dfrac{1}{2 \pi} \sum_i \gamma_i \ln \left(\sqrt{(\br r - \br r_i)^2 + \delta^2} \right) = -\dfrac{1}{4\pi} \sum_i \gamma_i \ln \left({{\Delta r}^2 + \delta^2} \right) \text{--- вихрь.}
-\end{equation*}
+\begin{equation}
+\label{eq_VortexInfluence}
+\Xi_\gamma(\vec c_1, \vec c_2, \vec r_\gamma) = \int\limits_{\vec c_1}^{\vec c_2} [\vec e_z \times \vec K(\vec r,\vec r_\gamma)] \cdot d \vec r = 
+\begin{cases}
+-\Re \left\lbrace \log \left(\dfrac{z-z_1}{z-z_2}\right) \right\rbrace,	&\text{для дальних}\\
+\dfrac{1}{\varepsilon^2}\Re \left\lbrace (z_s-z)(\bar z_2 - \bar z_1) \right\rbrace, 	&\text{для ближних}\\
+\end{cases}
+%записать по русски условия
+\end{equation}
+\begin{center}\input{images/ConvInfluence.pdf_tex}\end{center}
 
-\begin{equation*}
-\Psi(\br r) = -\dfrac{1}{2 \pi} \sum_i q_i \arctg \left(\dfrac{\Delta r_y}{\Delta r_x} \right) \text{--- источник.}
-\end{equation*}
+Если один из концов отрезка является ближним, а другой дальним, 
+отрезок делится на две части точкой $z_3$, для каждой
+из которых влияние вычисляется по своей формуле.
+В обычном случае, функцию для блихних вихрей удобней записать без использования
+комплексных чисел:
+$(\vec r_{sb} - \vec r_v) \Delta\vec l_{sb} / \varepsilon^2$
 
-\begin{equation*}
-\Psi(\br r) = \br r \times \br V_\infty \text{--- бесконечность.}
-\end{equation*}
+%FIXME
+Здесь надо дописать формулу для влияния источника (это нужно для СЛАУ и присоединенных источников).
+Сейчас вляние вычисляется только для дальних источников, и то плохо (я представляю, что отрезок повернут на $90^{\circ}$ и вычисляю влияние вихря на повернутый отрезок)
+
+\begin{equation}
+\Xi_q (\vec c_1, \vec c_2, \vec r_q) = \int\limits_{\vec c_1}^{\vec c_2} \vec K(\vec r, \vec r_q) \cdot d\vec r =
+???
+\end{equation}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{СЛАУ}
@@ -303,46 +341,92 @@ $\br\Psi: \rot\br\Psi = \br V$.
 
 \begin{packed_enum}
 \item Условие непротекания/прилипания. Мы используем интегральный вариант\\
-$\int (\br V_\text{liquid} \cdot d \br S) = \int (\br V_\text{body} \cdot d \br S)$ \\
-Интеграл вычисляется по конткетному отрезку. $\br V_\text{liquid}$ --- скорость жидкости, которая включает в себя индуцированную свободными и присоединенными вихрями, а так же скорость на бесконечности. $\br V_\text{body}$ --- скорость самого отрезка.
+$\int (\br V_\text{liquid} \cdot d \br r) = \int (\br V_\text{body} \cdot d \br r)$ \\
+Интеграл вычисляется по конткетному отрезку аналитически (см.~\ref{ConvectiveInfluence}). $\br V_\text{liquid}$ --- скорость жидкости, которая включает в себя индуцированную свободными и присоединенными вихрями, а так же скорость на бесконечности. $\br V_\text{body}$ --- скорость самого отрезка.
 \item Условие отсутствия возмущений на бесконечности. Если говорить кратко, то $\sum \gamma = 0$, что имеено подразумевается под $\gamma$ зависит от конкретного случая; об этом будет рассказано позже.
 \item Второй закон Ньютона. $\br F = m \br a$. Более подробно об этом позже.
 \end{packed_enum}
 
-Прежде чем расписывать каждое уравнение в отдельности, определимся с тем, что мы ищем. Неизвестными переменными на каждом шаге являются циркуляции новых доменов и скорости тела: $V_x$, $V_y$, $\omega$. Известными величинами являются скорость на бесконечности, скорость тела (частично). Вектор неизвестных величин составим следующим образом:
+Прежде чем расписывать каждое уравнение в отдельности, определимся с тем, что мы ищем. Неизвестными переменными на каждом временном шаге являются циркуляции новых доменов и скорости тела: $\vec V_?$, $\omega_?$. Известными величинами являются скорость и циркуляция на бесконечности ($\vec V_\infty$, $\Gamma_\infty$), скорость державки тела ($\vec V$, $\omega$), коэффициенты упругости пружины ($k_x$, $k_y$, $k_\alpha$). Вектор неизвестных величин составим следующим образом:
 
 \begin{equation}
 \label{eq_5_3_1}
-X^T = (\gamma_1, \ldots, \gamma_N, V_x, V_y, \omega)
+X = (\gamma_1, \dotsc, \gamma_{N_s}, V_{?x}, V_{?y}, \omega_?)^T
 \end{equation}
 
-Это для одного тела. Если тел несколько --- итоговый вектор будет состоять из нескольких таких частей. Теперь придется подробно расписать каждое уравнение в системе. Будем придерживаться таких обозначений, что $AX = B$, $A$ --- матрица системы, состоит из элементов $a_{i,j}$, а $X$ описан в формуле (\ref{eq_5_3_1}). Столбец правых частей $B$ включает в себя вклад от известных элеентов (таких, как скорость на бесконечности)
+Это для одного тела. Если тел несколько --- итоговый вектор будет состоять из нескольких таких частей. Теперь придется подробно расписать каждое уравнение в системе. Будем придерживаться таких обозначений, что $AX = B$, $A$ --- матрица системы, состоит из элементов $a_{i,j}$, а $X$ описан в формуле (\ref{eq_5_3_1}). Столбец правых частей $B$ включает в себя вклад от известных элеентов (таких, как скорость на бесконечности).
 
+Теперь распишем каждый член в отдельности. Всего в нашей подматрице $N_s + 3$ уравнений. Из них $N_s - 1$ --- непротекание, 1 на бесконечности, и 3 для закона Ньютона.
+
+Влияние неизвестного вихря на конкретный отрезок вычисляется по формуле~(\ref{eq_VortexInfluence}). Для этого реализована отдельная функция \emph{ConvectiveInfluence}, которая вычисляет $\Xi_\gamma(\vec c_1, \vec c_2, \vec r_\gamma)$.
+
+Сложнее дело обстоит с влиянием присоединенных вихрей (чья интенсивность определяется неизвестной скоростью тела). Распишем это влияние аккуратно.
+
+\begin{equation}
+\begin{split}
+&\int\limits_{\vec c_1}^{\vec c_2} {\vec V(\vec r) d \vec r}
+= \int\limits_{\vec c_1}^{\vec c_2} {
+	\sum\limits_{s=0}^{N_s} {
+		\biggl (
+		\gamma_{\att~s} \cdot [\vec e_z \times \vec K(\vec r, \vec r_s)] +
+		q_{\att~s}\cdot \vec K(\vec r, \vec r_s)
+		\biggr )
+	}
+	\cdot d \vec r
+} = \\ =
+%%%%%%%%
+&\sum\limits_{s=0}^{N_s} {
+	\biggl (
+	\gamma_{\att~s} \cdot 
+	\underbrace{
+	\int\limits_{\vec c_1}^{\vec c_2} {
+		[\vec e_z \times \vec K(\vec r, \vec r_s)] \cdot d \vec r
+	}}_{\Xi_\gamma(\vec c_1, \vec c_2, \vec r_s)} + 
+	q_{\att~s} \cdot
+	\underbrace{
+	\int\limits_{\vec c_1}^{\vec c_2} {
+		\vec K(\vec r, \vec r_s) \cdot d \vec r
+	}}_{\Xi_q(\vec c_1, \vec c_2, \vec r_s)}
+	\biggr )
+} = \\ =
+%%%%%%%%
+&-V_{?x} \cdot \underbrace{
+	\sum\limits_{s=0}^{N_s} {\binom{\Xi_\gamma}{\Xi_q} \cdot \Delta \vec l_s}
+}_{a_I}
+-V_{?y} \cdot \underbrace{
+	\sum\limits_{s=0}^{N_s} {\binom{\Xi_\gamma}{\Xi_q} \times \Delta \vec l_s}
+}_{a_{II}}
+-\omega_? \cdot \underbrace{
+	\sum\limits_{s=0}^{N_s} {\binom{\Xi_\gamma}{\Xi_q} \times \binom{\Delta \vec l_s \cdot \vec r_*}{[\Delta \vec l_s \times \vec r_*]}}
+}_{a_{III}}
+%%%%%%%%
+\end{split}
+\end{equation}
+
+
+\begin{equation}
+\label{slae}
+A_b = \left (
+\begin{array}{ccccccccc}
+\Xi_\gamma & \Xi_\gamma & \hdotsfor{3} & \Xi_\gamma & a_I & a_{II} & a_{III}\\
+\vdots & \ddots & \ddots &&& \vdots & \vdots & \vdots & \vdots \\
+\vdots && \ddots & \ddots && \vdots & \vdots & \vdots & \vdots \\
+\vdots &&& \ddots & \ddots & \vdots & \vdots & \vdots & \vdots \\
+\Xi_\gamma & \hdotsfor{3} & \Xi_\gamma & \Xi_\gamma & a_I & a_{II} & a_{III} \\
+1 & \hdotsfor{4} & 1 & ? & ? & ? \\
+? & ? & ? \\
+? & ? & ? \\
+? & ? & ? \\
+\end{array}
+\right)
+\cdot
+\begin{pmatrix}
+\gamma_1 \\ \vdots \\ \gamma_s \\ \vdots \\ \gamma_{N_s - 1} \\ \gamma_{N_s}
+\\ V_{x?} \\ V_{y?} \\ \omega_?
+\end{pmatrix}
+\end{equation}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{ConvectiveInfluence}
-Функция вычисляет интеграл скорости, индуцируемый единичным вихрем 
-в точке $\br p$ на отрезок $[\br p_1, \br p_2]$
-В комплексных переменных координаты следующие:
-$z = p_x - i p_y$, $z_c = \frac{1}{2}(z_1 + z_2)$
-
-
-\begin{equation*}
-\int\limits_{z_1}^{z_2} \left (\br V \cdot d \br S \right ) = 
-\begin{cases}
--\Re \left\lbrace \log \left(\dfrac{z-z_1}{z-z_2}\right) \right\rbrace,	&\text{для дальних}\\
-\dfrac{1}{\varepsilon^2}\Re \left\lbrace (z_c-z)(\bar z_2 - \bar z_1) \right\rbrace, 	&\text{для ближних}\\
-\end{cases}
-%записать по русски условия
-\end{equation*}
-\begin{center}\input{images/ConvInfluence.pdf_tex}\end{center}
-
-Если один из концов отрезка является ближним, а другой дальним, 
-отрезок делится на две части точкой $\br p_3$, для каждой
-из которых влияние вычисляется по своей формуле.
-В обычном случае, функцию для блихних вихрей удобней записать без использования
-комплексных чисел:
-$(\br p_c - \br p)(\br p_2 - \br p_1 ) / \varepsilon^2$
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Результаты}
@@ -415,6 +499,10 @@ $$\Nuss_\text{avg} = \dfrac{\sum (\Delta l_i \cdot \Nuss_\text{loc})}{\sum \Delt
 Интегральный:
 $$\Nuss_\text{int} = \sum ( \Delta l_i \cdot \Nuss_\text{loc})$$
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Линии тока}
+\input{parts/streamlines.tex}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
