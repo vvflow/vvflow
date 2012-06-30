@@ -392,13 +392,13 @@ X = (\gamma_1, \dotsc, \gamma_{N_s}, V_{?x}, V_{?y}, \omega_?)^T
 %%%%%%%%
 &-V_{?x} \cdot \underbrace{
 	\sum\limits_{s=0}^{N_s} {\binom{\Xi_\gamma}{\Xi_q} \cdot \Delta \vec l_s}
-}_{a_I}
+}_{-a_I}
 -V_{?y} \cdot \underbrace{
 	\sum\limits_{s=0}^{N_s} {\binom{\Xi_\gamma}{\Xi_q} \times \Delta \vec l_s}
-}_{a_{II}}
+}_{-a_{II}}
 -\omega_? \cdot \underbrace{
 	\sum\limits_{s=0}^{N_s} {\binom{\Xi_\gamma}{\Xi_q} \times \binom{\Delta \vec l_s \cdot \vec r_*}{[\Delta \vec l_s \times \vec r_*]}}
-}_{a_{III}}
+}_{-a_{III}}
 %%%%%%%%
 \end{split}
 \end{equation}
@@ -413,7 +413,7 @@ A_b = \left (
 \vdots && \ddots & \ddots && \vdots & \vdots & \vdots & \vdots \\
 \vdots &&& \ddots & \ddots & \vdots & \vdots & \vdots & \vdots \\
 \Xi_\gamma & \hdotsfor{3} & \Xi_\gamma & \Xi_\gamma & a_I & a_{II} & a_{III} \\
-1 & \hdotsfor{4} & 1 & ? & ? & ? \\
+1 & \hdotsfor{4} & 1 & 0 & 0 & 2S \\
 ? & ? & ? \\
 ? & ? & ? \\
 ? & ? & ? \\
@@ -432,13 +432,46 @@ A_b = \left (
 \section{Результаты}
 \subsection{Силы и моменты}
 
-Сила и момент силы давления вычисляются по формулам 
+В соответствии с формулами 3.5.19, 3.5.20 в~\cite{vvd_book} cилы и момент давления вычисляются по формулам
 \begin{equation*}
 \br F = - \rho_\infty S_b \cdot \br a + \sum {\gamma_i \cdot [\br e_z \times \br r_i]}
 \end{equation*}\begin{equation*}
 \br M = \sum {\gamma_i \br r_i^2}
 %TODO а тут нужно угловое ускорение? если да - на что его умножать?
 \end{equation*}
+
+\begin{equation}
+\label{eq_force}
+{\vec F} =
+\frac{1}{\Delta t} \sum\limits_{s=1}^{N_s} {\Delta \gamma_s \cdot [\vec e_z \times \vec r_s]}
+\underbrace {
+	- \frac{1}{2} \sum\limits_{s=1}^{N_s} \bigl(
+		{\gamma_{att~s} \cdot [\vec e_z \times \vec V_s]}
+		+ {q_{att~s} \cdot \vec V_s }
+	\bigr)
+}_{\text{с предыдущего шага}}
+\end{equation}
+
+$\Delta \gamma_s$ --- приращение циркуляции на отрезке за текущий шаг (рожденные минус удаленные).\\
+$\vec V_s$ --- скорость отрезка в соответствии с~\ref{eq_SegmentVelocity}. Берется с предыдущего шага
+присоединенная гамма к
+прис источник ку к
+
+Момент сил согласно (\ref{eq12.9}) может быть вычислен по формуле
+
+\begin{equation}
+\label{eq_moment}
+\begin{array}{l}
+ {\rm {\bf M}}=\sum\limits_{k=1}^K {\left( {{\rm {\bf r}}_k -{\rm {\bf r}}_c 
+} \right)\times \left( {\Gamma _k \times \left( {{\rm {\bf u}}_k -{\rm {\bf 
+V}}_k } \right)} \right)} +\frac{1}{2}\sum\limits_k^K {\left( {{\rm {\bf 
+r}}_k -{\rm {\bf r}}_c } \right)^2\frac{\Delta {\rm {\bf \delta }}{ 
+}_k}{\Delta t}} 
+ -\sum\limits_{k=1}^K {\left( {{\rm {\bf r}}_k -{\rm {\bf r}}_c } 
+\right)\times {\rm {\bf V}}_k Q_k } \\ 
+\end{array}
+\end{equation}
+
 
 Не стоит удивляться разрывам в графике сил при искорении набегающего потока. Помимо этого Ньютоновского слагаемого $ma$ имеются эффекты связанные с присоединенной массой, которая зависит как от размеров, так и от формы тела.
 
