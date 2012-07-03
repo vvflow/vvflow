@@ -301,15 +301,15 @@ $\br K = \br K_3 = \dfrac {\Delta\br r}{\Delta r^2 + \delta^2}$
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{ConvectiveInfluence}
 \label{ConvectiveInfluence}
-Функция вычисляет интеграл скорости, индуцируемый единичным вихрем 
+Функция вычисляет интеграл нормальной скорости, индуцируемой единичным вихрем 
 в точке $\vec r_\gamma$ на отрезок $[\vec c_1, \vec c_2]$.
-В комплексных переменных координаты следующие:
+Для вычисления этого интеграла удобно использовать комплексные переменные:
 $z = (r_{\gamma x}) - i (r_{\gamma y})$, $z_{1,2} = (c_{1,2~x}) - i (c_{1,2~y})$, $z_s = (r_{sx}) - i (r_{sy}) = \frac{1}{2}(z_1 + z_2)$
 
 
 \begin{equation}
 \label{eq_VortexInfluence}
-\Xi_\gamma(\vec c_1, \vec c_2, \vec r_\gamma) = \int\limits_{\vec c_1}^{\vec c_2} [\vec e_z \times \vec K(\vec r,\vec r_\gamma)] \cdot d \vec r = 
+\Xi_\gamma(\vec c_1, \vec c_2, \vec r_\gamma) = \int\limits_{\vec c_1}^{\vec c_2} [\vec e_z \times \vec K(\vec r,\vec r_\gamma)] \cdot \vec n \cdot dr = 
 \begin{cases}
 -\Re \left\lbrace \log \left(\dfrac{z-z_1}{z-z_2}\right) \right\rbrace,	&\text{для дальних}\\
 \dfrac{1}{\varepsilon^2}\Re \left\lbrace (z_s-z)(\bar z_2 - \bar z_1) \right\rbrace, 	&\text{для ближних}\\
@@ -325,13 +325,14 @@ $z = (r_{\gamma x}) - i (r_{\gamma y})$, $z_{1,2} = (c_{1,2~x}) - i (c_{1,2~y})$
 комплексных чисел:
 $(\vec r_{sb} - \vec r_v) \Delta\vec l_{sb} / \varepsilon^2$
 
-%FIXME
-Здесь надо дописать формулу для влияния источника (это нужно для СЛАУ и присоединенных источников).
-Сейчас вляние вычисляется только для дальних источников, и то плохо (я представляю, что отрезок повернут на $90^{\circ}$ и вычисляю влияние вихря на повернутый отрезок)
-
+Аналогичная формула $\Xi_q$ вычисляет влияние единичного источника на отрезок.
 \begin{equation}
-\Xi_q (\vec c_1, \vec c_2, \vec r_q) = \int\limits_{\vec c_1}^{\vec c_2} \vec K(\vec r, \vec r_q) \cdot d\vec r =
-???
+\label{eq_SourceInfluence}
+\Xi_q (\vec c_1, \vec c_2, \vec r_q) = \int\limits_{\vec c_1}^{\vec c_2} \vec K(\vec r, \vec r_q) \cdot \vec n \cdot dr =
+\begin{cases}
+-\Im \left\lbrace \log \left(\dfrac{z-z_1}{z-z_2}\right) \right\rbrace,	&\text{для дальних}\\
+-\dfrac{1}{\varepsilon^2}\Im \left\lbrace (z_s-z)(\bar z_2 - \bar z_1) \right\rbrace, 	&\text{для ближних}\\
+\end{cases}
 \end{equation}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -340,9 +341,11 @@ $(\vec r_{sb} - \vec r_v) \Delta\vec l_{sb} / \varepsilon^2$
 Для вычисления циркуляций новых доменов, на каждом шаге решается система линейных алгебраических уравнений. Составлять ее можно несколькими способами, но в самом общем варианте в нее входит несколько типов условий:
 
 \begin{packed_enum}
-\item Условие непротекания/прилипания. Мы используем интегральный вариант\\
-$\int (\br V_\text{liquid} \cdot d \br r) = \int (\br V_\text{body} \cdot d \br r)$ \\
-Интеграл вычисляется по конткетному отрезку аналитически (см.~\ref{ConvectiveInfluence}). $\br V_\text{liquid}$ --- скорость жидкости, которая включает в себя индуцированную свободными и присоединенными вихрями, а так же скорость на бесконечности. $\br V_\text{body}$ --- скорость самого отрезка.
+\item Условие непротекания/прилипания. Мы используем интегральный вариант
+\begin{equation*}
+\int{\vec V_\text{liquid}(\vec r) \cdot \vec n \cdot dr} = \int {\vec V_\text{body}(\vec r) \cdot \vec n \cdot dr}
+\end{equation*}
+Интеграл вычисляется по конткетному отрезку аналитически по формуле~(\ref{ConvectiveInfluence}). $\br V_\text{liquid}$ --- скорость жидкости, которая включает в себя индуцированную свободными и присоединенными вихрями, а так же скорость на бесконечности. $\br V_\text{body}$ --- скорость самого отрезка~(\ref{eq_SegmentVelocity}).
 \item Условие отсутствия возмущений на бесконечности. Если говорить кратко, то $\sum \gamma = 0$, что имеено подразумевается под $\gamma$ зависит от конкретного случая; об этом будет рассказано позже.
 \item Второй закон Ньютона. $\br F = m \br a$. Более подробно об этом позже.
 \end{packed_enum}
@@ -364,7 +367,7 @@ X = (\gamma_1, \dotsc, \gamma_{N_s}, V_{?x}, V_{?y}, \omega_?)^T
 
 \begin{equation}
 \begin{split}
-&\int\limits_{\vec c_1}^{\vec c_2} {\vec V(\vec r) d \vec r}
+&\int\limits_{\vec c_1}^{\vec c_2} {\vec V(\vec r)\vec n dr}
 = \int\limits_{\vec c_1}^{\vec c_2} {
 	\sum\limits_{s=0}^{N_s} {
 		\biggl (
@@ -372,7 +375,7 @@ X = (\gamma_1, \dotsc, \gamma_{N_s}, V_{?x}, V_{?y}, \omega_?)^T
 		q_{\att~s}\cdot \vec K(\vec r, \vec r_s)
 		\biggr )
 	}
-	\cdot d \vec r
+	\cdot \vec n \cdot  dr
 } = \\ =
 %%%%%%%%
 &\sum\limits_{s=0}^{N_s} {
@@ -380,12 +383,12 @@ X = (\gamma_1, \dotsc, \gamma_{N_s}, V_{?x}, V_{?y}, \omega_?)^T
 	\gamma_{\att~s} \cdot 
 	\underbrace{
 	\int\limits_{\vec c_1}^{\vec c_2} {
-		[\vec e_z \times \vec K(\vec r, \vec r_s)] \cdot d \vec r
+		[\vec e_z \times \vec K(\vec r, \vec r_s)] \cdot \vec n \cdot dr
 	}}_{\Xi_\gamma(\vec c_1, \vec c_2, \vec r_s)} + 
 	q_{\att~s} \cdot
 	\underbrace{
 	\int\limits_{\vec c_1}^{\vec c_2} {
-		\vec K(\vec r, \vec r_s) \cdot d \vec r
+		\vec K(\vec r, \vec r_s) \cdot \vec n \cdot dr
 	}}_{\Xi_q(\vec c_1, \vec c_2, \vec r_s)}
 	\biggr )
 } = \\ =
@@ -433,45 +436,35 @@ A_b = \left (
 \subsection{Силы и моменты}
 
 В соответствии с формулами 3.5.19, 3.5.20 в~\cite{vvd_book} cилы и момент давления вычисляются по формулам
-\begin{equation*}
-\br F = - \rho_\infty S_b \cdot \br a + \sum {\gamma_i \cdot [\br e_z \times \br r_i]}
-\end{equation*}\begin{equation*}
-\br M = \sum {\gamma_i \br r_i^2}
-%TODO а тут нужно угловое ускорение? если да - на что его умножать?
-\end{equation*}
-
 \begin{equation}
 \label{eq_force}
 {\vec F} =
 \frac{1}{\Delta t} \sum\limits_{s=1}^{N_s} {\Delta \gamma_s \cdot [\vec e_z \times \vec r_s]}
++
 \underbrace {
-	- \frac{1}{2} \sum\limits_{s=1}^{N_s} \bigl(
-		{\gamma_{att~s} \cdot [\vec e_z \times \vec V_s]}
-		+ {q_{att~s} \cdot \vec V_s }
+	\frac{1}{2} \sum\limits_{s=1}^{N_s} \bigl(
+		{\gamma_{\att~s} \cdot [\vec e_z \times \vec V_s]}
+		- {q_{\att~s} \cdot \vec V_s }
 	\bigr)
 }_{\text{с предыдущего шага}}
 \end{equation}
-
-$\Delta \gamma_s$ --- приращение циркуляции на отрезке за текущий шаг (рожденные минус удаленные).\\
-$\vec V_s$ --- скорость отрезка в соответствии с~\ref{eq_SegmentVelocity}. Берется с предыдущего шага
-присоединенная гамма к
-прис источник ку к
-
-Момент сил согласно (\ref{eq12.9}) может быть вычислен по формуле
-
+%
 \begin{equation}
 \label{eq_moment}
-\begin{array}{l}
- {\rm {\bf M}}=\sum\limits_{k=1}^K {\left( {{\rm {\bf r}}_k -{\rm {\bf r}}_c 
-} \right)\times \left( {\Gamma _k \times \left( {{\rm {\bf u}}_k -{\rm {\bf 
-V}}_k } \right)} \right)} +\frac{1}{2}\sum\limits_k^K {\left( {{\rm {\bf 
-r}}_k -{\rm {\bf r}}_c } \right)^2\frac{\Delta {\rm {\bf \delta }}{ 
-}_k}{\Delta t}} 
- -\sum\limits_{k=1}^K {\left( {{\rm {\bf r}}_k -{\rm {\bf r}}_c } 
-\right)\times {\rm {\bf V}}_k Q_k } \\ 
-\end{array}
+M =
+\frac{1}{2\Delta t}\sum\limits_{s=1}^{N_s} { \Delta \gamma_s \cdot \vec r_*^2 }
++
+\underbrace {
+	\frac{1}{2} \sum\limits_{s=1}^{N_s} \bigl(
+		{\gamma_{\att~s} \cdot(\vec r_* \cdot \vec V_s)
+		- q_{\att~s} \cdot [\vec r_* \times \vec V_s]}
+	\bigr)
+}_{\text{с предыдущего шага}}
 \end{equation}
-
+%
+$\Delta \gamma_s$ --- приращение циркуляции на отрезке за текущий шаг (рожденные минус удаленные).\\
+$\vec V_s$ --- скорость отрезка в соответствии с~(\ref{eq_SegmentVelocity}). Берется с предыдущего шага.\\
+$\vec r_* = \vec r_s - (\vec R + \Delta \vec R)$ --- положение отрезка относительно оси вращения тела~(\ref{eq_SegmentVelocity}).
 
 Не стоит удивляться разрывам в графике сил при искорении набегающего потока. Помимо этого Ньютоновского слагаемого $ma$ имеются эффекты связанные с присоединенной массой, которая зависит как от размеров, так и от формы тела.
 
