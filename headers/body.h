@@ -55,8 +55,8 @@ class TBody
 		vector<TAtt> *AttachList;
 		bool InsideIsValid;
 		bool isInsideValid();
-		double RotSpeed(double time) const
-			{ return RotSpeed_link?RotSpeed_link(time):RotSpeed_const; }
+		double RotSpeed();
+		double RotSpeed(double time);
 		double Angle;
 		TVec Position;
 		TVec RotAxis;
@@ -83,6 +83,10 @@ class TBody
 		TAtt* PointIsInContour(TVec p, vector<TObj> *list);
 		double (*RotSpeed_link)(double time);
 		double RotSpeed_const;
+		double RotSpeed_cache;
+		double cache_time;
+		double RotSpeed_cache2;
+		double cache2_time;
 };
 
 #endif /* BODY_H_ */

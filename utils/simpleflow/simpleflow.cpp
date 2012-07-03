@@ -22,6 +22,7 @@ using namespace std;
 
 char* infx_sh;
 char* infy_sh;
+char* rotation_sh;
 
 char* gen_mask(char *mask, int n)
 {
@@ -52,10 +53,18 @@ double inf(const char *sh, double t)
 	return result;
 }
 
+int icalls, rcalls;
 TVec InfSpeed(double t)
 {
 	const double k=1;
+	icalls++;
 	return TVec(inf(infx_sh, t), inf(infy_sh, t));
+}
+
+double RotSpeed(double t)
+{
+	rcalls++;
+	return inf(rotation_sh, t);
 }
 
 void getenv_alert(bool warning, const char* var)
@@ -73,6 +82,7 @@ int main(int argc, char** argv)
 		cerr << "VV_body - Bodies file names (different filenames are separated with space)\n";
 		cerr << "VV_infx - InfSpeedX (bash command, assuming $t is time)\n";
 		cerr << "VV_infy - InfSpeedY --||--\n";
+		cerr << "VV_rotation - RotationSpeed --||--\n";
 		cerr << "VV_1_nyu - \\frac{1}{\\nyu}\n";
 		cerr << "VV_Pr (optional) - Prandtl Number (default = 1)\n";
 		cerr << "VV_dt - dt\n";
@@ -91,6 +101,7 @@ int main(int argc, char** argv)
 	char *body_env = getenv("VV_body");
 	char *infx_env = getenv("VV_infx");
 	char *infy_env = getenv("VV_infy");
+	char *rotation_env = getenv("VV_rotation");
 	char *nyu_env = getenv("VV_1_nyu");
 	char *Pr_env = getenv("VV_Pr");
 	char *dt_env = getenv("VV_dt");
@@ -103,6 +114,7 @@ int main(int argc, char** argv)
 	if (!body_env) { getenv_alert(false, "VV_body"); error = true; }
 	if (!infx_env) { getenv_alert(false, "VV_infx"); error = true; }
 	if (!infy_env) { getenv_alert(false, "VV_infy"); error = true; }
+	if (!rotation_env) { getenv_alert(false, "VV_rotation"); error = true; }
 	if (!nyu_env) { getenv_alert(false, "VV_1_nyu"); error = true; }
 	if (!Pr_env) { getenv_alert(true, "VV_Pr"); }
 	if (!dt_env) { getenv_alert(false, "VV_dt"); error = true; }
@@ -119,6 +131,7 @@ int main(int argc, char** argv)
 	char sensors_output[256]; sprintf(sensors_output, "velocity_%s", name_env);
 	infx_sh = infx_env ? infx_env : NULL;
 	infy_sh = infy_env ? infy_env : NULL;
+	rotation_sh = rotation_env ? rotation_env : NULL;
 
 	double _1_nyu = atof(nyu_env);
 	double Pr = Pr_env?atof(Pr_env):1;
@@ -136,6 +149,7 @@ int main(int argc, char** argv)
 	fprintf(f, "Body file = \t%s\n", body_env);
 	fprintf(f, "InfSpeedX sh = \t%s\n", infx_env);
 	fprintf(f, "InfSpeedY sh = \t%s\n", infy_env);
+	fprintf(f, "Rotation sh = \t%s\n", rotation_env);
 	fprintf(f, "1/nyu = \t%g\n", _1_nyu);
 	fprintf(f, "Pr = \t%g\n", Pr);
 	fprintf(f, "dt = \t%g\n", dt);
@@ -167,7 +181,12 @@ int main(int argc, char** argv)
 	while(sscanf(body_env, gen_mask(mask, S->BodyList->size()), tmp) > 0)
 	{
 		S->LoadBody(tmp);
-	}}
+	}
+	const_for(S->BodyList, llbody)
+	{
+		(**llbody).SetRotation(TVec(0,0), RotSpeed);
+	}
+	}
 
 	fprintf(f, "%-10s \t", "Time");
 	for (int i=0; i<S->BodyList->size(); i++)
@@ -186,6 +205,7 @@ int main(int argc, char** argv)
 	while (true)
 	{
 		time_t begining = clock();
+		icalls = rcalls = 0;
 		dbg(BuildTree());
 		dbg(CalcCirculationFast(true));
 		dbg(DestroyTree());
@@ -228,14 +248,17 @@ int main(int argc, char** argv)
 		dbg(diff.CalcHeatDiffusiveFast());
 		dbg(DestroyTree());
 
-		//FIXME move bodies 
+		const_for(S->BodyList, llbody)
+		{
+			(**llbody).Rotate(RotSpeed(S->Time)*S->dt);
+		}
 		dbg(fm.MoveAndClean(true));
 		dbg(fm.CropHeat());
 		S->Time += S->dt;
 		
 		double steptime = double(clock()-begining)/CLOCKS_PER_SEC;
 		fprintf(f, "%-10lf \n", steptime); fflush(f);
-		fprintf(stderr, "%-10g \t%-10d \t%-10d \t%6.2lfs\r", S->Time, S->VortexList->size_safe(), S->HeatList->size_safe(), steptime);
+		fprintf(stderr, "%-10g \t%-10d \t%-10d \t%6.2lfs \t%d \t%d\r", S->Time, S->VortexList->size_safe(), S->HeatList->size_safe(), steptime, icalls, rcalls);
 	}
 
 	fclose(f);

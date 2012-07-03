@@ -31,7 +31,7 @@ void Space::FinishStep()
 	const_for(BodyList, llbody)
 	{
 		TBody &body = **llbody;
-		body.Rotate(body.RotSpeed(Time) * dt);
+		body.Rotate(body.RotSpeed() * dt);
 		body.Position -= InfSpeed() * dt;
 	}
 	Time+= dt;
@@ -102,7 +102,7 @@ void Space::Save(const char* format, const double header[], int N)
 		SaveList((**llbody).List, fout);
 		TObj rot;
 		rot = (**llbody).RotAxis;
-		rot.g = (**llbody).RotSpeed(Time);
+		rot.g = (**llbody).RotSpeed();
 		fwrite(&rot, 24, 1, fout);
 	}
 

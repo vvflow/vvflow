@@ -23,7 +23,7 @@ inline
 TVec BioSavar(const TObj &obj, const TVec &p);
 TVec SpeedSum(const TNode &Node, const TVec &p);
 
-TVec BoundaryConvective(const TBody &b, const TVec &p);
+TVec BoundaryConvective(TBody &b, const TVec &p);
 
 size_t N; // BodySize;
 double *BodyMatrix;
@@ -250,11 +250,11 @@ void CalcBoundaryConvective()
 }
 
 namespace {
-TVec BoundaryConvective(const TBody &b, const TVec &p)
+TVec BoundaryConvective(TBody &b, const TVec &p)
 {
 	TVec dr, res(0, 0);
 	auto alist = b.AttachList;
-	double rotspeed = b.RotSpeed(S->Time);
+	double rotspeed = b.RotSpeed();
 //	if (!rotspeed) return res;
 
 	const_for(alist, latt)
@@ -377,7 +377,7 @@ double AttachInfluence(const TAtt &seg, double rd)
 	{
 		#define body (**llbody)
 		if (!body.AttachList->size_safe()) continue;
-		double RotSpeed_tmp = body.RotSpeed(S->Time);
+		double RotSpeed_tmp = body.RotSpeed();
 		if (!RotSpeed_tmp) continue;
 
 		double res_tmp=0;
@@ -468,7 +468,7 @@ void FillRightCol()
 		{
 			tmp+= latt->g;
 		}
-		tmp*= body.RotSpeed(S->Time);
+		tmp*= body.RotSpeed();
 		rot_sum+= tmp;
 		#undef body
 	}
@@ -482,7 +482,7 @@ void FillRightCol()
 		{
 			tmp+= latt->g;
 		}
-		tmp*= body.RotSpeed(S->Time) - body.RotSpeed(S->Time-S->dt);
+		tmp*= body.RotSpeed() - body.RotSpeed(S->Time-S->dt);
 
 		#pragma omp parallel for
 		const_for (body.AttachList, latt)

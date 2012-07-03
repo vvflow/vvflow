@@ -25,6 +25,8 @@ TBody::TBody(Space *sS)
 	g_dead = 0;
 	Position = TVec(0,0);
 	Force = TObj(0,0,0); 
+	RotSpeed_cache = RotSpeed_cache2 = 0;
+	cache_time = cache2_time = -1;
 }
 
 TBody::~TBody()
@@ -32,6 +34,25 @@ TBody::~TBody()
 	delete List;
 	delete HeatLayerList;
 	delete AttachList;
+}
+
+double TBody::RotSpeed()
+{
+	if (cache_time != S->Time)
+	{
+		cache2_time = cache_time;
+		RotSpeed_cache2 = RotSpeed_cache;
+		cache_time = S->Time;
+		RotSpeed_cache = (S->Time>0) ? (RotSpeed_link?RotSpeed_link(S->Time):RotSpeed_const) : 0;
+	}
+
+	return RotSpeed_cache;
+}
+
+double TBody::RotSpeed(double t)
+{
+	if (t == cache2_time) return RotSpeed_cache2;
+	return (S->Time>0) ? (RotSpeed_link?RotSpeed_link(t):RotSpeed_const) : 0;
 }
 
 /*int TBody::LoadFromFile(const char* filename, int start_eq_no)
