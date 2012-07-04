@@ -38,7 +38,8 @@ void SolveMatrix_inv();
 bool BodyMatrixOK;
 bool InverseMatrixOK;
 
-double ConvectiveInfluence(TVec p, const TAtt &seg, double rd);
+double ConvectiveInfluence_vortex(TVec p, const TAtt &seg, double rd);
+double ConvectiveInfluence_source(TVec p, const TAtt &seg, double rd);
 double NodeInfluence(const TNode &Node, const TAtt &seg, double rd);
 double AttachInfluence(const TAtt &seg, double rd);
 
@@ -305,7 +306,7 @@ void FillInverseMatrix()
 }
 
 namespace {
-double ConvectiveInfluence(TVec p, const TAtt &seg, double rd)
+double ConvectiveInfluence_vortex(TVec p, const TAtt &seg, double rd)
 {
 	complex<double> z(p.rx, -p.ry);
 	complex<double> zc(seg.rx,-seg.ry);
@@ -341,6 +342,42 @@ double ConvectiveInfluence(TVec p, const TAtt &seg, double rd)
 }}
 
 namespace {
+double ConvectiveInfluence_source(TVec p, const TAtt &seg, double rd)
+{
+	complex<double> z(p.rx, -p.ry);
+	complex<double> zc(seg.rx,-seg.ry);
+	complex<double> dz(seg.dl.rx,-seg.dl.ry);
+	complex<double> z1 = zc-dz*0.5;
+	complex<double> z2 = zc+dz*0.5;
+
+	double c1=abs(z-z1);
+	double c2=abs(z-z2);
+	if ((c1>=rd)&&(c2>=rd))
+	{
+		return -log((z-z1)/(z-z2)).imag();
+	} else
+	if ((c1<=rd)&&(c2<=rd))
+	{
+		return ((seg-p)*rotl(seg.dl))/(rd*rd);
+	}
+	else
+	{
+		double a0 = seg.dl.abs2();
+		double b0 = (p-seg)*seg.dl;
+		double d  = sqrt(b0*b0-a0*((p-seg).abs2()-rd*rd));
+		double k  = (b0+d)/a0; if ((k<=-0.5)||(k>=0.5)) k = (b0-d)/a0;
+		complex<double> z3 = zc + k*dz;
+
+		if (c1 < rd)
+			return (((z1+z3)*0.5-z)*conj(z3-z1)).imag()/(rd*rd) -
+			       log((z-z3)/(z-z2)).real();
+		else
+			return -log((z-z1)/(z-z3)).real() +
+			       (((z3+z2)*0.5-z)*conj(z2-z3)).real()/(rd*rd);
+	}
+}}
+
+namespace {
 double NodeInfluence(const TNode &Node, const TAtt &seg, double rd)
 {
 	double res = 0;
@@ -353,15 +390,15 @@ double NodeInfluence(const TNode &Node, const TAtt &seg, double rd)
 		const_for (vlist, llobj)
 		{
 			//if (!*llobj) {continue;}
-			res+= ConvectiveInfluence((**llobj), seg, rd) * (**llobj).g;
+			res+= ConvectiveInfluence_vortex((**llobj), seg, rd) * (**llobj).g;
 		}
 	}
 
 	const_for(Node.FarNodes, llfnode)
 	{
 		#define fnode (**llfnode)
-		res+= ConvectiveInfluence(fnode.CMp, seg, rd) * fnode.CMp.g;
-		res+= ConvectiveInfluence(fnode.CMm, seg, rd) * fnode.CMm.g;
+		res+= ConvectiveInfluence_vortex(fnode.CMp, seg, rd) * fnode.CMp.g;
+		res+= ConvectiveInfluence_vortex(fnode.CMm, seg, rd) * fnode.CMm.g;
 		#undef fnode
 	}
 
@@ -383,12 +420,9 @@ double AttachInfluence(const TAtt &seg, double rd)
 		double res_tmp=0;
 		const_for(body.AttachList, latt)
 		{
-			if (latt == &seg) { res_tmp+= seg.q*0.5; continue; }
-			res_tmp+= ConvectiveInfluence(*latt, seg, rd) * latt->g;
-			TAtt seg_tmp = seg;
-			seg_tmp = rotl(TVec(seg));
-			seg_tmp.dl = rotl(seg.dl);
-			res_tmp+= ConvectiveInfluence(*latt, seg_tmp, rd) * latt->q;
+			if (latt == &seg) { res_tmp+= seg.q*0.5; }
+			res_tmp+= ConvectiveInfluence_vortex(*latt, seg, rd) * latt->g;
+			res_tmp+= ConvectiveInfluence_source(*latt, seg, rd) * latt->q;
 		}
 		res+= res_tmp * RotSpeed_tmp;
 		#undef body
@@ -433,7 +467,7 @@ void FillMatrix()
 					{
 					case bc::slip:
 					case bc::noslip:
-						BodyMatrix[N*i+j] = ConvectiveInfluence(*lobj, *latt, lobj->g)*C_1_2PI;
+						BodyMatrix[N*i+j] = ConvectiveInfluence_vortex(*lobj, *latt, lobj->g)*C_1_2PI;
 						// lobj->g TEMPORARILY stores rd info. Assignment made 30 lines earlier.
 						break;
 					case bc::kutta:
