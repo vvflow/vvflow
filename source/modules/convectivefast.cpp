@@ -369,11 +369,11 @@ double ConvectiveInfluence_source(TVec p, const TAtt &seg, double rd)
 		complex<double> z3 = zc + k*dz;
 
 		if (c1 < rd)
-			return (((z1+z3)*0.5-z)*conj(z3-z1)).imag()/(rd*rd) -
-			       log((z-z3)/(z-z2)).real();
+			return -(((z1+z3)*0.5-z)*conj(z3-z1)).imag()/(rd*rd) -
+			       log((z-z3)/(z-z2)).imag();
 		else
-			return -log((z-z1)/(z-z3)).real() +
-			       (((z3+z2)*0.5-z)*conj(z2-z3)).real()/(rd*rd);
+			return -log((z-z1)/(z-z3)).imag() -
+			       (((z3+z2)*0.5-z)*conj(z2-z3)).imag()/(rd*rd);
 	}
 }}
 
@@ -420,7 +420,7 @@ double AttachInfluence(const TAtt &seg, double rd)
 		double res_tmp=0;
 		const_for(body.AttachList, latt)
 		{
-			if (latt == &seg) { res_tmp+= seg.q*0.5; }
+			if (latt == &seg) { res_tmp+= seg.q*0.5; continue; }
 			res_tmp+= ConvectiveInfluence_vortex(*latt, seg, rd) * latt->g;
 			res_tmp+= ConvectiveInfluence_source(*latt, seg, rd) * latt->q;
 		}
