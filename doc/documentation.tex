@@ -270,12 +270,12 @@ J_0 = \rho \int r^2 dS = \dfrac{\rho}{4}\int(\rot([\br e_z \times \br r] r^2) dS
 вычисляется по формуле
 \begin{equation}
 \label{eq_VortexConvective}
-\vec V_\gamma(\vec r) = [\vec e_z \times \vec K(\vec r, \vec r_\gamma)] \cdot \gamma,
+\vec V_\gamma(\vec r) = \frac{1}{2\pi} [\vec e_z \times \vec K(\vec r, \vec r_\gamma)] \cdot \gamma,
 \end{equation}
 а скорость, индуцированная источником $(\vec r_q, q)$ --- по формуле
 \begin{equation}
 \label{eq_SourceInfluence}
-\vec V_q(\vec r) = \vec K(\vec r, \vec r_q) \cdot q.
+\vec V_q(\vec r) = \frac{1}{2\pi} \vec K(\vec r, \vec r_q) \cdot q.
 \end{equation}
 
 
@@ -293,6 +293,7 @@ $\br K_2 = \begin{cases}
 \\ (круг постоянной завихренности)
 
 \item Для вихря Лэмба:
+%TODO Математическая неточность: вихрь Лэмба не согласуется со скоростью источника
 $\br K = \br K_3 = \dfrac {\Delta\br r}{\Delta r^2 + \delta^2}$
 \end{packed_enum}
 
@@ -309,12 +310,18 @@ $z = (r_{\gamma x}) - i (r_{\gamma y})$, $z_{1,2} = (c_{1,2~x}) - i (c_{1,2~y})$
 
 \begin{equation}
 \label{eq_VortexInfluence}
-\Xi_\gamma(\vec c_1, \vec c_2, \vec r_\gamma) = \int\limits_{\vec c_1}^{\vec c_2} [\vec e_z \times \vec K(\vec r,\vec r_\gamma)] \cdot \vec n \cdot dr = 
+\begin{split}
+\Xi_\gamma(\vec c_1, \vec c_2, \vec r_\gamma)
+%%%%%%%%%
+&= \frac{1}{2\pi} \int\limits_{\vec c_1}^{\vec c_2} [\vec e_z \times \vec K(\vec r,\vec r_\gamma)] \cdot \vec n \cdot dr
+%%%%%%%%%
+= \\ &= \frac{1}{2\pi} \cdot
 \begin{cases}
 -\Re \left\lbrace \log \left(\dfrac{z-z_1}{z-z_2}\right) \right\rbrace,	&\text{для дальних}\\
 \dfrac{1}{\varepsilon^2}\Re \left\lbrace (z_s-z)(\bar z_2 - \bar z_1) \right\rbrace, 	&\text{для ближних}\\
 \end{cases}
-%записать по русски условия
+\end{split}
+%TODO записать по русски условия
 \end{equation}
 \begin{center}\input{images/ConvInfluence.pdf_tex}\end{center}
 
@@ -323,18 +330,25 @@ $z = (r_{\gamma x}) - i (r_{\gamma y})$, $z_{1,2} = (c_{1,2~x}) - i (c_{1,2~y})$
 из которых влияние вычисляется по своей формуле.
 В обычном случае, функцию для блихних вихрей удобней записать без использования
 комплексных чисел:
-$(\vec r_{sb} - \vec r_v) \Delta\vec l_{sb} / \varepsilon^2$
+$\frac{1}{2\pi} (\vec r_{sb} - \vec r_v) \Delta\vec l_{sb} / \varepsilon^2$
 
 Аналогичная формула $\Xi_q$ вычисляет влияние единичного источника на отрезок.
 \begin{equation}
 \label{eq_SourceInfluence}
-\Xi_q (\vec c_1, \vec c_2, \vec r_q) = \int\limits_{\vec c_1}^{\vec c_2} \vec K(\vec r, \vec r_q) \cdot \vec n \cdot dr =
+\begin{split}
+\Xi_q (\vec c_1, \vec c_2, \vec r_q)
+%%%%%%%%%%
+&= \frac{1}{2\pi} \int\limits_{\vec c_1}^{\vec c_2} \vec K(\vec r, \vec r_q) \cdot \vec n \cdot dr
+%%%%%%%%%%
+= \\ & = -\frac{1}{2\pi} \cdot
 \begin{cases}
--\Im \left\lbrace \log \left(\dfrac{z-z_1}{z-z_2}\right) \right\rbrace,	&\text{для дальних}\\
--\dfrac{1}{\varepsilon^2}\Im \left\lbrace (z_s-z)(\bar z_2 - \bar z_1) \right\rbrace, 	&\text{для ближних}\\
+\Im \left\lbrace \log \left(\dfrac{z-z_1}{z-z_2}\right) \right\rbrace,	&\text{для дальних}\\
+\dfrac{1}{\varepsilon^2}\Im \left\lbrace (z_s-z)(\bar z_2 - \bar z_1) \right\rbrace, 	&\text{для ближних}\\
 \end{cases}
+\end{split}
 \end{equation}
-Без использования комплексных чисел формуда для ближних источников принимает вид $[\Delta \vec l_{sb} \times (\vec r_{sb} - \vec r_v)]/\varepsilon^2$
+Без использования комплексных чисел формуда для ближних источников принимает вид
+$\frac{1}{2\pi} [\Delta \vec l_{sb} \times (\vec r_{sb} - \vec r_v)]/\varepsilon^2$
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{СЛАУ}
@@ -372,8 +386,8 @@ X = (\gamma_1, \dotsc, \gamma_{N_s}, V_{?x}, V_{?y}, \omega_?)^T
 = \int\limits_{\vec c_1}^{\vec c_2} {
 	\sum\limits_{s=0}^{N_s} {
 		\biggl (
-		\gamma_{\att~s} \cdot [\vec e_z \times \vec K(\vec r, \vec r_s)] +
-		q_{\att~s}\cdot \vec K(\vec r, \vec r_s)
+		\frac{\gamma_{\att~s}}{2\pi} \cdot [\vec e_z \times \vec K(\vec r, \vec r_s)] +
+		\frac{q_{\att~s}}{2\pi} \cdot \vec K(\vec r, \vec r_s)
 		\biggr )
 	}
 	\cdot \vec n \cdot  dr
@@ -383,11 +397,13 @@ X = (\gamma_1, \dotsc, \gamma_{N_s}, V_{?x}, V_{?y}, \omega_?)^T
 	\biggl (
 	\gamma_{\att~s} \cdot 
 	\underbrace{
+	\frac{1}{2\pi}
 	\int\limits_{\vec c_1}^{\vec c_2} {
 		[\vec e_z \times \vec K(\vec r, \vec r_s)] \cdot \vec n \cdot dr
 	}}_{\Xi_\gamma(\vec c_1, \vec c_2, \vec r_s)} + 
 	q_{\att~s} \cdot
 	\underbrace{
+	\frac{1}{2\pi}
 	\int\limits_{\vec c_1}^{\vec c_2} {
 		\vec K(\vec r, \vec r_s) \cdot \vec n \cdot dr
 	}}_{\Xi_q(\vec c_1, \vec c_2, \vec r_s)}
