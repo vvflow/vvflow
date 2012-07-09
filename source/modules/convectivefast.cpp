@@ -420,7 +420,7 @@ double AttachInfluence(const TAtt &seg, double rd)
 		double res_tmp=0;
 		const_for(body.AttachList, latt)
 		{
-			if (latt == &seg) { res_tmp+= seg.q*0.5; continue; }
+			if (latt == &seg) { res_tmp+= -seg.q*0.5*C_2PI; continue; }
 			res_tmp+= ConvectiveInfluence_vortex(*latt, seg, rd) * latt->g;
 			res_tmp+= ConvectiveInfluence_source(*latt, seg, rd) * latt->q;
 		}
