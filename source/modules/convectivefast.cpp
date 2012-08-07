@@ -260,8 +260,7 @@ TVec BoundaryConvective(TBody &b, const TVec &p)
 
 	const_for(alist, latt)
 	{
-		dr = p - *latt;
-		res += (dr*latt->q + rotl(dr)*latt->g) * (rotspeed/( dr.abs2() + Rd2 ));
+		res+= SegmentInfluence(p, *latt, latt->g, latt->q, Rd);
 		if (latt->bc == bc::slip)
 		{
 			res += BioSavar(*b.next(b.obj(latt)), p);
@@ -375,6 +374,49 @@ double ConvectiveInfluence_source(TVec p, const TAtt &seg, double rd)
 			return -log((z-z1)/(z-z3)).imag() -
 			       (((z3+z2)*0.5-z)*conj(z2-z3)).imag()/(rd*rd);
 	}
+}}
+
+namespace {
+TVec SegmentInfluence(TVec p, const TAtt &seg, double g, double q, double rd)
+{
+	complex<double> z(p.rx, -p.ry);
+	complex<double> zc(seg.rx,-seg.ry);
+	complex<double> dz(seg.dl.rx,-seg.dl.ry);
+	complex<double> z1 = zc-dz*0.5;
+	complex<double> z2 = zc+dz*0.5;
+	complex<double> zqg(-g, q);
+	complex<double> zV;
+	complex<double> i(0,1);
+
+	double c1=abs(z-z1);
+	double c2=abs(z-z2);
+	if ((c1>=rd)&&(c2>=rd))
+	{
+		zV = -i * log((z-z1)/(z-z2)) / dz;
+	} else
+	if ((c1<=rd)&&(c2<=rd))
+	{
+		zV = (zc - z) / (rd*rd);
+	}
+	else
+	{
+		double a0 = seg.dl.abs2();
+		double b0 = (p-seg)*seg.dl;
+		double d  = sqrt(b0*b0-a0*((p-seg).abs2()-rd*rd));
+		double k  = (b0+d)/a0; if ((k<=-0.5)||(k>=0.5)) k = (b0-d)/a0;
+		complex<double> z3 = zc + k*dz;
+
+		if (c1 < rd)
+			zV = ((z1+z3)*0.5 - z) / (rd*rd) -
+			       i * log((z-z3)/(z-z2)) / dz;
+		else
+			zV = - i * log((z-z1)/(z-z3)) / dz +
+			     ((z3+z2)*0.5 - z) / (rd*rd);
+	}
+
+	zV*= zqg;
+
+	return TVec(zV.real(), zV.imag());
 }}
 
 namespace {
