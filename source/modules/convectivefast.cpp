@@ -40,6 +40,7 @@ bool InverseMatrixOK;
 
 double ConvectiveInfluence_vortex(TVec p, const TAtt &seg, double rd);
 double ConvectiveInfluence_source(TVec p, const TAtt &seg, double rd);
+TVec SegmentInfluence(TVec p, const TAtt &seg, double g, double q, double rd);
 double NodeInfluence(const TNode &Node, const TAtt &seg, double rd);
 double AttachInfluence(const TAtt &seg, double rd);
 
@@ -260,7 +261,10 @@ TVec BoundaryConvective(TBody &b, const TVec &p)
 
 	const_for(alist, latt)
 	{
-		res+= SegmentInfluence(p, *latt, latt->g, latt->q, Rd);
+		if ((p-*latt).abs2() < latt->dl.abs2()) return rotl(p-b.RotAxis)*b.RotSpeed()*C_2PI;
+		dr = p - *latt;
+		res += (dr*latt->q + rotl(dr)*latt->g) * (rotspeed/( dr.abs2() + Rd2 ));
+		//res+= SegmentInfluence(p, *latt, latt->g, latt->q, 1E-6);
 		if (latt->bc == bc::slip)
 		{
 			res += BioSavar(*b.next(b.obj(latt)), p);
