@@ -136,6 +136,7 @@ void flowmove::VortexShed()
 			       || ((**llbody).prev(latt)->bc == bc::noslip) )
 			{
 				ObjCopy = *lbobj;
+				ObjCopy += rotl(body.att(lbobj)->dl)*1e-3;
 				body.Force += rotl(ObjCopy) * ObjCopy.g;
 				body.Force.g += ObjCopy.abs2() * ObjCopy.g;
 				          latt ->gsum+= 0.5*ObjCopy.g;

@@ -41,6 +41,7 @@ bool InverseMatrixOK;
 double ConvectiveInfluence_vortex(TVec p, const TAtt &seg, double rd);
 double ConvectiveInfluence_source(TVec p, const TAtt &seg, double rd);
 TVec SegmentInfluence(TVec p, const TAtt &seg, double g, double q, double rd);
+TVec SegmentInfluence_linear(TVec p, const TAtt &seg, double g1, double g2);
 double NodeInfluence(const TNode &Node, const TAtt &seg, double rd);
 double AttachInfluence(const TAtt &seg, double rd);
 
@@ -264,6 +265,20 @@ TVec BoundaryConvective(TBody &b, const TVec &p)
 		if ((p-*latt).abs2() < latt->dl.abs2()) return rotl(p-b.RotAxis)*b.RotSpeed()*C_2PI;
 		dr = p - *latt;
 		res += (dr*latt->q + rotl(dr)*latt->g) * (rotspeed/( dr.abs2() + Rd2 ));
+
+/*		if ((p-*latt).abs2() < 4*latt->dl.abs2())
+		{
+			double g1 = (latt->g+b.prev(latt)->g)*0.5;
+			double g2 = (latt->g+b.next(latt)->g)*0.5;
+			double q1 = (latt->q+b.prev(latt)->q)*0.5;
+			double q2 = (latt->q+b.next(latt)->q)*0.5;
+			res+= rotl(SegmentInfluence_linear(p, *latt, g1, g2)) + SegmentInfluence_linear(p, *latt, q1, q2);
+		} else
+		{
+			dr = p - *latt;
+			res += (dr*latt->q + rotl(dr)*latt->g) * (rotspeed/( dr.abs2() + Rd2 ));
+		}
+*/
 		//res+= SegmentInfluence(p, *latt, latt->g, latt->q, 1E-6);
 		if (latt->bc == bc::slip)
 		{
@@ -420,6 +435,26 @@ TVec SegmentInfluence(TVec p, const TAtt &seg, double g, double q, double rd)
 
 	zV*= zqg;
 
+	return TVec(zV.real(), zV.imag());
+}}
+
+namespace {
+TVec SegmentInfluence_linear(TVec p, const TAtt &seg, double g1, double g2)
+{
+//	cerr << "orly?" << endl;
+	complex<double> z(p.rx, p.ry);
+	complex<double> zc(seg.rx, seg.ry);
+	complex<double> dz(seg.dl.rx, seg.dl.ry);
+	complex<double> zs1 = zc-dz*0.5;
+	complex<double> zs2 = zc+dz*0.5;
+	complex<double> z1 = z - zs1;
+	complex<double> z2 = z - zs2;
+	complex<double> zV;
+	//complex<double> i(0,1);
+
+	//cerr << z2 << "\t" << z1 << endl;
+	zV = 0.5* abs(dz)/conj(dz) * ( (g2-g1) - conj(g2*z1 - g1*z2)/conj(dz)*log(conj(z2)/conj(z1)));
+	//cerr << zV << endl;
 	return TVec(zV.real(), zV.imag());
 }}
 
