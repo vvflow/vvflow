@@ -224,6 +224,10 @@ void CalcConvectiveFast()
 
 void CalcBoundaryConvective()
 {
+//	TVec tmp = BoundaryConvective(*S->BodyList->at(0), TVec(1e-5, 1000.7))*C_1_2PI;
+//	cerr << "ABC " << tmp << endl;
+
+
 	if (S->VortexList)
 	const_for(S->VortexList, lobj)
 	{
@@ -258,27 +262,33 @@ TVec BoundaryConvective(TBody &b, const TVec &p)
 	TVec dr, res(0, 0);
 	auto alist = b.AttachList;
 	double rotspeed = b.RotSpeed();
-//	if (!rotspeed) return res;
 
+//	if (!rotspeed) return res;
 	const_for(alist, latt)
 	{
-		if ((p-*latt).abs2() < latt->dl.abs2()) return rotl(p-b.RotAxis)*b.RotSpeed()*C_2PI;
+/*		if ((p-*latt).abs2() < latt->dl.abs2()) return rotl(p-b.RotAxis)*b.RotSpeed()*C_2PI;
 		dr = p - *latt;
 		res += (dr*latt->q + rotl(dr)*latt->g) * (rotspeed/( dr.abs2() + Rd2 ));
+*/
 
-/*		if ((p-*latt).abs2() < 4*latt->dl.abs2())
+		//if ((latt == b.AttachList->begin()+70) || (latt == b.AttachList->begin()+69) ) 
+		if ((p-*latt).abs2() < latt->dl.abs2())
 		{
 			double g1 = (latt->g+b.prev(latt)->g)*0.5;
 			double g2 = (latt->g+b.next(latt)->g)*0.5;
 			double q1 = (latt->q+b.prev(latt)->q)*0.5;
 			double q2 = (latt->q+b.next(latt)->q)*0.5;
-			res+= rotl(SegmentInfluence_linear(p, *latt, g1, g2)) + SegmentInfluence_linear(p, *latt, q1, q2);
+			if (&p == &S->VortexList->at(70))
+			{
+			//	cerr << p << "\t" << g1 << " " << g2 << " " << q1 << " " << q2 << endl;
+			}
+			res+= (rotl(SegmentInfluence_linear(p, *latt, g1, g2)) + SegmentInfluence_linear(p, *latt, q1, q2)) * rotspeed;
 		} else
 		{
 			dr = p - *latt;
 			res += (dr*latt->q + rotl(dr)*latt->g) * (rotspeed/( dr.abs2() + Rd2 ));
 		}
-*/
+
 		//res+= SegmentInfluence(p, *latt, latt->g, latt->q, 1E-6);
 		if (latt->bc == bc::slip)
 		{
@@ -453,7 +463,7 @@ TVec SegmentInfluence_linear(TVec p, const TAtt &seg, double g1, double g2)
 	//complex<double> i(0,1);
 
 	//cerr << z2 << "\t" << z1 << endl;
-	zV = 0.5* abs(dz)/conj(dz) * ( (g2-g1) - conj(g2*z1 - g1*z2)/conj(dz)*log(conj(z2)/conj(z1)));
+	zV = ( (g2-g1) - conj(g2*z1 - g1*z2)/conj(dz)*log(conj(z2)/conj(z1))) / conj(dz);
 	//cerr << zV << endl;
 	return TVec(zV.real(), zV.imag());
 }}
