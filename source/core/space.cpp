@@ -34,10 +34,7 @@ void Space::FinishStep()
 	const_for(BodyList, llbody)
 	{
 		TBody &body = **llbody;
-		body.doRotation(body.getRotation(Time) * dt);
-		body.doMotion(body.getMotion(Time) * dt);
-		
-		body.Position -= InfSpeed() * dt;
+		body.doRotationAndMotion();
 	}
 	Time+= dt;
 }
@@ -226,7 +223,7 @@ void Space::Load(const char* fname)
 				body->List->push_back(att);
 			}
 			body->doFillProperties();
-			body->doUpdateAttach();
+			body->doUpdateSegments();
 		}
 		else fprintf(stderr, "S->Load(): ignoring field \"%s\"", comment);
 	}
@@ -448,7 +445,7 @@ int Space::LoadBody(const char* filename)
 
 	fclose(fin);
 	body->doFillProperties();
-	body->doUpdateAttach();
+	body->doUpdateSegments();
 	EnumerateBodies();
 
 	return 0;

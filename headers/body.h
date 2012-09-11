@@ -33,7 +33,7 @@ class TAtt : public TObj
 
 		TAtt(){}
 		//TAtt(TBody *body, int eq_no);
-		void zero() { rx = ry = g = gatt = qatt = gsum = hsum = /*FIXME fric?*/ Cp = Fr = Nu = 0; ParticleInHeatLayer = -1; }
+		void zero() { rx = ry = g = gsum = hsum = /*FIXME fric?*/ Cp = Fr = Nu = 0; ParticleInHeatLayer = -1; }
 		TAtt& operator= (const TVec& p) { rx=p.rx; ry=p.ry; return *this; }
 
 	public:
@@ -55,6 +55,8 @@ class TBody
 		TVec   deltaPosition; //in doc $\Delta \vec R$
 		double RotationSpeed_slae; //in doc \omega_?
 		TVec   MotionSpeed_slae; // in doc \vec V_?
+
+		double kx, ky, ka;
 
 		TObj Force, Friction; //computed by S->CalcForces
 		double Nusselt; //computed by S->CalcForces

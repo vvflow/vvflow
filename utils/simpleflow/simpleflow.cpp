@@ -177,7 +177,7 @@ int main(int argc, char** argv)
 
 	double dl = S->AverageSegmentLength();
 	InitTree(S, 8, dl*20, 0.1);
-	InitConvectiveFast(S, dl*dl/25);
+	convectivefast conv(S, dl*0.2);
 	epsfast eps(S);
 	diffusivefast diff(S, _1_nyu, Pr);
 	flowmove fm(S, dt);
@@ -187,7 +187,7 @@ int main(int argc, char** argv)
 	{
 		time_t begining = clock();
 		dbg(BuildTree());
-		dbg(CalcCirculationFast(true));
+		dbg(CalcCirculationFast());
 		dbg(DestroyTree());
 
 		dbg(fm.HeatShed());

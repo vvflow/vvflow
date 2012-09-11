@@ -32,6 +32,10 @@ inline bool divisible(double dividend, double divisor, double precision) {
 	// precision = точность
 	// возвращает true если первый аргумент кратен второму с заданной точностью
 }
+inline bool divisible(double dividend, double divisor)
+{
+	return divisible(dividend, divisor, divisor*0.01);
+}
 
 class TVec
 {

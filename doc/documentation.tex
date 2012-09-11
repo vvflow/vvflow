@@ -373,11 +373,13 @@ $\frac{1}{2\pi} [\Delta \vec l_{sb} \times (\vec r_{sb} - \vec r_v)]/\varepsilon
 \subsection{SegmentInfluence}
 \label{SegmentInfluence}
 
-Эти формулы описывают скорость, индуцированную в точке $\vec r_0$ отрезком $[\vec c_1, \vec c_2]$ с циркуляцией $\gamma$ и интенсивностью $q$.
+Эти формулы описывают скорость, индуцированную в точке $\vec r_0$ отрезком $[\vec c_1, \vec c_2]$ с линейным распределением источников интенсивностью от $q_1$ до $q_2$. В отличие от предыдущих формул источники здесь точечные.
+
+$z_{12} = (r - r_{12})_x + i (r-r_{12})_y$, $r$ --- точка наблюдения
 
 \begin{equation}
-\label{eq_SegmentInfluence}
-\vec V_s (\vec c_1, \vec c_2, \vec r_0, \gamma, q) = \dfrac{1}{2\pi} \dfrac{1}{|\vec c_2 - \vec c_1|} \cdot \left( \genfrac{}{}{0pt}{}{\Re}{\Im} \bigl((-\gamma + iq) \cdot z_V \bigr) \right)
+\label{eq_SegmentInfluence_source}
+\vec V_{sq} (z_1, z_2, q_1, q_2) = \dfrac{1}{2\pi}  \int_{z_1}^{z_2}\dfrac{q}{z^*} dz = \dfrac{1}{2\pi} \dfrac{1}{(z_2-z_1)^*} \cdot \left(  (q_2-q_1) - \dfrac{q_2 z_1^* - q_1 z_2^*}{(z_2-z_1)^*}\ln \dfrac{z_2^*}{z_1^*} \right)
 \end{equation}
  
 

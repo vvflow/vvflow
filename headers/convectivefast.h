@@ -2,36 +2,24 @@
 #define __CONVECTIVEFAST_H__
 #include <math.h>
 #include "core.h"
+#include "matrix.h"
 
 class convectivefast
 {
 	public:
-		convectivefast(Space *sS, double sRadiusOfDiscretnessSq);
+		convectivefast(Space *sS, double sRadiusOfDiscretness);
 		void CalcConvectiveFast();
 		void CalcBoundaryConvective();
 		TVec SpeedSumFast(TVec p);
 
 	public:
 		void CalcCirculationFast(bool use_inverse);
+		//void fillSlae();
+		//void solveSlae();
+
+	private:
 		void FillMatrix();
-		void FillInverseMatrix();
 		void FillRightCol();
-		void SolveMatrix();
-		void SpoilBodyMatrix();
-		void SpoilInverseMatrix();
-
-		double* MatrixLink();
-		double* InvMatrixLink();
-
-		bool LoadBodyMatrix(const char* filename);
-		bool LoadInverseMatrix(const char* filename);
-		void SaveBodyMatrix(const char* filename);
-		void SaveInverseMatrix(const char* filename);
-
-		bool LoadBodyMatrix_bin(const char* filename);
-		bool LoadInverseMatrix_bin(const char* filename);
-		void SaveBodyMatrix_bin(const char* filename);
-		void SaveInverseMatrix_bin(const char* filename);
 
 	private:
 		TVec BioSavar(const TObj &obj, const TVec &p);
@@ -45,27 +33,12 @@ class convectivefast
 		double Rd;
 
 		int MatrixSize;
-		double *BodyMatrix;
-		double *InverseMatrix;
-		double *RightCol;
-		double *Solution;
-
-		int *ipvt; //technical variable for lapack
-		void inverse(double* A, int N, double *workspace); //workspace is being spoiled;
-		void transpose(double* A, int N);
-		void SolveMatrix_inv();
-
-		bool BodyMatrixOK;
-		bool InverseMatrixOK;
+		Matrix *matrix;
 
 		double ConvectiveInfluence(TVec p, const TAtt &seg, double rd);
 		double NodeInfluence(const TNode &Node, const TAtt &seg, double rd);
 		double AttachInfluence(const TAtt &seg, double rd);
-
-		size_t LoadMatrix(double *matrix, const char* filename);
-		void SaveMatrix(double *matrix, const char* filename);
-		size_t LoadMatrix_bin(double *matrix, const char* filename);
-		void SaveMatrix_bin(double *matrix, const char* filename); 
+		TVec SegmentInfluence_linear_source(TVec p, const TAtt &seg, double q1, double q2);
 };
 
 

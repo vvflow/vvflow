@@ -77,13 +77,13 @@ void TBody::doRotationAndMotion()
 
 	doRotation();
 	doMotion();
-	doUpdateAttach();
+	doUpdateSegments();
 }
 
 void TBody::doRotation()
 {
 	double angle_slae = RotationSpeed_slae * S->dt; //in doc \omega_? \Delta t
-	double angle_solid = getRotation(S->Time) * S->dt // in doc \omega \Delta t
+	double angle_solid = getRotation(S->Time) * S->dt; // in doc \omega \Delta t
 	const_for (List, lobj)
 	{
 		TVec dr = lobj->corner - (Position + deltaPosition);
@@ -94,7 +94,7 @@ void TBody::doRotation()
 	
 }
 
-void TBody::doMotion(TVec delta)
+void TBody::doMotion()
 {
 	TVec delta_slae = MotionSpeed_slae * S->dt;
 	TVec delta_solid = getMotion(S->Time) * S->dt;

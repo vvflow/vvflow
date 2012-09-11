@@ -21,7 +21,7 @@ AR		= xiar
 
 parts 	:= core modules
 core_objects 	:= space body tree
-modules_objects := flowmove flowmove2 epsfast diffusivefast convective convectivefast
+modules_objects := flowmove flowmove2 epsfast diffusivefast convective convectivefast matrix
 VPATH := $(addprefix source/, $(parts) ) 
 # VPATH is special make var 
 
