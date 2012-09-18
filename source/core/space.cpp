@@ -458,8 +458,12 @@ void Space::EnumerateBodies()
 	{
 		const_for((**llbody).List, latt)
 		{
-			latt->eq_no = eq_no++;
+			latt->eq_no = eq_no;
+			eq_no++;
 		}
+
+		(**llbody).eq_forces_no = eq_no;
+		eq_no+= 3;
 	}
 }
 

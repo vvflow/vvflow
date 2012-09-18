@@ -459,6 +459,14 @@ X = (\gamma_1, \dotsc, \gamma_{N_s}, V_{?x}, V_{?y}, \omega_?)^T
 \end{equation}
 
 
+Теперь разберемся с силами. Для разрешения сопряженности мы применяем второй закон Ньютона, который с учетом всех гидро-динамических сил принимает вид
+\begin{equation}
+\label{eq_newton}
+\vec F_{(\ref{eq_force})} + \left( \dfrac{\rho_b}{\rho_0} - 1 \right) \vec gS - k \Delta \vec R = \dfrac{\vec V_? - \vec V_?(t-\Delta t)}{\Delta t} \dfrac{\rho_b}{\rho_0}S
+\end{equation}
+
+Учитывая все сказанное, составим левую часть системы линейных уравнений.
+
 \begin{equation}
 \label{slae}
 A_b = \left (
@@ -469,9 +477,9 @@ A_b = \left (
 \vdots &&& \ddots & \ddots & \vdots & \vdots & \vdots & \vdots \\
 \Xi_\gamma & \hdotsfor{3} & \Xi_\gamma & \Xi_\gamma & a_I & a_{II} & a_{III} \\
 1 & \hdotsfor{4} & 1 & 0 & 0 & 2S \\
-? & ? & ? \\
-? & ? & ? \\
-? & ? & ? \\
+-\Delta l_y & \hdotsfor{4} & -\Delta l_y & -\dfrac{\rho_b}{\rho_0}S & 0 & 0\\
+\Delta l_x & \hdotsfor{4} & \Delta l_x & 0 & -\dfrac{\rho_b}{\rho_0}S & 0 \\
+{r_*^2/2} & \hdotsfor{4} & {r_*^2/2} & 0 & 0 & -\dfrac{\rho_b}{\rho_0}J_c \\
 \end{array}
 \right)
 \cdot
@@ -481,6 +489,43 @@ A_b = \left (
 \end{pmatrix}
 \end{equation}
 
+И правую часть:
+\begin{equation}
+\label{slae_right}
+B_b = 
+\begin{pmatrix}
+	-\sum\limits_{v=0}^{N_v} \Xi_\gamma(\vec c_1, \vec c_2, \vec r_v) \gamma_v\\
+	\vdots \\
+	-\sum\limits_{v=0}^{N_v} \Xi_\gamma(\vec c_{s}, \vec c_{s+1}, \vec r_v) \gamma_v\\
+	\vdots \\
+	-\sum\limits_{v=0}^{N_v} \Xi_\gamma(\vec c_{N_s-1}, \vec c_{N_s}, \vec r_v) \gamma_v\\
+	-\sum\limits_{v=0}^{N_v} \gamma_v\\
+	\underbrace {
+			- \dfrac{\rho_b}{\rho_0} S V_{x?} 
+			- \frac{\Delta t}{2} \sum\limits_{s=1}^{N_s} \Delta l_{ys} \cdot V_s^2
+			+ F_{x~\text{dead}}
+		}_{\text{с предыдущего шага}}
+		 - \left(\dfrac{\rho_b}{\rho_0}-1\right)S \Delta t g_x + \Delta t k_x \Delta R_x - F_{\tau x}\\
+	\underbrace {
+			- \dfrac{\rho_b}{\rho_0} S V_{y?}
+			+\frac{\Delta t}{2} \sum\limits_{s=1}^{N_s} \Delta l_{xs} \cdot V_s^2
+			+ F_{y~\text{dead}}
+		}_{\text{с предыдущего шага}}
+		 - \left(\dfrac{\rho_b}{\rho_0}-1\right)S \Delta t g_y + \Delta t k_y \Delta R_y - F_{\tau y}\\
+	\underbrace {
+			- \dfrac{\rho_b}{\rho_0} J_c \omega_?
+			+\frac{\Delta t}{2} \sum\limits_{s=1}^{N_s}
+				(\vec r_* \cdot \Delta \vec l_s) \cdot V_s^2
+		}_{\text{с предыдущего шага}}
+		 + \Delta t k_\omega \Delta \alpha\\
+\end{pmatrix}
+\end{equation}
+
+Галя еще дала вот такую формулу, вдруг потом пригодится
+\begin{equation*}
+\dfrac{1}{2} \sum [\vec e_z \times \Delta \vec l_s] V_s^2 = - [\vec e_z \times \vec V_?]\omega_? S + \omega_?^2 (\vec r_\text{com} - (\vec R + \Delta \vec R)) S
+\end{equation*}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -488,9 +533,9 @@ A_b = \left (
 \subsection{Силы и моменты}
 
 В соответствии с формулами 3.5.19, 3.5.20 в~\cite{vvd_book} cилы и момент давления вычисляются по формулам
-\begin{equation}
+\begin{multline}
 \label{eq_force}
-{\vec F} =
+{\vec F} = 
 \frac{1}{\Delta t} \sum\limits_{s=1}^{N_s} {\Delta \gamma_s \cdot [\vec e_z \times \vec r_s]}
 +
 \underbrace {
@@ -499,9 +544,15 @@ A_b = \left (
 		- {q_{\att~s} \cdot \vec V_s }
 	\bigr)
 }_{\text{с предыдущего шага}}
-\end{equation}
+\\= 
+\frac{1}{\Delta t} \sum\limits_{s=1}^{N_s} {\Delta \gamma_s \cdot [\vec e_z \times \vec r_s]} -
+\underbrace {
+	\frac{1}{2} \sum\limits_{s=1}^{N_s}
+		[\vec e_z \times \Delta \vec l_s] \cdot V_s^2
+}_{\text{с предыдущего шага}}
+\end{multline}
 %
-\begin{equation}
+\begin{multline}
 \label{eq_moment}
 M =
 \frac{1}{2\Delta t}\sum\limits_{s=1}^{N_s} { \Delta \gamma_s \cdot \vec r_*^2 }
@@ -512,7 +563,14 @@ M =
 		- q_{\att~s} \cdot [\vec r_* \times \vec V_s]}
 	\bigr)
 }_{\text{с предыдущего шага}}
-\end{equation}
+\\ =
+\frac{1}{2\Delta t}\sum\limits_{s=1}^{N_s} { \Delta \gamma_s \cdot \vec r_*^2 }
+-
+\underbrace {
+	\frac{1}{2} \sum\limits_{s=1}^{N_s}
+		(\vec r_* \cdot \Delta \vec l_s) \cdot V_s^2
+}_{\text{с предыдущего шага}}
+\end{multline}
 %
 $\Delta \gamma_s$ --- приращение циркуляции на отрезке за текущий шаг (рожденные минус удаленные).\\
 $\vec V_s$ --- скорость отрезка в соответствии с~(\ref{eq_SegmentVelocity}). Берется с предыдущего шага.\\

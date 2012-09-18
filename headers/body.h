@@ -91,6 +91,7 @@ class TBody
 
 		TAtt* next(TAtt* att) const { return List->next(att); }
 		TAtt* prev(TAtt* att) const { return List->prev(att); }
+		int eq_forces_no; // starting number of forces equations
 
 		//Heat layer
 		//void CleanHeatLayer();

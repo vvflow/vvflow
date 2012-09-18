@@ -234,17 +234,12 @@ void convectivefast::CalcCirculationFast(bool use_inverse)
 	//FIXME auto determine when to use inverse
 
 	FillRightCol();
-	if ((use_inverse && !matrix->inverseMatrixIsOk && !matrix->bodyMatrixIsOk) || (!use_inverse && !matrix->bodyMatrixIsOk))
+	if ((use_inverse && !matrix->inverseMatrixIsOk() && !matrix->bodyMatrixIsOk()) || (!use_inverse && !matrix->bodyMatrixIsOk()))
 		FillMatrix();
 	matrix->solveUsingInverseMatrix(use_inverse);
 }
 
 double convectivefast::_2PI_Xi_g(TVec p, const TAtt &seg, double rd) // in doc 2\pi\Xi_\gamma (1.7)
-{
-	return 0;
-}
-
-double convectivefast::ConvectiveInfluence(TVec p, const TAtt &seg, double rd)
 {
 	complex<double> z(p.rx, -p.ry);
 	complex<double> zc(seg.rx,-seg.ry);
@@ -279,6 +274,57 @@ double convectivefast::ConvectiveInfluence(TVec p, const TAtt &seg, double rd)
 	}
 }
 
+double convectivefast::_2PI_Xi_q(TVec p, const TAtt &seg, double rd) // in doc 2\pi\Xi_q (1.8)
+{
+	complex<double> z(p.rx, -p.ry);
+	complex<double> zc(seg.rx,-seg.ry);
+	complex<double> dz(seg.dl.rx,-seg.dl.ry);
+	complex<double> z1 = zc-dz*0.5;
+	complex<double> z2 = zc+dz*0.5;
+
+	double c1=abs(z-z1);
+	double c2=abs(z-z2);
+	if ((c1>=rd)&&(c2>=rd))
+	{
+		return -log((z-z1)/(z-z2)).imag();
+	} else
+	if ((c1<=rd)&&(c2<=rd))
+	{
+		return ((seg-p)*rotl(seg.dl))/(rd*rd);
+	}
+	else
+	{
+		double a0 = seg.dl.abs2();
+		double b0 = (p-seg)*seg.dl;
+		double d  = sqrt(b0*b0-a0*((p-seg).abs2()-rd*rd));
+		double k  = (b0+d)/a0; if ((k<=-0.5)||(k>=0.5)) k = (b0-d)/a0;
+		complex<double> z3 = zc + k*dz;
+
+		if (c1 < rd)
+			return -(((z1+z3)*0.5-z)*conj(z3-z1)).imag()/(rd*rd) -
+			       log((z-z3)/(z-z2)).imag();
+		else
+			return -log((z-z1)/(z-z3)).imag() -
+			       (((z3+z2)*0.5-z)*conj(z2-z3)).imag()/(rd*rd);
+	}
+}
+
+void convectivefast::_2PI_A123(const TAtt &seg, const TBody &b, double *A1, double *A2, double *A3)
+{
+	*A1 = *A2 = *A3 = 0;
+	if (!b.kx && !b.ky && !b.ka && !b.getRotation(S->Time) && b.getMotion(S->Time).iszero()) return;
+	const_for(b.List, latt)
+	{
+		double _2piXi_g = _2PI_Xi_g(*latt, seg, latt->dl.abs()*0.25);
+		double _2piXi_q = _2PI_Xi_q(*latt, seg, latt->dl.abs()*0.25);
+		TVec Xi(_2piXi_g, _2piXi_q);
+		TVec r0 = *latt - (b.Position + b.deltaPosition);
+		*A1 -= Xi*latt->dl;
+		*A2 -= rotl(Xi)*latt->dl;
+		*A3 -= rotl(Xi) * TVec(latt->dl * r0, rotl(latt->dl)*r0);
+	}
+}
+
 double convectivefast::NodeInfluence(const TNode &Node, const TAtt &seg, double rd)
 {
 	double res = 0;
@@ -291,15 +337,15 @@ double convectivefast::NodeInfluence(const TNode &Node, const TAtt &seg, double 
 		const_for (vlist, llobj)
 		{
 			//if (!*llobj) {continue;}
-			res+= ConvectiveInfluence((**llobj), seg, rd) * (**llobj).g;
+			res+= _2PI_Xi_g((**llobj), seg, rd) * (**llobj).g;
 		}
 	}
 
 	const_for(Node.FarNodes, llfnode)
 	{
 		#define fnode (**llfnode)
-		res+= ConvectiveInfluence(fnode.CMp, seg, rd) * fnode.CMp.g;
-		res+= ConvectiveInfluence(fnode.CMm, seg, rd) * fnode.CMm.g;
+		res+= _2PI_Xi_g(fnode.CMp, seg, rd) * fnode.CMp.g;
+		res+= _2PI_Xi_g(fnode.CMm, seg, rd) * fnode.CMm.g;
 		#undef fnode
 	}
 
@@ -314,20 +360,15 @@ double convectivefast::AttachInfluence(const TAtt &seg, double rd)
 	{
 		#define body (**llbody)
 		if (!body.List->size_safe()) continue;
-		double RotSpeed_tmp = body.getRotation(S->Time);
-		if (!RotSpeed_tmp) continue;
 
 		double res_tmp=0;
 		const_for(body.List, latt)
 		{
-			if (latt == &seg) { res_tmp+= seg.qatt*0.5; continue; }
-			res_tmp+= ConvectiveInfluence(*latt, seg, rd) * latt->g;
-			TAtt seg_tmp = seg;
-			seg_tmp = rotl(TVec(seg));
-			seg_tmp.dl = rotl(seg.dl);
-			res_tmp+= ConvectiveInfluence(*latt, seg_tmp, rd) * latt->qatt;
+			TVec Vs = body.MotionSpeed_slae + body.RotationSpeed_slae * rotl(*latt - (body.Position + body.deltaPosition));
+			if (latt == &seg) { res_tmp+= -(-rotl(Vs) * latt->dl)*0.5*C_2PI; continue; }
+			res+= _2PI_Xi_g(*latt, seg, rd) * (-Vs * latt->dl);
+			res+= _2PI_Xi_q(*latt, seg, rd) * (-rotl(Vs) * latt->dl);
 		}
-		res+= res_tmp * RotSpeed_tmp;
 		#undef body
 	}
 
@@ -358,19 +399,6 @@ void convectivefast::FillMatrix()
 	//BodyMatrix[N*i+j]
 	//RightCol[i]
 
-	const_for(S->BodyList, llbody)
-	{
-		#define body (**llbody)
-		const_for(body.List, lbvort)
-		{
-			//temporarily vort->g stores eps info.
-			lbvort->g = (*body.next(lbvort)-*lbvort).abs()+
-			            (*body.prev(lbvort)-*lbvort).abs();
-			lbvort->g *= 0.25;
-		}
-		#undef body
-	}
-
 	const_for(S->BodyList, llibody)
 	{
 		#define ibody (**llibody)
@@ -380,7 +408,7 @@ void convectivefast::FillMatrix()
 		{
 			int eq = latt->eq_no;
 			auto boundaryCondition = latt->bc;
-			matrix->solution[eq] = &latt->g;
+			*matrix->solutionAtIndex(eq) = &latt->g;
 
 			const_for(S->BodyList, lljbody)
 			{
@@ -392,8 +420,7 @@ void convectivefast::FillMatrix()
 					{
 					case bc::slip:
 					case bc::noslip:
-						*matrix->objectAtIndex(eq, j) = _2PI_Xi_g(*lobj, *latt, lobj->g)*C_1_2PI;
-						// lobj->g TEMPORARILY stores rd info. Assignment made 30 lines earlier.
+						*matrix->objectAtIndex(eq, j) = _2PI_Xi_g(*lobj, *latt, lobj->dl.abs()*0.5)*C_1_2PI;
 						break;
 					case bc::kutta:
 						*matrix->objectAtIndex(eq, j) = (lobj == latt) ? 1:0;
@@ -406,17 +433,11 @@ void convectivefast::FillMatrix()
 					}
 				}
 
-				//FIXME 3 speed coefficients
-				int j = jbody.List->at(jbody.List->size()-1)->eq_no;
 				double A1, A2, A3;
-				_2PI_A123(latt, jbody, &A1, &A2, &A3);
- 
-				j++;
-				*matrix->objectAtIndex(eq, j) = A1;
-				j++;
-				*matrix->objectAtIndex(eq, j) = A2;
-				j++;
-				*matrix->objectAtIndex(eq, j) = A3;
+				_2PI_A123(*latt, jbody, &A1, &A2, &A3);
+				*matrix->objectAtIndex(eq, jbody.eq_forces_no+0) = A1;
+				*matrix->objectAtIndex(eq, jbody.eq_forces_no+1) = A2;
+				*matrix->objectAtIndex(eq, jbody.eq_forces_no+2) = A3;
 				#undef jbody
 			}
 		}
@@ -425,7 +446,7 @@ void convectivefast::FillMatrix()
 		#undef ibody
 	}
 
-	BodyMatrixOK = true;
+	matrix->markBodyMatrixAsFilled();
 }
 
 void convectivefast::FillRightCol()
@@ -437,7 +458,7 @@ void convectivefast::FillRightCol()
 		double tmp = 0;
 		const_for(body.List, latt)
 		{
-			tmp+= latt->gatt;
+			tmp+= 0;//FIXME latt->gatt;
 		}
 		tmp*= body.getRotation(S->Time);
 		rot_sum+= tmp;
@@ -466,17 +487,17 @@ void convectivefast::FillRightCol()
 			{
 			case bc::slip:
 			case bc::noslip:
-				RightCol[latt->eq_no] = rotl(S->InfSpeed())*SegDl;
-				RightCol[latt->eq_no] -= NodeInfluence(*Node, *latt, Rd);
-				RightCol[latt->eq_no] -= AttachInfluence(*latt, Rd);
+				*matrix->rightColAtIndex(latt->eq_no) = rotl(S->InfSpeed())*SegDl;
+				*matrix->rightColAtIndex(latt->eq_no) -= NodeInfluence(*Node, *latt, Rd);
+				*matrix->rightColAtIndex(latt->eq_no) -= AttachInfluence(*latt, Rd);
 				break;
 			case bc::kutta:
 			case bc::steady:
-				RightCol[latt->eq_no] = -tmp +  body.g_dead;
+				*matrix->rightColAtIndex(latt->eq_no) = -tmp +  body.g_dead;
 				body.g_dead = 0;
 			break;
 			case bc::inf_steady:
-				RightCol[latt->eq_no] = -S->gsum() - rot_sum;
+				*matrix->rightColAtIndex(latt->eq_no) = -S->gsum() - rot_sum;
 				break;
 			}
 		}
