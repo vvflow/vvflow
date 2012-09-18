@@ -77,6 +77,7 @@ void TBody::doRotationAndMotion()
 
 	doRotation();
 	doMotion();
+	doFillProperties();
 	doUpdateSegments();
 }
 

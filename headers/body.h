@@ -7,7 +7,7 @@ class TAtt;
 #include "elementary.h"
 #include "space.h"
 
-namespace bc{enum BoundaryCondition {slip, noslip, kutta, steady, inf_steady};}
+namespace bc{enum BoundaryCondition {slip, noslip, kutta, steady, inf_steady, force_x, force_y, moment};}
 namespace hc{enum HeatCondition {neglect, isolate, const_t, const_W};}
 
 class TAtt : public TObj
@@ -24,6 +24,8 @@ class TAtt : public TObj
 		double Cp; // computed by S->CalcForces, need /=dt before print (its implemented in SaveProfile);
 		double Fr; // computed by S->CalcForces, need /=dt before print (its implemented in SaveProfile);
 		double Nu; // computed by S->CalcForces, need /=dt before print (its implemented in SaveProfile);
+
+		double gdead;
 
 		double heat_const;
 		TVec dl; //$\Delta \vec l$ in doc
@@ -55,6 +57,8 @@ class TBody
 		TVec   deltaPosition; //in doc $\Delta \vec R$
 		double RotationSpeed_slae; //in doc \omega_?
 		TVec   MotionSpeed_slae; // in doc \vec V_?
+		double RotationSpeed_slae_prev; //\omega_? from previous step
+		TVec   MotionSpeed_slae_prev; //\vec V_? from previous step
 
 		double kx, ky, ka;
 

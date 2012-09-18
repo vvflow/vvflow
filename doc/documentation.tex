@@ -514,14 +514,14 @@ B_b =
 		 - \left(\dfrac{\rho_b}{\rho_0}-1\right)S \Delta t g_y + \Delta t k_y \Delta R_y - F_{\tau y}\\
 	\underbrace {
 			- \dfrac{\rho_b}{\rho_0} J_c \omega_?
-			+\frac{\Delta t}{2} \sum\limits_{s=1}^{N_s}
-				(\vec r_* \cdot \Delta \vec l_s) \cdot V_s^2
+			+\frac{\Delta t}{2} \sum\limits_{s=1}^{N_s} (\vec r_* \cdot \Delta \vec l_s) \cdot V_s^2
+			+ M_\text{dead}
 		}_{\text{с предыдущего шага}}
 		 + \Delta t k_\omega \Delta \alpha\\
 \end{pmatrix}
 \end{equation}
 
-Галя еще дала вот такую формулу, вдруг потом пригодится
+Галя еще дала вот такую формулу, вдруг потом пригодится. Но она неправильная :(
 \begin{equation*}
 \dfrac{1}{2} \sum [\vec e_z \times \Delta \vec l_s] V_s^2 = - [\vec e_z \times \vec V_?]\omega_? S + \omega_?^2 (\vec r_\text{com} - (\vec R + \Delta \vec R)) S
 \end{equation*}

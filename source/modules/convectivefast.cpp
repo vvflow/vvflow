@@ -394,6 +394,85 @@ TVec SegmentInfluence_linear_source(TVec p, const TAtt &seg, double q1, double q
 	return TVec(zV.real(), zV.imag());
 }
 
+void convectivefast::fillSlipEquationForSegment(TAtt* seg)
+{
+	int seg_eq_no = seg->eq_no; //equation number for current segment
+	const_for(S->BodyList, lljbody)
+	{
+		#define jbody (**lljbody)
+		const_for(jbody.List, lobj)
+		{
+			*matrix->objectAtIndex(seg_eq_no, lobj->eq_no) = _2PI_Xi_g(*lobj, *seg, lobj->dl.abs()*0.5)*C_1_2PI;
+		}
+
+		double A1, A2, A3;
+		_2PI_A123(*seg, jbody, &A1, &A2, &A3);
+		*matrix->objectAtIndex(seg_eq_no, jbody.eq_forces_no+0) = A1;
+		*matrix->objectAtIndex(seg_eq_no, jbody.eq_forces_no+1) = A2;
+		*matrix->objectAtIndex(seg_eq_no, jbody.eq_forces_no+2) = A3;
+
+		#undef jbody
+	}
+
+	//place solution pointer
+	*matrix->solutionAtIndex(seg_eq_no) = &seg->g;
+
+	//right column
+	//influence of infinite speed
+	*matrix->rightColAtIndex(seg_eq_no) = rotl(S->InfSpeed())*SegDl;
+	//influence of all free vortices
+	TNode* Node = S->Tree->findNode(*seg);
+	*matrix->rightColAtIndex(seg_eq_no) -= NodeInfluence(*Node, *seg, Rd);
+}
+
+void convectivefast::fillKuttaEquationForSegment(int eq_no, TAtt* seg)
+{
+	
+}
+
+void convectivefast::fillSteadyEquationForSegment(int eq_no, TAtt* seg)
+{
+	TBody* body = seg->body;
+	int seg_eq_no = seg->eq_no; //equation number for current segment
+	const_for(S->BodyList, lljbody)
+	{
+		#define jbody (**lljbody)
+		const_for(jbody.List, lobj)
+		{
+			*matrix->objectAtIndex(seg_eq_no, lobj->eq_no) = (body==*lljbody)? 1 : 0;
+		}
+
+		*matrix->objectAtIndex(seg_eq_no, jbody.eq_forces_no+0) = 0;
+		*matrix->objectAtIndex(seg_eq_no, jbody.eq_forces_no+1) = 0;
+		*matrix->objectAtIndex(seg_eq_no, jbody.eq_forces_no+2) = (body==*lljbody) ? 2*body.getArea() : 0;
+
+		#undef jbody
+	}
+
+	//place solution pointer
+	*matrix->solutionAtIndex(seg_eq_no) = &seg->g;
+
+	//right column
+	//influence of infinite speed
+	*matrix->rightColAtIndex(seg_eq_no) = body.g_dead + 2*body.getArea()*body.RotationSpeed_slae;
+	body.g_dead = 0;
+}
+
+void convectivefast::fillInfSteadyEquationForSegment(int eq_no, TAtt* seg)
+{
+	
+}
+
+void convectivefast::fillForceEquations(int eq_no, TBody* ibody)
+{
+	
+}
+
+void convectivefast::fillMomentEquation(int eq_no, TBody* ibody)
+{
+	
+}
+
 void convectivefast::FillMatrix()
 {
 	//BodyMatrix[N*i+j]
@@ -433,16 +512,58 @@ void convectivefast::FillMatrix()
 					}
 				}
 
-				double A1, A2, A3;
-				_2PI_A123(*latt, jbody, &A1, &A2, &A3);
-				*matrix->objectAtIndex(eq, jbody.eq_forces_no+0) = A1;
-				*matrix->objectAtIndex(eq, jbody.eq_forces_no+1) = A2;
-				*matrix->objectAtIndex(eq, jbody.eq_forces_no+2) = A3;
+				switch (boundaryCondition)
+				{
+					case bc::slip:
+					case bc::noslip:
+						double A1, A2, A3;
+						_2PI_A123(*latt, jbody, &A1, &A2, &A3);
+						*matrix->objectAtIndex(eq, jbody.eq_forces_no+0) = A1;
+						*matrix->objectAtIndex(eq, jbody.eq_forces_no+1) = A2;
+						*matrix->objectAtIndex(eq, jbody.eq_forces_no+2) = A3;
+						break;
+					case bc::kutta:
+					case bc::steady:
+						*matrix->objectAtIndex(eq, jbody.eq_forces_no+0) = 0;
+						*matrix->objectAtIndex(eq, jbody.eq_forces_no+1) = 0;
+						*matrix->objectAtIndex(eq, jbody.eq_forces_no+2) = (llibody==lljbody) ? 2*ibody.getArea() : 0;
+						break;
+					case bc::inf_steady:
+						*matrix->objectAtIndex(eq, jbody.eq_forces_no+0) = 0;
+						*matrix->objectAtIndex(eq, jbody.eq_forces_no+1) = 0;
+						*matrix->objectAtIndex(eq, jbody.eq_forces_no+2) = 2*ibody.getArea();
+						break;
+				}
 				#undef jbody
 			}
 		}
 
 		//FIXME forces equations
+		int eq = ibody.eq_forces_no;
+		const_for(S->BodyList, lljbody)
+		{
+			#define jbody (**lljbody)
+			const_for(jbody.List, lobj)
+			{
+				int j=lobj->eq_no;
+				switch (boundaryCondition)
+				{
+				case bc::slip:
+				case bc::noslip:
+					*matrix->objectAtIndex(eq, j) = _2PI_Xi_g(*lobj, *latt, lobj->dl.abs()*0.5)*C_1_2PI;
+					break;
+				case bc::kutta:
+					*matrix->objectAtIndex(eq, j) = (lobj == latt) ? 1:0;
+				case bc::steady:
+					*matrix->objectAtIndex(eq, j) = (llibody==lljbody)?1:0;
+					break;
+				case bc::inf_steady:
+					*matrix->objectAtIndex(eq, j) = 1;
+					break;
+				}
+			}
+		}
+
 		#undef ibody
 	}
 
