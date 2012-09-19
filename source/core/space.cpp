@@ -22,6 +22,7 @@ Space::Space(TVec (*sInfSpeed)(double time))
 
 	InfSpeed_link = sInfSpeed;
 	InfSpeed_const.zero();
+	InfCirculation = 0;
 	Time = dt = Re = Pr = cache_time = cache2_time = 0;
 	InfSpeed_cache.zero();
 	InfSpeed_cache2.zero();

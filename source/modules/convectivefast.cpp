@@ -425,9 +425,29 @@ void convectivefast::fillSlipEquationForSegment(TAtt* seg)
 	*matrix->rightColAtIndex(seg_eq_no) -= NodeInfluence(*Node, *seg, Rd);
 }
 
-void convectivefast::fillKuttaEquationForSegment(int eq_no, TAtt* seg)
+void convectivefast::fillZeroEquationForSegment(int eq_no, TAtt* seg)
 {
-	
+	int seg_eq_no = seg->eq_no; //equation number for current segment
+	const_for(S->BodyList, lljbody)
+	{
+		#define jbody (**lljbody)
+		const_for(jbody.List, lobj)
+		{
+			*matrix->objectAtIndex(seg_eq_no, lobj->eq_no) = 0;
+		}
+
+		*matrix->objectAtIndex(seg_eq_no, jbody.eq_forces_no+0) = 0;
+		*matrix->objectAtIndex(seg_eq_no, jbody.eq_forces_no+1) = 0;
+		*matrix->objectAtIndex(seg_eq_no, jbody.eq_forces_no+2) = 0;
+
+		#undef jbody
+	}
+	//the only non-zero value
+	*matrix->objectAtIndex(seg_eq_no, seg_eq_no) = 1;
+	//place solution pointer
+	*matrix->solutionAtIndex(seg_eq_no) = &seg->g;
+	//right column
+	*matrix->rightColAtIndex(seg_eq_no) = 0;
 }
 
 void convectivefast::fillSteadyEquationForSegment(int eq_no, TAtt* seg)
@@ -453,19 +473,64 @@ void convectivefast::fillSteadyEquationForSegment(int eq_no, TAtt* seg)
 	*matrix->solutionAtIndex(seg_eq_no) = &seg->g;
 
 	//right column
-	//influence of infinite speed
 	*matrix->rightColAtIndex(seg_eq_no) = body.g_dead + 2*body.getArea()*body.RotationSpeed_slae;
 	body.g_dead = 0;
 }
 
 void convectivefast::fillInfSteadyEquationForSegment(int eq_no, TAtt* seg)
 {
-	
+	int seg_eq_no = seg->eq_no; //equation number for current segment
+	const_for(S->BodyList, lljbody)
+	{
+		#define jbody (**lljbody)
+		const_for(jbody.List, lobj)
+		{
+			*matrix->objectAtIndex(seg_eq_no, lobj->eq_no) = 1;
+		}
+
+		*matrix->objectAtIndex(seg_eq_no, jbody.eq_forces_no+0) = 0;
+		*matrix->objectAtIndex(seg_eq_no, jbody.eq_forces_no+1) = 0;
+		*matrix->objectAtIndex(seg_eq_no, jbody.eq_forces_no+2) = 2*(**lljbody).getArea() : 0;
+
+		#undef jbody
+	}
+
+	//place solution pointer
+	*matrix->solutionAtIndex(seg_eq_no) = &seg->g;
+
+	//right column
+	*matrix->rightColAtIndex(seg_eq_no) = -S->gsum() - S->InfCirculation;
 }
 
-void convectivefast::fillForceEquations(int eq_no, TBody* ibody)
+void convectivefast::fillForceXEquation(int eq_no, TBody* ibody)
 {
-	
+	double _1_dt = 1/S->dt;
+	const_for(S->BodyList, lljbody)
+	{
+		#define jbody (**lljbody)
+		const_for(jbody.List, lobj)
+		{
+			if ( (ibody==*llbody) && (ibody->kx >= 0) )
+				*matrix->objectAtIndex(eq_no, lobj->eq_no) = _1_dt * (-lobj->corner.ry);
+			else
+				*matrix->objectAtIndex(eq_no, lobj->eq_no) = 0;
+		}
+
+		double tmp = (ibody==*llbody) ? ((ibody->kx >= 0) ? -ibody->getArea()*_1_dt*ibody->density : 1) : 0;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = tmp;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = 0;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = 0;
+		#undef jbody
+	}
+
+	//place solution pointer
+	*matrix->solutionAtIndex(eq_no) = &ibody->MotionSpeed_slae->rx;
+
+	//right column
+	if ( ibody->kx >= 0 )
+		*matrix->rightColAtIndex(eq_no) = ; //FIXME
+	else
+		*matrix->rightColAtIndex(eq_no) = ibody->getMotion(S->Time);
 }
 
 void convectivefast::fillMomentEquation(int eq_no, TBody* ibody)

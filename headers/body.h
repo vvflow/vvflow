@@ -7,8 +7,28 @@ class TAtt;
 #include "elementary.h"
 #include "space.h"
 
-namespace bc{enum BoundaryCondition {slip, noslip, kutta, steady, inf_steady, force_x, force_y, moment};}
-namespace hc{enum HeatCondition {neglect, isolate, const_t, const_W};}
+namespace bc{
+	enum BoundaryCondition
+	{
+		slip = 's',
+		noslip = 'n',
+		zero = 'z',
+		steady = 's',
+		inf_steady = 'i',
+		force_x = 'x',
+		force_y = 'y',
+		moment = 'm'
+	};
+}
+
+namespace hc{
+	enum HeatCondition {
+		neglect = 'n',
+		isolate = 'i',
+		const_t = 't',
+		const_W = 'w'
+	};
+}
 
 class TAtt : public TObj
 {
@@ -61,6 +81,7 @@ class TBody
 		TVec   MotionSpeed_slae_prev; //\vec V_? from previous step
 
 		double kx, ky, ka;
+		double density; //in doc \frac{\rho_b}{\rho_0}
 
 		TObj Force, Friction; //computed by S->CalcForces
 		double Nusselt; //computed by S->CalcForces

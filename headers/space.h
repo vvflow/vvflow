@@ -37,6 +37,7 @@ class Space
 		TVec InfSpeed(double t);
 		TVec InfMarker;
 		void ZeroSpeed();
+		double InfCirculation;
 		double Time, dt, Re, Pr;
 
 		void Save(const char* format);
