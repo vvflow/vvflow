@@ -232,10 +232,11 @@ TVec convectivefast::BoundaryConvective(const TBody &b, const TVec &p)
 void convectivefast::CalcCirculationFast(bool use_inverse)
 {
 	//FIXME auto determine when to use inverse
+	if (matrix->bodyMatrixIsOk())
+		FillMatrix(true);
+	else
+		FillMatrix(false);
 
-	if ((use_inverse && !matrix->inverseMatrixIsOk() && !matrix->bodyMatrixIsOk()) || (!use_inverse && !matrix->bodyMatrixIsOk()))
-		FillMatrix();
-	else FillMatrix(true);
 	matrix->solveUsingInverseMatrix(use_inverse);
 }
 

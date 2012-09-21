@@ -26,8 +26,6 @@ class list
 		T* end();
 		size_t size();
 		size_t size_safe();
-		T* next(T* item);
-		T* prev(T* item);
 
 	private:
 		size_t size_;
@@ -88,13 +86,6 @@ size_t list<T>::size() { return size_; }
 
 template <class T> inline
 size_t list<T>::size_safe() { return this ? size_ : 0; }
-
-template <class T> inline
-T* list<T>::next(T* item) { return (item == end_-1) ? begin_ : item+1; }
-
-template <class T> inline
-T* list<T>::prev(T* item) { return (item == begin_) ? end_-1 : item-1; }
-
 
 template <class T>
 void list<T>::realloc_()

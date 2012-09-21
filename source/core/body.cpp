@@ -140,6 +140,9 @@ void TBody::doUpdateSegments()
 {
 	if (!this) return;
 
+	List->push_back(List->at(0));
+	List->erase(List->end()-1);
+
 	const_for (List, lobj)
 	{
 		lobj->dl = (lobj+1)->corner - lobj->corner;

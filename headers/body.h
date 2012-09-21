@@ -116,8 +116,6 @@ class TBody
 		double getMoi_c()   {return _moi_c;} // moment of inertia about rotation axis
 		int size()       {return List->size_safe();}
 
-		TAtt* next(TAtt* att) const { return List->next(att); }
-		TAtt* prev(TAtt* att) const { return List->prev(att); }
 		int eq_forces_no; // starting number of forces equations
 
 		//Heat layer
