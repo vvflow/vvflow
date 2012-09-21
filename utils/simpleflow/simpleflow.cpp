@@ -158,7 +158,7 @@ int main(int argc, char** argv)
 			if (streak_source_env) S->LoadStreakSource(streak_source_env);
 	} else
 	{
-		S->StreakList->push_back(TObj(1000, 0, 0));
+		S->StreakList->push_back(TObj(1000, 0, 0)); //FIXME
 		if (streak_env) S->LoadStreak(streak_env);
 		if (streak_source_env) S->LoadStreakSource(streak_source_env);
 	}
@@ -229,7 +229,6 @@ int main(int argc, char** argv)
 		dbg(diff.CalcHeatDiffusiveFast());
 		dbg(DestroyTree());
 
-		//FIXME move bodies 
 		dbg(fm.MoveAndClean(true));
 		dbg(fm.CropHeat());
 		S->Time += S->dt;

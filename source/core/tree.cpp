@@ -303,7 +303,7 @@ void tree::printBottomNodes(FILE* f, bool PrintDepth)
 }
 
 template <class T>
-void fillRootNode(vector<T> *src, node::content **dst)
+void tree::fillRootNode(vector<T> *src, node::content **dst)
 {
 	if (!src->size_safe()) return;
 	if (!(*dst))

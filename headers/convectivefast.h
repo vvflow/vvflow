@@ -18,8 +18,7 @@ class convectivefast
 		//void solveSlae();
 
 	private:
-		void FillMatrix();
-		void FillRightCol();
+		void FillMatrix(bool rightColOnly = false);
 
 	private:
 		TVec BioSavar(const TObj &obj, const TVec &p);
@@ -42,6 +41,15 @@ class convectivefast
 		double NodeInfluence(const TNode &Node, const TAtt &seg, double rd);
 		double AttachInfluence(const TAtt &seg, double rd);
 		TVec SegmentInfluence_linear_source(TVec p, const TAtt &seg, double q1, double q2);
+
+	private:
+		void fillSlipEquationForSegment(TAtt* seg, bool rightColOnly);
+		void fillZeroEquationForSegment(TAtt* seg, bool rightColOnly);
+		void fillSteadyEquationForSegment(TAtt* seg, bool rightColOnly);
+		void fillInfSteadyEquationForSegment(TAtt* seg, bool rightColOnly);
+		void fillForceXEquation(TBody* ibody, bool rightColOnly);
+		void fillForceYEquation(TBody* ibody, bool rightColOnly);
+		void fillMomentEquation(TBody* ibody, bool rightColOnly);
 };
 
 

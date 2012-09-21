@@ -17,6 +17,12 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
 	auto vlist = S->VortexList;
 	auto hlist = S->HeatList;
 
+	//Move bodies
+	const_for (S->BodyList, llbody)
+	{
+		(**llbody).doRotationAndMotion();
+	}
+
 	//MOVING VORTEXES
 	if ( vlist )
 	const_for (vlist, lobj)
@@ -33,8 +39,8 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
 		if ( remove && invalid_inbody )
 		{
 			TBody *badbody = invalid_inbody->body;
-			badbody->Force -= rotl(*lobj) * lobj->g;
-			badbody->Force.g -=  lobj->abs2() * lobj->g;
+			badbody->Force_dead -= rotl(*lobj) * lobj->g;
+			badbody->Force_dead.g -=  (*lobj - badbody->Position - badbody->deltaPosition).abs2() * lobj->g;
 			invalid_inbody->gsum -= lobj->g;
 			badbody->g_dead += lobj->g;
 			CleanedV_++;
@@ -134,8 +140,8 @@ void flowmove::VortexShed()
 			else if ( latt->bc == bc::noslip )
 			{
 				ObjCopy = *latt;
-				body.Force += rotl(ObjCopy) * ObjCopy.g;
-				body.Force.g += (ObjCopy-body.Position).abs2() * ObjCopy.g;
+				body.Force_born += rotl(ObjCopy) * ObjCopy.g;
+				body.Force_born.g += (ObjCopy-body.Position-body.deltaPosition).abs2() * ObjCopy.g;
 				latt->gsum+= ObjCopy.g;
 				vlist->push_back(ObjCopy);
 			}

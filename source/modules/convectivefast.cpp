@@ -22,7 +22,7 @@ convectivefast::convectivefast(Space *sS, double sRd)
 	MatrixSize = 0; 
 	const_for(sS->BodyList, llbody)
 	{
-		MatrixSize+=(**llbody).size();
+		MatrixSize+=(**llbody).size()+3;
 	}
 
 	matrix = new Matrix(MatrixSize);
@@ -233,9 +233,9 @@ void convectivefast::CalcCirculationFast(bool use_inverse)
 {
 	//FIXME auto determine when to use inverse
 
-	FillRightCol();
 	if ((use_inverse && !matrix->inverseMatrixIsOk() && !matrix->bodyMatrixIsOk()) || (!use_inverse && !matrix->bodyMatrixIsOk()))
 		FillMatrix();
+	else FillMatrix(true);
 	matrix->solveUsingInverseMatrix(use_inverse);
 }
 
@@ -375,7 +375,7 @@ double convectivefast::AttachInfluence(const TAtt &seg, double rd)
 	return res * C_1_2PI;
 }
 
-TVec SegmentInfluence_linear_source(TVec p, const TAtt &seg, double q1, double q2)
+TVec convectivefast::SegmentInfluence_linear_source(TVec p, const TAtt &seg, double q1, double q2)
 {
 //	cerr << "orly?" << endl;
 	complex<double> z(p.rx, p.ry);
@@ -394,15 +394,16 @@ TVec SegmentInfluence_linear_source(TVec p, const TAtt &seg, double q1, double q
 	return TVec(zV.real(), zV.imag());
 }
 
-void convectivefast::fillSlipEquationForSegment(TAtt* seg)
+void convectivefast::fillSlipEquationForSegment(TAtt* seg, bool rightColOnly)
 {
 	int seg_eq_no = seg->eq_no; //equation number for current segment
+	if (!rightColOnly)
 	const_for(S->BodyList, lljbody)
 	{
 		#define jbody (**lljbody)
 		const_for(jbody.List, lobj)
 		{
-			*matrix->objectAtIndex(seg_eq_no, lobj->eq_no) = _2PI_Xi_g(*lobj, *seg, lobj->dl.abs()*0.5)*C_1_2PI;
+			*matrix->objectAtIndex(seg_eq_no, lobj->eq_no) = _2PI_Xi_g(lobj->corner, *seg, lobj->dl.abs()*0.25)*C_1_2PI;
 		}
 
 		double A1, A2, A3;
@@ -419,15 +420,16 @@ void convectivefast::fillSlipEquationForSegment(TAtt* seg)
 
 	//right column
 	//influence of infinite speed
-	*matrix->rightColAtIndex(seg_eq_no) = rotl(S->InfSpeed())*SegDl;
+	*matrix->rightColAtIndex(seg_eq_no) = rotl(S->InfSpeed())*seg->dl;
 	//influence of all free vortices
 	TNode* Node = S->Tree->findNode(*seg);
 	*matrix->rightColAtIndex(seg_eq_no) -= NodeInfluence(*Node, *seg, Rd);
 }
 
-void convectivefast::fillZeroEquationForSegment(int eq_no, TAtt* seg)
+void convectivefast::fillZeroEquationForSegment(TAtt* seg, bool rightColOnly)
 {
 	int seg_eq_no = seg->eq_no; //equation number for current segment
+	if (!rightColOnly)
 	const_for(S->BodyList, lljbody)
 	{
 		#define jbody (**lljbody)
@@ -450,21 +452,22 @@ void convectivefast::fillZeroEquationForSegment(int eq_no, TAtt* seg)
 	*matrix->rightColAtIndex(seg_eq_no) = 0;
 }
 
-void convectivefast::fillSteadyEquationForSegment(int eq_no, TAtt* seg)
+void convectivefast::fillSteadyEquationForSegment(TAtt* seg, bool rightColOnly)
 {
-	TBody* body = seg->body;
+	TBody* lbody = seg->body;
 	int seg_eq_no = seg->eq_no; //equation number for current segment
+	if (!rightColOnly)
 	const_for(S->BodyList, lljbody)
 	{
 		#define jbody (**lljbody)
 		const_for(jbody.List, lobj)
 		{
-			*matrix->objectAtIndex(seg_eq_no, lobj->eq_no) = (body==*lljbody)? 1 : 0;
+			*matrix->objectAtIndex(seg_eq_no, lobj->eq_no) = (lbody==*lljbody)? 1 : 0;
 		}
 
 		*matrix->objectAtIndex(seg_eq_no, jbody.eq_forces_no+0) = 0;
 		*matrix->objectAtIndex(seg_eq_no, jbody.eq_forces_no+1) = 0;
-		*matrix->objectAtIndex(seg_eq_no, jbody.eq_forces_no+2) = (body==*lljbody) ? 2*body.getArea() : 0;
+		*matrix->objectAtIndex(seg_eq_no, jbody.eq_forces_no+2) = (lbody==*lljbody) ? 2*lbody->getArea() : 0;
 
 		#undef jbody
 	}
@@ -473,13 +476,14 @@ void convectivefast::fillSteadyEquationForSegment(int eq_no, TAtt* seg)
 	*matrix->solutionAtIndex(seg_eq_no) = &seg->g;
 
 	//right column
-	*matrix->rightColAtIndex(seg_eq_no) = body.g_dead + 2*body.getArea()*body.RotationSpeed_slae;
-	body.g_dead = 0;
+	*matrix->rightColAtIndex(seg_eq_no) = lbody->g_dead + 2*lbody->getArea()*lbody->RotationSpeed_slae_prev;
+	lbody->g_dead = 0;
 }
 
-void convectivefast::fillInfSteadyEquationForSegment(int eq_no, TAtt* seg)
+void convectivefast::fillInfSteadyEquationForSegment(TAtt* seg, bool rightColOnly)
 {
 	int seg_eq_no = seg->eq_no; //equation number for current segment
+	if (!rightColOnly)
 	const_for(S->BodyList, lljbody)
 	{
 		#define jbody (**lljbody)
@@ -490,7 +494,7 @@ void convectivefast::fillInfSteadyEquationForSegment(int eq_no, TAtt* seg)
 
 		*matrix->objectAtIndex(seg_eq_no, jbody.eq_forces_no+0) = 0;
 		*matrix->objectAtIndex(seg_eq_no, jbody.eq_forces_no+1) = 0;
-		*matrix->objectAtIndex(seg_eq_no, jbody.eq_forces_no+2) = 2*(**lljbody).getArea() : 0;
+		*matrix->objectAtIndex(seg_eq_no, jbody.eq_forces_no+2) = 2*(**lljbody).getArea();
 
 		#undef jbody
 	}
@@ -502,21 +506,23 @@ void convectivefast::fillInfSteadyEquationForSegment(int eq_no, TAtt* seg)
 	*matrix->rightColAtIndex(seg_eq_no) = -S->gsum() - S->InfCirculation;
 }
 
-void convectivefast::fillForceXEquation(int eq_no, TBody* ibody)
+void convectivefast::fillForceXEquation(TBody* ibody, bool rightColOnly)
 {
 	double _1_dt = 1/S->dt;
+	int eq_no = ibody->eq_forces_no;
+	if (!rightColOnly)
 	const_for(S->BodyList, lljbody)
 	{
 		#define jbody (**lljbody)
 		const_for(jbody.List, lobj)
 		{
-			if ( (ibody==*llbody) && (ibody->kx >= 0) )
+			if ( (ibody==*lljbody) && (ibody->kx >= 0) )
 				*matrix->objectAtIndex(eq_no, lobj->eq_no) = _1_dt * (-lobj->corner.ry);
 			else
 				*matrix->objectAtIndex(eq_no, lobj->eq_no) = 0;
 		}
 
-		double tmp = (ibody==*llbody) ? ((ibody->kx >= 0) ? -ibody->getArea()*_1_dt*ibody->density : 1) : 0;
+		double tmp = (ibody==*lljbody) ? ((ibody->kx >= 0) ? -ibody->getArea()*_1_dt*ibody->density : 1) : 0;
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = tmp;
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = 0;
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = 0;
@@ -524,170 +530,143 @@ void convectivefast::fillForceXEquation(int eq_no, TBody* ibody)
 	}
 
 	//place solution pointer
-	*matrix->solutionAtIndex(eq_no) = &ibody->MotionSpeed_slae->rx;
+	*matrix->solutionAtIndex(eq_no) = &ibody->MotionSpeed_slae.rx;
 
 	//right column
 	if ( ibody->kx >= 0 )
-		*matrix->rightColAtIndex(eq_no) = ; //FIXME
+		*matrix->rightColAtIndex(eq_no) = 
+			- (ibody->density-1.0) * S->gravitation.rx * ibody->getArea()
+			+ ibody->kx * ibody->deltaPosition.rx +
+			- ibody->Friction_prev.rx
+			+ ibody->Force_dead.rx
+			- ibody->density * ibody->getArea() * ibody->MotionSpeed_slae_prev.rx * _1_dt
+			- (-ibody->MotionSpeed_slae_prev.ry) * ibody->RotationSpeed_slae_prev * ibody->getArea()
+			+ sqr(ibody->RotationSpeed_slae_prev) * ibody->getArea() * (ibody->getCom() - ibody->Position - ibody->deltaPosition).rx;
 	else
-		*matrix->rightColAtIndex(eq_no) = ibody->getMotion(S->Time);
+		*matrix->rightColAtIndex(eq_no) = ibody->getMotion(S->Time).rx;
 }
 
-void convectivefast::fillMomentEquation(int eq_no, TBody* ibody)
+void convectivefast::fillForceYEquation(TBody* ibody, bool rightColOnly)
 {
-	
+	double _1_dt = 1/S->dt;
+	int eq_no = ibody->eq_forces_no+1;
+	if (!rightColOnly)
+	const_for(S->BodyList, lljbody)
+	{
+		#define jbody (**lljbody)
+		const_for(jbody.List, lobj)
+		{
+			if ( (ibody==*lljbody) && (ibody->ky >= 0) )
+				*matrix->objectAtIndex(eq_no, lobj->eq_no) = _1_dt * (lobj->corner.rx);
+			else
+				*matrix->objectAtIndex(eq_no, lobj->eq_no) = 0;
+		}
+
+		double tmp = (ibody==*lljbody) ? ((ibody->ky >= 0) ? -ibody->getArea()*_1_dt*ibody->density : 1) : 0;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = 0;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = tmp;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = 0;
+		#undef jbody
+	}
+
+	//place solution pointer
+	*matrix->solutionAtIndex(eq_no) = &ibody->MotionSpeed_slae.ry;
+
+	//right column
+	if ( ibody->kx >= 0 )
+		*matrix->rightColAtIndex(eq_no) = 
+			- (ibody->density-1.0) * S->gravitation.ry * ibody->getArea()
+			+ ibody->ky * ibody->deltaPosition.ry +
+			- ibody->Friction_prev.ry
+			+ ibody->Force_dead.ry
+			- ibody->density * ibody->getArea() * ibody->MotionSpeed_slae_prev.ry * _1_dt
+			- (ibody->MotionSpeed_slae_prev.rx) * ibody->RotationSpeed_slae_prev * ibody->getArea()
+			+ sqr(ibody->RotationSpeed_slae_prev) * ibody->getArea() * (ibody->getCom() - ibody->Position - ibody->deltaPosition).ry;
+	else
+		*matrix->rightColAtIndex(eq_no) = ibody->getMotion(S->Time).ry;
 }
 
-void convectivefast::FillMatrix()
+void convectivefast::fillMomentEquation(TBody* ibody, bool rightColOnly)
 {
-	//BodyMatrix[N*i+j]
-	//RightCol[i]
+	double _1_dt = 1/S->dt;
+	double _1_2dt = 0.5/S->dt;
+	int eq_no = ibody->eq_forces_no+2;
+	if (!rightColOnly)
+	const_for(S->BodyList, lljbody)
+	{
+		#define jbody (**lljbody)
+		const_for(jbody.List, lobj)
+		{
+			if ( (ibody==*lljbody) && (ibody->ka >= 0) )
+				*matrix->objectAtIndex(eq_no, lobj->eq_no) = _1_2dt * (lobj->corner - ibody->Position - ibody->deltaPosition).abs2();
+			else
+				*matrix->objectAtIndex(eq_no, lobj->eq_no) = 0;
+		}
 
+		double tmp = (ibody==*lljbody) ? ((ibody->ka >= 0) ? -ibody->getMoi_c()*_1_dt*ibody->density : 1) : 0;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = 0;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = 0;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = tmp;
+		#undef jbody
+	}
+
+	//place solution pointer
+	*matrix->solutionAtIndex(eq_no) = &ibody->RotationSpeed_slae;
+
+	//right column
+	if ( ibody->kx >= 0 )
+		*matrix->rightColAtIndex(eq_no) = 
+			+ ibody->ka * ibody->deltaAngle +
+			- ibody->Friction_prev.g
+			+ ibody->Force_dead.g
+			- ibody->density * ibody->getMoi_c() * ibody->RotationSpeed_slae_prev * _1_dt
+			- ((ibody->getCom() - ibody->Position - ibody->deltaPosition) * ibody->MotionSpeed_slae_prev) * ibody->RotationSpeed_slae_prev * ibody->getArea();
+	else
+		*matrix->rightColAtIndex(eq_no) = ibody->getRotation(S->Time);
+}
+
+void convectivefast::FillMatrix(bool rightColOnly)
+{
 	const_for(S->BodyList, llibody)
 	{
-		#define ibody (**llibody)
 		#pragma omp parallel for
-
-		const_for(ibody.List, latt)
+		const_for((**llibody).List, latt)
 		{
-			int eq = latt->eq_no;
 			auto boundaryCondition = latt->bc;
-			*matrix->solutionAtIndex(eq) = &latt->g;
-
-			const_for(S->BodyList, lljbody)
+			switch (boundaryCondition)
 			{
-				#define jbody (**lljbody)
-				const_for(jbody.List, lobj)
-				{
-					int j=lobj->eq_no;
-					switch (boundaryCondition)
-					{
-					case bc::slip:
-					case bc::noslip:
-						*matrix->objectAtIndex(eq, j) = _2PI_Xi_g(*lobj, *latt, lobj->dl.abs()*0.5)*C_1_2PI;
-						break;
-					case bc::kutta:
-						*matrix->objectAtIndex(eq, j) = (lobj == latt) ? 1:0;
-					case bc::steady:
-						*matrix->objectAtIndex(eq, j) = (llibody==lljbody)?1:0;
-						break;
-					case bc::inf_steady:
-						*matrix->objectAtIndex(eq, j) = 1;
-						break;
-					}
-				}
-
-				switch (boundaryCondition)
-				{
-					case bc::slip:
-					case bc::noslip:
-						double A1, A2, A3;
-						_2PI_A123(*latt, jbody, &A1, &A2, &A3);
-						*matrix->objectAtIndex(eq, jbody.eq_forces_no+0) = A1;
-						*matrix->objectAtIndex(eq, jbody.eq_forces_no+1) = A2;
-						*matrix->objectAtIndex(eq, jbody.eq_forces_no+2) = A3;
-						break;
-					case bc::kutta:
-					case bc::steady:
-						*matrix->objectAtIndex(eq, jbody.eq_forces_no+0) = 0;
-						*matrix->objectAtIndex(eq, jbody.eq_forces_no+1) = 0;
-						*matrix->objectAtIndex(eq, jbody.eq_forces_no+2) = (llibody==lljbody) ? 2*ibody.getArea() : 0;
-						break;
-					case bc::inf_steady:
-						*matrix->objectAtIndex(eq, jbody.eq_forces_no+0) = 0;
-						*matrix->objectAtIndex(eq, jbody.eq_forces_no+1) = 0;
-						*matrix->objectAtIndex(eq, jbody.eq_forces_no+2) = 2*ibody.getArea();
-						break;
-				}
-				#undef jbody
-			}
-		}
-
-		//FIXME forces equations
-		int eq = ibody.eq_forces_no;
-		const_for(S->BodyList, lljbody)
-		{
-			#define jbody (**lljbody)
-			const_for(jbody.List, lobj)
-			{
-				int j=lobj->eq_no;
-				switch (boundaryCondition)
-				{
 				case bc::slip:
 				case bc::noslip:
-					*matrix->objectAtIndex(eq, j) = _2PI_Xi_g(*lobj, *latt, lobj->dl.abs()*0.5)*C_1_2PI;
+					fillSlipEquationForSegment(latt, rightColOnly);
 					break;
-				case bc::kutta:
-					*matrix->objectAtIndex(eq, j) = (lobj == latt) ? 1:0;
+				case bc::zero:
+					fillZeroEquationForSegment(latt, rightColOnly);
+					break;
 				case bc::steady:
-					*matrix->objectAtIndex(eq, j) = (llibody==lljbody)?1:0;
+					fillSteadyEquationForSegment(latt, rightColOnly);
 					break;
 				case bc::inf_steady:
-					*matrix->objectAtIndex(eq, j) = 1;
+					fillInfSteadyEquationForSegment(latt, rightColOnly);
 					break;
-				}
 			}
 		}
 
-		#undef ibody
+		fillForceXEquation(*llibody, rightColOnly);
+		fillForceYEquation(*llibody, rightColOnly);
+		fillMomentEquation(*llibody, rightColOnly);
 	}
 
 	matrix->markBodyMatrixAsFilled();
-}
-
-void convectivefast::FillRightCol()
-{
-	double rot_sum = 0;
-	const_for (S->BodyList, llbody)
+	fprintf(stderr, "%d %d\n\n", matrix->size, S->BodyList->size());
+	for (int i=0; i<matrix->size; i++)
 	{
-		#define body (**llbody)
-		double tmp = 0;
-		const_for(body.List, latt)
+		for (int j=0; j< matrix->size; j++)
 		{
-			tmp+= 0;//FIXME latt->gatt;
+			printf("%8.4lf\t", *matrix->objectAtIndex(i, j));
 		}
-		tmp*= body.getRotation(S->Time);
-		rot_sum+= tmp;
-		#undef body
+
+		printf("\t%8.4lf\n", *matrix->rightColAtIndex(i));
 	}
-
-	const_for (S->BodyList, llbody)
-	{
-		#define body (**llbody)
-		double tmp = 0;
-		const_for(body.List, latt)
-		{
-			tmp+= latt->g;
-		}
-		tmp*= body.getRotation(S->Time) - body.getRotation(S->Time-S->dt);
-
-		#pragma omp parallel for
-		const_for (body.List, latt)
-		{
-			TNode* Node = S->Tree->findNode(*latt);
-			if (!Node) { continue; }
-
-			TVec SegDl = latt->dl;
-
-			switch (latt->bc)
-			{
-			case bc::slip:
-			case bc::noslip:
-				*matrix->rightColAtIndex(latt->eq_no) = rotl(S->InfSpeed())*SegDl;
-				*matrix->rightColAtIndex(latt->eq_no) -= NodeInfluence(*Node, *latt, Rd);
-				*matrix->rightColAtIndex(latt->eq_no) -= AttachInfluence(*latt, Rd);
-				break;
-			case bc::kutta:
-			case bc::steady:
-				*matrix->rightColAtIndex(latt->eq_no) = -tmp +  body.g_dead;
-				body.g_dead = 0;
-			break;
-			case bc::inf_steady:
-				*matrix->rightColAtIndex(latt->eq_no) = -S->gsum() - rot_sum;
-				break;
-			}
-		}
-		#undef body
-	}
+	printf("\n\n");
 }
 

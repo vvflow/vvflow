@@ -10,6 +10,7 @@
 using namespace std;
 
 #include "space.h"
+const char *current_version = "v: 1.1  "; //binary file format
 
 Space::Space(TVec (*sInfSpeed)(double time))
 {
@@ -23,6 +24,7 @@ Space::Space(TVec (*sInfSpeed)(double time))
 	InfSpeed_link = sInfSpeed;
 	InfSpeed_const.zero();
 	InfCirculation = 0;
+	gravitation = TVec(0,0);
 	Time = dt = Re = Pr = cache_time = cache2_time = 0;
 	InfSpeed_cache.zero();
 	InfSpeed_cache2.zero();
@@ -138,10 +140,12 @@ void Space::Save(const char* format)
 		fwrite(&size, 8, 1, fout);
 		const_for (body.List, latt)
 		{
+			long int bc = latt->bc;
+			long int hc = latt->hc;
 			fwrite(pointer(&latt->corner), 16, 1, fout);
 			fwrite(pointer(&latt->g), 8, 1, fout);
-			fwrite(pointer(&latt->bc), 8, 1, fout);
-			fwrite(pointer(&latt->hc), 8, 1, fout);
+			fwrite(pointer(&bc), 8, 1, fout);
+			fwrite(pointer(&hc), 8, 1, fout);
 			fwrite(pointer(&latt->heat_const), 8, 1, fout);
 		}
 		#undef body
@@ -215,11 +219,14 @@ void Space::Load(const char* fname)
 			int64_t size; fread(&size, 8, 1, fin);
 			for (int64_t i=0; i<size; i++)
 			{
+				long int bc, hc;
 				fread(&att.corner, 16, 1, fin);
 				fread(&att.g, 8, 1, fin);
-				fread(&att.bc, 8, 1, fin);
-				fread(&att.hc, 8, 1, fin);
+				fread(&bc, 8, 1, fin);
+				fread(&hc, 8, 1, fin);
 				fread(&att.heat_const, 8, 1, fin);
+				att.bc = bc::bc(bc);
+				att.hc = hc::hc(hc);
 
 				body->List->push_back(att);
 			}
@@ -252,6 +259,9 @@ void Space::CalcForces()
 	{
 		double tmp_gsum = 0;
 		//TObj tmp_fric(0,0,0);
+		body.Friction_prev = body.Friction;
+		body.Friction.zero();
+
 		const_for(body.List, latt)
 		{
 			tmp_gsum+= latt->gsum;
@@ -259,14 +269,14 @@ void Space::CalcForces()
 			latt->Fr += latt->fric * C_NyuDt_Pi;
 			latt->Nu += latt->hsum * (Re*Pr / latt->dl.abs());
 
-			body.Friction += latt->dl * (latt->fric * C_Nyu_Pi / latt->dl.abs());
+			body.Friction -= latt->dl * (latt->fric * C_Nyu_Pi / latt->dl.abs());
 			body.Friction.g += (rotl(*latt)* latt->dl) * (latt->fric  * C_Nyu_Pi / latt->dl.abs());
 			body.Nusselt += latt->hsum * (Re*Pr);
 		}
 
-		body.Force -= body.getArea() * (InfSpeed() - InfSpeed(Time-dt));
-		body.Force /= dt;
-		body.Force.g /= dt;
+		//body.Force -= body.getArea() * (InfSpeed() - InfSpeed(Time-dt));
+		(TVec)body.Force_export = (body.Force_born - body.Force_dead)/dt;
+		body.Force_export.g = (body.Force_born.g - body.Force_dead.g)/dt;
 		//body.Friction /= dt;
 		//body.Friction.g /= dt;
 		body.Nusselt /= dt;
@@ -322,7 +332,8 @@ void Space::ZeroForces()
 			latt->ParticleInHeatLayer = -1;
 		}
 
-		(**llbody).Force.zero();
+		(**llbody).Force_dead.zero();
+		(**llbody).Force_born.zero();
 		(**llbody).Friction.zero();
 		(**llbody).Nusselt = 0;
 	}
@@ -427,7 +438,7 @@ int Space::LoadBody(const char* filename)
 	if (!fin) { cerr << "No file called " << filename << endl; return -1; } 
 
 	TAtt att; att.body = body; att.zero();
-	while ( fscanf(fin, "%lf %lf %d %d %lf", &att.corner.rx, &att.corner.ry, &att.bc, &att.hc, &att.heat_const)==5 )
+	while ( fscanf(fin, "%lf %lf %c %c %lf", &att.corner.rx, &att.corner.ry, &att.bc, &att.hc, &att.heat_const)==5 )
 	{
 		body->List->push_back(att);
 	}
@@ -445,8 +456,8 @@ int Space::LoadBody(const char* filename)
 	}
 
 	fclose(fin);
-	body->doFillProperties();
 	body->doUpdateSegments();
+	body->doFillProperties();
 	EnumerateBodies();
 
 	return 0;

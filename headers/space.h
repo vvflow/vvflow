@@ -17,8 +17,6 @@ namespace val
 	TValues Nu = 4;
 }
 
-const char *current_version = "v: 1.1  "; //binary file format
-
 class Space
 {
 	public:
@@ -38,6 +36,7 @@ class Space
 		TVec InfMarker;
 		void ZeroSpeed();
 		double InfCirculation;
+		TVec gravitation; //gravitational acceleration
 		double Time, dt, Re, Pr;
 
 		void Save(const char* format);

@@ -42,5 +42,11 @@ for i in $@
 do
 	beg=$(od -j$(expr $i \* 16) -N8 -An -w8 -td8 $file)
 	size=$(od -j$beg -N8 -An -w8 -td8 $file)
-	od -j$(expr $beg + 8) -N$(expr $size \* 24) -w24 -An -tf8 $file
+	BMname=$(head -c$(expr $i \* 16 + 16)  $file | tail -c8);
+	if test $BMname = Body
+	then
+		od -j$(expr $beg + 8) -N$(expr $size \* 48) -w48 -An -tf8 $file
+	else
+		od -j$(expr $beg + 8) -N$(expr $size \* 24) -w24 -An -tf8 $file
+	fi
 done

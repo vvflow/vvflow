@@ -10,15 +10,14 @@ class TAtt;
 namespace bc{
 	enum BoundaryCondition
 	{
-		slip = 's',
+		slip = 'l',
 		noslip = 'n',
 		zero = 'z',
 		steady = 's',
 		inf_steady = 'i',
-		force_x = 'x',
-		force_y = 'y',
-		moment = 'm'
 	};
+
+	BoundaryCondition bc(int i);
 }
 
 namespace hc{
@@ -28,6 +27,8 @@ namespace hc{
 		const_t = 't',
 		const_W = 'w'
 	};
+
+	HeatCondition hc(int i);
 }
 
 class TAtt : public TObj
@@ -83,7 +84,8 @@ class TBody
 		double kx, ky, ka;
 		double density; //in doc \frac{\rho_b}{\rho_0}
 
-		TObj Force, Friction; //computed by S->CalcForces
+		TObj Friction, Friction_prev, Force_export; //computed by S->CalcForces
+		TObj Force_born, Force_dead; //computed in flowmove
 		double Nusselt; //computed by S->CalcForces
 		double g_dead;
 
@@ -112,7 +114,7 @@ class TBody
 		double getArea()    {return _area;}
 		TVec   getCom()     {return _com;} // center of mass
 		double getMoi_c()   {return _moi_c;} // moment of inertia about rotation axis
-		double size()       {return List->size_safe();}
+		int size()       {return List->size_safe();}
 
 		TAtt* next(TAtt* att) const { return List->next(att); }
 		TAtt* prev(TAtt* att) const { return List->prev(att); }

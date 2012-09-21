@@ -424,7 +424,7 @@ X_b =
 \begin{equation}
 \label{eq_noslip}
 \left(\begin{matrix}
-\Xi_\gamma(\vec c_1, \vec c_2, \vec r_s)\dotsc& ~~a_{I}& a_{II}& a_{III}\\
+\Xi_\gamma(\vec c_1, \vec c_2, \vec c_s)\dotsc& ~~a_{I}& a_{II}& a_{III}\\
 \end{matrix}\right)
 \cdot X
 =
@@ -554,9 +554,15 @@ $\Delta \gamma_s$ --- приращение циркуляции на отрез�
 $\vec V_s$ --- скорость отрезка в соответствии с~(\ref{eq_SegmentVelocity}). Берется с предыдущего шага.\\
 $\vec r_* = \vec r_s - (\vec R + \Delta \vec R)$, $\vec c_* = \vec c_s - (\vec R + \Delta \vec R)$ --- координаты относительно оси вращения тела~(\ref{eq_SegmentVelocity}).
 
-Постеднюю сумму (которая с предыдущего шага), можно посчитать аналитически. Она равна
+Последние суммы (которые с предыдущего шага), можно посчитать аналитически.
 \begin{equation*}
-\dfrac{1}{2} \sum [\vec e_z \times \Delta \vec l_s] V_s^2 = - [\vec e_z \times \vec V_?]\omega_? S + \omega_?^2 (\vec r_\text{com} - (\vec R + \Delta \vec R)) S
+\dfrac{1}{2} \sum [\vec e_z \times \Delta \vec l_s] V_s^2 = - [\vec e_z \times \vec V_?]\omega_? S + \vec r_{*\text{com}} \omega_?^2 S
+\end{equation*}
+%%%%%%%%%%%%%%
+\begin{equation*}
+\frac{1}{2} \sum\limits_{s=1}^{N_s} (\vec r_* \cdot \Delta \vec l_s) \cdot V_s^2
+=
+- \vec r_{*\text{com}} \vec V_? \omega_? S
 \end{equation*}
 
 Итого уравнение превращается в такое:
@@ -572,7 +578,7 @@ $\vec r_* = \vec r_s - (\vec R + \Delta \vec R)$, $\vec c_* = \vec c_s - (\vec R
 \left(\begin{matrix}
 	\dfrac{[\vec e_z \times \vec c]}{\Delta t}
 	\dotsc
-	&\abinom{-\frac{S}{\Delta t}\frac{\rho_b}{\rho_0}}{0}
+	&~~\abinom{-\frac{S}{\Delta t}\frac{\rho_b}{\rho_0}}{0}
 	&\abinom{0}{-\frac{S}{\Delta t}\frac{\rho_b}{\rho_0}}
 	&\abinom{0}{0}
 \end{matrix}\right)
@@ -586,66 +592,24 @@ $\vec r_* = \vec r_s - (\vec R + \Delta \vec R)$, $\vec c_* = \vec c_s - (\vec R
 		}_{\text{с предыдущего шага}}
 \end{multline}
 
-Учитывая все сказанное, составим левую часть системы линейных уравнений.
-
-\begin{equation}
-\label{slae}
-A_b = \left (
-\begin{array}{ccccccccc}
-\Xi_\gamma & \Xi_\gamma & \hdotsfor{3} & \Xi_\gamma & a_I & a_{II} & a_{III}\\
-\vdots & \ddots & \ddots &&& \vdots & \vdots & \vdots & \vdots \\
-\vdots && \ddots & \ddots && \vdots & \vdots & \vdots & \vdots \\
-\vdots &&& \ddots & \ddots & \vdots & \vdots & \vdots & \vdots \\
-\Xi_\gamma & \hdotsfor{3} & \Xi_\gamma & \Xi_\gamma & a_I & a_{II} & a_{III} \\
-1 & \hdotsfor{4} & 1 & 0 & 0 & 2S \\
--\Delta l_y & \hdotsfor{4} & -\Delta l_y & -\dfrac{\rho_b}{\rho_0}S & 0 & 0\\
-\Delta l_x & \hdotsfor{4} & \Delta l_x & 0 & -\dfrac{\rho_b}{\rho_0}S & 0 \\
-{r_*^2/2} & \hdotsfor{4} & {r_*^2/2} & 0 & 0 & -\dfrac{\rho_b}{\rho_0}J_c \\
-\end{array}
-\right)
-\cdot
-\begin{pmatrix}
-\gamma_1 \\ \vdots \\ \gamma_s \\ \vdots \\ \gamma_{N_s - 1} \\ \gamma_{N_s}
-\\ V_{x?} \\ V_{y?} \\ \omega_?
-\end{pmatrix}
-\end{equation}
-
-И правую часть:
-\begin{equation}
-\label{slae_right}
-B_b = 
-\begin{pmatrix}
-	-\sum\limits_{v=0}^{N_v} \Xi_\gamma(\vec c_1, \vec c_2, \vec r_v) \gamma_v\\
-	\vdots \\
-	-\sum\limits_{v=0}^{N_v} \Xi_\gamma(\vec c_{s}, \vec c_{s+1}, \vec r_v) \gamma_v\\
-	\vdots \\
-	-\sum\limits_{v=0}^{N_v} \Xi_\gamma(\vec c_{N_s-1}, \vec c_{N_s}, \vec r_v) \gamma_v\\
-	-\sum\limits_{v=0}^{N_v} \gamma_v\\
-	\underbrace {
-			- \dfrac{\rho_b}{\rho_0} S V_{x?} 
-			- \frac{\Delta t}{2} \sum\limits_{s=1}^{N_s} \Delta l_{ys} \cdot V_s^2
-			+ F_{x~\text{dead}}
+\begin{multline}
+\label{eq_newton_moment}
+\left(\begin{matrix}
+	\dfrac{c_*^2}{2\Delta t}
+	\dotsc
+	&~~0
+	&0
+	&-\frac{J_c}{\Delta t} \frac{\rho_b}{\rho_0}
+\end{matrix}\right)
+\cdot X =\\
+	 k_\alpha \Delta \alpha +\\
+	+ \underbrace {
+			M_\text{dead}
+			- M_\tau
+			- \dfrac{\rho_b}{\rho_0} J_c \frac{\omega_?}{\Delta t}
+			+ \frac{1}{2} \sum\limits_{s=1}^{N_s} (\vec r_* \cdot \Delta \vec l_s) \cdot V_s^2
 		}_{\text{с предыдущего шага}}
-		 - \left(\dfrac{\rho_b}{\rho_0}-1\right)S \Delta t g_x + \Delta t k_x \Delta R_x - F_{\tau x}\\
-	\underbrace {
-			- \dfrac{\rho_b}{\rho_0} S V_{y?}
-			+\frac{\Delta t}{2} \sum\limits_{s=1}^{N_s} \Delta l_{xs} \cdot V_s^2
-			+ F_{y~\text{dead}}
-		}_{\text{с предыдущего шага}}
-		 - \left(\dfrac{\rho_b}{\rho_0}-1\right)S \Delta t g_y + \Delta t k_y \Delta R_y - F_{\tau y}\\
-	\underbrace {
-			- \dfrac{\rho_b}{\rho_0} J_c \omega_?
-			+\frac{\Delta t}{2} \sum\limits_{s=1}^{N_s} (\vec r_* \cdot \Delta \vec l_s) \cdot V_s^2
-			+ M_\text{dead}
-		}_{\text{с предыдущего шага}}
-		 + \Delta t k_\omega \Delta \alpha\\
-\end{pmatrix}
-\end{equation}
-
-Галя еще дала вот такую формулу, вдруг потом пригодится. Но она неправильная :(
-\begin{equation*}
-\dfrac{1}{2} \sum [\vec e_z \times \Delta \vec l_s] V_s^2 = - [\vec e_z \times \vec V_?]\omega_? S + \omega_?^2 (\vec r_\text{com} - (\vec R + \Delta \vec R)) S
-\end{equation*}
+\end{multline}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -654,24 +618,24 @@ B_b =
 \subsection{Силы и моменты}
 
 Повторим сказанное в~(\ref{eq_force},~\ref{eq_moment}).
-\begin{equation*}
-{\vec F} =
-\frac{1}{\Delta t} \sum\limits_{s=1}^{N_s} {\Delta \gamma_s \cdot [\vec e_z \times \vec r_s]} -
+\begin{equation}
+{\vec F_\text{fluid}} = 
+\frac{1}{\Delta t} \sum\limits_{s=1}^{N_s} {\Delta \gamma_s \cdot [\vec e_z \times \vec c_s]} -
 \underbrace {
 	\frac{1}{2} \sum\limits_{s=1}^{N_s}
 		[\vec e_z \times \Delta \vec l_s] \cdot V_s^2
 }_{\text{с предыдущего шага}}
-\end{equation*}
+\end{equation}
 %
-\begin{equation*}
-M =
-\frac{1}{2\Delta t}\sum\limits_{s=1}^{N_s} { \Delta \gamma_s \cdot \vec r_*^2 }
+\begin{equation}
+M_\text{fluid} =
+\frac{1}{2\Delta t}\sum\limits_{s=1}^{N_s} { \Delta \gamma_s \cdot \vec c_*^2 }
 -
 \underbrace {
 	\frac{1}{2} \sum\limits_{s=1}^{N_s}
 		(\vec r_* \cdot \Delta \vec l_s) \cdot V_s^2
 }_{\text{с предыдущего шага}}
-\end{equation*}
+\end{equation}
 %
 $\Delta \gamma_s$ --- приращение циркуляции на отрезке за текущий шаг (рожденные минус удаленные).\\
 $\vec V_s$ --- скорость отрезка в соответствии с~(\ref{eq_SegmentVelocity}). Берется с предыдущего шага.\\
@@ -838,14 +802,14 @@ I_0 = {\varepsilon^2\sum\limits_k \dfrac{\lvert\rho_k\rvert /\varepsilon +1}{\rh
 \item Решаем СЛАУ
 \item Удаляем дерево\\
 \item Сохраняемся: вихри, тела
-\item Спускаем вихри, чернила, тепло\\
+\item Спускаем вихри, чернила, тепло
+\item Сохраняем файл stepdata\\
 \item Строим дерево
 \item Считаем эпсилоны, объединяем вихри
 \item Считаем скорости: Convective, Diffusive, Boundary; скорости чернил, тепла
 \subitem Опционально: двигаем на пол шага, заменяем скорости на отрицательные.
 \subitem Опционально: считаем вторую половину скоростей.
 \item Двигаем вихри, тела, стриклайны; удаляем проникшие внутрь.
-\item Печатаем файл stepdata
 \item $t += \Delta t$
 \end{packed_enum}
 

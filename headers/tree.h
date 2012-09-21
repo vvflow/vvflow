@@ -44,7 +44,7 @@ class tree
 {
 	public:
 		tree(Space *sS, int sFarCriteria, double sMinNodeSize, double sMaxNodeSize = DBL_MAX);
-		~tree();
+		//~tree();
 
 		void build(bool IncludeVortexes = true, bool IncludeBody = true, bool IncludeHeat = true);
 		void destroy();

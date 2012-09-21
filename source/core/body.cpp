@@ -10,6 +10,32 @@ using namespace std;
 	this->body = body;
 	this->eq_no = eq_no;
 }*/
+namespace bc{
+BoundaryCondition bc(int i)
+{
+	switch (i)
+	{
+		case 'l': return slip;
+		case 'n': return noslip;
+		case 'z': return zero;
+		case 's': return steady;
+		case 'i': return inf_steady;
+	}
+	return slip;
+}}
+
+namespace hc{
+HeatCondition hc(int i)
+{
+	switch (i)
+	{
+		case 'n': return neglect;
+		case 'i': return isolate;
+		case 't': return const_t;
+		case 'w': return const_W;
+	}
+	return neglect;
+}}
 
 TBody::TBody(Space *sS)
 {
@@ -25,10 +51,12 @@ TBody::TBody(Space *sS)
 	Angle = deltaAngle = 0; Position = deltaPosition = TVec(0,0);
 	g_dead = 0;
 	Position = TVec(0,0);
-	Force = TObj(0,0,0);
+	Friction = Friction_prev = TObj(0,0,0);
+	Force_born = Force_dead = TObj(0,0,0);
 	_surface = _area = 0;
 	_com.zero();
 	_moi_c = _moi_com = 0;
+	kx = ky = ka = -1;
 }
 
 TBody::~TBody()
@@ -92,7 +120,7 @@ void TBody::doRotation()
 	}
 	Angle += angle_solid;
 	deltaAngle += angle_slae - angle_solid;
-	
+	RotationSpeed_slae_prev = RotationSpeed_slae;
 }
 
 void TBody::doMotion()
@@ -105,6 +133,7 @@ void TBody::doMotion()
 	}
 	Position += delta_solid;
 	deltaPosition += delta_slae - delta_solid;
+	MotionSpeed_slae_prev = MotionSpeed_slae;
 }
 
 void TBody::doUpdateSegments()
@@ -192,6 +221,8 @@ void TBody::doFillProperties()
 	_com = 0.5*_com/_area - Position;
 	_moi_com = 0.25*_moi_com - _area*(_com+Position).abs2();
 	_moi_c = _moi_com + _area*_com.abs2();
+
+	fprintf(stderr, "poroperties: %lf %lf %lf %lf %d\n", this->getArea(), this->getMoi_c(), this->getCom().rx, this->getCom().ry, this->size());
 }
 
 inline double atan2(const TVec &p)
