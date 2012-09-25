@@ -226,8 +226,8 @@ $\Delta \vec R = \Delta \vec R + (\vec V_{?} - \vec V) \cdot \Delta t$\\
 \begin{equation}
 \label{eq_AttachIntensity}
 \begin{split}
-\gamma_{\att~s} &= -\vec V_s \cdot \Delta \vec l_s \\
-q_{\att~s} &= -[\vec V_s \times \Delta \vec l_s] \\
+\gamma_{\att~s} &= -\vec V_s \cdot \Delta \vec l_s  = \vec n \times \vec V_s\\
+q_{\att~s} &= -[\vec V_s \times \Delta \vec l_s] = \vec n \cdot \vec V_s\\
 \end{split}
 \end{equation}
 
@@ -531,7 +531,7 @@ X_b =
 В соответствии с формулами 3.5.19, 3.5.20 в~\cite{vvd_book} (в другой версии книжки это 18.19 и 18.20) cилы и момент давления вычисляются по формулам
 \begin{equation}
 \label{eq_force}
-{\vec F_\text{fluid}} = 
+\dfrac{\vec F_\text{fluid}}{\rho_0} = 
 \frac{1}{\Delta t} \sum\limits_{s=1}^{N_s} {\Delta \gamma_s \cdot [\vec e_z \times \vec c_s]} -
 \underbrace {
 	\frac{1}{2} \sum\limits_{s=1}^{N_s}
@@ -541,7 +541,7 @@ X_b =
 %
 \begin{equation}
 \label{eq_moment}
-M_\text{fluid} =
+\dfrac{M_\text{fluid}}{\rho_0} =
 \frac{1}{2\Delta t}\sum\limits_{s=1}^{N_s} { \Delta \gamma_s \cdot \vec c_*^2 }
 -
 \underbrace {
@@ -550,7 +550,7 @@ M_\text{fluid} =
 }_{\text{с предыдущего шага}}
 \end{equation}
 %
-$\Delta \gamma_s$ --- приращение циркуляции на отрезке за текущий шаг (рожденные минус удаленные). Циркуляция рождается в узлах тела ($\vec c_s$)\\
+$\Delta \gamma_s$ --- приращение циркуляции на отрезке за текущий шаг. Этот член очень коварен, он включает в себя 3 части: рожденную циркуляцию в узлах тела ($\vec c_s$); удаленные на прошлом шаге вихри (их вклад мы предварительно сохраним в $\vec F_\text{dead}$, $M_\text{dead}$); а так же изменение присоединенной циркуляции (обозначим его $\vec F_\att$, $M_\att$).\\
 $\vec V_s$ --- скорость отрезка в соответствии с~(\ref{eq_SegmentVelocity}). Берется с предыдущего шага.\\
 $\vec r_* = \vec r_s - (\vec R + \Delta \vec R)$, $\vec c_* = \vec c_s - (\vec R + \Delta \vec R)$ --- координаты относительно оси вращения тела~(\ref{eq_SegmentVelocity}).
 
@@ -565,12 +565,20 @@ $\vec r_* = \vec r_s - (\vec R + \Delta \vec R)$, $\vec c_* = \vec c_s - (\vec R
 - \vec r_{*\text{com}} \vec V_? \omega_? S
 \end{equation*}
 
-Итого уравнение превращается в такое:
+Влияние присоединенных вихрей на силу выпишем здесь отдельно
+\begin{equation*}
+\dfrac{\vec F_\att}{\rho_0} = \dot{\vec{V}}_? S + [\vec e_z \times (3 \vec r_\text{com} - \vec r_c)] \dot{\omega}_? S
+\end{equation*}
+\begin{equation*}
+\dfrac{M_\att}{\rho_0} = [\dot{\vec{V}}_? \times \vec r_{*\text{com}}] S - 2 \dot{\omega}_? J_c
+\end{equation*}
 
+
+Итого уравнение превращается в такое:
 \begin{equation*}
 \vec F_{(\ref{eq_force})} + \left( \dfrac{\rho_b}{\rho_0} - 1 \right) \vec gS - k \Delta \vec R
 =
-\underbrace{\dfrac{\vec V_? - \vec V_?(t-\Delta t)}{\Delta t} \dfrac{\rho_b}{\rho_0}S}_{m \vec a}
+\vec{\dot V}_? \dfrac{\rho_b}{\rho_0}S
 \end{equation*}
 
 \begin{multline}
@@ -578,16 +586,16 @@ $\vec r_* = \vec r_s - (\vec R + \Delta \vec R)$, $\vec c_* = \vec c_s - (\vec R
 \left(\begin{matrix}
 	\dfrac{[\vec e_z \times \vec c]}{\Delta t}
 	\dotsc
-	&~~\abinom{-\frac{S}{\Delta t}\frac{\rho_b}{\rho_0}}{0}
-	&\abinom{0}{-\frac{S}{\Delta t}\frac{\rho_b}{\rho_0}}
-	&\abinom{0}{0}
+	&~~\abinom{-\frac{S}{\Delta t}\left(\frac{\rho_b}{\rho_0} - 1\right)}{0}
+	&\abinom{0}{-\frac{S}{\Delta t} \left(\frac{\rho_b}{\rho_0} - 1\right)}
+	&-\dfrac{S}{\Delta t} (3 \vec r_\text{com} - \vec r_c)
 \end{matrix}\right)
 \cdot X =\\
 	 - \left(\dfrac{\rho_b}{\rho_0}-1\right) \vec g S + k \Delta \vec R +\\
 	+ \underbrace {
 			\vec F_\text{dead}
 			- \vec F_\tau
-			- \dfrac{\rho_b}{\rho_0} S \frac{\vec V_?}{\Delta t}
+			- \left(\dfrac{\rho_b}{\rho_0} - 1\right) S \frac{\vec V_?}{\Delta t}
 			+ \frac{1}{2} \sum\limits_{s=1}^{N_s} [\vec e_z \times \Delta \vec l_s] \cdot V_s^2
 		}_{\text{с предыдущего шага}}
 \end{multline}
