@@ -282,7 +282,7 @@ if opts.count('o') > 0:
 
 if opts.count('b') > 0:
 	for b in bodies:
-		gp.write("""%s '%s' binary record=%d skip=%d format='%%3float64' u 1:2 w @body_style""" % (delim.get(), fin, b[1], b[0]+8))
+		gp.write("""%s '%s' binary record=%d skip=%d format='%%6float64' u 1:2 w @body_style""" % (delim.get(), fin, b[1], b[0]+8))
 
 gp.write("\n")
 gp.flush()

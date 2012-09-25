@@ -207,7 +207,7 @@ TVec convectivefast::BoundaryConvective(const TBody &b, const TVec &p)
 
 			TVec Vs2 = b.MotionSpeed_slae + b.RotationSpeed_slae * rotl(latt->corner + latt->dl - (b.Position + b.deltaPosition));
 			double g2 = -Vs2 * latt->dl;
-			double q2 = -rotl(Vs2) * latt->dl; 
+			double q2 = -rotl(Vs2) * latt->dl;
 
 			res+= (rotl(SegmentInfluence_linear_source(p, *latt, g1, g2)) + SegmentInfluence_linear_source(p, *latt, q1, q2));
 		} else
@@ -657,8 +657,9 @@ void convectivefast::FillMatrix(bool rightColOnly)
 		fillMomentEquation(*llibody, rightColOnly);
 	}
 
-	matrix->markBodyMatrixAsFilled();
-	fprintf(stderr, "%d %d\n\n", matrix->size, S->BodyList->size());
+	if (!rightColOnly)
+		matrix->markBodyMatrixAsFilled();
+
 	for (int i=0; i<matrix->size; i++)
 	{
 		for (int j=0; j< matrix->size; j++)

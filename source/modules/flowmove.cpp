@@ -139,7 +139,8 @@ void flowmove::VortexShed()
 				{ CleanedV_++; body.g_dead+= latt->g; }
 			else if ( latt->bc == bc::noslip )
 			{
-				ObjCopy = *latt;
+				ObjCopy = latt->corner + rotl(latt->dl)*0.05;
+				ObjCopy.g = latt->g;
 				body.Force_born += rotl(ObjCopy) * ObjCopy.g;
 				body.Force_born.g += (ObjCopy-body.Position-body.deltaPosition).abs2() * ObjCopy.g;
 				latt->gsum+= ObjCopy.g;
