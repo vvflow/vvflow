@@ -431,7 +431,7 @@ X_b =
 -[\Delta \vec l \times \vec V_\infty] - \sum\limits_{v=0}^{N_v} \Xi_\gamma (\vec c_1, \vec c_2, \vec r_v) \cdot \gamma_v
 \end{equation}
 
-Члены $a_1, a_2, a_3$ получаются из влияния присоединенных вихрей (чья интенсивность определяется неизвестной скоростью тела).
+Члены $a_1, a_2, a_3$ получаются из влияния присоединенных вихрей (чья интенсивность определяется неизвестной скоростью тела). Аналитически $a_1 = - \Delta l_y$, $a_2 = \Delta l_x$, но это утверждение еще надо проверить
 
 \begin{equation}
 \begin{split}
@@ -611,17 +611,18 @@ $\vec r_* = \vec r_s - (\vec R + \Delta \vec R)$, $\vec c_* = \vec c_s - (\vec R
 \left(\begin{matrix}
 	\dfrac{c_*^2}{2\Delta t}
 	\dotsc
-	&~~0
-	&0
-	&-\frac{J_c}{\Delta t} \frac{\rho_b}{\rho_0}
+	&~~r_{y * \text{com}} * \frac{S}{\Delta t}
+	&-r_{x * \text{com}} * \frac{S}{\Delta t}
+	&-\frac{J_c}{\Delta t} (\frac{\rho_b}{\rho_0} +2)
 \end{matrix}\right)
 \cdot X =\\
 	 k_\alpha \Delta \alpha +\\
 	+ \underbrace {
 			M_\text{dead}
 			- M_\tau
-			- \dfrac{\rho_b}{\rho_0} J_c \frac{\omega_?}{\Delta t}
-			+ \frac{1}{2} \sum\limits_{s=1}^{N_s} (\vec r_* \cdot \Delta \vec l_s) \cdot V_s^2
+			- [\vec r_{*\text{com}} \times \vec V_?] \dfrac{S}{\Delta t}
+			- J_c \frac{\omega_?}{\Delta t} \left( \dfrac{\rho_b}{\rho_0}  + 2 \right)
+			- \vec r_{*\text{com}} \vec V_? \omega_? S
 		}_{\text{с предыдущего шага}}
 \end{multline}
 
