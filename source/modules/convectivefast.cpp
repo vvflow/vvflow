@@ -275,8 +275,9 @@ double convectivefast::_2PI_Xi_g(TVec p, const TAtt &seg, double rd) // in doc 2
 	}
 }
 
-double convectivefast::_2PI_Xi_q(TVec p, const TAtt &seg, double rd) // in doc 2\pi\Xi_q (1.8)
+double convectivefast::_2PI_Xi_q(TVec &p, const TAtt &seg, double rd) // in doc 2\pi\Xi_q (1.8)
 {
+	if (&p == &seg) { return 0; }
 	complex<double> z(p.rx, -p.ry);
 	complex<double> zc(seg.rx,-seg.ry);
 	complex<double> dz(seg.dl.rx,-seg.dl.ry);
@@ -313,7 +314,12 @@ double convectivefast::_2PI_Xi_q(TVec p, const TAtt &seg, double rd) // in doc 2
 void convectivefast::_2PI_A123(const TAtt &seg, const TBody &b, double *A1, double *A2, double *A3)
 {
 	*A1 = *A2 = *A3 = 0;
-	if (!b.kx && !b.ky && !b.ka && !b.getRotation(S->Time) && b.getMotion(S->Time).iszero()) return;
+	if ((b.kx<0) && (b.ky<0) && (b.ka<0) && (!b.getRotation(S->Time)) && b.getMotion(S->Time).iszero()) 
+	{
+		//FIXME econome time. uncomment return
+		//fprintf(stderr, "ret:\t%lf\t%lf\n", seg.corner.rx, seg.corner.ry);
+		//return;
+	}
 	const_for(b.List, latt)
 	{
 		double _2piXi_g = _2PI_Xi_g(*latt, seg, latt->dl.abs()*0.25);
@@ -633,7 +639,7 @@ void convectivefast::FillMatrix(bool rightColOnly)
 		#pragma omp parallel for
 		const_for((**llibody).List, latt)
 		{
-			auto boundaryCondition = latt->bc;
+			bc::BoundaryCondition boundaryCondition = latt->bc;
 			switch (boundaryCondition)
 			{
 				case bc::slip:
@@ -649,6 +655,8 @@ void convectivefast::FillMatrix(bool rightColOnly)
 				case bc::inf_steady:
 					fillInfSteadyEquationForSegment(latt, rightColOnly);
 					break;
+				default:
+					fprintf(stderr, "Unknown bc: %d\n", boundaryCondition);
 			}
 		}
 
@@ -659,7 +667,7 @@ void convectivefast::FillMatrix(bool rightColOnly)
 
 	if (!rightColOnly)
 		matrix->markBodyMatrixAsFilled();
-
+/*
 	for (int i=0; i<matrix->size; i++)
 	{
 		for (int j=0; j< matrix->size; j++)
@@ -669,6 +677,6 @@ void convectivefast::FillMatrix(bool rightColOnly)
 
 		printf("\t%8.4lf\n", *matrix->rightColAtIndex(i));
 	}
-	printf("\n\n");
+	printf("\n\n");*/
 }
 

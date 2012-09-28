@@ -438,8 +438,11 @@ int Space::LoadBody(const char* filename)
 	if (!fin) { cerr << "No file called " << filename << endl; return -1; } 
 
 	TAtt att; att.body = body; att.zero();
-	while ( fscanf(fin, "%lf %lf %c %c %lf", &att.corner.rx, &att.corner.ry, &att.bc, &att.hc, &att.heat_const)==5 )
+	char bc_char, hc_char;
+	while ( fscanf(fin, "%lf %lf %c %c %lf", &att.corner.rx, &att.corner.ry, &bc_char, &hc_char, &att.heat_const)==5 )
 	{
+		att.bc = bc::bc(bc_char);
+		att.hc = hc::hc(hc_char);
 		body->List->push_back(att);
 	}
 

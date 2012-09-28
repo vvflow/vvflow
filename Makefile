@@ -16,7 +16,7 @@
 #                   VARIABLES                    #
 #________________________________________________#
 
-CC		= icc -O3 -g -openmp
+CC		= icc -O0 -g -openmp
 AR		= xiar
 
 parts 	:= core modules

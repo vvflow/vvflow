@@ -224,8 +224,6 @@ void TBody::doFillProperties()
 	_com = 0.5*_com/_area - Position;
 	_moi_com = 0.25*_moi_com - _area*(_com+Position).abs2();
 	_moi_c = _moi_com + _area*_com.abs2();
-
-	fprintf(stderr, "poroperties: %lf %lf %lf %lf %d\n", this->getArea(), this->getMoi_c(), this->getCom().rx, this->getCom().ry, this->size());
 }
 
 inline double atan2(const TVec &p)
