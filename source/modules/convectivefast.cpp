@@ -277,7 +277,7 @@ double convectivefast::_2PI_Xi_g(TVec p, const TAtt &seg, double rd) // in doc 2
 
 double convectivefast::_2PI_Xi_q(TVec &p, const TAtt &seg, double rd) // in doc 2\pi\Xi_q (1.8)
 {
-	if (&p == &seg) { return 0; }
+	if (&p == &seg) { TVec pnew = p-rotl(seg.dl)*0.001; return _2PI_Xi_q(pnew, seg, rd); }
 	complex<double> z(p.rx, -p.ry);
 	complex<double> zc(seg.rx,-seg.ry);
 	complex<double> dz(seg.dl.rx,-seg.dl.ry);
@@ -311,11 +311,11 @@ double convectivefast::_2PI_Xi_q(TVec &p, const TAtt &seg, double rd) // in doc 
 	}
 }
 
-void convectivefast::_2PI_A123(const TAtt &seg, const TBody &b, double *A1, double *A2, double *A3)
+void convectivefast::_2PI_A123(const TAtt &seg, const TBody &b, double *_2PI_A1, double *_2PI_A2, double *_2PI_A3)
 {
-	*A1 = -seg.ry;
-	*A2 = seg.rx;
-	*A3 = 0;
+	*_2PI_A1 = -C_2PI * seg.ry;
+	*_2PI_A2 = C_2PI * seg.rx;
+	*_2PI_A3 = 0;
 	if ((b.kx<0) && (b.ky<0) && (b.ka<0) && (!b.getRotation(S->Time)) && b.getMotion(S->Time).iszero()) 
 	{
 		//FIXME econome time. uncomment return
@@ -330,7 +330,7 @@ void convectivefast::_2PI_A123(const TAtt &seg, const TBody &b, double *A1, doub
 		TVec r0 = *latt - (b.Position + b.deltaPosition);
 //		*A1 -= Xi*latt->dl;
 //		*A2 -= rotl(Xi)*latt->dl;
-		*A3 -= rotl(Xi) * TVec(latt->dl * r0, rotl(latt->dl)*r0);
+		*_2PI_A3 -= rotl(Xi) * TVec(latt->dl * r0, rotl(latt->dl)*r0);
 	}
 }
 
@@ -415,11 +415,11 @@ void convectivefast::fillSlipEquationForSegment(TAtt* seg, bool rightColOnly)
 			*matrix->objectAtIndex(seg_eq_no, lobj->eq_no) = _2PI_Xi_g(lobj->corner, *seg, lobj->dl.abs()*0.25)*C_1_2PI;
 		}
 
-		double A1, A2, A3;
-		_2PI_A123(*seg, jbody, &A1, &A2, &A3);
-		*matrix->objectAtIndex(seg_eq_no, jbody.eq_forces_no+0) = A1;
-		*matrix->objectAtIndex(seg_eq_no, jbody.eq_forces_no+1) = A2;
-		*matrix->objectAtIndex(seg_eq_no, jbody.eq_forces_no+2) = A3;
+		double _2PI_A1, _2PI_A2, _2PI_A3;
+		_2PI_A123(*seg, jbody, &_2PI_A1, &_2PI_A2, &_2PI_A3);
+		*matrix->objectAtIndex(seg_eq_no, jbody.eq_forces_no+0) = _2PI_A1*C_1_2PI;
+		*matrix->objectAtIndex(seg_eq_no, jbody.eq_forces_no+1) = _2PI_A2*C_1_2PI;
+		*matrix->objectAtIndex(seg_eq_no, jbody.eq_forces_no+2) = _2PI_A3*C_1_2PI;
 
 		#undef jbody
 	}
@@ -582,7 +582,7 @@ void convectivefast::fillForceYEquation(TBody* ibody, bool rightColOnly)
 	*matrix->solutionAtIndex(eq_no) = &ibody->MotionSpeed_slae.ry;
 
 	//right column
-	if ( ibody->kx >= 0 )
+	if ( ibody->ky >= 0 )
 		*matrix->rightColAtIndex(eq_no) = 
 			- (ibody->density-1.0) * S->gravitation.ry * ibody->getArea()
 			+ ibody->ky * ibody->deltaPosition.ry +
@@ -638,9 +638,10 @@ void convectivefast::fillMomentEquation(TBody* ibody, bool rightColOnly)
 	*matrix->solutionAtIndex(eq_no) = &ibody->RotationSpeed_slae;
 
 	//right column
-	if ( ibody->kx >= 0 )
+	if ( ibody->ka >= 0 )
 		*matrix->rightColAtIndex(eq_no) = 
 			+ ibody->ka * ibody->deltaAngle +
+			- (ibody->density-1.0) * (rotl(r_c_com)*S->gravitation) * ibody->getArea()
 			+ ibody->Force_dead.g
 			- ibody->Friction_prev.g
 			- rotl(r_c_com)*ibody->MotionSpeed_slae_prev * ibody->getArea() * _1_dt

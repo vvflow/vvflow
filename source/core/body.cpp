@@ -57,6 +57,7 @@ TBody::TBody(Space *sS)
 	_com.zero();
 	_moi_c = _moi_com = 0;
 	kx = ky = ka = -1;
+	density = 1;
 }
 
 TBody::~TBody()
