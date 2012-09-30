@@ -277,7 +277,7 @@ double convectivefast::_2PI_Xi_g(TVec p, const TAtt &seg, double rd) // in doc 2
 
 double convectivefast::_2PI_Xi_q(TVec &p, const TAtt &seg, double rd) // in doc 2\pi\Xi_q (1.8)
 {
-	if (&p == &seg) { TVec pnew = p-rotl(seg.dl)*0.001; return _2PI_Xi_q(pnew, seg, rd); }
+	if (&p == &seg) { TVec pnew = p+rotl(seg.dl)*0.001; return _2PI_Xi_q(pnew, seg, rd); }
 	complex<double> z(p.rx, -p.ry);
 	complex<double> zc(seg.rx,-seg.ry);
 	complex<double> dz(seg.dl.rx,-seg.dl.ry);
@@ -330,7 +330,7 @@ void convectivefast::_2PI_A123(const TAtt &seg, const TBody &b, double *_2PI_A1,
 		TVec r0 = *latt - (b.Position + b.deltaPosition);
 //		*A1 -= Xi*latt->dl;
 //		*A2 -= rotl(Xi)*latt->dl;
-		*_2PI_A3 -= rotl(Xi) * TVec(latt->dl * r0, rotl(latt->dl)*r0);
+		*_2PI_A3 -= Xi * TVec(rotl(r0) * latt->dl, -latt->dl*r0);
 	}
 }
 
