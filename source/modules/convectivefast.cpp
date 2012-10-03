@@ -316,7 +316,7 @@ void convectivefast::_2PI_A123(const TAtt &seg, const TBody &b, double *_2PI_A1,
 	*_2PI_A1 = -C_2PI * seg.ry;
 	*_2PI_A2 = C_2PI * seg.rx;
 	*_2PI_A3 = 0;
-	if ((b.kx<0) && (b.ky<0) && (b.ka<0) && (!b.getRotation(S->Time)) && b.getMotion(S->Time).iszero()) 
+	if ((b.ka<0) && (!b.getRotation())) 
 	{
 		//FIXME econome time. uncomment return
 		//fprintf(stderr, "ret:\t%lf\t%lf\n", seg.corner.rx, seg.corner.ry);
@@ -552,7 +552,7 @@ void convectivefast::fillForceXEquation(TBody* ibody, bool rightColOnly)
 			- (-ibody->MotionSpeed_slae_prev.ry) * ibody->RotationSpeed_slae_prev * ibody->getArea()
 			+ sqr(ibody->RotationSpeed_slae_prev) * ibody->getArea() * (ibody->getCom() - ibody->Position - ibody->deltaPosition).rx;
 	else
-		*matrix->rightColAtIndex(eq_no) = ibody->getMotion(S->Time).rx;
+		*matrix->rightColAtIndex(eq_no) = ibody->getSpeedX();
 }
 
 void convectivefast::fillForceYEquation(TBody* ibody, bool rightColOnly)
@@ -592,7 +592,7 @@ void convectivefast::fillForceYEquation(TBody* ibody, bool rightColOnly)
 			- (ibody->MotionSpeed_slae_prev.rx) * ibody->RotationSpeed_slae_prev * ibody->getArea()
 			+ sqr(ibody->RotationSpeed_slae_prev) * ibody->getArea() * (ibody->getCom() - ibody->Position - ibody->deltaPosition).ry;
 	else
-		*matrix->rightColAtIndex(eq_no) = ibody->getMotion(S->Time).ry;
+		*matrix->rightColAtIndex(eq_no) = ibody->getSpeedY();
 }
 
 void convectivefast::fillMomentEquation(TBody* ibody, bool rightColOnly)
@@ -648,7 +648,7 @@ void convectivefast::fillMomentEquation(TBody* ibody, bool rightColOnly)
 			- ibody->getMoi_c() * ibody->RotationSpeed_slae_prev * _1_dt * (ibody->density + 2)
 			- (r_c_com * ibody->MotionSpeed_slae_prev) * ibody->RotationSpeed_slae_prev * ibody->getArea();
 	else
-		*matrix->rightColAtIndex(eq_no) = ibody->getRotation(S->Time);
+		*matrix->rightColAtIndex(eq_no) = ibody->getRotation();
 }
 
 void convectivefast::FillMatrix(bool rightColOnly)

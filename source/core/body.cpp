@@ -43,10 +43,9 @@ TBody::TBody(Space *sS)
 	List = new vector<TAtt>();
 	HeatLayerList = new vector<TVec>();
 
-	RotSpeed_link = NULL;
-	RotSpeed_const = 0;
-	MotSpeed_link = NULL;
-	MotSpeed_const = TVec(0,0);
+	SpeedX = new ShellScript;
+	SpeedY = new ShellScript;
+	SpeedO = new ShellScript;
 
 	Angle = deltaAngle = 0; Position = deltaPosition = TVec(0,0);
 	g_dead = 0;
@@ -64,7 +63,20 @@ TBody::~TBody()
 {
 	delete List;
 	delete HeatLayerList;
+
+	delete SpeedX;
+	delete SpeedY;
+	delete SpeedO;
 }
+
+double TBody::getRotation() const
+{ return SpeedO->getValue(S->Time); }
+double TBody::getSpeedX() const
+{ return SpeedX->getValue(S->Time); }
+double TBody::getSpeedY() const
+{ return SpeedY->getValue(S->Time); }
+TVec TBody::getMotion() const
+{ return TVec(getSpeedX(), getSpeedY());}
 
 /*int TBody::LoadFromFile(const char* filename, int start_eq_no)
 {
@@ -88,18 +100,6 @@ TBody::~TBody()
 	return 0;
 }*/
 
-void TBody::setRotation(double (*sRotSpeed)(double time), double sRotSpeed_const)
-{
-	RotSpeed_link = sRotSpeed;
-	RotSpeed_const = sRotSpeed_const;
-}
-
-void TBody::setMotion(TVec (*sMotSpeed)(double time), TVec sMotSpeed_const)
-{
-	MotSpeed_link = sMotSpeed;
-	MotSpeed_const = sMotSpeed_const;
-}
-
 void TBody::doRotationAndMotion()
 {
 	if (!this) return;
@@ -113,7 +113,7 @@ void TBody::doRotationAndMotion()
 void TBody::doRotation()
 {
 	double angle_slae = RotationSpeed_slae * S->dt; //in doc \omega_? \Delta t
-	double angle_solid = getRotation(S->Time) * S->dt; // in doc \omega \Delta t
+	double angle_solid = SpeedO->getValue(S->Time) * S->dt; // in doc \omega \Delta t
 	const_for (List, lobj)
 	{
 		TVec dr = lobj->corner - (Position + deltaPosition);
@@ -127,7 +127,7 @@ void TBody::doRotation()
 void TBody::doMotion()
 {
 	TVec delta_slae = MotionSpeed_slae * S->dt;
-	TVec delta_solid = getMotion(S->Time) * S->dt;
+	TVec delta_solid = TVec(SpeedX->getValue(S->Time), SpeedY->getValue(S->Time)) * S->dt;
 	const_for (List, lobj)
 	{
 		lobj->corner += delta_slae;

@@ -8,11 +8,11 @@ const double ExpArgRestriction = -8.;
 #include "iostream"
 using namespace std;
 
-diffusivefast::diffusivefast(Space *sS, double sRe, double sPr)
+diffusivefast::diffusivefast(Space *sS)
 {
 	S = sS;
-	S->Re = Re = sRe;
-	S->Pr = Pr = sPr;
+	Re = S->Re;
+	Pr = S->Pr;
 }
 
 void diffusivefast::CalcVortexDiffusiveFast()

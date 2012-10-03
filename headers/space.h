@@ -7,8 +7,6 @@ class Space;
 #include "tree.h"
 #include "elementary.h"
 
-using namespace std;
-
 typedef const char TValues;
 namespace val
 {
@@ -20,7 +18,8 @@ namespace val
 class Space
 {
 	public:
-		Space(TVec (*sInfSpeed)(double time) = NULL);
+		Space();
+		char* name;
 
 		vector<TBody*> *BodyList;
 		vector<TObj> *VortexList;
@@ -31,13 +30,15 @@ class Space
 
 		inline void FinishStep(); //update time and coord variables
 
-		TVec InfSpeed();
-		TVec InfSpeed(double t);
+		ShellScript *InfSpeedX;
+		ShellScript *InfSpeedY;
+		TVec InfSpeed() {return TVec(InfSpeedX->getValue(Time), InfSpeedY->getValue(Time));}
 		TVec InfMarker;
 		void ZeroSpeed();
 		double InfCirculation;
 		TVec gravitation; //gravitational acceleration
-		double Time, dt, Re, Pr;
+		double Time, dt, Re, Pr, Finish;
+		double save_dt, streak_dt, profile_dt;
 
 		void Save(const char* format);
 		void Load(const char* filename);
@@ -53,7 +54,7 @@ class Space
 		int LoadStreak(const char* filename);
 		int LoadStreakSource(const char* filename);
 
-		int LoadBody(const char* filename);
+		int LoadBody(const char* filename, int cols=5);
 		void EnumerateBodies();
 		void ZeroBodies(); //zero Cp, Fr, Nu variables.
 
@@ -63,14 +64,6 @@ class Space
 		double gmax();
 		TVec HydroDynamicMomentum();
 		double AverageSegmentLength();
-
-	private:
-		TVec (*InfSpeed_link)(double time);
-		TVec InfSpeed_const;
-		TVec InfSpeed_cache;
-		double cache_time;
-		TVec InfSpeed_cache2;
-		double cache2_time;
 };
 
 #endif /*SPACE_H_*/

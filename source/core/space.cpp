@@ -10,9 +10,9 @@
 using namespace std;
 
 #include "space.h"
-const char *current_version = "v: 1.1  "; //binary file format
+const char *current_version = "v: 1.2  "; //binary file format
 
-Space::Space(TVec (*sInfSpeed)(double time))
+Space::Space()
 {
 	VortexList = NULL; //new vector<TObj>();
 	HeatList = NULL; //new vector<TObj>();
@@ -21,14 +21,17 @@ Space::Space(TVec (*sInfSpeed)(double time))
 	StreakSourceList = new vector<TObj>();
 	StreakList = new vector<TObj>();
 
-	InfSpeed_link = sInfSpeed;
-	InfSpeed_const.zero();
+	InfSpeedX = new ShellScript();
+	InfSpeedY = new ShellScript();
 	InfCirculation = 0;
 	gravitation = TVec(0,0);
-	Time = dt = Re = Pr = cache_time = cache2_time = 0;
-	InfSpeed_cache.zero();
-	InfSpeed_cache2.zero();
+	Finish = DBL_MAX;
+	Time = dt = Re = Pr = 0;
+	save_dt = streak_dt = profile_dt = DBL_MAX;
 	InfMarker.zero();
+
+	name = new char[64];
+	name[0] = 0;
 }
 
 inline
@@ -40,25 +43,6 @@ void Space::FinishStep()
 		body.doRotationAndMotion();
 	}
 	Time+= dt;
-}
-
-TVec Space::InfSpeed()
-{
-	if (cache_time != Time)
-	{
-		cache2_time = cache_time;
-		InfSpeed_cache2 = InfSpeed_cache;
-		cache_time = Time;
-		InfSpeed_cache = (Time>0)?(InfSpeed_link?InfSpeed_link(Time):InfSpeed_const):TVec(0,0);
-	}
-
-	return InfSpeed_cache;
-}
-
-TVec Space::InfSpeed(double t)
-{
-	if (t == cache2_time) return InfSpeed_cache2;
-	return (Time>0)?(InfSpeed_link?InfSpeed_link(t):InfSpeed_const):TVec(0,0);
 }
 
 /********************************** SAVE/LOAD *********************************/
@@ -107,12 +91,20 @@ void Space::Save(const char* format)
 	SaveBookmark(fout, 0, "Header  ");
 	{
 		fwrite(current_version, 8, 1, fout);
+		fwrite(name, 1, 64, fout);
 		fwrite(&Time, 8, 1, fout);
 		fwrite(&dt, 8, 1, fout);
+		fwrite(&save_dt, 8, 1, fout);
+		fwrite(&streak_dt, 8, 1, fout);
+		fwrite(&profile_dt, 8, 1, fout);
 		fwrite(&Re, 8, 1, fout);
 		fwrite(&Pr, 8, 1, fout);
 		fwrite(&InfMarker, 16, 1, fout);
-		TVec inf = InfSpeed(); fwrite(&inf, 16, 1, fout);
+		InfSpeedX->write(fout);
+		InfSpeedY->write(fout);
+		fwrite(&InfCirculation, 8, 1, fout);
+		fwrite(&gravitation, 16, 1, fout);
+		fwrite(&Finish, 8, 1, fout);
 		time_t rt; time(&rt); int64_t rawtime=rt; fwrite(&rawtime, 8, 1, fout);
 	}
 
@@ -127,13 +119,19 @@ void Space::Save(const char* format)
 	const_for(BodyList, llbody)
 	{
 		#define body (**llbody)
+		// пишем общую информацию о данном теле. 
 		SaveBookmark(fout, ++bookmark, "BData   ");
 		fwrite(&body.Angle, 8, 1, fout);
 		fwrite(&body.Position, 16, 1, fout);
-		double RotSpeed_tmp = body.getRotation(Time);
-		TVec   MotSpeed_tmp = body.getMotion(Time);
-		fwrite(&RotSpeed_tmp, 8, 1, fout);
-		fwrite(&MotSpeed_tmp, 16, 1, fout);
+		fwrite(&body.deltaAngle, 8, 1, fout);
+		fwrite(&body.deltaPosition, 16, 1, fout);
+		body.SpeedX->write(fout);
+		body.SpeedY->write(fout);
+		body.SpeedO->write(fout);
+		fwrite(&body.RotationSpeed_slae, 8, 1, fout);
+		fwrite(&body.MotionSpeed_slae, 16, 1, fout);
+		fwrite(&body.RotationSpeed_slae_prev, 8, 1, fout);
+		fwrite(&body.MotionSpeed_slae_prev, 16, 1, fout);
 
 		SaveBookmark(fout, ++bookmark, "Body    ");
 		int64_t size = body.size();
@@ -147,6 +145,7 @@ void Space::Save(const char* format)
 			fwrite(pointer(&bc), 8, 1, fout);
 			fwrite(pointer(&hc), 8, 1, fout);
 			fwrite(pointer(&latt->heat_const), 8, 1, fout);
+			//FIXME maybe i should save gdead?
 		}
 		#undef body
 	}
@@ -188,12 +187,20 @@ void Space::Load(const char* fname)
 				exit(1);
 			}
 
+			fread(name, 1, 64, fin);
 			fread(&Time, 8, 1, fin);
 			fread(&dt, 8, 1, fin);
+			fread(&save_dt, 8, 1, fin);
+			fread(&streak_dt, 8, 1, fin);
+			fread(&profile_dt, 8, 1, fin);
 			fread(&Re, 8, 1, fin);
 			fread(&Pr, 8, 1, fin);
 			fread(&InfMarker, 16, 1, fin);
-			fread(&InfSpeed_const, 16, 1, fin);
+			InfSpeedX->read(fin);
+			InfSpeedY->read(fin);
+			fread(&InfCirculation, 8, 1, fin);
+			fread(&gravitation, 16, 1, fin);
+			fread(&Finish, 8, 1, fin);
 		}
 		else if (eq(comment, "Vortexes")>8) LoadList(VortexList, fin);
 		else if (eq(comment, "Heat    ")>8) LoadList(HeatList, fin);
@@ -206,10 +213,15 @@ void Space::Load(const char* fname)
 
 			fread(&body->Angle, 8, 1, fin);
 			fread(&body->Position, 16, 1, fin);
-			double rot_tmp; fread(&rot_tmp, 8, 1, fin);
-			TVec mot_tmp; fread(&mot_tmp, 16, 1, fin);
-			body->setRotation(NULL, rot_tmp);
-			body->setMotion(NULL, mot_tmp);
+			fread(&body->deltaAngle, 8, 1, fin);
+			fread(&body->deltaPosition, 16, 1, fin);
+			body->SpeedX->read(fin);
+			body->SpeedY->read(fin);
+			body->SpeedO->read(fin);
+			fread(&body->RotationSpeed_slae, 8, 1, fin);
+			fread(&body->MotionSpeed_slae, 16, 1, fin);
+			fread(&body->RotationSpeed_slae_prev, 8, 1, fin);
+			fread(&body->MotionSpeed_slae_prev, 16, 1, fin);
 		}
 		else if (eq(comment, "Body    ")>8)
 		{
@@ -281,6 +293,8 @@ void Space::CalcForces()
 		//body.Friction.g /= dt;
 		body.Nusselt /= dt;
 	}
+
+	//FIXME calculate total pressure
 	#undef body
 }
 
@@ -429,7 +443,7 @@ int Space::LoadStreakSource(const char* filename)
 	return 0;
 }
 
-int Space::LoadBody(const char* filename)
+int Space::LoadBody(const char* filename, int cols)
 {
 	TBody *body = new TBody(this);
 	BodyList->push_back(body);
@@ -438,8 +452,19 @@ int Space::LoadBody(const char* filename)
 	if (!fin) { cerr << "No file called " << filename << endl; return -1; } 
 
 	TAtt att; att.body = body; att.zero();
-	char bc_char, hc_char;
-	while ( fscanf(fin, "%lf %lf %c %c %lf", &att.corner.rx, &att.corner.ry, &bc_char, &hc_char, &att.heat_const)==5 )
+	att.heat_const = 0;
+	char bc_char('n'), hc_char('n');
+
+	char *pattern;
+	switch (cols)
+	{
+		case 2: pattern = "%lf %lf \n"; break;
+		case 3: pattern = "%lf %lf %c \n"; break;
+		case 5: pattern = "%lf %lf %c %c %lf \n"; break;
+		default: fprintf(stderr, "Bad columns number. Only 2 3 or 5 supported\n"); return -1;
+	}
+
+	while ( fscanf(fin, pattern, &att.corner.rx, &att.corner.ry, &att.bc, &att.hc, &att.heat_const)==cols )
 	{
 		att.bc = bc::bc(bc_char);
 		att.hc = hc::hc(hc_char);

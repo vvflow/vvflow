@@ -5,7 +5,7 @@
 class diffusivefast
 {
 	public:
-		diffusivefast(Space *sS, double sRe, double sPr);
+		diffusivefast(Space *sS);
 		void CalcVortexDiffusiveFast();
 		void CalcHeatDiffusiveFast();
 

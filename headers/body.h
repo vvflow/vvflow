@@ -90,15 +90,14 @@ class TBody
 		double g_dead;
 
 	public:
-		//set \omega, \vec V
-		void setRotation(double (*sRotSpeed)(double time), double sRotSpeed_const = 0);
-		void setMotion(TVec (*sMotSpeed)(double time), TVec sMotSpeed_const = TVec(0,0));
-
-		//get \omega, \vec V 
-		double getRotation(double time) const
-			{ return RotSpeed_link ? RotSpeed_link(time):RotSpeed_const; }
-		TVec   getMotion(double time) const
-			{ return MotSpeed_link ? MotSpeed_link(time):MotSpeed_const; }
+		//functions \vec V(t), \omega(t)
+		ShellScript *SpeedX;
+		ShellScript *SpeedY;
+		ShellScript *SpeedO;
+		double getRotation() const;
+		double getSpeedX() const;
+		double getSpeedY() const;
+		TVec getMotion() const;
 
 		//see \vec c_s \vert_Rotation
 		void doRotationAndMotion();
@@ -134,10 +133,6 @@ class TBody
 		vector<TVec> *HeatLayerList;
 		template <class T>
 		TAtt* isPointInContour(TVec p, vector<T> *list);
-		double (*RotSpeed_link)(double time);
-		double RotSpeed_const;
-		TVec   (*MotSpeed_link)(double time);
-		TVec   MotSpeed_const;
 
 		void doRotation();
 		void doMotion();

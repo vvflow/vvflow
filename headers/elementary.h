@@ -4,6 +4,7 @@
 #include <math.h>
 #include <iostream>
 #include "list.h"
+#include "shellscript.h"
 using namespace std;
 
 #define bugfix volatile

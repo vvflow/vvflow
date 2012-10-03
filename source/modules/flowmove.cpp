@@ -3,10 +3,10 @@
 #include <cstdlib>
 #include <time.h>
 
-flowmove::flowmove(Space *sS, double sdt, double sRemoveEps)
+flowmove::flowmove(Space *sS, double sRemoveEps)
 {
 	S = sS;
-	dt = S->dt = sdt;
+	dt = S->dt;
 	RemoveEps = sRemoveEps;
 	CleanedV_ = 0;
 }
@@ -22,6 +22,8 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
 	{
 		(**llbody).doRotationAndMotion();
 	}
+
+	S->InfMarker+= S->InfSpeed()*S->dt;
 
 	//MOVING VORTEXES
 	if ( vlist )
