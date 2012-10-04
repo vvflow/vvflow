@@ -244,8 +244,8 @@ void Space::Load(const char* fname)
 
 				body->List->push_back(att);
 			}
-			body->doFillProperties();
 			body->doUpdateSegments();
+			body->doFillProperties();
 		}
 		else fprintf(stderr, "S->Load(): ignoring field \"%s\"", comment);
 	}
@@ -466,7 +466,7 @@ int Space::LoadBody(const char* filename, int cols)
 		default: fprintf(stderr, "Bad columns number. Only 2 3 or 5 supported\n"); return -1;
 	}
 
-	while ( fscanf(fin, pattern, &att.corner.rx, &att.corner.ry, &att.bc, &att.hc, &att.heat_const)==cols )
+	while ( fscanf(fin, pattern, &att.corner.rx, &att.corner.ry, &bc_char, &hc_char, &att.heat_const)==cols )
 	{
 		att.bc = bc::bc(bc_char);
 		att.hc = hc::hc(hc_char);

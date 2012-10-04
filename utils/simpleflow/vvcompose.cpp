@@ -25,13 +25,16 @@ int main(int argc, char *argv[])
 {
 	if (argc < 3)
 	{
-		fprintf(stdout, "vvcompose -i -b235 -bvx -bvy -bvo -bx -by -ba -bdx -bdy -bda -v -h -s -ss -ix -iy -ig -gx -gy -t -dt -dt_save -dt_streak -dt_profile -re -pr -finish -name -o -remove\n");
+		fprintf(stdout, "vvcompose -i -b235 -bvx -bvy -bvo -bx -by -ba -bdx -bdy -bda -bkx -bky -bka -brho -v -h -s -ss -ix -iy -ig -gx -gy -t -dt -dt_save -dt_streak -dt_profile -re -pr -finish -name -o -remove\n");
 		fprintf(stderr, "Options:\n-b{2,3,5} filename --- body file with 2 3 or 5 columns\n");
 		fprintf(stderr, "-bvx, -bvy, -bvo './script.sh $t' --- script for body motion speed (vx, vy, omega)\n");
 		fprintf(stderr, "-bx, -by, -ba float --- body initial coordinates (x, y, alpha)\n");
 		fprintf(stderr, "-bdx, -bdy, -bda float --- body spring deformation (delta x, delta y, delta alpha)\n");
+		fprintf(stderr, "-bkx, -bky, -bka float --- body spring koefficient\n");
+		fprintf(stderr, "-brho float --- body density\n");
 		fprintf(stderr, "Also you can put number after -b?? option (like -bvx2 'echo 0'). Numbers start with 1.");
 		fprintf(stderr, " It will change corresponding parameter of selected body\n");
+
 		fprintf(stderr, "-v, -h, -s, -ss filename --- files of vortexes, heat particles, streaks, streak sources (need 3 columns)\n");
 		fprintf(stderr, "-ix, -iy './script.sh $t' --- script for inf speed\n");
 		fprintf(stderr, "-ig float --- constant circulation at infinity\n");
@@ -56,7 +59,7 @@ int main(int argc, char *argv[])
 			S->Load(argv[i+1]);
 		} else if (!strcmp(argv[i], "-b") || !strcmp(argv[i], "-b2") || !strcmp(argv[i], "-b3") || !strcmp(argv[i], "-b5"))
 		{
-			S->LoadBody(argv[i+1], argv[i][3]?atoi(argv[i]+3):5);
+			S->LoadBody(argv[i+1], argv[i][2]?atoi(argv[i]+2):5);
 		} else if (beginsWith(argv[i], "-bvx"))
 		{
 			getBodyFromArg(S, argv[i]+4)->SpeedX->initWithString(argv[i+1]);
@@ -84,6 +87,20 @@ int main(int argc, char *argv[])
 		} else if (beginsWith(argv[i], "-bda"))
 		{
 			getBodyFromArg(S, argv[i]+4)->deltaAngle = atof(argv[i+1]);
+		} else if (beginsWith(argv[i], "-bkx"))
+		{
+			getBodyFromArg(S, argv[i]+4)->kx = atof(argv[i+1]);
+		} else if (beginsWith(argv[i], "-bky"))
+		{
+			getBodyFromArg(S, argv[i]+4)->ky = atof(argv[i+1]);
+		} else if (beginsWith(argv[i], "-bka"))
+		{
+			getBodyFromArg(S, argv[i]+4)->ka = atof(argv[i+1]);
+		} else if (beginsWith(argv[i], "-brho"))
+		{
+			getBodyFromArg(S, argv[i]+5)->density = atof(argv[i+1]);
+
+
 		} else if (!strcmp(argv[i], "-v"))
 		{
 			S->LoadVorticityFromFile(argv[i+1]);

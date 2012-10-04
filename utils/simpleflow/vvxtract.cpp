@@ -55,4 +55,19 @@ int main(int argc, char **argv)
 			printf(" %d: Body    [%ld]\n", 4+i*2+1, S->BodyList->at(i)->List->size_safe());
 		}
 	}
+
+	switch (atoi(argv[2]))
+	{
+		case 1:
+			const_for(S->VortexList, lobj)
+				printf("%lf\t %lf\t %lf\n", lobj->rx, lobj->ry, lobj->g);
+			break;
+		case 5:
+			const_for(S->BodyList->at(0)->List, latt)
+				printf("%lg\t %lg\t %lg\t %c\t %c\t %lg\n", latt->corner.rx, latt->corner.ry, latt->g, latt->bc, latt->hc, latt->heat_const);
+		default:
+			break;
+	}
+
+	return 0;
 }

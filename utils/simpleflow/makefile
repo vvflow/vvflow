@@ -6,12 +6,12 @@ all:
 	$(CC) vvxtract.cpp -o vvxtract $(VVHD) -std=c++0x -mkl=parallel
 
 clean:
-	rm -f vvhd_sf vvcompose
+	rm -f vvhd_sf vvcompose vvxtract
 
 install:
-	cp vvhd_sf vvcompose ~/.bin/
+	cp vvhd_sf vvcompose vvxtract ~/.bin/
 
 uninstall:
-	rm -f ~/.bin/vvhd_sf ~/.bin/vvcompose
+	rm -f ~/.bin/vvhd_sf ~/.bin/vvcompose ~/.bin/vvxtract
 
 
