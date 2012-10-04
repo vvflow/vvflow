@@ -101,7 +101,7 @@ int main(int argc, char** argv)
 		             (**llbody).deltaPosition.ry,
 		             (**llbody).deltaAngle);
 		}
-		fprintf(f, "%-10ld \t%-10ld \t",
+		fprintf(f, "%-10ld \t%-10ld \n",
 		             S->VortexList->size_safe(),
 		             S->HeatList->size_safe());
 		fflush(f);

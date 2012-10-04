@@ -133,6 +133,11 @@ void Space::Save(const char* format)
 		fwrite(&body.RotationSpeed_slae_prev, 8, 1, fout);
 		fwrite(&body.MotionSpeed_slae_prev, 16, 1, fout);
 
+		fwrite(&body.kx, 8, 1, fout);
+		fwrite(&body.ky, 8, 1, fout);
+		fwrite(&body.ka, 8, 1, fout);
+		fwrite(&body.density, 8, 1, fout);
+
 		SaveBookmark(fout, ++bookmark, "Body    ");
 		int64_t size = body.size();
 		fwrite(&size, 8, 1, fout);
@@ -224,6 +229,11 @@ void Space::Load(const char* fname)
 			fread(&body->MotionSpeed_slae, 16, 1, fin);
 			fread(&body->RotationSpeed_slae_prev, 8, 1, fin);
 			fread(&body->MotionSpeed_slae_prev, 16, 1, fin);
+
+			fread(&body->kx, 8, 1, fin);
+			fread(&body->ky, 8, 1, fin);
+			fread(&body->ka, 8, 1, fin);
+			fread(&body->density, 8, 1, fin);
 		}
 		else if (eq(comment, "Body    ")>8)
 		{
