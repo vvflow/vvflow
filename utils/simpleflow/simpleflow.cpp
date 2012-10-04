@@ -55,18 +55,19 @@ int main(int argc, char** argv)
 	fprintf(f, "%-10s\t %-10s\n", "N vorts", "N heats");
 
 	double dl = S->AverageSegmentLength();
-	InitTree(S, 8, dl*20, 0.1);
+	tree tr(S, 8, dl*20, 0.1);
+	S->Tree = &tr;
 	convectivefast conv(S, dl*0.2);
 	epsfast eps(S);
 	diffusivefast diff(S);
 	flowmove fm(S);
-	sensors sens(S, (argc>2)?argv[2]:NULL, sensors_output);
+	sensors sens(S, &conv, (argc>2)?argv[2]:NULL, sensors_output);
 
 	while (S->Time < S->Finish)
 	{
-		dbg(BuildTree());
-		dbg(CalcCirculationFast());
-		dbg(DestroyTree());
+		dbg(tr.build());
+		dbg(conv.CalcCirculationFast(true));
+		dbg(tr.destroy());
 
 		dbg(fm.HeatShed());
 
@@ -83,10 +84,11 @@ int main(int argc, char** argv)
 		S->SaveProfile(profile, S->profile_dt, val::Cp | val::Fr | val::Nu);
 		fprintf(f, "%-10g \t", S->Time);
 		const_for(S->BodyList, llbody)
+		{
 		fprintf(f, "%-+20e\t %-+20e\t %-+20e\t %-+20e\t %-+20e\t %-+20e\t %-+20e\t ",
-		             (**llbody).Force.rx,
-		             (**llbody).Force.ry,
-		             (**llbody).Force.g,
+		             (**llbody).Force_export.rx,
+		             (**llbody).Force_export.ry,
+		             (**llbody).Force_export.g,
 		             (**llbody).Friction.rx,
 		             (**llbody).Friction.ry,
 		             (**llbody).Friction.g,
@@ -98,26 +100,27 @@ int main(int argc, char** argv)
 		             (**llbody).deltaPosition.rx,
 		             (**llbody).deltaPosition.ry,
 		             (**llbody).deltaAngle);
+		}
 		fprintf(f, "%-10ld \t%-10ld \t",
 		             S->VortexList->size_safe(),
-		             S->HeatList->size_safe();
+		             S->HeatList->size_safe());
 		fflush(f);
 		S->ZeroForces();
 
-		dbg(BuildTree());
+		dbg(tr.build());
 		dbg(eps.CalcEpsilonFast(true));
-		dbg(CalcBoundaryConvective());
-		dbg(CalcConvectiveFast());
+		dbg(conv.CalcBoundaryConvective());
+		dbg(conv.CalcConvectiveFast());
 		dbg(sens.output());
 		dbg(diff.CalcVortexDiffusiveFast());
 		dbg(diff.CalcHeatDiffusiveFast());
-		dbg(DestroyTree());
+		dbg(tr.destroy());
 
 		dbg(fm.MoveAndClean(true));
 		dbg(fm.CropHeat());
 		S->Time += S->dt;
 
-		fprintf(stderr, "%-10g \t%-10d \t%-10d \t%6.2lfs\r", S->Time, S->VortexList->size_safe(), S->HeatList->size_safe(), steptime);
+		fprintf(stderr, "%-10g \t%-10d \t%-10d \r", S->Time, S->VortexList->size_safe(), S->HeatList->size_safe());
 	}
 
 	fclose(f);

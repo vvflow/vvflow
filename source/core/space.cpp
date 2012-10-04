@@ -201,6 +201,8 @@ void Space::Load(const char* fname)
 			fread(&InfCirculation, 8, 1, fin);
 			fread(&gravitation, 16, 1, fin);
 			fread(&Finish, 8, 1, fin);
+
+			int64_t rawtime; fread(&rawtime, 8, 1, fin); realtime = rawtime;
 		}
 		else if (eq(comment, "Vortexes")>8) LoadList(VortexList, fin);
 		else if (eq(comment, "Heat    ")>8) LoadList(HeatList, fin);
@@ -225,7 +227,7 @@ void Space::Load(const char* fname)
 		}
 		else if (eq(comment, "Body    ")>8)
 		{
-			TBody *body = *BodyList->end();
+			TBody *body = *(BodyList->end()-1);
 
 			TAtt att; att.body = body; att.zero();
 			int64_t size; fread(&size, 8, 1, fin);

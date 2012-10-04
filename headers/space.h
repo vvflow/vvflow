@@ -20,6 +20,7 @@ class Space
 	public:
 		Space();
 		char* name;
+		time_t realtime;
 
 		vector<TBody*> *BodyList;
 		vector<TObj> *VortexList;
