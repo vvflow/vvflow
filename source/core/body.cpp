@@ -215,16 +215,17 @@ void TBody::doFillProperties()
 {
 	_surface = _area = _moi_c = _moi_com = 0;
 	_com.zero();
+	double _4moi_0 = 0;
 	const_for (List, latt)
 	{
 		_surface+= latt->dl.abs();
 		_area+= latt->ry*latt->dl.rx;
 		_com+= latt->abs2() * rotl(latt->dl);
-		_moi_com-= latt->abs2() * latt->dl * rotl(*latt);
+		_4moi_0 -= latt->abs2() * latt->dl * rotl(*latt);
 	}
-	_com = 0.5*_com/_area - Position;
-	_moi_com = 0.25*_moi_com - _area*(_com+Position).abs2();
-	_moi_c = _moi_com + _area*_com.abs2();
+	_com = 0.5*_com/_area;
+	_moi_com = 0.25*_4moi_0 - _area*_com.abs2();
+	_moi_c = _moi_com + _area*(Position + deltaPosition - _com).abs2();
 }
 
 inline double atan2(const TVec &p)

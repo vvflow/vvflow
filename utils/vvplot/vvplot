@@ -87,7 +87,7 @@ else: y_offset = 0.0
 
 ############################ PARSING OPTIONS ###################################
 
-v_skip, h_skip, i_skip = struct.unpack("16xq8xq24xq", ffin.read(72))
+header_skip, v_skip, h_skip, i_skip = struct.unpack("q8x q8x q8x 16x q8x", ffin.read(80))
 ffin.seek(v_skip); v_size = struct.unpack("q", ffin.read(8))[0]
 ffin.seek(h_skip); h_size = struct.unpack("q", ffin.read(8))[0]
 ffin.seek(i_skip); i_size = struct.unpack("q", ffin.read(8))[0]
@@ -100,10 +100,10 @@ for i in range(5, 11):
 		ffin.seek(b_skip); b_size = struct.unpack("q", ffin.read(8))[0]
 		bodies.append( (b_skip, b_size) );
 
-ffin.seek(v_skip-48);
-dt, Re, vx, vy, timestamp, time = struct.unpack("ddddqd", ffin.read(48))
+ffin.seek(v_skip - 8);
+timestamp = struct.unpack("d", ffin.read(8))
 realtime = os.popen("date -d \"1970-01-01 %d sec GMT\" +\"%%F %%H:%%M:%%S\"" % timestamp).read()
-ffin.seek(i_skip); marker_x, marker_y = struct.unpack("8x2d", ffin.read(24));
+ffin.seek(header_skip); time, marker_x, marker_y = struct.unpack("8x64x d 48x d d", ffin.read(144));
 
 ffin.close()
 
@@ -293,12 +293,9 @@ gp.close()
 comment = """argv = %s
 time = %g
 realtime = %s
-dt = %g
-Re = %g
-V = (%g, %g)
 offset = (%g, %g)
 xrange = [%g, %g]
-yrange = [%g, %g]""" % (argv, time, realtime, dt, Re, vx, vy, x_offset, y_offset, xmin, xmax, ymin, ymax)
+yrange = [%g, %g]""" % (argv, time, realtime, x_offset, y_offset, xmin, xmax, ymin, ymax)
 
 executable = """exiv2 -M"set Exif.Photo.DateTimeOriginal %s" """ % realtime
 executable+= """      -M"set Exif.Image.DateTime %s" """ % realtime

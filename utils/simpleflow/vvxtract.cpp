@@ -51,21 +51,58 @@ int main(int argc, char **argv)
 			printf(" 4: Streak   [%ld]\n", S->StreakList->size_safe());
 		for (int i=0; i<S->BodyList->size_safe(); i++)
 		{
-			printf(" %d: BData   \n", 4+i*2);
-			printf(" %d: Body    [%ld]\n", 4+i*2+1, S->BodyList->at(i)->List->size_safe());
+			printf(" %d: BData   \n", 5+i*2);
+			printf(" %d: Body    [%ld]\n", 5+i*2+1, S->BodyList->at(i)->List->size_safe());
 		}
+
+		return 0;
 	}
 
+	TBody *body;
 	switch (atoi(argv[2]))
 	{
 		case 1:
 			const_for(S->VortexList, lobj)
 				printf("%lf\t %lf\t %lf\n", lobj->rx, lobj->ry, lobj->g);
 			break;
-		case 5:
-			const_for(S->BodyList->at(0)->List, latt)
-				printf("%lg\t %lg\t %lg\t %c\t %c\t %lg\n", latt->corner.rx, latt->corner.ry, latt->g, latt->bc, latt->hc, latt->heat_const);
+		case 2:
+			const_for(S->HeatList, lobj)
+				printf("%lf\t %lf\t %lf\n", lobj->rx, lobj->ry, lobj->g);
+			break;
+		case 3:
+			const_for(S->StreakSourceList, lobj)
+				printf("%lf\t %lf\t %lf\n", lobj->rx, lobj->ry, lobj->g);
+			break;
+		case 4:
+			const_for(S->StreakList, lobj)
+				printf("%lf\t %lf\t %lf\n", lobj->rx, lobj->ry, lobj->g);
+			break;
 		default:
+			if (atoi(argv[2]) % 2)
+			{
+				body = S->BodyList->at(0);
+				if (body->Position.rx || body->Position.ry || body->Angle)
+					printf("Position   = (%lg, %lg, %lg)\n", body->Position.rx, body->Position.ry, body->Angle);
+				if (body->deltaPosition.rx || body->deltaPosition.ry || body->deltaAngle)
+					printf("deltaPos   = (%lg, %lg, %lg)\n", body->deltaPosition.rx, body->deltaPosition.ry, body->deltaAngle);
+				if ((body->kx>=0) || (body->ky>=0) || (body->ka>=0))
+					printf("spring_k   = (%lg, %lg, %lg)\n", body->kx, body->ky, body->ka);
+				if (strlen(body->SpeedX->getScript()))
+					printf("SpeedX     = %s\n", body->SpeedX->getScript());
+				if (strlen(body->SpeedY->getScript()))
+					printf("SpeedY     = %s\n", body->SpeedY->getScript());
+				if (strlen(body->SpeedO->getScript()))
+					printf("SpeedO     = %s\n", body->SpeedO->getScript());
+					printf("Area       = %lg\n", body->getArea());
+					printf("Com        = (%lg, %lg)\n", body->getCom().rx, body->getCom().ry);
+					printf("Moi_c      = %lg\n", body->getMoi_c());
+					printf("density    = %lg\n", body->density);		
+			} else
+			{
+				const_for(S->BodyList->at(0)->List, latt)
+					printf("%lg\t %lg\t %lg\t %c\t %c\t %lg\n", latt->corner.rx, latt->corner.ry, latt->g,
+					                                            latt->bc, latt->hc, latt->heat_const);
+			}
 			break;
 	}
 
