@@ -259,9 +259,10 @@ q_{\att~s} &=
 
 Аналогичный алгоритм можно использовать для момента инерции. Здесь используется теорема Стокса. Минус в конце появляется по той-же причине.
 \begin{equation*}
-J_0 = \rho \int r^2 dS = \dfrac{\rho}{4}\int(\rot([\br e_z \times \br r] r^2) dS = \dfrac{\rho}{4}\int r^2 ([\br e_z \times \br r] \cdot d \br l) = -\dfrac{\rho}{4} \sum r^2 \cdot ([\br e_z \times \br r] \cdot \Delta \br l)
+J_0 = \int r^2 dS = \dfrac{1}{4}\int(\rot([\br e_z \times \br r] r^2) dS = \dfrac{1}{4}\int r^2 ([\br e_z \times \br r] \cdot d \br l) = -\dfrac{1}{4} \sum r^2 \cdot ([\br e_z \times \br r] \cdot \Delta \br l)
 \end{equation*}
 
+Это не совсем момент инерции, так как в него не входи плотность. Он обезразмерен на плотность жидкости, как и все уравнения, которые мы решаем. Поэтому во всех последующих выкладках для сил перед этим самым моментом будет появляться отношение $\rho_b/\rho_0$.
 Этот момент инерции вычислен относительно центра основной системы координат. Пересчитать его относительно центра масс или оси вращения легко: $J_\text{com} = J_0 - S r_\text{com}^2$, $J_c = J_\text{com} + S (r_c - r_\text{com})^2$
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -582,7 +583,7 @@ $\vec r_* = \vec r_s - (\vec R + \Delta \vec R)$, $\vec c_* = \vec c_s - (\vec R
 \end{equation*}
 
 \begin{equation*}
-\dfrac{M_{(\ref{eq_moment})}}{\rho_0} - \dfrac{k_\alpha}{\rho_0} \Delta \alpha
+\dfrac{M_{(\ref{eq_moment})}}{\rho_0} + \left( \dfrac{\rho_b}{\rho_0} - 1 \right) [\vec r_{*\text{com}} \times \vec g] S - \dfrac{k_\alpha}{\rho_0} \Delta \alpha
 =
 \dot \omega_? \dfrac{\rho_b}{\rho_0}J_c
 \end{equation*}
@@ -599,8 +600,8 @@ $\vec r_* = \vec r_s - (\vec R + \Delta \vec R)$, $\vec c_* = \vec c_s - (\vec R
 \cdot X =\\
 	 - \left(\dfrac{\rho_b}{\rho_0}-1\right) \vec g S + k \Delta \vec R +\\
 	+ \underbrace {
-			\vec F_\text{dead}
-			- \vec F_\tau
+			\dfrac{\vec F_\text{dead}}{\rho_0}
+			- \dfrac{\vec F_\tau}{\rho_0}
 			- \left(\dfrac{\rho_b}{\rho_0} - 1\right) S \frac{\vec V_?}{\Delta t}
 			+ \frac{1}{2} \sum\limits_{s=1}^{N_s} [\vec e_z \times \Delta \vec l_s] \cdot V_s^2
 		}_{\text{с предыдущего шага}}
@@ -618,8 +619,8 @@ $\vec r_* = \vec r_s - (\vec R + \Delta \vec R)$, $\vec c_* = \vec c_s - (\vec R
 \cdot X =\\
 	 k_\alpha \Delta \alpha - \left (\dfrac{\rho_b}{\rho_0} - 1 \right)[\vec r_{*\text{com}} \times \vec g] S\\
 	+ \underbrace {
-			M_\text{dead}
-			- M_\tau
+			\dfrac{M_\text{dead}}{\rho_0}
+			- \dfrac{M_\tau}{\rho_0}
 			- [\vec r_{*\text{com}} \times \vec V_?] \dfrac{S}{\Delta t}
 			- J_c \frac{\omega_?}{\Delta t} \left( \dfrac{\rho_b}{\rho_0}  + 2 \right)
 			- \vec r_{*\text{com}} \vec V_? \omega_? S
