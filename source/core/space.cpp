@@ -294,7 +294,7 @@ void Space::CalcForces()
 			latt->Nu += latt->hsum * (Re*Pr / latt->dl.abs());
 
 			body.Friction -= latt->dl * (latt->fric * C_Nyu_Pi / latt->dl.abs());
-			body.Friction.g += (rotl(*latt)* latt->dl) * (latt->fric  * C_Nyu_Pi / latt->dl.abs());
+			body.Friction.g -= (rotl(*latt)* latt->dl) * (latt->fric  * C_Nyu_Pi / latt->dl.abs());
 			body.Nusselt += latt->hsum * (Re*Pr);
 		}
 
