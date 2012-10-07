@@ -21,17 +21,30 @@ TBody* getBodyFromArg(Space* S, const char* arg)
 		return *(S->BodyList->end()-1);
 }
 
+void transformBody(TBody* body, double x, double y, double a)
+{
+	const_for (body->List, lobj)
+	{
+		TVec dr = lobj->corner - (body->Position + body->deltaPosition);
+		lobj->corner = TVec(x, y) + body->Position + body->deltaPosition + dr*cos(a) + rotl(dr)*sin(a);
+	}
+	body->doUpdateSegments();
+	body->doFillProperties();
+}
+
 int main(int argc, char *argv[])
 {
 	if (argc < 3)
 	{
-		fprintf(stdout, "vvcompose -i -b235 -bvx -bvy -bvo -bx -by -ba -bdx -bdy -bda -bkx -bky -bka -brho -v -h -s -ss -ix -iy -ig -gx -gy -t -dt -dt_save -dt_streak -dt_profile -re -pr -finish -name -o -remove\n");
+		fprintf(stdout, "vvcompose -i -b235 -bvx -bvy -bvo -bx -by -ba -bdx -bdy -bda -bkx -bky -bka -brho -mx -my -ma -mad -v -h -s -ss -ix -iy -ig -gx -gy -t -dt -dt_save -dt_streak -dt_profile -re -pr -finish -name -o -remove\n");
 		fprintf(stderr, "Options:\n-b{2,3,5} filename --- body file with 2 3 or 5 columns\n");
 		fprintf(stderr, "-bvx, -bvy, -bvo './script.sh $t' --- script for body motion speed (vx, vy, omega)\n");
 		fprintf(stderr, "-bx, -by, -ba float --- body initial coordinates (x, y, alpha)\n");
 		fprintf(stderr, "-bdx, -bdy, -bda float --- body spring deformation (delta x, delta y, delta alpha)\n");
 		fprintf(stderr, "-bkx, -bky, -bka float --- body spring koefficient\n");
 		fprintf(stderr, "-brho float --- body density\n");
+		fprintf(stderr, "-mx, -my float --- move body without changing position and deltaposition variables\n");
+		fprintf(stderr, "-ma, -mad float --- rotate body around r_0. Value is in radians and degrees correspondigly\n");
 		fprintf(stderr, "Also you can put number after -b?? option (like -bvx2 'echo 0'). Numbers start with 1.");
 		fprintf(stderr, " It will change corresponding parameter of selected body\n");
 
@@ -99,6 +112,20 @@ int main(int argc, char *argv[])
 		} else if (beginsWith(argv[i], "-brho"))
 		{
 			getBodyFromArg(S, argv[i]+5)->density = atof(argv[i+1]);
+
+
+		} else if (beginsWith(argv[i], "-mx"))
+		{
+			transformBody(getBodyFromArg(S, argv[i]+3), atof(argv[i+1]), 0, 0);
+		} else if (beginsWith(argv[i], "-my"))
+		{
+			transformBody(getBodyFromArg(S, argv[i]+3), 0, atof(argv[i+1]), 0);
+		} else if (beginsWith(argv[i], "-ma"))
+		{
+			transformBody(getBodyFromArg(S, argv[i]+3), 0, 0, atof(argv[i+1]));
+		} else if (beginsWith(argv[i], "-mad"))
+		{
+			transformBody(getBodyFromArg(S, argv[i]+3), 0, 0, atof(argv[i+1])*C_PI/180.);
 
 
 		} else if (!strcmp(argv[i], "-v"))

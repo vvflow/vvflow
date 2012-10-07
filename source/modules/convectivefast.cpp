@@ -643,7 +643,7 @@ void convectivefast::fillMomentEquation(TBody* ibody, bool rightColOnly)
 			+ ibody->ka * ibody->deltaAngle +
 			- (ibody->density-1.0) * (rotl(r_c_com)*S->gravitation) * ibody->getArea()
 			+ ibody->Force_dead.g
-			- ibody->Friction_prev.g
+			//- ibody->Friction_prev.g
 			- rotl(r_c_com)*ibody->MotionSpeed_slae_prev * ibody->getArea() * _1_dt
 			- ibody->getMoi_c() * ibody->RotationSpeed_slae_prev * _1_dt * (ibody->density + 2)
 			- (r_c_com * ibody->MotionSpeed_slae_prev) * ibody->RotationSpeed_slae_prev * ibody->getArea();

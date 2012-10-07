@@ -299,7 +299,7 @@ void Space::CalcForces()
 		}
 
 		//body.Force -= body.getArea() * (InfSpeed() - InfSpeed(Time-dt));
-		(TVec)body.Force_export = (body.Force_born - body.Force_dead)/dt;
+		body.Force_export = TVec((body.Force_born - body.Force_dead)/dt);
 		body.Force_export.g = (body.Force_born.g - body.Force_dead.g)/dt;
 		//body.Friction /= dt;
 		//body.Friction.g /= dt;
