@@ -41,8 +41,8 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
 		if ( remove && invalid_inbody )
 		{
 			TBody *badbody = invalid_inbody->body;
-			badbody->Force_dead -= rotl(*lobj) * lobj->g;
-			badbody->Force_dead.g -=  (*lobj - badbody->Position - badbody->deltaPosition).abs2() * lobj->g;
+			badbody->Force_dead += rotl(*lobj) * lobj->g;
+			badbody->Force_dead.g +=  (*lobj - badbody->Position - badbody->deltaPosition).abs2() * lobj->g;
 			invalid_inbody->gsum -= lobj->g;
 			badbody->g_dead += lobj->g;
 			CleanedV_++;
