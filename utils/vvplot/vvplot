@@ -262,7 +262,7 @@ if opts.count('g') > 0:
 
 if opts.count('v') > 0 and v_size > 0:
 	gp.write("""%s '%s' binary record=%d skip=%d format='%%3float64'""" % (delim.get(), fin, v_size, v_skip+8))
-	gp.write(""" u 1:2:(%f):(color($3)) w @vortex_style""" % prec_hi)
+	gp.write(""" u 1:2:(color($3)) w @dots""")
 
 if opts.count('H') > 0 and h_size > 0:
 	gp.write("""%s '%s' binary record=%d skip=%d format='%%3float64' """ % (delim.get(), fin, h_size, h_skip+8))

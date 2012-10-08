@@ -31,7 +31,7 @@ bool PointIsInvalid(Space *S, TVec p)
 {
 	const_for(S->BodyList, llbody)
 	{
-		if ((**llbody).PointIsInvalid(p)) return true;
+		if ((**llbody).isPointInvalid(p)) return true;
 	}
 	return false;
 }
@@ -126,7 +126,7 @@ double Vorticity(Space* S, TVec p)
 {
 	double T=0;
 	auto *hlist = S->VortexList;
-	TNode* bnode = FindNode(p);
+	TNode* bnode = S->Tree->findNode(p);
 
 	//return  bnode->NearNodes->size_safe();
 	TObj* nrst = Nearest(*bnode, p);
@@ -175,11 +175,11 @@ int main(int argc, char *argv[])
 	S->HeatList = NULL;
 
 	dl = S->AverageSegmentLength();
-	InitTree(S, 8, dl*20, DBL_MAX);
-	BuildTree();
+	S->Tree = new tree(S, 8, dl*20, DBL_MAX);
+	S->Tree->build();
 
 	#pragma omp parallel for
-	const_for(GetTreeBottomNodes(), llbnode)
+	const_for(S->Tree->getBottomNodes(), llbnode)
 	{
 		if (!(**llbnode).VortexLList) continue;
 		const_for((**llbnode).VortexLList, llobj)

@@ -100,6 +100,10 @@ int main(int argc, char** argv)
 		             (**llbody).deltaPosition.rx,
 		             (**llbody).deltaPosition.ry,
 		             (**llbody).deltaAngle);
+		fprintf(f, "%-+20e\t %-+20e\t %-+20e\t ",
+		             (**llbody).MotionSpeed_slae.rx,
+		             (**llbody).MotionSpeed_slae.ry,
+		             (**llbody).RotationSpeed_slae);
 		}
 		fprintf(f, "%-10ld \t%-10ld \n",
 		             S->VortexList->size_safe(),
