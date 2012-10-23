@@ -93,10 +93,15 @@ int main(int argc, char **argv)
 					printf("SpeedY     = %s\n", body->SpeedY->getScript());
 				if (strlen(body->SpeedO->getScript()))
 					printf("SpeedO     = %s\n", body->SpeedO->getScript());
+					printf("Speed_slae = (%lg, %lg, %lg)\n", body->MotionSpeed_slae.rx,
+					                                         body->MotionSpeed_slae.ry,
+					                                         body->RotationSpeed_slae);
 					printf("Area       = %lg\n", body->getArea());
 					printf("Com        = (%lg, %lg)\n", body->getCom().rx, body->getCom().ry);
 					printf("Moi_c      = %lg\n", body->getMoi_c());
-					printf("density    = %lg\n", body->density);		
+					printf("density    = %lg\n", body->density);
+					printf("Force_born = (%lg, %lg, %lg)\n", body->Force_born.rx, body->Force_born.ry, body->Force_born.g);
+					printf("Force_dead = (%lg, %lg, %lg)\n", body->Force_dead.rx, body->Force_dead.ry, body->Force_dead.g);
 			} else
 			{
 				const_for(S->BodyList->at(0)->List, latt)

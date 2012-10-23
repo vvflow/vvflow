@@ -138,6 +138,10 @@ void Space::Save(const char* format)
 		fwrite(&body.ka, 8, 1, fout);
 		fwrite(&body.density, 8, 1, fout);
 
+		fwrite(&body.Force_born, 24, 1, fout);
+		fwrite(&body.Force_dead, 24, 1, fout);
+		fwrite(&body.Friction_prev, 24, 1, fout);
+
 		SaveBookmark(fout, ++bookmark, "Body    ");
 		int64_t size = body.size();
 		fwrite(&size, 8, 1, fout);
@@ -234,6 +238,10 @@ void Space::Load(const char* fname)
 			fread(&body->ky, 8, 1, fin);
 			fread(&body->ka, 8, 1, fin);
 			fread(&body->density, 8, 1, fin);
+
+			fread(&body->Force_born, 24, 1, fin);
+			fread(&body->Force_dead, 24, 1, fin);
+			fread(&body->Friction_prev, 24, 1, fin);
 		}
 		else if (eq(comment, "Body    ")>8)
 		{
@@ -298,11 +306,8 @@ void Space::CalcForces()
 			body.Nusselt += latt->hsum * (Re*Pr);
 		}
 
-		//body.Force -= body.getArea() * (InfSpeed() - InfSpeed(Time-dt));
-		body.Force_export = TVec((body.Force_born - body.Force_dead)/dt);
-		body.Force_export.g = (body.Force_born.g - body.Force_dead.g)/dt;
-		//body.Friction /= dt;
-		//body.Friction.g /= dt;
+		body.Force_export = TVec(body.Force_born - body.Force_dead);
+		body.Force_export.g = body.Force_born.g - body.Force_dead.g;
 		body.Nusselt /= dt;
 	}
 

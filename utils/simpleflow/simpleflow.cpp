@@ -71,7 +71,7 @@ int main(int argc, char** argv)
 
 		dbg(fm.HeatShed());
 
-		if (divisible(S->Time, S->save_dt, S->dt/4))
+		if (divisible(S->Time, S->save_dt, S->dt/4)  && (S->Time > 0))
 		{
 			char tmp_filename[256]; sprintf(tmp_filename, "%s/%%06d.vb", dir);
 			S->Save(tmp_filename);
@@ -81,7 +81,7 @@ int main(int argc, char** argv)
 		dbg(fm.StreakShed(S->streak_dt));
 
 		dbg(S->CalcForces());
-		S->SaveProfile(profile, S->profile_dt, val::Cp | val::Fr | val::Nu);
+		if (S->Time > 0) S->SaveProfile(profile, S->profile_dt, val::Cp | val::Fr | val::Nu);
 		fprintf(f, "%-10g \t", S->Time);
 		const_for(S->BodyList, llbody)
 		{
@@ -124,8 +124,9 @@ int main(int argc, char** argv)
 		dbg(fm.CropHeat());
 		S->Time += S->dt;
 
-		fprintf(stderr, "%-10g \t%-10d \t%-10d \r", S->Time, S->VortexList->size_safe(), S->HeatList->size_safe());
+		fprintf(stderr, "\r%-10g \t%-10d \t%-10d", S->Time, S->VortexList->size_safe(), S->HeatList->size_safe());
 	}
 
+	fprintf(stderr, "\n");
 	fclose(f);
 }

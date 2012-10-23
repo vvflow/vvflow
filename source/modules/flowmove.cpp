@@ -57,6 +57,12 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
 		}
 	}
 
+	const_for(S->BodyList, llbody)
+	{
+		(**llbody).Force_dead /= dt;
+		(**llbody).Force_dead.g /= 2*dt;
+	}
+
 	//MOVING HEAT PARTICLES
 	if ( hlist )
 	const_for (hlist, lobj)
@@ -135,6 +141,8 @@ void flowmove::VortexShed()
 	const_for(S->BodyList, llbody)
 	{
 		#define body (**llbody)
+		body.Force_born.zero();
+
 		const_for(body.List, latt)
 		{
 			if (fabs(latt->g) < RemoveEps)
@@ -149,6 +157,9 @@ void flowmove::VortexShed()
 				vlist->push_back(ObjCopy);
 			}
 		}
+
+		body.Force_born /= dt;
+		body.Force_born.g /= 2*dt;
 		#undef body
 	}
 }
