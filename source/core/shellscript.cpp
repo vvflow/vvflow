@@ -8,6 +8,7 @@
 ShellScript::ShellScript()
 {
 	script = new char[1024];
+	*script = 0;
 	cacheTime1 = -DBL_MAX; cacheValue1 = 0.;
 	cacheTime2 = -DBL_MAX; cacheValue2 = 0.;
 }

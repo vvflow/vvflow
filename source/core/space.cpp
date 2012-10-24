@@ -82,8 +82,7 @@ void LoadList(vector<TObj> *&list, FILE* fin)
 void Space::Save(const char* format)
 {
 	char fname[64]; sprintf(fname, format, int(Time/dt+0.5));
-	FILE *fout = fopen(fname, "rb+");
-	if (!fout) fout = fopen(fname, "wb");
+	FILE *fout = fopen(fname, "wb");
 	if (!fout) { perror("Error saving the space"); return; }
 
 	fseek(fout, 1024, SEEK_SET);

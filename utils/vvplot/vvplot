@@ -27,7 +27,7 @@ def file_exists(fname):
 	return 0 == os.spawnvp(os.P_WAIT, "test", ("test", "-e", fname))
 
 def printHelp():
-	print "Usage: %s -[ bBfghHiopstv01 ] input.vb output.png xmin xmax [y_offset]" % sys.argv[0]
+	print "Usage: %s -[ bBfghHiopstvV01 ] input.vb output.png xmin xmax [y_offset]" % sys.argv[0]
 	print "\nPossible options are:"
 	print "  -b - plot Body"
 	print "  -B - choose body reference frame (default among -0 and -1)"
@@ -42,6 +42,7 @@ def printHelp():
 	print "  -s - plot streamlines"
 	print "  -t - plot Temperature field"
 	print "  -v - plot vortex domains"
+	print "  -V - plot vortex domains (bold)"
 	print "  -w - Black and White mode"
 	print "  -0 - choose reference frame, strictly connected to fluid"
 	print "  -1 - choose reference frame, moving respectively fluid at rate (-1, 0)"
@@ -259,6 +260,10 @@ if opts.count('t') > 0:
 
 if opts.count('g') > 0:
 	gp.write("""%s '%s.vrtc' w image""" % (delim.get(), fin))
+
+if opts.count('V') > 0 and v_size > 0:
+	gp.write("""%s '%s' binary record=%d skip=%d format='%%3float64'""" % (delim.get(), fin, v_size, v_skip+8))
+	gp.write(""" u 1:2:(%f):(color($3)) w @vortex_style""" % prec_hi)
 
 if opts.count('v') > 0 and v_size > 0:
 	gp.write("""%s '%s' binary record=%d skip=%d format='%%3float64'""" % (delim.get(), fin, v_size, v_skip+8))
