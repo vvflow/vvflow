@@ -127,7 +127,7 @@ class TBody
 
 		double _surface;
 		double _area;
-		TVec   _com; //center of mass in body ref frame (Oxbyb)
+		TVec   _com; //center of mass (in global ref frame)
 		double _moi_com; //moment of inertia about com;
 		double _moi_c; //moi about rotation axis
 

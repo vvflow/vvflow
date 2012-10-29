@@ -146,8 +146,8 @@ void Space::Save(const char* format)
 		fwrite(&size, 8, 1, fout);
 		const_for (body.List, latt)
 		{
-			long int bc = latt->bc;
-			long int hc = latt->hc;
+			int64_t bc = latt->bc;
+			int64_t hc = latt->hc;
 			fwrite(pointer(&latt->corner), 16, 1, fout);
 			fwrite(pointer(&latt->g), 8, 1, fout);
 			fwrite(pointer(&bc), 8, 1, fout);
@@ -250,7 +250,7 @@ void Space::Load(const char* fname)
 			int64_t size; fread(&size, 8, 1, fin);
 			for (int64_t i=0; i<size; i++)
 			{
-				long int bc, hc;
+				int64_t bc, hc;
 				fread(&att.corner, 16, 1, fin);
 				fread(&att.g, 8, 1, fin);
 				fread(&bc, 8, 1, fin);

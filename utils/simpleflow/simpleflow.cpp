@@ -20,6 +20,8 @@
 #define seek(f) while (fgetc(f)!='\n'){}
 using namespace std;
 
+//#define OVERRIDEMOI 0.35
+
 int main(int argc, char** argv)
 {
 	if (argc < 2)
@@ -60,6 +62,9 @@ int main(int argc, char** argv)
 	diffusivefast diff(S);
 	flowmove fm(S);
 	sensors sens(S, &conv, (argc>2)?argv[2]:NULL, sensors_output);
+	#ifdef OVERRIDEMOI
+		S->BodyList->at(0)->overrideMoi_c(OVERRIDEMOI);
+	#endif
 
 	while (S->Time < S->Finish)
 	{
@@ -132,6 +137,9 @@ int main(int argc, char** argv)
 		dbg(tr.destroy());
 
 		dbg(fm.MoveAndClean(true));
+	        #ifdef OVERRIDEMOI
+        	        S->BodyList->at(0)->overrideMoi_c(OVERRIDEMOI);
+	        #endif
 		dbg(fm.CropHeat());
 		S->Time += S->dt;
 
