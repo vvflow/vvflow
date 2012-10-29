@@ -114,6 +114,7 @@ class TBody
 		TVec   getCom()     {return _com;} // center of mass
 		double getMoi_c()   {return _moi_c;} // moment of inertia about rotation axis
 		int size()       {return List->size_safe();}
+		void overrideMoi_c(double newMoi_c) {_moi_c = newMoi_c;}
 
 		int eq_forces_no; // starting number of forces equations
 

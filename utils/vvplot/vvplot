@@ -27,7 +27,7 @@ def file_exists(fname):
 	return 0 == os.spawnvp(os.P_WAIT, "test", ("test", "-e", fname))
 
 def printHelp():
-	print "Usage: %s -[ bBfghHiopstvV01 ] input.vb output.png xmin xmax [y_offset]" % sys.argv[0]
+	print "Usage: %s -[ bBfghHinopstvV01 ] input.vb output.png xmin xmax [y_offset]" % sys.argv[0]
 	print "\nPossible options are:"
 	print "  -b - plot Body"
 	print "  -B - choose body reference frame (default among -0 and -1)"
@@ -36,6 +36,7 @@ def printHelp():
 	print "  -h - display this message and exit"
 	print "  -H - plot Heat particles"
 	print "  -i - plot Ink (streaklines)"
+	print "  -n - dry run (run subroutines and exit)"
 	print "  -o - plot isOtherms"
 	print "  -p - plot Pressure field"
 	print "  -P - plot Pressure isolines (includes -p)"
@@ -173,6 +174,9 @@ for i in pids:
 	os.waitpid(i, 0)
 
 ############################## CALL GNUPLOT ####################################
+
+if opts.count('n') > 0:
+	exit();
 
 gp = os.popen("gnuplot", "w")
 gp.write("""
