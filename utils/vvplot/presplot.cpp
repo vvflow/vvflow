@@ -21,7 +21,7 @@ bool PointIsInvalid(Space *S, TVec p)
 {
 	const_for(S->BodyList, llbody)
 	{
-		if ((**llbody).PointIsInvalid(p)) return true;
+		if ((**llbody).isPointInvalid(p)) return true;
 	}
 	return false;
 }
@@ -54,8 +54,8 @@ double Pressure(Space* S, TVec p, double precision)
 		double gtmp = 0;
 		const_for(b.List, lobj)
 		{
-			gtmp+= b.att(lobj)->gsum;
-			Cp -= (b.att(lobj)->dl * rotl(K(*lobj, p))) * gtmp;
+			gtmp+= lobj->gsum; //FIXME
+			Cp -= (lobj->dl * rotl(K(*lobj, p))) * gtmp;
 		}
 
 		double alpha = b.RotSpeed(S->Time)*S->dt;
@@ -88,14 +88,14 @@ int main(int argc, char *argv[])
 
 	Space *S = new Space();
 	S->Load(argv[1]);
-	S->EnumerateBodies(true);
 
-	double dl = S->AverageSegmentLength(); Rd2 = dl*dl/25;
-	InitConvectiveFast(S, dl*dl/25);
+	double dl = S->AverageSegmentLength();
+	tree tr(S, 8, dl*20, 0.1);
+	S->Tree = &tr;
+	convectivefast conv(S, dl*0.2);
 	epsfast eps(S);
-	diffusivefast diff(S, S->Re, 1);
-	flowmove fm(S, S->dt);
-	InitTree(S, 8, dl*20, 0.3);
+	diffusivefast diff(S);
+	flowmove fm(S);
 
 	/**************************** LOAD ARGUMENTS ******************************/
 	double xmin, xmax, ymin, ymax, prec;
@@ -107,28 +107,8 @@ int main(int argc, char *argv[])
 	ymax = atof(argv[++i]);
 	prec = atof(argv[2]);
 	}
-		dbg(fm.VortexShed());
-	/******************************************/
 
-	S->ZeroForces();
-	for (int i=0; i<1; i++)
-	{
-		S->ZeroSpeed();
-		dbg(BuildTree());
-		dbg(eps.CalcEpsilonFast(false));
-		dbg(CalcBoundaryConvective());
-		dbg(CalcConvectiveFast());
-		dbg(diff.CalcVortexDiffusiveFast());
-		dbg(DestroyTree());
-
-		RotateAll(S);
-		dbg(fm.MoveAndClean(true, false));
-		S->Time += S->dt;
-
-		dbg(BuildTree());
-		dbg(CalcCirculationFast(false));
-		dbg(fm.VortexShed());
-	}
+	fm.VortexShed();
 
 	//требуется: выполнить условие непротекания, найти скорости вихрей (всех, включая присоединенные)
 	int total = int((xmax-xmin)/prec + 1)*int((ymax-ymin)/prec + 1);

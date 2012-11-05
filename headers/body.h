@@ -39,14 +39,12 @@ class TAtt : public TObj
 		TVec corner; //$\vec c$ in doc
 		//double gatt, qatt; //$q_\att, \gamma_\att$ in doc
 
-		double gsum; //filled by different modules
-		double hsum; //filled by different modules
-		double fric; //filled by different modules
-		double Cp; // computed by S->CalcForces, need /=dt before print (its implemented in SaveProfile);
-		double Fr; // computed by S->CalcForces, need /=dt before print (its implemented in SaveProfile);
-		double Nu; // computed by S->CalcForces, need /=dt before print (its implemented in SaveProfile);
-
-		double gdead;
+		double gsum; //filled by flowmove: MoveAndClean() & VortexShed()
+		double hsum; //filled by flowmove: MoveAndClean() & HeatShed()
+		double fric; //filled by diffusivefast: SegmentInfluence()
+		double Cp; // computed by S->CalcForces;
+		double Fr; // computed by S->CalcForces;
+		double Nu; // computed by S->CalcForces;
 
 		double heat_const;
 		TVec dl; //$\Delta \vec l$ in doc

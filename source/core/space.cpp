@@ -153,7 +153,7 @@ void Space::Save(const char* format)
 			fwrite(pointer(&bc), 8, 1, fout);
 			fwrite(pointer(&hc), 8, 1, fout);
 			fwrite(pointer(&latt->heat_const), 8, 1, fout);
-			//FIXME maybe i should save gdead?
+			fwrite(pointer(&latt->gsum), 8, 1, fout);
 		}
 		#undef body
 	}
@@ -258,6 +258,7 @@ void Space::Load(const char* fname)
 				fread(&att.heat_const, 8, 1, fin);
 				att.bc = bc::bc(bc);
 				att.hc = hc::hc(hc);
+				fread(&att.gsum, 8, 1, fin);
 
 				body->List->push_back(att);
 			}
