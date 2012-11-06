@@ -9,9 +9,9 @@ clean:
 	rm -f vvhd_sf vvcompose vvxtract
 
 install:
-	cp vvhd_sf vvcompose vvxtract ~/.bin/
+	cp vvhd_sf vvcompose vvxtract calc.py ~/.bin/
 
 uninstall:
-	rm -f ~/.bin/vvhd_sf ~/.bin/vvcompose ~/.bin/vvxtract
+	rm -f ~/.bin/vvhd_sf ~/.bin/vvcompose ~/.bin/vvxtract ~/.bin/calc.py
 
 
