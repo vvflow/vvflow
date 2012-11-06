@@ -13,12 +13,13 @@ class convectivefast
 		TVec SpeedSumFast(TVec p);
 
 	public:
-		void CalcCirculationFast(bool use_inverse);
+		void CalcCirculationFast();
 		Matrix* getMatrix() {return matrix;}
 		//void fillSlae();
 		//void solveSlae();
 
 	private:
+		bool canUseInverse();
 		void FillMatrix(bool rightColOnly = false);
 
 	private:

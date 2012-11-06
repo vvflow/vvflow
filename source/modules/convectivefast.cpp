@@ -229,9 +229,46 @@ TVec convectivefast::BoundaryConvective(const TBody &b, const TVec &p)
 	return res;
 }
 
-void convectivefast::CalcCirculationFast(bool use_inverse)
+bool convectivefast::canUseInverse()
 {
-	//FIXME auto determine when to use inverse
+	//Algorithm:
+	// if Nb <= 1 -> use_inverse=TRUE
+	// else check bodies
+	//     if any kx, ky, ka >= 0 -> use_inverse=FALSE
+	//     else if for any pair of bodies (Vo!=0) and (Vo or R*) differ -> use_inverse=FALSE
+	//     else if for any pair of bodies Vx or Vy differ -> use_inverse=FALSE
+	//     else use_inverse=TRUE
+	if (S->BodyList->size() <= 1) return true;
+
+	const_for(S->BodyList, llbody1)
+	{
+		TBody *lbody1 = *llbody1;
+
+		if (lbody1->kx >= 0) return false;
+		if (lbody1->ky >= 0) return false;
+		if (lbody1->ka >= 0) return false;
+
+		const_for(S->BodyList, llbody2)
+		{
+			TBody *lbody2 = *llbody2;
+			if ((lbody1->getRotation()!=0) || (lbody2->getRotation()!=0))
+			{
+				if (lbody1->getRotation() != lbody2->getRotation()) return false;
+				if ((lbody1->Position+lbody1->deltaPosition) != (lbody2->Position+lbody2->deltaPosition)) return false;
+			}
+
+			if (lbody1->getSpeedX() != lbody2->getSpeedX()) return false;
+			if (lbody1->getSpeedY() != lbody2->getSpeedY()) return false;
+		}
+	}
+
+	return true;
+}
+
+void convectivefast::CalcCirculationFast()
+{
+	bool use_inverse = canUseInverse();
+
 	if (matrix->bodyMatrixIsOk())
 		FillMatrix(true);
 	else

@@ -65,6 +65,7 @@ class TVec
 		friend void operator-= (TVec &p1, const TVec& p2) { p1.rx-= p2.rx; p1.ry-= p2.ry; }
 		friend void operator*= (TVec &p, const double c) { p.rx*= c; p.ry*= c; }
 		friend void operator/= (TVec &p, const double c) { p*= (1/c); }
+		friend bool operator!= (const TVec &p1, const TVec &p2) { return ((p1.rx!=p2.rx)||(p1.ry!=p2.ry)); }
 
 		friend double operator* (const TVec &p1, const TVec &p2) 	{ return p1.rx*p2.rx + p1.ry*p2.ry; }
 		friend const TVec rotl(const TVec &p) { return TVec(-p.ry, p.rx); }

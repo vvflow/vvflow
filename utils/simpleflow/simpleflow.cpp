@@ -69,7 +69,7 @@ int main(int argc, char** argv)
 	while (S->Time < S->Finish)
 	{
 		dbg(tr.build());
-		dbg(conv.CalcCirculationFast(true));
+		dbg(conv.CalcCirculationFast());
 		dbg(tr.destroy());
 
 		dbg(fm.HeatShed());
