@@ -78,9 +78,11 @@ int main(int argc, char **argv)
 				printf("%lf\t %lf\t %lf\n", lobj->rx, lobj->ry, lobj->g);
 			break;
 		default:
-			if (atoi(argv[2]) % 2)
+			int arg = atoi(argv[2])-5;
+			if (! (arg%2))
 			{
-				body = S->BodyList->at(0);
+				if (arg/2 >= S->BodyList->size_safe()) { fprintf(stderr, "No such entry\n"); return -1; }
+				body = S->BodyList->at(arg/2);
 				if (body->Position.rx || body->Position.ry || body->Angle)
 					printf("Position   = (%lg, %lg, %lg)\n", body->Position.rx, body->Position.ry, body->Angle);
 				if (body->deltaPosition.rx || body->deltaPosition.ry || body->deltaAngle)
@@ -104,7 +106,8 @@ int main(int argc, char **argv)
 					printf("Force_dead = (%lg, %lg, %lg)\n", body->Force_dead.rx, body->Force_dead.ry, body->Force_dead.g);
 			} else
 			{
-				const_for(S->BodyList->at(0)->List, latt)
+				if (arg/2 >= S->BodyList->size_safe()) { fprintf(stderr, "No such entry\n"); return -1; }
+				const_for(S->BodyList->at(arg/2)->List, latt)
 					printf("%lg\t %lg\t %lg\t %c\t %c\t %lg\n", latt->corner.rx, latt->corner.ry, latt->g,
 					                                            latt->bc, latt->hc, latt->heat_const);
 			}

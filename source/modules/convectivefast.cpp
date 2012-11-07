@@ -568,10 +568,26 @@ void convectivefast::fillForceXEquation(TBody* ibody, bool rightColOnly)
 				*matrix->objectAtIndex(eq_no, lobj->eq_no) = 0;
 		}
 
-		double tmp = (ibody==*lljbody) ? ((ibody->kx >= 0) ? -ibody->getArea()*_1_dt*ibody->density : 1) : 0;
-		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = tmp;
-		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = 0;
-		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = 0;
+		if (ibody == *lljbody)
+		{
+			if (ibody->kx >= 0)
+			{
+				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = -ibody->getArea()*_1_dt*ibody->density;
+				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = 0;
+				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = 0;
+			} else
+			{
+				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = 1;
+				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = 0;
+				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = 0;
+			}
+		} else
+		{
+			*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = 0;
+			*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = 0;
+			*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = 0;
+		}
+
 		#undef jbody
 	}
 
@@ -608,10 +624,25 @@ void convectivefast::fillForceYEquation(TBody* ibody, bool rightColOnly)
 				*matrix->objectAtIndex(eq_no, lobj->eq_no) = 0;
 		}
 
-		double tmp = (ibody==*lljbody) ? ((ibody->ky >= 0) ? -ibody->getArea()*_1_dt*ibody->density : 1) : 0;
-		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = 0;
-		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = tmp;
-		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = 0;
+		if (ibody == *lljbody)
+		{
+			if (ibody->ky >= 0)
+			{
+				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = 0;
+				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = -ibody->getArea()*_1_dt*ibody->density;
+				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = 0;
+			} else
+			{
+				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = 0;
+				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = 1;
+				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = 0;
+			}
+		} else
+		{
+			*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = 0;
+			*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = 0;
+			*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = 0;
+		}
 		#undef jbody
 	}
 
@@ -666,7 +697,9 @@ void convectivefast::fillMomentEquation(TBody* ibody, bool rightColOnly)
 			}
 		} else
 		{
-			fprintf(stderr, "this case isnt implemented yet\n");
+			*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = 0;
+			*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = 0;
+			*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = 0;
 		}
 		#undef jbody
 	}

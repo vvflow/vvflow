@@ -511,10 +511,20 @@ int Space::LoadBody(const char* filename, int cols)
 void Space::EnumerateBodies()
 {
 	int eq_no=0;
+	TBody *bodyWithInfSteadyBC = NULL;
+	//there must be 1 and only 1 body with inf_steady condition
+
 	const_for(BodyList, llbody)
 	{
 		const_for((**llbody).List, latt)
 		{
+			if (latt->bc == bc::inf_steady)
+			{
+				if (bodyWithInfSteadyBC)
+					latt->bc = bc::steady;
+				else
+					bodyWithInfSteadyBC = *llbody;
+			}
 			latt->eq_no = eq_no;
 			eq_no++;
 		}
@@ -593,13 +603,9 @@ TVec Space::HydroDynamicMomentum()
 double Space::AverageSegmentLength()
 {
 	if (!BodyList) return DBL_MIN;
-	double SurfaceLength = 0;
-	int N = 0;
-	const_for(BodyList, llbody)
-	{
-		SurfaceLength+= (**llbody).getSurface();
-		N+= (**llbody).size() - 1;
-	}
+
+	double SurfaceLength = BodyList->at(0)->getSurface();
+	int N = BodyList->at(0)->size() - 1;
 
 	if (!N) return DBL_MIN;
 	return SurfaceLength / N;

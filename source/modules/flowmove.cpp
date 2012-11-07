@@ -147,7 +147,7 @@ void flowmove::VortexShed()
 		{
 			if (fabs(latt->g) < RemoveEps)
 				{ CleanedV_++; body.g_dead+= latt->g; }
-			else if ( latt->bc != bc::slip )
+			else if ( (latt->bc == bc::noslip) || ((latt+1)->bc == bc::noslip) )
 			{
 				ObjCopy = latt->corner + rotl(latt->dl)*1e-4;
 				ObjCopy.g = latt->g;

@@ -16,7 +16,7 @@ bool beginsWith(const char* string, const char* begining)
 TBody* getBodyFromArg(Space* S, const char* arg)
 {
 	if (*arg)
-		return S->BodyList->at(atoi(arg)+1);
+		return S->BodyList->at(atoi(arg)-1);
 	else
 		return *(S->BodyList->end()-1);
 }

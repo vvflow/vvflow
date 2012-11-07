@@ -220,10 +220,10 @@ void TBody::doFillProperties()
 	{
 		_surface+= latt->dl.abs();
 		_area+= latt->ry*latt->dl.rx;
-		_com+= latt->abs2() * rotl(latt->dl);
+		_com-= *latt * (rotl(latt->corner) * (latt+1)->corner);
 		_4moi_0 -= latt->abs2() * latt->dl * rotl(*latt);
 	}
-	_com = 0.5*_com/_area;
+	_com = _com/(3*_area);
 	_moi_com = 0.25*_4moi_0 - _area*_com.abs2();
 	_moi_c = _moi_com + _area*(Position + deltaPosition - _com).abs2();
 }
