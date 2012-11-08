@@ -350,8 +350,8 @@ double convectivefast::_2PI_Xi_q(TVec &p, const TAtt &seg, double rd) // in doc 
 
 void convectivefast::_2PI_A123(const TAtt &seg, const TBody &b, double *_2PI_A1, double *_2PI_A2, double *_2PI_A3)
 {
-	*_2PI_A1 = -C_2PI * seg.ry;
-	*_2PI_A2 = C_2PI * seg.rx;
+	*_2PI_A1 = C_2PI * seg.dl.ry;
+	*_2PI_A2 = -C_2PI * seg.dl.rx;
 	*_2PI_A3 = 0;
 	if ((b.ka<0) && (!b.getRotation())) 
 	{
