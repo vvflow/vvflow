@@ -26,14 +26,6 @@ bool PointIsInvalid(Space *S, TVec p)
 	return false;
 }
 
-void RotateAll(Space* S)
-{
-	const_for(S->BodyList, llbody)
-	{
-		(**llbody).Rotate((**llbody).RotSpeed(S->Time)*S->dt);
-	}
-}
-
 FILE *fout;
 double Rd2;
 
@@ -44,38 +36,39 @@ TVec K(const TVec &obj, const TVec &p)
 	return dr/(dr.abs2() + Rd2);
 }
 
-double Pressure(Space* S, TVec p, double precision)
+double Pressure(Space* S, convectivefast *conv, TVec p, double precision)
 {
-	double Cp=0;
+	double _2PI_Cp=0;
 
 	const_for(S->BodyList, llbody)
 	{
 		#define b (**llbody)
-		double gtmp = 0;
-		const_for(b.List, lobj)
+		//first addend
+		const_for(b.List, latt)
 		{
-			gtmp+= lobj->gsum; //FIXME
-			Cp -= (lobj->dl * rotl(K(*lobj, p))) * gtmp;
+			TVec Vs = b.MotionSpeed_slae + b.RotationSpeed_slae * rotl(*latt - (b.Position + b.deltaPosition));
+			double g = -Vs * latt->dl;
+			double q = -rotl(Vs) * latt->dl;
+			_2PI_Cp += (rotl(K(*latt, p))*g + K(*latt, p)*q) * Vs;
 		}
 
-		double alpha = b.RotSpeed(S->Time)*S->dt;
-		const_for(b.AttachList, latt)
+		//second addend
+		double gtmp = 0;
+		const_for(b.List, latt)
 		{
-			Cp += ((latt->g*rotl(K(*latt, p)) + latt->q*K(*latt, p)) *
-			      rotl(*latt-b.RotAxis)) * alpha;
+			TVec Vs = b.MotionSpeed_slae + b.RotationSpeed_slae * rotl(*latt - (b.Position + b.deltaPosition));
+			gtmp+= latt->gsum;
+			_2PI_Cp -= (latt->dl/S->dt * rotl(K(*latt, p))) * gtmp;
 		}
 		#undef b
 	}
-	Cp/= S->dt;
 
 	const_for(S->VortexList, lobj)
 	{
-		Cp+= (lobj->v*rotl(p-*lobj))*lobj->g / ((p-*lobj).abs2() + Rd2);
+		_2PI_Cp+= (lobj->v * rotl(K(*lobj, p))) * lobj->g;
 	}
 
-	Cp *= C_1_2PI;
-	Cp += 0.5*(S->InfSpeed().abs2() - (SpeedSumFast(p)).abs2());
-	return Cp*2/S->InfSpeed().abs2();
+	return C_1_2PI * _2PI_Cp + 0.5*(S->InfSpeed().abs2() - conv->SpeedSumFast(p).abs2());
 }
 
 int main(int argc, char *argv[])
@@ -110,7 +103,14 @@ int main(int argc, char *argv[])
 
 	fm.VortexShed();
 
-	//требуется: выполнить условие непротекания, найти скорости вихрей (всех, включая присоединенные)
+	//дано: условие непротекания выполнено, неизвестные вихри найдены и рождены.
+	//требуется: найти скорости вихрей (всех, включая присоединенные) и посчитать давление
+	tr.build();
+	eps.CalcEpsilonFast(false);
+	conv.CalcBoundaryConvective();
+	conv.CalcConvectiveFast();
+	diff.CalcVortexDiffusiveFast();
+
 	int total = int((xmax-xmin)/prec + 1)*int((ymax-ymin)/prec + 1);
 	int now=0;
 
@@ -129,7 +129,7 @@ int main(int argc, char *argv[])
 		{
 			double y = ymin + double(j)*prec;
 			double t = PointIsInvalid(S, TVec(x, y)) ? 
-			           0 : Pressure(S, TVec(x, y), prec);
+			           0 : Pressure(S, &conv, TVec(x, y), prec);
 
 			#pragma omp ordered
 			{fout << x << "\t" << y << "\t" << t << endl;}

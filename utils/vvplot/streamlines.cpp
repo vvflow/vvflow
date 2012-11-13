@@ -25,7 +25,7 @@ bool PointIsInvalid(Space *S, TVec p)
 {
 	const_for(S->BodyList, llbody)
 	{
-		if ((**llbody).PointIsInvalid(p)) return true;
+		if ((**llbody).isPointInvalid(p)) return true;
 	}
 	return false;
 }
@@ -44,23 +44,28 @@ double Psi(Space* S, TVec p)
 		#define b (**llbody)
 
 		double psi_g_tmp=0, psi_q_tmp=0;
-		if (b.RotSpeed(S->Time))
-		const_for(b.AttachList, latt)
-		{
-			psi_g_tmp+= log((p-*latt).abs2() + Rd2) * latt->g;
-			psi_q_tmp+= atan(p-*latt) * latt->q;
-		}
-		psi1-= (psi_g_tmp*0.5 + psi_q_tmp) * b.RotSpeed(S->Time) * C_1_2PI;
 
-		const_for(b.List, lobj)
+		if ((b.MotionSpeed_slae.abs() > 1e-5) || (b.RotationSpeed_slae > 1e-5))
+		const_for(b.List, latt)
 		{
-			psi2 += log((p-*lobj).abs2() + Rd2) * lobj->g;
+			TVec Vs = b.MotionSpeed_slae + b.RotationSpeed_slae * rotl(*latt - (b.Position + b.deltaPosition));
+			double g = -Vs * latt->dl;
+			double q = -rotl(Vs) * latt->dl;
+			psi_g_tmp+= log((p-*latt).abs2() + Rd2) * g;
+			psi_q_tmp+= atan(p-*latt) * q;
 		}
+		psi1-= (psi_g_tmp*0.5 + psi_q_tmp) * C_1_2PI;
+
+		const_for(b.List, latt)
+		{
+			psi2 += log((p-*latt).abs2() + Rd2) * latt->g;
+		}
+
 		#undef b
 	}
 	psi2*= -0.5*C_1_2PI;
 
-	TNode* Node = FindNode(p);
+	TNode* Node = S->Tree->findNode(p);
 	if (!Node) return 0;
 	const_for (Node->FarNodes, llfnode)
 	{
@@ -98,7 +103,7 @@ int main(int argc, char *argv[])
 	printer my_printer;
 
 	double dl = S->AverageSegmentLength(); Rd2 = dl*dl/25;
-	InitTree(S, 8, dl*20, 0.3);
+	S->Tree = new tree(S, 8, dl*20, 0.3);
 
 	/**************************** LOAD ARGUMENTS ******************************/
 	double xmin, xmax, ymin, ymax, prec;
@@ -120,7 +125,7 @@ int main(int argc, char *argv[])
 	}
 	/******************************************/
 
-	BuildTree();
+	S->Tree->build();
 
 	int total = int((xmax-xmin)/prec + 1)*int((ymax-ymin)/prec + 1);
 	int now=0;
