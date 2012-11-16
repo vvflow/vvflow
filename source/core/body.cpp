@@ -215,16 +215,17 @@ void TBody::doFillProperties()
 {
 	_surface = _area = _moi_c = _moi_com = 0;
 	_com.zero();
-	double _4moi_0 = 0;
+	double _12moi_0 = 0;
 	const_for (List, latt)
 	{
 		_surface+= latt->dl.abs();
 		_area+= latt->ry*latt->dl.rx;
 		_com-= *latt * (rotl(latt->corner) * (latt+1)->corner);
-		_4moi_0 -= latt->abs2() * latt->dl * rotl(*latt);
+		_12moi_0 -= (latt->corner.abs2() + latt->corner*(latt+1)->corner + (latt+1)->corner.abs2())
+		            *  (rotl(latt->corner) * (latt+1)->corner);
 	}
 	_com = _com/(3*_area);
-	_moi_com = 0.25*_4moi_0 - _area*_com.abs2();
+	_moi_com = _12moi_0/12. - _area*_com.abs2();
 	_moi_c = _moi_com + _area*(Position + deltaPosition - _com).abs2();
 }
 
