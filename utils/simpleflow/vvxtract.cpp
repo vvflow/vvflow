@@ -63,19 +63,19 @@ int main(int argc, char **argv)
 	{
 		case 1:
 			const_for(S->VortexList, lobj)
-				printf("%lf\t %lf\t %lf\n", lobj->rx, lobj->ry, lobj->g);
+				printf("%lf\t %lf\t %le\n", lobj->rx, lobj->ry, lobj->g);
 			break;
 		case 2:
 			const_for(S->HeatList, lobj)
-				printf("%lf\t %lf\t %lf\n", lobj->rx, lobj->ry, lobj->g);
+				printf("%lf\t %lf\t %le\n", lobj->rx, lobj->ry, lobj->g);
 			break;
 		case 3:
 			const_for(S->StreakSourceList, lobj)
-				printf("%lf\t %lf\t %lf\n", lobj->rx, lobj->ry, lobj->g);
+				printf("%lf\t %lf\t %lg\n", lobj->rx, lobj->ry, lobj->g);
 			break;
 		case 4:
 			const_for(S->StreakList, lobj)
-				printf("%lf\t %lf\t %lf\n", lobj->rx, lobj->ry, lobj->g);
+				printf("%lf\t %lf\t %lg\n", lobj->rx, lobj->ry, lobj->g);
 			break;
 		default:
 			int arg = atoi(argv[2])-5;
@@ -84,9 +84,9 @@ int main(int argc, char **argv)
 				if (arg/2 >= S->BodyList->size_safe()) { fprintf(stderr, "No such entry\n"); return -1; }
 				body = S->BodyList->at(arg/2);
 				if (body->Position.rx || body->Position.ry || body->Angle)
-					printf("Position   = (%lg, %lg, %lg)\n", body->Position.rx, body->Position.ry, body->Angle);
+					printf("Position   = (%lg, %lg, %lf (%.1lf deg))\n", body->Position.rx, body->Position.ry, body->Angle, body->Angle/3.141592*180);
 				if (body->deltaPosition.rx || body->deltaPosition.ry || body->deltaAngle)
-					printf("deltaPos   = (%lg, %lg, %lg)\n", body->deltaPosition.rx, body->deltaPosition.ry, body->deltaAngle);
+					printf("deltaPos   = (%lg, %lg, %lf (%.1lf deg))\n", body->deltaPosition.rx, body->deltaPosition.ry, body->deltaAngle, body->deltaAngle/3.141592*180);
 				if ((body->kx>=0) || (body->ky>=0) || (body->ka>=0))
 					printf("spring_k   = (%lg, %lg, %lg)\n", body->kx, body->ky, body->ka);
 				if (strlen(body->SpeedX->getScript()))
@@ -108,7 +108,7 @@ int main(int argc, char **argv)
 			{
 				if (arg/2 >= S->BodyList->size_safe()) { fprintf(stderr, "No such entry\n"); return -1; }
 				const_for(S->BodyList->at(arg/2)->List, latt)
-					printf("%lg\t %lg\t %lg\t %c\t %c\t %lg\n", latt->corner.rx, latt->corner.ry, latt->g,
+					printf("%lf\t %lf\t %le\t %c\t %c\t %lg\n", latt->corner.rx, latt->corner.ry, latt->g,
 					                                            latt->bc, latt->hc, latt->heat_const);
 			}
 			break;
