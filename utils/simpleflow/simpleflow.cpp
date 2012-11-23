@@ -51,7 +51,7 @@ int main(int argc, char** argv)
 
 	fprintf(f, "%-10s \t", "Time");
 	for (int i=0; i<S->BodyList->size(); i++)
-	fprintf(f, "fxborn\t fyborn\t mzborn\t fxdead\t fydead\t mzdead\t Fx\t Fy\t Mz\t Friction_x\t Firc_t\t Fric_m\t NUsselt/L\t PosX\t PosY\t Angle\t DeltaPosX\t DeltaPosY\t DeltaAngle\t SpeedX\t SpeedY\t SpeedO\t SpeedX_prev\t SpeedY_prev\t SpeedO_prev\t ");
+	fprintf(f, "Fx\t Fy\t Mz\t Friction_x\t Firc_y\t Fric_m\t NUsselt/L\t PosX\t PosY\t Angle\t DeltaPosX\t DeltaPosY\t DeltaAngle\t SpeedX\t SpeedY\t SpeedO\t ");
 	fprintf(f, "Nv\t Nh \n");
 
 	double dl = S->AverageSegmentLength();
@@ -88,14 +88,6 @@ int main(int argc, char** argv)
 		fprintf(f, "%-10g \t", S->Time);
 		const_for(S->BodyList, llbody)
 		{
-		fprintf(f, "%-+20e\t %-+20e\t %-+20e\t %-+20e\t %-+20e\t %-+20e\t ",
-		             (**llbody).Force_born.rx,
-		             (**llbody).Force_born.ry,
-		             (**llbody).Force_born.g,
-		             (**llbody).Force_dead.rx,
-		             (**llbody).Force_dead.ry,
-		             (**llbody).Force_dead.g);
-
 		fprintf(f, "%-+20e\t %-+20e\t %-+20e\t %-+20e\t %-+20e\t %-+20e\t %-+20e\t ",
 		             (**llbody).Force_export.rx,
 		             (**llbody).Force_export.ry,
@@ -115,10 +107,6 @@ int main(int argc, char** argv)
 		             (**llbody).MotionSpeed_slae.rx,
 		             (**llbody).MotionSpeed_slae.ry,
 		             (**llbody).RotationSpeed_slae);
-		fprintf(f, "%-+20e\t %-+20e\t %-+20e\t ",
-		             (**llbody).MotionSpeed_slae_prev.rx,
-		             (**llbody).MotionSpeed_slae_prev.ry,
-		             (**llbody).RotationSpeed_slae_prev);
 		}
 		fprintf(f, "%-10ld \t%-10ld \n",
 		             S->VortexList->size_safe(),
