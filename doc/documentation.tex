@@ -1,8 +1,15 @@
+% Required packages (ubuntu)
+% texlive-latex-base           % for pdflatex
+% texlive-latex-recommended    % some stuff
+% texlive-latex-extra          % even more stuff
+% texlive-lang-cyrillic        % cyrillic support
+% texlive-math-extra           % some fonts
+% it all about 450 Mb 
+
 \documentclass[14pt]{extreport}
 \usepackage[paper=a4paper,top=2cm,left=2cm,right=2cm,
     footskip=1cm,bottom=2cm]{geometry}
 
-\usepackage{times}
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
 \usepackage[english,russian]{babel}
@@ -11,6 +18,7 @@
 \usepackage{listings, color}
 \usepackage{graphicx}
 \usepackage{import}
+\usepackage{times}
 \graphicspath{{images/}}
 
 \renewcommand{\baselinestretch}{1.25}
@@ -280,7 +288,7 @@ J_0 = \int r^2 dS =
 \end{equation}
 а скорость, индуцированная источником $(\vec r_q, q)$ --- по формуле
 \begin{equation}
-\label{eq_SourceInfluence}
+\label{eq_SourceConvective}
 \vec V_q(\vec r) = \frac{1}{2\pi} \vec K(\vec r, \vec r_q) \cdot q.
 \end{equation}
 

@@ -107,6 +107,9 @@ timestamp = struct.unpack("d", ffin.read(8))
 realtime = os.popen("date -d \"1970-01-01 %d sec GMT\" +\"%%F %%H:%%M:%%S\"" % timestamp).read()
 ffin.seek(header_skip); time, marker_x, marker_y = struct.unpack("8x64x d 48x d d", ffin.read(144));
 
+print marker_x, marker_y
+#exit()
+
 ffin.close()
 
 ############################## CALC OFFSETS ####################################
@@ -117,12 +120,12 @@ if (opts.count('B') + opts.count('0') + opts.count('1')) > 1:
 elif opts.find('0')>=0:
 	#print "0 RF"
 	RefFrame = '0'
-	x_offset = marker_x - 1000
+	x_offset = marker_x
 	y_offset+= marker_y
 elif opts.find('1')>=0:
 	#print "-1 RF"
 	RefFrame = '1'
-	x_offset = marker_x - 1000 - time
+	x_offset = marker_x - time
 	y_offset+= marker_y
 else: #B - default
 	#print "Body RF"
