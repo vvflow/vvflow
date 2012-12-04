@@ -92,7 +92,7 @@ double Psi(Space* S, TVec p)
 
 int main(int argc, char *argv[])
 {
-	if ( argc != 8)\
+	if ( argc != 8 )
 	{
 		cerr << "Error! Please use: \nstreamlines_exe file.vb precission xmin xmax ymin ymax {0|1|B}\n";
 		return -1;

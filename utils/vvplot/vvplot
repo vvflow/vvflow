@@ -107,9 +107,6 @@ timestamp = struct.unpack("d", ffin.read(8))
 realtime = os.popen("date -d \"1970-01-01 %d sec GMT\" +\"%%F %%H:%%M:%%S\"" % timestamp).read()
 ffin.seek(header_skip); time, marker_x, marker_y = struct.unpack("8x64x d 48x d d", ffin.read(144));
 
-print marker_x, marker_y
-#exit()
-
 ffin.close()
 
 ############################## CALC OFFSETS ####################################
@@ -120,16 +117,24 @@ if (opts.count('B') + opts.count('0') + opts.count('1')) > 1:
 elif opts.find('0')>=0:
 	#print "0 RF"
 	RefFrame = '0'
+	PressureMode = '0'
 	x_offset = marker_x
 	y_offset+= marker_y
 elif opts.find('1')>=0:
 	#print "-1 RF"
 	RefFrame = '1'
+	PressureMode = '1'
 	x_offset = marker_x - time
 	y_offset+= marker_y
+elif opts.find('B')>=0:
+	#print "-1 RF"
+	RefFrame = 'B'
+	PressureMode = 'B'
+	x_offset = 0.0
 else: #B - default
 	#print "Body RF"
 	RefFrame = 'B'
+	PressureMode = 's'
 	x_offset = 0.0
 
 xmin+= x_offset
@@ -149,9 +154,9 @@ boundaries = (str(xmin-prec_lo), str(xmax+prec_lo), str(ymin-prec_lo), str(ymax+
 pids = list()
 #PRESS FIELD
 if opts.count('p') + opts.count('P') > 0:
-	if not file_exists("%s.map" % fin) or opts.count('f') > 0:
+	if not file_exists("%s.%c.map" % (fin, PressureMode)) or opts.count('f') > 0:
 		pids.append(os.spawnvp(os.P_NOWAIT, "presplot_exe", \
-		("presplot_exe", str(fin), str(prec_hi)) + boundaries));
+		("presplot_exe", str(fin), str(prec_hi)) + boundaries + tuple(PressureMode)));
 
 #TEMPERATURE FIELD
 if opts.count('t') + opts.count('o') > 0:
@@ -257,10 +262,10 @@ if opts.count('t') > 0:
 
 delim = delimiter()
 if opts.count('p') + opts.count('P') > 0:
-	gp.write("""%s '%s.map' w image""" % (delim.get(), fin))
+	gp.write("""%s '%s.%c.map' w image""" % (delim.get(), fin, PressureMode))
 	if opts.count('P') > 0:
 		vv_isopres = os.popen("seq -s ' ' -1.5 0.075757576 1").read()[:-1]
-		gp.write("""%s "< isoline_exe %s.map %s" w lines lw 1 lc rgb '#9999cc'""" % (delim.get(), fin, vv_isopres))
+		gp.write("""%s "< isoline_exe %s.%c.map %s" w lines lw 1 lc rgb '#9999cc'""" % (delim.get(), fin, PressureMode, vv_isopres))
 
 if opts.count('t') > 0:
 	gp.write("""%s '%s.heat' w image""" % (delim.get(), fin))

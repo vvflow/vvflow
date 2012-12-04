@@ -28,6 +28,7 @@ bool PointIsInvalid(Space *S, TVec p)
 
 FILE *fout;
 double Rd2;
+char RefFrame;
 
 inline
 TVec K(const TVec &obj, const TVec &p)
@@ -68,14 +69,24 @@ double Pressure(Space* S, convectivefast *conv, TVec p, double precision)
 		_2PI_Cp+= (lobj->v * rotl(K(*lobj, p))) * lobj->g;
 	}
 
-	return C_1_2PI * _2PI_Cp + 0.5*(S->InfSpeed().abs2() - conv->SpeedSumFast(p).abs2());
+	TVec LocalSpeed = conv->SpeedSumFast(p);
+	double Cp_static = C_1_2PI * _2PI_Cp + 0.5*(S->InfSpeed().abs2() - LocalSpeed.abs2());
+	switch (RefFrame)
+	{
+		case 's': return Cp_static;
+		case 'B': return Cp_static + 0.5*(LocalSpeed.abs2());
+		case '0': return Cp_static + 0.5*((LocalSpeed - S->InfSpeed()).abs2());
+		case '1': return Cp_static + 0.5*((LocalSpeed - S->InfSpeed() + TVec(1, 0)).abs2());
+		default: cerr << "Bad reference frame!!!" << endl; return -2;
+	}
+	return Cp_static; // not used
 }
 
 int main(int argc, char *argv[])
 {
-	if ( argc != 7)\
+	if ( argc != 8)\
 	{
-		cerr << "Error! Please use: \npresplot file.vb precission xmin xmax ymin ymax\n";
+		cerr << "Error! Please use: \npresplot file.vb precission xmin xmax ymin ymax {0|1|B|s}\n";
 		return -1;
 	}
 
@@ -100,6 +111,12 @@ int main(int argc, char *argv[])
 	ymax = atof(argv[++i]);
 	prec = atof(argv[2]);
 	}
+	RefFrame = argv[7][1]?0:argv[7][0];
+	switch(RefFrame)
+	{
+		case '0': case '1': case 'B': case 's': break;
+		default: cerr << "Bad reference frame" << endl; return -2;
+	}
 
 	fm.VortexShed();
 
@@ -116,7 +133,7 @@ int main(int argc, char *argv[])
 
 	fstream fout;
 	char fname[128];
-	sprintf(fname, "%s.map", argv[1]);
+	sprintf(fname, "%s.%c.map", argv[1], RefFrame);
 	fout.open(fname, ios::out);
 
 	int imax = (xmax-xmin)/prec + 1;
