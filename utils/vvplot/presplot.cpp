@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
 {
 	if ( argc != 8)\
 	{
-		cerr << "Error! Please use: \npresplot file.vb precission xmin xmax ymin ymax {0|1|B|s}\n";
+		cerr << "Error! Please use: \npresplot file.vb precission xmin xmax ymin ymax s|o|b|f\n";
 		return -1;
 	}
 
@@ -114,7 +114,7 @@ int main(int argc, char *argv[])
 	RefFrame = argv[7][1]?0:argv[7][0];
 	switch(RefFrame)
 	{
-		case '0': case '1': case 'B': case 's': break;
+		case 's': case 'o': case 'b': case 'f': break;
 		default: cerr << "Bad reference frame" << endl; return -2;
 	}
 
