@@ -74,9 +74,9 @@ double Pressure(Space* S, convectivefast *conv, TVec p, double precision)
 	switch (RefFrame)
 	{
 		case 's': return Cp_static;
-		case 'B': return Cp_static + 0.5*(LocalSpeed.abs2());
-		case '0': return Cp_static + 0.5*((LocalSpeed - S->InfSpeed()).abs2());
-		case '1': return Cp_static + 0.5*((LocalSpeed - S->InfSpeed() + TVec(1, 0)).abs2());
+		case 'o': return Cp_static + 0.5*(LocalSpeed.abs2());
+		case 'f': return Cp_static + 0.5*((LocalSpeed - S->InfSpeed()).abs2());
+		case 'b': return Cp_static + 0.5*((LocalSpeed - S->InfSpeed() + TVec(1, 0)).abs2());
 		default: cerr << "Bad reference frame!!!" << endl; return -2;
 	}
 	return Cp_static; // not used

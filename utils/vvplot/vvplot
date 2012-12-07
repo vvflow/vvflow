@@ -203,7 +203,7 @@ if args.plot_vorticity:
 
 #PSI FUNCTION FIELD
 if args.plot_streamlines:
-	if not file_exists("%s.psi" % fin_name) or args.mode_force:
+	if not os.path.exists("%s.psi" % fin_name) or args.mode_force:
 		pids.append(os.spawnvp(os.P_NOWAIT, streamlines_exe,
 		               (streamlines_exe, fin_name,
 		               str(vv_prec_lo)) + boundaries + tuple(args.streamlines)));
@@ -275,11 +275,11 @@ if args.plot_pressure or args.plot_isopressure:
 		""")
 	if args.mode_bw:
 		gp.write("""
-		set palette maxcolors 33 defined (-1.5 "#000000", 0 "#c8c8c8", 0.5 "#f0f0f0", 1 "#ffffff")
+		set palette defined (-1.5 "#000000", 0 "#c8c8c8", 0.5 "#f0f0f0", 1 "#ffffff")
 		""")
 	else:
 		gp.write("""
-		set palette maxcolors 33 defined (-1.5 "#0829d5", -0.5 "#1ffcff", 0 "#2ef62e", 0.3 "yellow", 1 "red")
+		set palette defined (-1.5 "#0829d5", -0.5 "#1ffcff", 0 "#2ef62e", 0.3 "yellow", 1 "red")
 		""")
 
 if args.plot_vorticity:
@@ -306,11 +306,11 @@ if args.plot_temperature:
 		""")
 	if args.mode_bw:
 		gp.write("""
-		set palette maxcolors 33 defined (0 "#000000", 1 "#ffffff")
+		set palette defined (0 "#000000", 1 "#ffffff")
 		""")
 	else:
 		gp.write("""
-		set palette maxcolors 33 defined (0 "#0829d5", 0.3 "#1ffcff", 0.5 "red", 1 "yellow", 2 "white")
+		set palette defined (0 "#0829d5", 0.3 "#1ffcff", 0.5 "red", 1 "yellow", 2 "white")
 		""")
 
 delim = delimiter()

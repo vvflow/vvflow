@@ -94,7 +94,7 @@ int main(int argc, char *argv[])
 {
 	if ( argc != 8 )
 	{
-		cerr << "Error! Please use: \nstreamlines_exe file.vb precission xmin xmax ymin ymax {0|1|B}\n";
+		cerr << "Error! Please use: \nstreamlines_exe file.vb precission xmin xmax ymin ymax o|b|f\n";
 		return -1;
 	}
 
@@ -118,9 +118,9 @@ int main(int argc, char *argv[])
 	char RF = argv[7][1]?0:argv[7][0];
 	switch (RF)
 	{
-		case '0': RefFrame_Speed = TVec(0, 0); break;
-		case '1': RefFrame_Speed = TVec(1, 0); break;
-		case 'B': RefFrame_Speed = S->InfSpeed(); break;
+		case 'f': RefFrame_Speed = TVec(0, 0); break;
+		case 'b': cerr << "Not implemented yet\n"; return -1; RefFrame_Speed = TVec(1, 0); break;
+		case 'o': RefFrame_Speed = S->InfSpeed(); break;
 		default: cerr << "Bad reference frame" << endl; return -2;
 	}
 	/******************************************/

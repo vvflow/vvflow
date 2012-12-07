@@ -200,7 +200,7 @@ parser.add_argument(
 #	dest='referenceframe'
 	choices='obf',
 	default='o',
-	help='reference frame (original/body/fluid)'
+	help='reference frame (original/body/fluid), default:  \'%(default)s\''
 )
 
 parser.add_argument(
@@ -209,7 +209,8 @@ parser.add_argument(
 #	dest='streamlines'
 	choices='obf',
 	default='o',
-	help='choose streamlines reference frame (original/body/fluid)'
+	help="""choose streamlines reference frame (original/body/fluid),
+	      default:  \'%(default)s\'"""
 )
 
 parser.add_argument(
@@ -218,7 +219,8 @@ parser.add_argument(
 #	dest='pressure'
 	choices='sobf',
 	default='s',
-	help='choose pressure mode (static pressure, original/body/fluid refframe)'
+	help="""choose pressure mode (static pressure, original/body/fluid refframe),
+	        default:  \'%(default)s\'"""
 )
 
 args = parser.parse_args()
