@@ -4,6 +4,7 @@ import sys
 import math
 import os
 import struct
+import subprocess
 import argparse_vvplot
 args = argparse_vvplot.args
 
@@ -34,8 +35,21 @@ fout_name = args.output_file
 
 if os.path.isdir(fout_name):
 	#generate filename and override fout_name
+	opts = str()
+	if (args.plot_body): opts+= 'b'
+	if (args.plot_vorticity): opts+= 'g'
+	if (args.plot_heat): opts+= 'H'
+	if (args.plot_ink): opts+= 'i'
+	if (args.plot_isotherms): opts+= 'O'
+	if (args.plot_pressure): opts+= 'p%s'%args.pressure
+	if (args.plot_isopressure): opts+= 'P%s'%args.pressure
+	if (args.plot_streamlines): opts+= 's%s'%args.streamlines
+	if (args.plot_temperature): opts+= 't'
+	if (args.plot_vortexes): opts+= 'v'
+	if (args.plot_vortexes_bold): opts+= 'V'
 	filename = os.path.splitext(os.path.basename(fin_name))[0]
-	fout_name = os.path.join(fout_name, '%s.png'%filename)
+	fout_name = os.path.join(fout_name, '%s.%s.png'%(filename, opts))
+	del opts
 
 if os.path.exists(fout_name) and args.mode_nooverride:
 	exit()
@@ -368,11 +382,23 @@ argv = %s
 time = %g
 shift  = (%g, %g)
 xrange = [%g, %g]
-yrange = [%g, %g]""" % (realtime, allargs, time, x_shift, y_shift, xmin, xmax, ymin, ymax)
+yrange = [%g, %g]
+""" % (realtime, allargs, time, x_shift, y_shift, xmin, xmax, ymin, ymax)
 
-executable = """exiv2 -M"set Exif.Photo.DateTimeOriginal %s" """ % realtime
-executable+= """      -M"set Exif.Image.DateTime %s" """ % realtime
-executable+= """      -M"set Exif.Photo.UserComment charset=Ascii %s" """ % comment
-os.popen("%s %s" % (executable, fout_name))
+for envname in ["VV_PREC_HI", "VV_ISOPSI", "VV_ISOTHERMS",
+                "VV_VORT_RANGE", "VV_EPS_MULT", "VV_BODY_TEMP"]:
+	if os.getenv(envname): comment+= "\n%s: %s" % (envname, os.getenv(envname))
+
+try:
+	subprocess.check_call(["exiv2",
+	           '-M', "set Exif.Photo.DateTimeOriginal %s" % realtime,
+	           '-M', "set Exif.Image.DateTime %s" % realtime,
+	           '-M', "set Exif.Photo.UserComment charset=Ascii %s" % comment,
+	           """%s""" % fout_name
+	                     ])
+except subprocess.CalledProcessError:
+	print "Failed to execute exiv2"
+except OSError:
+	print "Warning: exiv2 not installed, cannot write exif comment"
 
 
