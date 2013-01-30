@@ -45,7 +45,8 @@ double Psi(Space* S, TVec p)
 
 		double psi_g_tmp=0, psi_q_tmp=0;
 
-		if ((b.MotionSpeed_slae.abs() > 1e-5) || (b.RotationSpeed_slae > 1e-5))
+		//fprintf(stderr, "body %lf\n", b.RotationSpeed_slae);
+		if ((b.MotionSpeed_slae.abs() > 1e-5) || (fabs(b.RotationSpeed_slae) > 1e-5))
 		const_for(b.List, latt)
 		{
 			TVec Vs = b.MotionSpeed_slae + b.RotationSpeed_slae * rotl(*latt - (b.Position + b.deltaPosition));
@@ -53,8 +54,9 @@ double Psi(Space* S, TVec p)
 			double q = -rotl(Vs) * latt->dl;
 			psi_g_tmp+= log((p-*latt).abs2() + Rd2) * g;
 			psi_q_tmp+= atan(p-*latt) * q;
+			//fprintf(stderr, "attach %lf\n", b.RotationSpeed_slae);
 		}
-		psi1-= (psi_g_tmp*0.5 + psi_q_tmp) * C_1_2PI;
+		//psi1-= (psi_g_tmp*0.5 + psi_q_tmp) * C_1_2PI;
 
 		const_for(b.List, latt)
 		{
