@@ -48,7 +48,7 @@ class TVec
 
 		double abs() const {return sqrt(rx*rx+ry*ry);}
 		double abs2() const {return rx*rx+ry*ry;}
-		bool iszero() {return (fabs(rx)+fabs(ry) < 1E-10); }
+		bool iszero() const {return (fabs(rx)+fabs(ry) < 1E-10); }
 		void zero() { rx = ry = 0; }
 		void init(double rx_, double ry_) {rx=rx_; ry=ry_;}
 

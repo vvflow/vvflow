@@ -163,30 +163,42 @@ void convectivefast::CalcConvectiveFast()
 
 void convectivefast::CalcBoundaryConvective()
 {
-	if (S->VortexList)
-	const_for(S->VortexList, lobj)
+	const_for(S->BodyList, llbody)
 	{
-		const_for(S->BodyList, llbody)
-		{
-			lobj->v += BoundaryConvective(**llbody, *lobj)*C_1_2PI;
-		}
-	}
+		bool calcBC = (!(**llbody).MotionSpeed_slae.iszero() || fabs((**llbody).RotationSpeed_slae) > 1E-10);
+		bool calcBCS = false;
+		const_for((**llbody).List, latt) { if (latt->bc == bc::slip) {calcBCS = true; break;}}
 
-	if (S->HeatList)
-	const_for(S->HeatList, lobj)
-	{
-		const_for(S->BodyList, llbody)
-		{
-			lobj->v += BoundaryConvective(**llbody, *lobj)*C_1_2PI;
-		}
-	}
+		if (!calcBC && !calcBCS) continue;
 
-	if (S->StreakList)
-	const_for(S->StreakList, lobj)
-	{
-		const_for(S->BodyList, llbody)
+		if (S->VortexList)
 		{
-			lobj->v += BoundaryConvective(**llbody, *lobj)*C_1_2PI;
+			#pragma omp parallel for
+			const_for(S->VortexList, lobj)
+			{
+				if (calcBC) lobj->v += BoundaryConvective(**llbody, *lobj)*C_1_2PI;
+				if (calcBCS) lobj->v += BoundaryConvectiveSlip(**llbody, *lobj)*C_1_2PI;
+			}
+		}
+
+		if (S->HeatList)
+		{
+			#pragma omp parallel for
+			const_for(S->HeatList, lobj)
+			{
+				if (calcBC) lobj->v += BoundaryConvective(**llbody, *lobj)*C_1_2PI;
+				if (calcBCS) lobj->v += BoundaryConvectiveSlip(**llbody, *lobj)*C_1_2PI;
+			}
+		}
+
+		if (S->StreakList)
+		{
+			#pragma omp parallel for
+			const_for(S->StreakList, lobj)
+			{
+				if (calcBC) lobj->v += BoundaryConvective(**llbody, *lobj)*C_1_2PI;
+				if (calcBCS) lobj->v += BoundaryConvectiveSlip(**llbody, *lobj)*C_1_2PI;
+			}
 		}
 	}
 }
@@ -196,7 +208,6 @@ TVec convectivefast::BoundaryConvective(const TBody &b, const TVec &p)
 	TVec dr, res(0, 0);
 	auto alist = b.List;
 
-//	if (!rotspeed) return res;
 	const_for(alist, latt)
 	{
 		if ((p-*latt).abs2() < latt->dl.abs2())
@@ -218,8 +229,20 @@ TVec convectivefast::BoundaryConvective(const TBody &b, const TVec &p)
 			dr = p - *latt;
 			res += (dr*q + rotl(dr)*g) /(dr.abs2() + Rd2);
 		}
-
 		//res+= SegmentInfluence(p, *latt, latt->g, latt->q, 1E-6);
+	}
+
+	return res;
+}
+
+
+TVec convectivefast::BoundaryConvectiveSlip(const TBody &b, const TVec &p)
+{
+	TVec dr, res(0, 0);
+	auto alist = b.List;
+
+	const_for(alist, latt)
+	{
 		if (latt->bc == bc::slip)
 		{
 			res += BioSavar(*latt, p);
@@ -228,6 +251,7 @@ TVec convectivefast::BoundaryConvective(const TBody &b, const TVec &p)
 
 	return res;
 }
+
 
 bool convectivefast::canUseInverse()
 {

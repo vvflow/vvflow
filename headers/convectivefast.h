@@ -27,6 +27,7 @@ class convectivefast
 		TVec SpeedSum(const TNode &Node, const TVec &p);
 
 		TVec BoundaryConvective(const TBody &b, const TVec &p);
+		TVec BoundaryConvectiveSlip(const TBody &b, const TVec &p);
 
 	private:
 		Space *S;
