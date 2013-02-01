@@ -5,6 +5,7 @@
 #include <fstream>
 #include <math.h>
 
+#include "flowmove.h"
 #include "epsfast.h"
 
 const double ExpArgRestriction = -8.;
@@ -171,6 +172,8 @@ int main(int argc, char *argv[])
 
 	Space *S = new Space();
 	S->Load(argv[1]);
+	flowmove fm(S);
+	fm.VortexShed();
 	printer my_printer;
 	S->HeatList = NULL;
 
