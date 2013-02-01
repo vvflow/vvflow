@@ -41,7 +41,11 @@ get_timestamp ()
 int main(int argc, char** argv)
 {
 	ofstream myst;
-	myst.open ("stat.txt",ios::app);
+	char fname[64] = "";
+	#pragma omp parallel
+	#pragma omp master
+		sprintf(fname, "stat%d.txt", omp_get_num_threads());
+	myst.open (fname ,ios::app);
 
 	if (argc < 2)
 	{
