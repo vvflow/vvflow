@@ -15,15 +15,34 @@
 
 #include "sensors.cpp"
 #include "omp.h"
-#define dbg(a) a
+
+#include <sys/time.h>
+
+//#define dbg(a) a
 //#define dbg(a) cerr << "Doing " << #a << "... " << flush; a; cerr << "done\n";
+#define dbg(a) { timestamp_t ts=get_timestamp(); myst <<  #a << " "<< omp_get_max_threads() << " " << flush; a; myst << " " << (get_timestamp()-ts) << endl;}
+
 #define seek(f) while (fgetc(f)!='\n'){}
 using namespace std;
+
+typedef unsigned long long timestamp_t;
+
+static timestamp_t
+get_timestamp ()
+{
+	struct timeval now;
+	gettimeofday (&now, NULL);
+	return  now.tv_usec + (timestamp_t)now.tv_sec * 1000000;
+}
+
 
 //#define OVERRIDEMOI 0.35
 
 int main(int argc, char** argv)
 {
+	ofstream myst;
+	myst.open ("stat.txt",ios::app);
+
 	if (argc < 2)
 	{
 		cerr << "Missing filename to load. You can create it with vvcompose utility.\n";
@@ -66,8 +85,11 @@ int main(int argc, char** argv)
 		S->BodyList->at(0)->overrideMoi_c(OVERRIDEMOI);
 	#endif
 
+	int trololo=3;
 	while (S->Time < S->Finish)
 	{
+		trololo--;
+
 		dbg(tr.build());
 		dbg(conv.CalcCirculationFast());
 		dbg(tr.destroy());
@@ -136,4 +158,6 @@ int main(int argc, char** argv)
 
 	fprintf(stderr, "\n");
 	fclose(f);
+
+	myst.close();
 }
