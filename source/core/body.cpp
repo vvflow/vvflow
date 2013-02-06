@@ -10,50 +10,73 @@ using namespace std;
 	this->body = body;
 	this->eq_no = eq_no;
 }*/
+namespace bc{
+BoundaryCondition bc(int i)
+{
+	switch (i)
+	{
+		case 'l': return slip;
+		case 'n': return noslip;
+		case 'z': return zero;
+		case 's': return steady;
+		case 'i': return inf_steady;
+	}
+	return slip;
+}}
+
+namespace hc{
+HeatCondition hc(int i)
+{
+	switch (i)
+	{
+		case 'n': return neglect;
+		case 'i': return isolate;
+		case 't': return const_t;
+		case 'w': return const_W;
+	}
+	return neglect;
+}}
 
 TBody::TBody(Space *sS)
 {
 	S = sS;
-	List = new vector<TObj>();
-	HeatLayerList = new vector<TObj>();
-	AttachList = new vector<TAtt>();
-	RotSpeed_link = NULL;
-	RotSpeed_const = 0;
-	RotAxis = TVec(0,0);
-	InsideIsValid = true;
-	Angle = 0;
+	List = new vector<TAtt>();
+	HeatLayerList = new vector<TVec>();
+
+	SpeedX = new ShellScript;
+	SpeedY = new ShellScript;
+	SpeedO = new ShellScript;
+
+	Angle = deltaAngle = 0; Position = deltaPosition = TVec(0,0);
 	g_dead = 0;
 	Position = TVec(0,0);
-	Force = TObj(0,0,0); 
-	RotSpeed_cache = RotSpeed_cache2 = 0;
-	cache_time = cache2_time = -1;
+	Friction = Friction_prev = TObj(0,0,0);
+	Force_born = Force_dead = TObj(0,0,0);
+	_surface = _area = 0;
+	_com.zero();
+	_moi_c = _moi_com = 0;
+	kx = ky = ka = -1;
+	density = 1;
 }
 
 TBody::~TBody()
 {
 	delete List;
 	delete HeatLayerList;
-	delete AttachList;
+
+	delete SpeedX;
+	delete SpeedY;
+	delete SpeedO;
 }
 
-double TBody::RotSpeed()
-{
-	if (cache_time != S->Time)
-	{
-		cache2_time = cache_time;
-		RotSpeed_cache2 = RotSpeed_cache;
-		cache_time = S->Time;
-		RotSpeed_cache = (S->Time>0) ? (RotSpeed_link?RotSpeed_link(S->Time):RotSpeed_const) : 0;
-	}
-
-	return RotSpeed_cache;
-}
-
-double TBody::RotSpeed(double t)
-{
-	if (t == cache2_time) return RotSpeed_cache2;
-	return (S->Time>0) ? (RotSpeed_link?RotSpeed_link(t):RotSpeed_const) : 0;
-}
+double TBody::getRotation() const
+{ return SpeedO->getValue(S->Time); }
+double TBody::getSpeedX() const
+{ return SpeedX->getValue(S->Time); }
+double TBody::getSpeedY() const
+{ return SpeedY->getValue(S->Time); }
+TVec TBody::getMotion() const
+{ return TVec(getSpeedX(), getSpeedY());}
 
 /*int TBody::LoadFromFile(const char* filename, int start_eq_no)
 {
@@ -77,62 +100,106 @@ double TBody::RotSpeed(double t)
 	return 0;
 }*/
 
-void TBody::Rotate(double angle)
+void TBody::doRotationAndMotion()
 {
 	if (!this) return;
 
-	const_for (List, obj)
-	{
-		TVec dr = *obj - RotAxis;
-		*obj = RotAxis + dr*cos(angle) + rotl(dr)*sin(angle);
-	}
-	Angle += angle;
-	UpdateAttach();
-	HeatLayerList->clear();
+	doRotation();
+	doMotion();
+	doFillProperties();
+	doUpdateSegments();
 }
 
-TAtt* TBody::PointIsInvalid(TVec p)
+void TBody::doRotation()
 {
-	return PointIsInContour(p, List);
+	double angle_slae = RotationSpeed_slae * S->dt; //in doc \omega_? \Delta t
+	double angle_solid = SpeedO->getValue(S->Time) * S->dt; // in doc \omega \Delta t
+	const_for (List, lobj)
+	{
+		TVec dr = lobj->corner - (Position + deltaPosition);
+		lobj->corner = Position + deltaPosition + dr*cos(angle_slae) + rotl(dr)*sin(angle_slae);
+	}
+	Angle += angle_solid;
+	deltaAngle += angle_slae - angle_solid;
+	RotationSpeed_slae_prev = RotationSpeed_slae;
 }
 
-TAtt* TBody::PointIsInHeatLayer(TVec p)
+void TBody::doMotion()
+{
+	TVec delta_slae = MotionSpeed_slae * S->dt;
+	TVec delta_solid = TVec(SpeedX->getValue(S->Time), SpeedY->getValue(S->Time)) * S->dt;
+	const_for (List, lobj)
+	{
+		lobj->corner += delta_slae;
+	}
+	Position += delta_solid;
+	deltaPosition += delta_slae - delta_solid;
+	MotionSpeed_slae_prev = MotionSpeed_slae;
+}
+
+void TBody::doUpdateSegments()
+{
+	if (!this) return;
+
+	List->push_back(List->at(0));
+	List->erase(List->end()-1);
+
+	const_for (List, lobj)
+	{
+		lobj->dl = (lobj+1)->corner - lobj->corner;
+		*lobj = 0.5*((lobj+1)->corner + lobj->corner);
+	}
+}
+
+TAtt* TBody::isPointInvalid(TVec p)
+{
+	if (!this) return NULL;
+	return isPointInContour(p, List);
+}
+
+TAtt* TBody::isPointInHeatLayer(TVec p)
 {
 	if (!this) return NULL;
 	if (!HeatLayerList->size())
 	{
-		TObj tmp(0, 0, 0);
+		TVec tmp(0, 0);
 		const_for(List, lobj)
 		{
-			tmp = *lobj + rotl(att(lobj)->dl);
+			tmp = *lobj + rotl(lobj->dl);
 			HeatLayerList->push_back(tmp);
 		}
 	}
 
-	return PointIsInContour(p, HeatLayerList);
+	return isPointInContour(p, HeatLayerList);
 }
 
-TAtt* TBody::PointIsInContour(TVec p, vector<TObj> *list)
+template <class T> TVec corner(T *lobj) {return *lobj;}
+template <> TVec corner<TAtt>(TAtt *lobj) {return lobj->corner;}
+template <class T>
+TAtt* TBody::isPointInContour(TVec p, vector<T> *list)
 {
 	if (!this) return NULL;
 
-	bool res = InsideIsValid;
+	bool res = isInsideValid();
 	TAtt *nearest = NULL;
 	double nearest_dr2 = 1E10;
 
 	for (auto i = list->begin(), j = list->end()-1; i<list->end(); j=i++)
 	{
+		TVec vi = corner<T>(i);
+		TVec vj = corner<T>(j);
+
 		if ((
-			(i->ry < j->ry) && (i->ry < p.ry) && (p.ry <= j->ry) &&
-			((j->ry - i->ry) * (p.rx - i->rx) > (j->rx - i->rx) * (p.ry - i->ry))
+			(vi.ry < vj.ry) && (vi.ry < p.ry) && (p.ry <= vj.ry) &&
+			((vj.ry - vi.ry) * (p.rx - vi.rx) > (vj.rx - vi.rx) * (p.ry - vi.ry))
 			) || (
-			(i->ry > j->ry) && (i->ry > p.ry) && (p.ry >= j->ry) &&
-			((j->ry - i->ry) * (p.rx - i->rx) < (j->rx - i->rx) * (p.ry - i->ry))
+			(vi.ry > vj.ry) && (vi.ry > p.ry) && (p.ry >= vj.ry) &&
+			((vj.ry - vi.ry) * (p.rx - vi.rx) < (vj.rx - vi.rx) * (p.ry - vi.ry))
 		)) res = !res;
 	}
 
 	if (res)
-	const_for(AttachList, latt)
+	const_for(List, latt)
 	{
 		if ((*latt-p).abs2()<nearest_dr2)
 		{
@@ -144,74 +211,26 @@ TAtt* TBody::PointIsInContour(TVec p, vector<TObj> *list)
 	return nearest;
 }
 
-double TBody::SurfaceLength()
+void TBody::doFillProperties()
 {
-	if (!this || !List->size()) return 0;
-	double res=0;
-
-	const_for (List, obj)
+	_surface = _area = _moi_c = _moi_com = 0;
+	_com.zero();
+	double _12moi_0 = 0;
+	const_for (List, latt)
 	{
-		res += (*obj - *next(obj)).abs();
+		_surface+= latt->dl.abs();
+		_area+= latt->ry*latt->dl.rx;
+		_com-= *latt * (rotl(latt->corner) * (latt+1)->corner);
+		_12moi_0 -= (latt->corner.abs2() + latt->corner*(latt+1)->corner + (latt+1)->corner.abs2())
+		            *  (rotl(latt->corner) * (latt+1)->corner);
 	}
-
-	return res;
-}
-
-void TBody::SetRotation(TVec sRotAxis, double (*sRotSpeed)(double time), double sRotSpeed_const)
-{
-	RotSpeed_link = sRotSpeed;
-	RotSpeed_const = sRotSpeed_const;
-	RotAxis = sRotAxis;
+	_com = _com/(3*_area);
+	_moi_com = _12moi_0/12. - _area*_com.abs2();
+	_moi_c = _moi_com + _area*(Position + deltaPosition - _com).abs2();
 }
 
 inline double atan2(const TVec &p)
 {
 	return atan2(p.ry, p.rx);
 }
-
-bool TBody::isInsideValid()
-{
-	if (!this) return true;
-
-	auto min = List->begin();
-	const_for (List, obj)
-	{
-		min = (obj->rx < min->rx) ? obj : min;
-	}
-
-	return ((atan2(*prev(min)-*min) - atan2(*next(min)-*min)) > 0);
-}
-
-void TBody::UpdateAttach()
-{
-	if (!this) return;
-
-	const_for (List, lobj)
-	{
-		TAtt &att = *this->att(lobj);
-		att.dl = *next(lobj) - *lobj;
-		att = TVec(0.5*(*next(lobj) + *lobj));
-
-		att.g = -rotl(att-RotAxis)*att.dl;
-		att.q =      (att-RotAxis)*att.dl;
-	}
-}
-
-/************************** HEAT LAYER ****************************************/
-
-/*void TBody::CleanHeatLayer()
-{
-	if (!this) return;
-	if (!HeatLayer) return;
-
-	for (size_t i=0; i<List->size(); i++)
-	{
-		HeatLayer[i]=0;
-	}
-}*/
-
-/*int* TBody::ObjectIsInHeatLayer(TObj &obj)
-{
-	return false;
-}*/
 

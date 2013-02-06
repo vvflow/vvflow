@@ -4,6 +4,7 @@
 #include <math.h>
 #include <iostream>
 #include "list.h"
+#include "shellscript.h"
 using namespace std;
 
 #define bugfix volatile
@@ -21,6 +22,7 @@ const double C_2_PI = 	2./C_PI;
 
 inline double sign(double x) { return (x>0) ? 1 : ((x<0) ? -1 : 0); }
 inline double sqr(double x) { return x*x; }
+inline int sqr(int x) { return x*x; }
 inline double max(double a, double b) { return(a>b)?a:b; }
 inline double min(double a, double b) { return(a<b)?a:b; }
 inline bool divisible(double dividend, double divisor, double precision) {
@@ -30,6 +32,10 @@ inline bool divisible(double dividend, double divisor, double precision) {
 	// divisor = делитель
 	// precision = точность
 	// возвращает true если первый аргумент кратен второму с заданной точностью
+}
+inline bool divisible(double dividend, double divisor)
+{
+	return divisible(dividend, divisor, divisor*0.01);
 }
 
 class TVec
@@ -42,7 +48,7 @@ class TVec
 
 		double abs() const {return sqrt(rx*rx+ry*ry);}
 		double abs2() const {return rx*rx+ry*ry;}
-		bool iszero() {return (fabs(rx)+fabs(ry) < 1E-10); }
+		bool iszero() const {return (fabs(rx)+fabs(ry) < 1E-10); }
 		void zero() { rx = ry = 0; }
 		void init(double rx_, double ry_) {rx=rx_; ry=ry_;}
 
@@ -59,9 +65,11 @@ class TVec
 		friend void operator-= (TVec &p1, const TVec& p2) { p1.rx-= p2.rx; p1.ry-= p2.ry; }
 		friend void operator*= (TVec &p, const double c) { p.rx*= c; p.ry*= c; }
 		friend void operator/= (TVec &p, const double c) { p*= (1/c); }
+		friend bool operator!= (const TVec &p1, const TVec &p2) { return ((p1.rx!=p2.rx)||(p1.ry!=p2.ry)); }
 
 		friend double operator* (const TVec &p1, const TVec &p2) 	{ return p1.rx*p2.rx + p1.ry*p2.ry; }
 		friend const TVec rotl(const TVec &p) { return TVec(-p.ry, p.rx); }
+		//NB: double * rotl(vec) = (in terms of math) (e_z*double) \times vec
 		friend const TVec operator- (const TVec &p) { return TVec(-p.rx, -p.ry); }
 };
 

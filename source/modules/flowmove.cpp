@@ -3,10 +3,10 @@
 #include <cstdlib>
 #include <time.h>
 
-flowmove::flowmove(Space *sS, double sdt, double sRemoveEps)
+flowmove::flowmove(Space *sS, double sRemoveEps)
 {
 	S = sS;
-	dt = S->dt = sdt;
+	dt = S->dt;
 	RemoveEps = sRemoveEps;
 	CleanedV_ = 0;
 }
@@ -16,6 +16,14 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
 	CleanedV_ = 0;
 	auto vlist = S->VortexList;
 	auto hlist = S->HeatList;
+
+	//Move bodies
+	const_for (S->BodyList, llbody)
+	{
+		(**llbody).doRotationAndMotion();
+	}
+
+	S->InfMarker+= S->InfSpeed()*S->dt;
 
 	//MOVING VORTEXES
 	if ( vlist )
@@ -27,14 +35,14 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
 		const_for(S->BodyList, llbody)
 		{
 			if (!invalid_inbody)
-			invalid_inbody = (**llbody).PointIsInvalid(*lobj);
+			invalid_inbody = (**llbody).isPointInvalid(*lobj);
 		}
 
 		if ( remove && invalid_inbody )
 		{
 			TBody *badbody = invalid_inbody->body;
-			badbody->Force -= rotl(*lobj) * lobj->g;
-			badbody->Force.g -=  lobj->abs2() * lobj->g;
+			badbody->Force_dead += rotl(*lobj) * lobj->g;
+			badbody->Force_dead.g +=  (*lobj - badbody->Position - badbody->deltaPosition).abs2() * lobj->g;
 			invalid_inbody->gsum -= lobj->g;
 			badbody->g_dead += lobj->g;
 			CleanedV_++;
@@ -49,6 +57,12 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
 		}
 	}
 
+	const_for(S->BodyList, llbody)
+	{
+		(**llbody).Force_dead /= dt;
+		(**llbody).Force_dead.g /= 2*dt;
+	}
+
 	//MOVING HEAT PARTICLES
 	if ( hlist )
 	const_for (hlist, lobj)
@@ -58,7 +72,7 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
 		TAtt* invalid_inbody = NULL;
 		const_for(S->BodyList, llbody)
 		{
-			invalid_inbody = (**llbody).PointIsInvalid(*lobj);
+			invalid_inbody = (**llbody).isPointInvalid(*lobj);
 			if (invalid_inbody) break;
 		}
 
@@ -72,7 +86,7 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
 		TAtt* inlayer = NULL;
 		const_for(S->BodyList, llbody)
 		{
-			inlayer = (**llbody).PointIsInHeatLayer(*lobj);
+			inlayer = (**llbody).isPointInHeatLayer(*lobj);
 			if (inlayer) break;
 		}
 
@@ -108,7 +122,7 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
 		TAtt* invalid_inbody = NULL;
 		const_for(S->BodyList, llbody)
 		{
-			if ((**llbody).PointIsInvalid(*lobj))
+			if ((**llbody).isPointInvalid(*lobj))
 			{
 				S->StreakList->erase(lobj);
 				lobj--;
@@ -127,23 +141,25 @@ void flowmove::VortexShed()
 	const_for(S->BodyList, llbody)
 	{
 		#define body (**llbody)
-		const_for(body.List, lbobj)
+		body.Force_born.zero();
+
+		const_for(body.List, latt)
 		{
-			TAtt *latt = body.att(lbobj);
-			if (fabs(lbobj->g) < RemoveEps)
-				{ CleanedV_++; body.g_dead+= lbobj->g; }
-			else if ( (latt->bc == bc::noslip)
-			       || ((**llbody).prev(latt)->bc == bc::noslip) )
+			if (fabs(latt->g) < RemoveEps)
+				{ CleanedV_++; body.g_dead+= latt->g; }
+			else if ( (latt->bc == bc::noslip) || ((latt+1)->bc == bc::noslip) )
 			{
-				ObjCopy = *lbobj;
-				ObjCopy += rotl(body.att(lbobj)->dl)*1e-3;
-				body.Force += rotl(ObjCopy) * ObjCopy.g;
-				body.Force.g += ObjCopy.abs2() * ObjCopy.g;
-				          latt ->gsum+= 0.5*ObjCopy.g;
-				body.prev(latt)->gsum+= 0.5*ObjCopy.g;
+				ObjCopy = latt->corner + rotl(latt->dl)*1e-4;
+				ObjCopy.g = latt->g;
+				body.Force_born += rotl(latt->corner) * ObjCopy.g;
+				body.Force_born.g += (latt->corner-body.Position-body.deltaPosition).abs2() * ObjCopy.g;
+				latt->gsum+= ObjCopy.g;
 				vlist->push_back(ObjCopy);
 			}
 		}
+
+		body.Force_born /= dt;
+		body.Force_born.g /= 2*dt;
 		#undef body
 	}
 }
@@ -157,7 +173,7 @@ void flowmove::HeatShed()
 	const_for(S->BodyList, llbody)
 	{
 		#define body (**llbody)
-		const_for(body.AttachList, latt)
+		const_for(body.List, latt)
 		{
 			switch (latt->hc)
 			{

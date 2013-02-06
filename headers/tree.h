@@ -1,5 +1,9 @@
 #ifndef TREE_H_
 #define TREE_H_
+
+class node; typedef node TNode;
+class tree; typedef tree TTree;
+
 #include "core.h"
 #include <stdio.h>
 #include <float.h>
@@ -7,7 +11,7 @@
 class node
 {
 	public:
-		node();
+		node(tree *sParent);
 		~node();
 
 		double x, y, h, w;
@@ -26,6 +30,7 @@ class node
 		node *ch1;
 		node *ch2;
 	public:
+		tree *parent;
 		void DivideNode();
 		void DistributeContent(content *parent, content **ch1, content **ch2);
 		void Stretch();
@@ -34,19 +39,33 @@ class node
 		void CalculateCMassFromScratch();
 		void FindNearNodes(node *TopNode);
 };
-typedef node TNode;
 
-void InitTree(Space *sS, int sFarCriteria, double sMinNodeSize, double sMaxNodeSize = DBL_MAX);
-void BuildTree(bool IncludeVortexes = true, bool IncludeBody = true, bool IncludeHeat = true);
-void DestroyTree();
+class tree
+{
+	public:
+		tree(Space *sS, int sFarCriteria, double sMinNodeSize, double sMaxNodeSize = DBL_MAX);
+		//~tree();
 
-double GetAverageNearNodesPercent();
-double GetAverageNearNodesCount();
-vector<TNode*>* GetTreeBottomNodes();
+		void build(bool IncludeVortexes = true, bool IncludeBody = true, bool IncludeHeat = true);
+		void destroy();
 
-TNode* FindNode(TVec p);
-int GetMaxDepth();
-int PrintBottomNodes(FILE* f, bool PrintDepth = false); // prints lines such "x y w h [i]"
-void PrintLevel(std::ostream& os, int level);
+		vector<TNode*>* getBottomNodes();
+		TNode* findNode(TVec p);
+
+		void printBottomNodes(FILE* f, bool PrintDepth = false); // prints lines such "x y w h [i]"
+
+	private:
+		Space *S;
+		int farCriteria;
+		double minNodeSize;
+		double maxNodeSize;
+
+		TNode *rootNode;
+		vector<TNode*> *bottomNodes;
+		template <class T>
+		void fillRootNode(vector<T> *src, node::content **dst);
+
+		friend class node;
+};
 
 #endif /*TREE_H_*/

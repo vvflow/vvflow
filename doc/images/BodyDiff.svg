@@ -7,6 +7,7 @@
    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
    xmlns:svg="http://www.w3.org/2000/svg"
    xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    width="177.16534"
@@ -14,9 +15,27 @@
    id="svg2"
    version="1.1"
    inkscape:version="0.48.1 r9760"
-   sodipodi:docname="VortexDiff.pdf">
+   sodipodi:docname="BodyDiff_tex.svg"
+   inkscape:export-filename="/home/rosik/vvhd/doc/images/BodyDiff.png"
+   inkscape:export-xdpi="150"
+   inkscape:export-ydpi="150">
   <defs
      id="defs4">
+    <linearGradient
+       id="linearGradient5041">
+      <stop
+         style="stop-color:#ffffff;stop-opacity:1;"
+         offset="0"
+         id="stop5043" />
+      <stop
+         id="stop5049"
+         offset="0.62171835"
+         style="stop-color:#ffffff;stop-opacity:1;" />
+      <stop
+         style="stop-color:#ffffff;stop-opacity:0;"
+         offset="1"
+         id="stop5045" />
+    </linearGradient>
     <marker
        inkscape:stockid="Arrow1Mend"
        orient="auto"
@@ -73,19 +92,29 @@
          transform="matrix(-0.4,0,0,-0.4,-4,0)"
          inkscape:connector-curvature="0" />
     </marker>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient5041"
+       id="linearGradient5047"
+       x1="7.7129636"
+       y1="71.452782"
+       x2="37.341007"
+       y2="68.871567"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="translate(0,910.63005)" />
   </defs>
   <sodipodi:namedview
      id="base"
      pagecolor="#ffffff"
      bordercolor="#666666"
      borderopacity="1.0"
-     inkscape:pageopacity="0.0"
+     inkscape:pageopacity="1"
      inkscape:pageshadow="2"
-     inkscape:zoom="3.4572224"
-     inkscape:cx="177.16534"
+     inkscape:zoom="4.2615555"
+     inkscape:cx="50.80304"
      inkscape:cy="70.866142"
      inkscape:document-units="px"
-     inkscape:current-layer="layer3"
+     inkscape:current-layer="layer1"
      showgrid="false"
      units="mm"
      showguides="true"
@@ -102,28 +131,12 @@
      inkscape:window-x="0"
      inkscape:window-y="24"
      inkscape:window-maximized="1"
-     inkscape:snap-global="true"
+     inkscape:snap-global="false"
      inkscape:snap-to-guides="true">
     <sodipodi:guide
-       orientation="0,1"
-       position="66.614601,33.977224"
-       id="guide6328" />
-    <sodipodi:guide
-       orientation="0,1"
-       position="17.524196,53.427426"
-       id="guide6330" />
-    <sodipodi:guide
        orientation="1,0"
-       position="73.019272,122.69807"
+       position="69.998389,122.64181"
        id="guide3040" />
-    <sodipodi:guide
-       orientation="0,1"
-       position="64.468612,101.96823"
-       id="guide3042" />
-    <sodipodi:guide
-       orientation="0,1"
-       position="64.212866,67.972735"
-       id="guide3044" />
   </sodipodi:namedview>
   <metadata
      id="metadata7">
@@ -145,7 +158,7 @@
      style="display:inline">
     <path
        style="fill:#e0e0e0;fill-opacity:1;stroke:#000000;stroke-width:1.41732287;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
-       d="m 16.28539,929.5405 48.183222,20.8536 -0.511492,67.991 -32.589197,28.9232"
+       d="m 19.335919,918.74632 45.132693,31.64778 -0.511492,67.991 -32.589197,28.9232"
        id="path2985"
        inkscape:connector-curvature="0"
        sodipodi:nodetypes="cccc" />
@@ -174,22 +187,19 @@
        d="m 67.905416,984.3896 -7.3851,0"
        id="path6394"
        inkscape:connector-curvature="0" />
+    <path
+       style="fill:url(#linearGradient5047);fill-opacity:1;stroke:none"
+       d="m 30.974605,913.68058 -26.5161391,1.77652 12.4367731,133.0169 37.075664,1.7764 z"
+       id="path5039"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="ccccc" />
   </g>
   <g
      inkscape:groupmode="layer"
      id="layer2"
      inkscape:label="Vort"
-     transform="translate(0,-283.46455)">
-    <path
-       sodipodi:type="arc"
-       style="fill:none;stroke:#000000;stroke-width:3.99135876;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
-       id="path5354"
-       sodipodi:cx="202.45053"
-       sodipodi:cy="195.22014"
-       sodipodi:rx="159.82936"
-       sodipodi:ry="37.293518"
-       d="m 362.27989,195.22014 a 159.82936,37.293518 0 1 1 -319.65872,0 159.82936,37.293518 0 1 1 319.65872,0 z"
-       transform="matrix(0.12864641,0,0,0.55134175,92.628768,215.59559)" />
+     transform="translate(0,-283.46455)"
+     style="display:inline">
     <path
        style="fill:none;stroke:#000000;stroke-width:1.0629921;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-end:url(#Arrow1Mend);display:inline"
        d="M 64.212866,357.2241 118.6733,323.2286"
@@ -213,6 +223,16 @@
        id="path5375-5"
        inkscape:connector-curvature="0"
        sodipodi:nodetypes="cc" />
+    <path
+       sodipodi:type="arc"
+       style="opacity:0.50526315;fill:none;stroke:#000000;stroke-width:0.95192325;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       id="path4245"
+       sodipodi:cx="35.866943"
+       sodipodi:cy="21.328279"
+       sodipodi:rx="16.487225"
+       sodipodi:ry="18.435776"
+       d="m 52.354168,21.328279 a 16.487225,18.435776 0 1 1 -32.974449,0 16.487225,18.435776 0 1 1 32.974449,0 z"
+       transform="matrix(1.1808236,0,0,1.0560176,76.320767,300.70556)" />
   </g>
   <g
      inkscape:groupmode="layer"
@@ -222,7 +242,7 @@
      transform="translate(0,-283.46455)">
     <text
        xml:space="preserve"
-       style="font-size:14px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       style="font-size:6px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
        x="98.670586"
        y="304.17325"
        id="text6224"
@@ -230,85 +250,74 @@
          sodipodi:role="line"
          id="tspan6226"
          x="98.670586"
-         y="304.17325">𝜀</tspan></text>
+         y="304.17325"
+         style="font-size:6px">$\varepsilon$</tspan></text>
     <text
        xml:space="preserve"
-       x="73.019272"
-       y="323.22861"
+       x="69.99839"
+       y="329.88135"
        id="text6224-0"
-       style="font-size:14px"><tspan
+       style="font-size:6px"><tspan
          sodipodi:role="line"
          id="tspan6226-8"
-         x="73.019272"
-         y="323.22861"
-         style="font-size:14px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:FreeSerif;-inkscape-font-specification:FreeSerif">p<tspan
-   style="font-size:65.00091553%;baseline-shift:sub"
-   id="tspan3026">k</tspan></tspan></text>
+         x="69.99839"
+         y="329.88135"
+         style="font-size:6px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:FreeSerif;-inkscape-font-specification:FreeSerif">$\vec c_s$</tspan></text>
     <text
        xml:space="preserve"
-       x="73.019272"
-       y="391.2196"
+       x="69.99839"
+       y="397.00461"
        id="text6224-0-70"
-       style="font-size:14px"><tspan
+       style="font-size:6px"><tspan
          sodipodi:role="line"
          id="tspan6226-8-3"
-         x="73.019272"
-         y="391.2196"
-         style="font-size:14px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:FreeSerif;-inkscape-font-specification:FreeSerif">p<tspan
-   style="font-size:65.00091553%;baseline-shift:sub"
-   id="tspan3028">k+1</tspan></tspan></text>
+         x="69.99839"
+         y="397.00461"
+         style="font-size:6px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:FreeSerif;-inkscape-font-specification:FreeSerif">$\vec c_{s+1}$</tspan></text>
     <text
        xml:space="preserve"
-       x="73.019272"
-       y="357.22409"
+       x="69.99839"
+       y="363.29834"
        id="text6224-0-6"
-       style="font-size:14px"><tspan
+       style="font-size:6px"><tspan
          sodipodi:role="line"
          id="tspan6226-8-8"
-         x="73.019272"
-         y="357.22409"
-         style="font-size:14px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:FreeSerif;-inkscape-font-specification:FreeSerif">r<tspan
-   style="font-size:65.00091553%;baseline-shift:sub"
-   id="tspan3032">k</tspan></tspan></text>
+         x="69.99839"
+         y="363.29834"
+         style="font-size:6px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:FreeSerif;-inkscape-font-specification:FreeSerif">$\vec r_s$</tspan></text>
     <text
        xml:space="preserve"
-       style="font-size:40px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
-       x="91.194595"
-       y="347.30728"
+       style="font-size:6px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       x="90.037598"
+       y="349.62128"
        id="text3034"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
          id="tspan3036"
-         x="91.194595"
-         y="347.30728"
-         style="font-size:10px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:FreeSerif;-inkscape-font-specification:FreeSerif">ρ<tspan
-   style="font-size:65%;baseline-shift:sub"
-   id="tspan3126">k</tspan></tspan></text>
+         x="90.037598"
+         y="349.62128"
+         style="font-size:6px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:FreeSerif;-inkscape-font-specification:FreeSerif">$\vec \rho_{sv}$</tspan></text>
     <text
        xml:space="preserve"
-       x="120.57437"
-       y="332.19534"
+       x="118.22781"
+       y="318.81995"
        id="text6224-0-6-8"
-       style="font-size:14px;display:inline"><tspan
+       style="font-size:6px;display:inline"><tspan
          sodipodi:role="line"
          id="tspan6226-8-8-3"
-         x="120.57437"
-         y="332.19534"
-         style="font-size:14px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:FreeSerif;-inkscape-font-specification:FreeSerif">r<tspan
-   style="font-size:65.00091553%;baseline-shift:sub"
-   id="tspan3032-8" /></tspan></text>
+         x="118.22781"
+         y="318.81995"
+         style="font-size:6px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:FreeSerif;-inkscape-font-specification:FreeSerif">$\vec r_v$</tspan></text>
     <text
        xml:space="preserve"
        x="147.46947"
        y="315.24753"
        id="text6224-0-0"
-       style="font-size:14px;display:inline"><tspan
+       style="font-size:6px;display:inline"><tspan
          sodipodi:role="line"
          id="tspan6226-8-33"
          x="147.46947"
          y="315.24753"
-         style="font-size:14px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:FreeSerif;-inkscape-font-specification:FreeSerif">W<tspan
-   style="font-size:65.00091553%;baseline-shift:sub"
-   id="tspan3124">d</tspan></tspan></text>
+         style="font-size:6px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:FreeSerif;-inkscape-font-specification:FreeSerif">$\vec W_d$</tspan></text>
   </g>
 </svg>

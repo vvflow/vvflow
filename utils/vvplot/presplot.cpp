@@ -21,21 +21,14 @@ bool PointIsInvalid(Space *S, TVec p)
 {
 	const_for(S->BodyList, llbody)
 	{
-		if ((**llbody).PointIsInvalid(p)) return true;
+		if ((**llbody).isPointInvalid(p)) return true;
 	}
 	return false;
 }
 
-void RotateAll(Space* S)
-{
-	const_for(S->BodyList, llbody)
-	{
-		(**llbody).Rotate((**llbody).RotSpeed(S->Time)*S->dt);
-	}
-}
-
 FILE *fout;
 double Rd2;
+char RefFrame;
 
 inline
 TVec K(const TVec &obj, const TVec &p)
@@ -44,58 +37,69 @@ TVec K(const TVec &obj, const TVec &p)
 	return dr/(dr.abs2() + Rd2);
 }
 
-double Pressure(Space* S, TVec p, double precision)
+double Pressure(Space* S, convectivefast *conv, TVec p, double precision)
 {
-	double Cp=0;
+	double _2PI_Cp=0;
 
 	const_for(S->BodyList, llbody)
 	{
 		#define b (**llbody)
-		double gtmp = 0;
-		const_for(b.List, lobj)
+		//first addend
+		const_for(b.List, latt)
 		{
-			gtmp+= b.att(lobj)->gsum;
-			Cp -= (b.att(lobj)->dl * rotl(K(*lobj, p))) * gtmp;
+			TVec Vs = b.MotionSpeed_slae + b.RotationSpeed_slae * rotl(*latt - (b.Position + b.deltaPosition));
+			double g = -Vs * latt->dl;
+			double q = -rotl(Vs) * latt->dl;
+			_2PI_Cp += (rotl(K(*latt, p))*g + K(*latt, p)*q) * Vs;
 		}
 
-		double alpha = b.RotSpeed(S->Time)*S->dt;
-		const_for(b.AttachList, latt)
+		//second addend
+		double gtmp = 0;
+		const_for(b.List, latt)
 		{
-			Cp += ((latt->g*rotl(K(*latt, p)) + latt->q*K(*latt, p)) *
-			      rotl(*latt-b.RotAxis)) * alpha;
+			TVec Vs = b.MotionSpeed_slae + b.RotationSpeed_slae * rotl(*latt - (b.Position + b.deltaPosition));
+			gtmp+= latt->gsum;
+			_2PI_Cp -= (latt->dl/S->dt * rotl(K(*latt, p))) * gtmp;
 		}
 		#undef b
 	}
-	Cp/= S->dt;
 
 	const_for(S->VortexList, lobj)
 	{
-		Cp+= (lobj->v*rotl(p-*lobj))*lobj->g / ((p-*lobj).abs2() + Rd2);
+		_2PI_Cp+= (lobj->v * rotl(K(*lobj, p))) * lobj->g;
 	}
 
-	Cp *= C_1_2PI;
-	Cp += 0.5*(S->InfSpeed().abs2() - (SpeedSumFast(p)).abs2());
-	return Cp*2/S->InfSpeed().abs2();
+	TVec LocalSpeed = conv->SpeedSumFast(p);
+	double Cp_static = C_1_2PI * _2PI_Cp + 0.5*(S->InfSpeed().abs2() - LocalSpeed.abs2());
+	switch (RefFrame)
+	{
+		case 's': return Cp_static;
+		case 'o': return Cp_static + 0.5*(LocalSpeed.abs2());
+		case 'f': return Cp_static + 0.5*((LocalSpeed - S->InfSpeed()).abs2());
+		case 'b': return Cp_static + 0.5*((LocalSpeed - S->InfSpeed() + TVec(1, 0)).abs2());
+		default: cerr << "Bad reference frame!!!" << endl; return -2;
+	}
+	return Cp_static; // not used
 }
 
 int main(int argc, char *argv[])
 {
-	if ( argc != 7)\
+	if ( argc != 8)\
 	{
-		cerr << "Error! Please use: \npresplot file.vb precission xmin xmax ymin ymax\n";
+		cerr << "Error! Please use: \npresplot file.vb precission xmin xmax ymin ymax s|o|b|f\n";
 		return -1;
 	}
 
 	Space *S = new Space();
 	S->Load(argv[1]);
-	S->EnumerateBodies(true);
 
-	double dl = S->AverageSegmentLength(); Rd2 = dl*dl/25;
-	InitConvectiveFast(S, dl*dl/25);
+	double dl = S->AverageSegmentLength();
+	tree tr(S, 8, dl*20, 0.1);
+	S->Tree = &tr;
+	convectivefast conv(S, dl*0.2);
 	epsfast eps(S);
-	diffusivefast diff(S, S->Re, 1);
-	flowmove fm(S, S->dt);
-	InitTree(S, 8, dl*20, 0.3);
+	diffusivefast diff(S);
+	flowmove fm(S);
 
 	/**************************** LOAD ARGUMENTS ******************************/
 	double xmin, xmax, ymin, ymax, prec;
@@ -107,36 +111,29 @@ int main(int argc, char *argv[])
 	ymax = atof(argv[++i]);
 	prec = atof(argv[2]);
 	}
-		dbg(fm.VortexShed());
-	/******************************************/
-
-	S->ZeroForces();
-	for (int i=0; i<1; i++)
+	RefFrame = argv[7][1]?0:argv[7][0];
+	switch(RefFrame)
 	{
-		S->ZeroSpeed();
-		dbg(BuildTree());
-		dbg(eps.CalcEpsilonFast(false));
-		dbg(CalcBoundaryConvective());
-		dbg(CalcConvectiveFast());
-		dbg(diff.CalcVortexDiffusiveFast());
-		dbg(DestroyTree());
-
-		RotateAll(S);
-		dbg(fm.MoveAndClean(true, false));
-		S->Time += S->dt;
-
-		dbg(BuildTree());
-		dbg(CalcCirculationFast(false));
-		dbg(fm.VortexShed());
+		case 's': case 'o': case 'b': case 'f': break;
+		default: cerr << "Bad reference frame" << endl; return -2;
 	}
 
-	//требуется: выполнить условие непротекания, найти скорости вихрей (всех, включая присоединенные)
+	fm.VortexShed();
+
+	//дано: условие непротекания выполнено, неизвестные вихри найдены и рождены.
+	//требуется: найти скорости вихрей (всех, включая присоединенные) и посчитать давление
+	tr.build();
+	eps.CalcEpsilonFast(false);
+	conv.CalcBoundaryConvective();
+	conv.CalcConvectiveFast();
+	diff.CalcVortexDiffusiveFast();
+
 	int total = int((xmax-xmin)/prec + 1)*int((ymax-ymin)/prec + 1);
 	int now=0;
 
 	fstream fout;
 	char fname[128];
-	sprintf(fname, "%s.map", argv[1]);
+	sprintf(fname, "%s.%c.map", argv[1], RefFrame);
 	fout.open(fname, ios::out);
 
 	int imax = (xmax-xmin)/prec + 1;
@@ -149,7 +146,7 @@ int main(int argc, char *argv[])
 		{
 			double y = ymin + double(j)*prec;
 			double t = PointIsInvalid(S, TVec(x, y)) ? 
-			           0 : Pressure(S, TVec(x, y), prec);
+			           0 : Pressure(S, &conv, TVec(x, y), prec);
 
 			#pragma omp ordered
 			{fout << x << "\t" << y << "\t" << t << endl;}

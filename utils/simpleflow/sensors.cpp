@@ -6,19 +6,21 @@
 class sensors
 {
 	public:
-		sensors(Space* sS, const char* sensors_file, const char* output);
+		sensors(Space* sS, convectivefast *sconv, const char* sensors_file, const char* output);
 		void loadFile(const char* file);
 		void output();
 
 	private:
 		Space *S;
+		convectivefast *conv;
 		FILE *fout;
 		vector <TVec> *slist;
 };
 
-sensors::sensors(Space* sS, const char* sensors_file, const char* output)
+sensors::sensors(Space* sS, convectivefast *sconv, const char* sensors_file, const char* output)
 {
 	S = sS;
+	conv = sconv;
 	fout = NULL;
 	slist = NULL;
 
@@ -50,7 +52,7 @@ void sensors::output()
 	fprintf(fout, "%lg", S->Time);
 	const_for(slist, lvec)
 	{
-		TVec tmp = SpeedSumFast(*lvec);
+		TVec tmp = conv->SpeedSumFast(*lvec);
 		fprintf(fout, " \t%lg \t%lg", tmp.rx, tmp.ry);
 	}
 	fprintf(fout, "\n");

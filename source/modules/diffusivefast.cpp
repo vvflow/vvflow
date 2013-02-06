@@ -8,18 +8,18 @@ const double ExpArgRestriction = -8.;
 #include "iostream"
 using namespace std;
 
-diffusivefast::diffusivefast(Space *sS, double sRe, double sPr)
+diffusivefast::diffusivefast(Space *sS)
 {
 	S = sS;
-	S->Re = Re = sRe;
-	S->Pr = Pr = sPr;
+	Re = S->Re;
+	Pr = S->Pr;
 }
 
 void diffusivefast::CalcVortexDiffusiveFast()
 {
 	if ( !S->VortexList ) return;
 
-	auto bnodes = GetTreeBottomNodes();
+	auto bnodes = S->Tree->getBottomNodes();
 	if ( !bnodes ) return;
 
 	#pragma omp parallel for schedule(dynamic, 10)
@@ -49,18 +49,11 @@ void diffusivefast::CalcVortexDiffusiveFast()
 					VortexInfluence(obj, **lljobj, &S2, &S1);
 				}
 
-				jlist = nnode.BodyLList;
-				if ( jlist )
-				const_for(jlist, lljobj)
+				if ( nnode.BodyLList )
+				const_for(nnode.BodyLList, lljatt)
 				{
-					if (!*lljobj) { continue; }
-					TBody *body = NULL;
-					const_for(S->BodyList, llbody)
-						if ( (*lljobj >= (**llbody).List->begin()) &&
-						     (*lljobj <  (**llbody).List->end()) )
-							body = *llbody;
-					if (!body) { continue; }
-					SegmentInfluence(obj, body->att(*lljobj), &S3, &S0, true);
+					if (!*lljatt) { continue; }
+					SegmentInfluence(obj, (TAtt*)(*lljatt), &S3, &S0, true);
 				}
 				#undef nnode
 			}
@@ -79,7 +72,7 @@ void diffusivefast::CalcHeatDiffusiveFast()
 {
 	if ( !S->HeatList ) return;
 
-	auto bnodes = GetTreeBottomNodes();
+	auto bnodes = S->Tree->getBottomNodes();
 	if ( !bnodes ) return;
 
 	#pragma omp parallel for schedule(dynamic, 10)
@@ -109,18 +102,11 @@ void diffusivefast::CalcHeatDiffusiveFast()
 					VortexInfluence(obj, **lljobj, &S2, &S1);
 				}
 
-				jlist = nnode.BodyLList;
-				if ( jlist )
-				const_for(jlist, lljobj)
+				if ( nnode.BodyLList )
+				const_for(nnode.BodyLList, lljatt)
 				{
-					if (!*lljobj) { continue; }
-					TBody *body = NULL;
-					const_for(S->BodyList, llbody)
-						if ( (*lljobj >= (**llbody).List->begin()) &&
-						     (*lljobj <  (**llbody).List->end()) )
-							body = *llbody;
-					if (!body) { continue; }
-					SegmentInfluence(obj, body->att(*lljobj), &S3, &S0, false);
+					if (!*lljatt) { continue; }
+					SegmentInfluence(obj, (TAtt*)(*lljatt), &S3, &S0, false);
 				}
 				#undef nnode
 			}

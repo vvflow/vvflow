@@ -49,19 +49,17 @@ void flowmove2::VortexShed()
 	const_for(S->BodyList, llbody)
 	{
 		TBody &body = **llbody;
-		const_for(body.List, lbobj)
+		const_for(body.List, latt)
 		{
-			TAtt *latt = body.att(lbobj);
-			if (fabs(lbobj->g) < RemoveEps)
-				{ CleanedV_++; body.g_dead+= lbobj->g; }
+			if (fabs(latt->g) < RemoveEps)
+				{ CleanedV_++; body.g_dead+= latt->g; }
 			else if ( (latt->bc == bc::noslip)
 			       || ((**llbody).prev(latt)->bc == bc::noslip) )
 			{
-				ObjCopy = *lbobj;
+				ObjCopy = *latt;
 				body.Force += rotl(ObjCopy) * ObjCopy.g;
-				body.Force.g += (ObjCopy-body.RotAxis).abs2() * ObjCopy.g;
-				          latt ->gsum+= 0.5*ObjCopy.g;
-				body.prev(latt)->gsum+= 0.5*ObjCopy.g;
+				body.Force.g += (ObjCopy-body.Position).abs2() * ObjCopy.g;
+				latt->gsum+= ObjCopy.g;
 				vlist->push_back(ObjCopy);
 			}
 		}
@@ -75,14 +73,14 @@ void flowmove2::CheckObject(TObj*& lobj, bool remove)
 	const_for(S->BodyList, llbody)
 	{
 		if (!invalid_inbody)
-		invalid_inbody = (**llbody).PointIsInvalid(*lobj);
+		invalid_inbody = (**llbody).isPointInvalid(*lobj);
 	}
 
 	if ( remove && invalid_inbody )
 	{
 		TBody *badbody = invalid_inbody->body;
 		badbody->Force -= rotl(*lobj) * lobj->g;
-		badbody->Force.g -= (*lobj - badbody->RotAxis).abs2() * lobj->g;
+		badbody->Force.g -= (*lobj - badbody->Position).abs2() * lobj->g;
 		invalid_inbody->gsum -= lobj->g;
 		badbody->g_dead += lobj->g;
 		CleanedV_++;

@@ -7,29 +7,54 @@ class TAtt;
 #include "elementary.h"
 #include "space.h"
 
-namespace bc{enum BoundaryCondition {slip, noslip, kutta, steady, inf_steady};}
-namespace hc{enum HeatCondition {neglect, isolate, const_t, const_W};}
+namespace bc{
+	enum BoundaryCondition
+	{
+		slip = 'l',
+		noslip = 'n',
+		zero = 'z',
+		steady = 's',
+		inf_steady = 'i',
+	};
 
-class TAtt : public TVec
+	BoundaryCondition bc(int i);
+}
+
+namespace hc{
+	enum HeatCondition {
+		neglect = 'n',
+		isolate = 'i',
+		const_t = 't',
+		const_W = 'w'
+	};
+
+	HeatCondition hc(int i);
+}
+
+class TAtt : public TObj
 {
 	public:
-		double g, q;
-		double gsum; //filled by different modules
-		double hsum; //filled by different modules
-		double fric; //filled by different modules
-		double Cp; // computed by S->CalcForces, need /=dt before print (its implemented in SaveProfile);
-		double Fr; // computed by S->CalcForces, need /=dt before print (its implemented in SaveProfile);
-		double Nu; // computed by S->CalcForces, need /=dt before print (its implemented in SaveProfile);
+		//rx, ry: center coordinates ; $\vec r$ in doc
+		//g: unkonown circulation $\gamma$ in doc
+		TVec corner; //$\vec c$ in doc
+		//double gatt, qatt; //$q_\att, \gamma_\att$ in doc
+
+		double gsum; //filled by flowmove: MoveAndClean() & VortexShed()
+		double hsum; //filled by flowmove: MoveAndClean() & HeatShed()
+		double fric; //filled by diffusivefast: SegmentInfluence()
+		double Cp; // computed by S->CalcForces;
+		double Fr; // computed by S->CalcForces;
+		double Nu; // computed by S->CalcForces;
 
 		double heat_const;
-		TVec dl;
+		TVec dl; //$\Delta \vec l$ in doc
 		bc::BoundaryCondition bc;
 		hc::HeatCondition hc;
 		long ParticleInHeatLayer;
 
 		TAtt(){}
 		//TAtt(TBody *body, int eq_no);
-		void zero() { rx = ry = g = q = gsum = hsum = Cp = Fr = Nu = 0; ParticleInHeatLayer = -1; }
+		void zero() { rx = ry = g = gsum = hsum = /*FIXME fric?*/ Cp = Fr = Nu = 0; ParticleInHeatLayer = -1; }
 		TAtt& operator= (const TVec& p) { rx=p.rx; ry=p.ry; return *this; }
 
 	public:
@@ -43,35 +68,53 @@ class TBody
 		TBody(Space *sS);
 		~TBody();
 
-		//int LoadFromFile(const char* filename, int start_eq_no);
-		void Rotate(double angle);
-		TAtt* PointIsInvalid(TVec p);
-		TAtt* PointIsInHeatLayer(TVec p);
-		double SurfaceLength();
-		double size(){ return List->size_safe(); }
-		void SetRotation(TVec sRotAxis, double (*sRotSpeed)(double time), double sRotSpeed_const = 0);
+		vector<TAtt> *List;
 
-		vector<TObj> *List;
-		vector<TAtt> *AttachList;
-		bool InsideIsValid;
-		bool isInsideValid();
-		double RotSpeed();
-		double RotSpeed(double time);
-		double Angle;
-		TVec Position;
-		TVec RotAxis;
-		void UpdateAttach();
+		double Angle; // in documentation = $\alpha$
+		TVec   Position; // = $\vec R$
+		double deltaAngle; // in doc $\Delta \alpha$
+		TVec   deltaPosition; //in doc $\Delta \vec R$
+		double RotationSpeed_slae; //in doc \omega_?
+		TVec   MotionSpeed_slae; // in doc \vec V_?
+		double RotationSpeed_slae_prev; //\omega_? from previous step
+		TVec   MotionSpeed_slae_prev; //\vec V_? from previous step
 
-		TObj Force, Friction; //computed by S->CalcForces
+		double kx, ky, ka;
+		double density; //in doc \frac{\rho_b}{\rho_0}
+
+		TObj Friction, Friction_prev, Force_export; //computed by S->CalcForces
+		TObj Force_born, Force_dead; //computed in flowmove
 		double Nusselt; //computed by S->CalcForces
 		double g_dead;
 
-		TObj* next(TObj* obj) const { return List->next(obj); }
-		TObj* prev(TObj* obj) const { return List->prev(obj); }
-		TAtt* next(TAtt* att) const { return AttachList->next(att); }
-		TAtt* prev(TAtt* att) const { return AttachList->prev(att); }
-		TAtt* att(const TObj* obj) const { return &AttachList->at(obj - List->begin());}
-		TObj* obj(const TAtt* att) const { return &List->at(att - AttachList->begin());}
+	public:
+		//functions \vec V(t), \omega(t)
+		ShellScript *SpeedX;
+		ShellScript *SpeedY;
+		ShellScript *SpeedO;
+		double getRotation() const;
+		double getSpeedX() const;
+		double getSpeedY() const;
+		TVec getMotion() const;
+
+		//see \vec c_s \vert_Rotation
+		void doRotationAndMotion();
+		//update TAtt-> rx, ry, dl after doRotationAndMotion()
+		void doUpdateSegments();
+
+		TAtt* isPointInvalid(TVec p);
+		TAtt* isPointInHeatLayer(TVec p);
+		bool isInsideValid() {return _area<=0;}
+
+		void doFillProperties();
+		double getSurface() {return _surface;}
+		double getArea()    {return _area;}
+		TVec   getCom()     {return _com;} // center of mass
+		double getMoi_c()   {return _moi_c;} // moment of inertia about rotation axis
+		int size()       {return List->size_safe();}
+		void overrideMoi_c(double newMoi_c) {_moi_c = newMoi_c;}
+
+		int eq_forces_no; // starting number of forces equations
 
 		//Heat layer
 		//void CleanHeatLayer();
@@ -79,14 +122,19 @@ class TBody
 
 	private:
 		Space *S;
-		vector<TObj> *HeatLayerList;
-		TAtt* PointIsInContour(TVec p, vector<TObj> *list);
-		double (*RotSpeed_link)(double time);
-		double RotSpeed_const;
-		double RotSpeed_cache;
-		double cache_time;
-		double RotSpeed_cache2;
-		double cache2_time;
+
+		double _surface;
+		double _area;
+		TVec   _com; //center of mass (in global ref frame)
+		double _moi_com; //moment of inertia about com;
+		double _moi_c; //moi about rotation axis
+
+		vector<TVec> *HeatLayerList;
+		template <class T>
+		TAtt* isPointInContour(TVec p, vector<T> *list);
+
+		void doRotation();
+		void doMotion();
 };
 
 #endif /* BODY_H_ */

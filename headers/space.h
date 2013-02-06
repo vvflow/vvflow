@@ -4,9 +4,8 @@
 class Space;
 
 #include "body.h"
+#include "tree.h"
 #include "elementary.h"
-
-using namespace std;
 
 typedef const char TValues;
 namespace val
@@ -19,22 +18,31 @@ namespace val
 class Space
 {
 	public:
-		Space(TVec (*sInfSpeed)(double time) = NULL);
+		Space();
+		char* name;
+		time_t realtime;
 
 		vector<TBody*> *BodyList;
 		vector<TObj> *VortexList;
 		vector<TObj> *HeatList;
 		vector<TObj> *StreakSourceList;
 		vector<TObj> *StreakList;
+		TTree *Tree;
 
 		inline void FinishStep(); //update time and coord variables
 
-		TVec InfSpeed() { return InfSpeed_link?InfSpeed_link(Time):InfSpeed_const; }
+		ShellScript *InfSpeedX;
+		ShellScript *InfSpeedY;
+		TVec InfSpeed() {return TVec(InfSpeedX->getValue(Time), InfSpeedY->getValue(Time));}
+		TVec InfMarker;
 		void ZeroSpeed();
-		double Time, dt, Re, Pr;
+		double InfCirculation;
+		TVec gravitation; //gravitational acceleration
+		double Time, dt, Re, Pr, Finish;
+		double save_dt, streak_dt, profile_dt;
 
-		void Save(const char* format, const double header[]=NULL, int N=0);
-		double* Load(const char* filename, int* N = NULL);
+		void Save(const char* format);
+		void Load(const char* filename);
 		FILE* OpenFile(const char* format);
 		void CalcForces();
 		void SaveProfile(const char* filename, double dt, TValues vals);
@@ -48,7 +56,7 @@ class Space
 		int LoadStreakSource(const char* filename);
 
 		int LoadBody(const char* filename, int cols=5);
-		void EnumerateBodies(bool cheat = false);
+		void EnumerateBodies();
 		void ZeroBodies(); //zero Cp, Fr, Nu variables.
 
 		/***************** INTEGRALS ******************/
@@ -57,10 +65,6 @@ class Space
 		double gmax();
 		TVec HydroDynamicMomentum();
 		double AverageSegmentLength();
-
-	private:
-		TVec (*InfSpeed_link)(double time);
-		TVec InfSpeed_const;
 };
 
 #endif /*SPACE_H_*/
