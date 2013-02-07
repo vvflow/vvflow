@@ -20,36 +20,30 @@ epsfast::epsfast(Space *sS)
 void epsfast::CalcEpsilonFast(bool merge)
 {
 	merged_ = 0;
-	eps_restriction = 0.6*S->AverageSegmentLength();
-	double tmp_merge_criteria_sq = 0.16*sqr(S->AverageSegmentLength());
 
 	auto bnodes = S->Tree->getBottomNodes();
 	const_for(bnodes, llbnode)
 	{
 		#define bnode (**llbnode)
+		TAtt *nearestAtt = nearestBodySegment(TVec(bnode.x, bnode.y));
 
-		double h2=DBL_MAX; //distance to body surface 
-		const_for(S->BodyList, llbody)
-		const_for((**llbody).List, lobj)
+		double merge_criteria_sq = (merge && nearestAtt) ? 
+		                             0.16 * nearestAtt->dl.abs2() * (1 + (TVec(bnode.x, bnode.y) - *nearestAtt).abs2())
+		                             : 0;
+		double _1_eps_restriction = 1.0/nearestAtt->dl.abs();
+
+		for (TObj *lobj = bnode.vRange.first; lobj < bnode.vRange.last; lobj++)
 		{
-			h2 = min(h2, (*lobj-TVec(bnode.x, bnode.y)).abs2());
-			lobj+= 10; //speed up
+			if (!lobj->g) continue;
+			lobj->_1_eps = min(1./epsv(bnode, lobj, merge_criteria_sq), _1_eps_restriction);
+			//eps is bounded below (cant be less than restriction)
 		}
-		merge_criteria_sq = (h2==DBL_MAX)?0:(h2+1) * tmp_merge_criteria_sq;
 
-		for (TObj *lobj = bnode.vRange.first, lobj < bnode.vRange.last; lobj++)
+		for (TObj *lobj = bnode.hRange.first; lobj < bnode.hRange.last; lobj++)
 		{
-			obj._1_eps = 1./max(epsv(bnode, lobj, merge), eps_restriction);
-		}
-
-		auto hlist = bnode.HeatLList;
-		if (hlist)
-		const_for (hlist, llobj)
-		{
-			if (!*llobj) { continue; }
-			#define obj (**llobj)
-			obj._1_eps = 1./max(epsh(bnode, llobj, merge), eps_restriction);
-			#undef obj
+			if (!lobj->g) continue;
+			lobj->_1_eps = min(1./epsh(bnode, lobj, merge_criteria_sq), _1_eps_restriction);
+			//eps is bounded below (cant be less than restriction)
 		}
 		#undef bnode
 	}
@@ -57,140 +51,106 @@ void epsfast::CalcEpsilonFast(bool merge)
 
 /******************************** NAMESPACE ***********************************/
 
-void epsfast::MergeVortexes(TObj **lv1, TObj **lv2)
+void epsfast::MergeVortexes(TObj *lv1, TObj *lv2)
 {
-//	if (!lv1 || !lv2 || (lv1==lv2)) return;
-//	if (!*lv1 || !*lv2) return;
-	#define v1 (**lv1)
-	#define v2 (**lv2)
 	merged_++;
 
-	if ( sign(v1) == sign(v2) )
+	if ( sign(*lv1) == sign(*lv2) )
 	{
-		v1 = (v1*v1.g + v2*v2.g)/(v1.g + v2.g);
+		*lv1 = (*lv1*lv1->g + *lv2*lv2->g)/(lv1->g + lv2->g);
 	}
-	else if ( fabs(v1.g) < fabs(v2.g) )
+	else if ( fabs(lv1->g) < fabs(lv2->g) )
 	{
-		v1.rx = v2.rx;
-		v1.ry = v2.ry;
+		lv1->rx = lv2->rx;
+		lv1->ry = lv2->ry;
 	}
-	v1.v = (v1.v*v1.g + v2.v*v2.g)/(v1.g + v2.g);
-	v1.g+= v2.g;
-	v2.g = 0;
-	*lv2 = NULL;
-	#undef v1
-	#undef v2
+	//lv1->v = (lv1->v*lv1->g + lv2->v*lv2->g)/(lv1->g + lv2->g);
+	lv1->g+= lv2->g;
+	lv2->g = 0;
 }
 
-double epsfast::epsv(const TNode &Node, TObj **lv, bool merge)
+double epsfast::epsv(const TSortedNode &Node, TObj *lv, double merge_criteria_sq)
 {
-	if (!lv || !*lv) { return DBL_MIN; }
-	TVec dr;
 	double res1, res2;
 	res2 = res1 = DBL_MAX;
 
-	#define v (**lv)
-	TObj **lv1, **lv2;
+	TObj *lv1, *lv2;
 	lv1 = lv2 = NULL;
 
 	const_for(Node.NearNodes, llnnode)
 	{
 		#define nnode (**llnnode)
-
-		auto *vlist = nnode.VortexLList;
-		if (!vlist) {continue;}
-		const_for (vlist, llobj)
+		for (TObj *lobj = nnode.vRange.first; lobj < nnode.vRange.last; lobj++)
 		{
-			if (!*llobj) { continue; }
-			TObj &obj = **llobj;
-			dr = v - obj;
-			double drabs2 = dr.abs2();
-			if ( drabs2 ) {
+			if (!lobj->g || (lv == lobj)) { continue; }
+			double drabs2 = (*lv - *lobj).abs2();
+
 			if ( res1 > drabs2 )
 			{
 				res2 = res1; lv2 = lv1;
-				res1 = drabs2; lv1 = llobj;
+				res1 = drabs2; lv1 = lobj;
 			}
 			else if ( res2 > drabs2 )
 			{
-				res2 = drabs2; lv2 = llobj;
-			}}
+				res2 = drabs2; lv2 = lobj;
+			}
 		}
 		#undef nnode
 	}
 
 	if ( !lv1 ) return DBL_MIN;
 	if ( !lv2 ) return sqrt(res1);
-	if (!merge) return sqrt(res2);
 
-	#define v1 (**lv1)
-	#define v2 (**lv2)
 	if ( 
 		(res1 < merge_criteria_sq)
 		||
-		( (sign(v1) == sign(v2)) && (sign(v1) != sign(v)) ) 
+		( (lv1->sign() == lv2->sign()) && (lv1->sign() != lv->sign()) ) 
 	   )
 	{
 		MergeVortexes(lv, lv1);
-		return epsv(Node, lv, false);
+		return epsv(Node, lv, 0);
 	}
-	#undef v1
-	#undef v2
-	#undef v
 
 	return sqrt(res2);
 }
 
-double epsfast::epsh(const TNode &Node, TObj **lv, bool merge)
+double epsfast::epsh(const TSortedNode &Node, TObj *lv, double merge_criteria_sq)
 {
-	if (!lv || !*lv) { return DBL_MIN; }
-	TVec dr;
 	double res1, res2;
 	res2 = res1 = DBL_MAX;
 
-	#define v (**lv)
-	TObj **lv1 = NULL;
+	TObj *lv1 = NULL;
 
 	const_for(Node.NearNodes, llnnode)
 	{
 		#define nnode (**llnnode)
-
-		auto *hlist = nnode.HeatLList;
-		if (!hlist) {continue;}
-		const_for (hlist, llobj)
+		for (TObj *lobj = nnode.vRange.first; lobj < nnode.vRange.last; lobj++)
 		{
-			if (!*llobj) { continue; }
-			#define obj (**llobj)
-			dr = v - obj;
-			double drabs2 = dr.abs2();
-			if ( drabs2 ) {
+			if (!lobj->g || (lv == lobj)) { continue; }
+			double drabs2 = (*lv - *lobj).abs2();
+
 			if ( res1 > drabs2 )
 			{
 				res2 = res1;
 				res1 = drabs2;
-				lv1 = llobj;
+				lv1 = lobj;
 			}
 			else if ( res2 > drabs2 )
 			{
 				res2 = drabs2;
-			}}
-			#undef obj
+			}
 		}
 		#undef nnode
 	}
 
 	if ( res1 == DBL_MAX ) return DBL_MIN;
 	if ( res2 == DBL_MAX ) return sqrt(res1);
-	if (!merge) return sqrt(res2);
 
-	#define v1 (**lv1)
 	if (res1 < merge_criteria_sq)
 	{
 		MergeVortexes(lv, lv1);
-		return epsh(Node, lv, false);
+		return epsh(Node, lv, 0);
 	}
-	#undef v
-	#undef v1
 
 	return sqrt(res2);
 }

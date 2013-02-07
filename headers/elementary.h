@@ -82,7 +82,7 @@ class TObj: public TVec
 	public:
 		double g;
 		TVec v;
-		double _1_eps;
+		double _1_eps; // eps = max (nearest dl on wall,  dist to 2nd nearest vortex)
 
 		TObj() {}
 		TObj(double rx_, double ry_, double g_):TVec(rx_, ry_) { g=g_; v.zero();}
@@ -90,11 +90,12 @@ class TObj: public TVec
 
 		void zero() { rx = ry = g = 0; v.zero(); }
 		void init(double rx_, double ry_, double g_) {rx=rx_; ry=ry_; g=g_;}
+		short sign() { return ::sign(g); }
 
 		TObj& operator= (const TVec& p) { rx=p.rx; ry=p.ry; return *this; }
 		friend istream& operator>> (istream& is, TObj& p) 		{ return is >> p.rx >> p.ry >> p.g; }
 		friend ostream& operator<< (ostream& os, const TObj& p) 	{ return os << p.rx << " \t" << p.ry << " \t" << p.g; }
-		friend short sign(const TObj& p) { return (p.g>0)? 1:-1; }
+		friend short sign(const TObj& p) { return ::sign(p.g); }
 };
 
 

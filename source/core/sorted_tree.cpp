@@ -84,7 +84,7 @@ void TSortedNode::definePointerRangesAndSort(vector<TObj> *list)
 	else if (list == hList) { first = center = hRange.first; last = hRange.last; }
 	else if (list == sList) { first = center = sRange.first; last = sRange.last; }
 
-	TObj *p1 = first, *p2 = last;
+	TObj *p1 = first, *p2 = last-1;
 	while (p1 < p2)
 	{
 		while ( (h<w) ? (p1->rx<x) : (p1->ry<y) ) p1++;
