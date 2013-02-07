@@ -10,57 +10,60 @@ class stree; typedef stree TSortedTree;
 
 class range
 {
-	TObj *first, *last;
+	public:
+		TObj *first, *last;
 	public:
 		range() { first = last = NULL; }
 		range(TObj *f, TObj *l) { first = f; last = l; }
 		void set(TObj *f, TObj *l) { first = f; last = l; }
-}
+		int size() { return last-first; }
+};
 
 class snode
 {
 	public:
-		snode(tree *sParent);
+		snode(stree *sParent);
 		~snode();
 
 		double x, y, h, w;
 		int i, j; //debug
 		TObj CMp, CMm;
 
-		typedef vector<TObj*> content;
-		content *BodyLList;
-
+		typedef vector<TObj*> blList;
+		blList *BodyLList;
 		range vRange;
 		range hRange;
 		range sRange;
 
-		vector<node*> *NearNodes;
-		vector<node*> *FarNodes;
+		vector<snode*> *NearNodes;
+		vector<snode*> *FarNodes;
 
-		node *ch1;
-		node *ch2;
+		snode *ch1;
+		snode *ch2;
 	public:
-		tree *parent;
+		stree *parent;
 		void DivideNode();
-		void DistributeContent(content *parent, content **ch1, content **ch2);
+		void definePointerRangesAndSort(vector<TObj> *list);
+		void DistributeContent(blList *parent, blList **ch1, blList **ch2);
 		void Stretch();
+		void Stretch(range &oRange, TVec &tr, TVec &bl);
 		void Destroy();
 		void CalculateCMass();
 		void CalculateCMassFromScratch();
-		void FindNearNodes(node *TopNode);
+		void FindNearNodes(snode *TopNode);
 };
 
 class stree
 {
 	public:
-		tree(Space *sS, int sFarCriteria, double sMinNodeSize, double sMaxNodeSize = DBL_MAX);
+		stree(Space *sS, int sFarCriteria, double sMinNodeSize, double sMaxNodeSize = DBL_MAX);
 		//~tree();
 
 		void build(bool IncludeVortexes = true, bool IncludeBody = true, bool IncludeHeat = true);
 		void destroy();
 
-		vector<TNode*>* getBottomNodes();
-		TNode* findNode(TVec p);
+		vector<TSortedNode*>* getBottomNodes();
+		TSortedNode* findNode(TVec p);
 
 		void printBottomNodes(FILE* f, bool PrintDepth = false); // prints lines such "x y w h [i]"
 
@@ -70,12 +73,10 @@ class stree
 		double minNodeSize;
 		double maxNodeSize;
 
-		TNode *rootNode;
-		vector<TNode*> *bottomNodes;
-		template <class T>
-		void fillRootNode(vector<T> *src, node::content **dst);
+		TSortedNode *rootNode;
+		vector<TSortedNode*> *bottomNodes;
 
-		friend class node;
+		friend class snode;
 };
 
 #endif /*SORTEDTREE_H_*/

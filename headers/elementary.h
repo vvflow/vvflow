@@ -25,6 +25,10 @@ inline double sqr(double x) { return x*x; }
 inline int sqr(int x) { return x*x; }
 inline double max(double a, double b) { return(a>b)?a:b; }
 inline double min(double a, double b) { return(a<b)?a:b; }
+inline double max(double a, double b, double c) { return max(a, max(b, c)); }
+inline double min(double a, double b, double c) { return min(a, min(b, c)); }
+inline double max(double a, double b, double c, double d) { return max(a, max(b, max(c,d))); }
+inline double min(double a, double b, double c, double d) { return min(a, min(b, min(c,d))); }
 inline bool divisible(double dividend, double divisor, double precision) {
 	return (fabs(dividend-int(dividend/divisor+0.5)*divisor) < precision);
 	// divisible = кратно
