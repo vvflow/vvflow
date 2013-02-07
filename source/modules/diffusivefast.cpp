@@ -26,13 +26,9 @@ void diffusivefast::CalcVortexDiffusiveFast()
 	const_for(bnodes, llbnode)
 	{
 		#define bnode (**llbnode)
-
-		auto vlist = bnode.VortexLList;
-		if ( !vlist ) { continue; }
-		const_for (vlist, llobj)
+		for (TObj *lobj = bnode.vRange.first; lobj < bnode.vRange.last; lobj++)
 		{
-			if (!*llobj) { continue; }
-			#define obj (**llobj)
+			if (!lobj->g) { continue; }
 
 			TVec S2(0,0), S3(0,0);
 			double S1 = 0, S0 = 0;
@@ -41,28 +37,26 @@ void diffusivefast::CalcVortexDiffusiveFast()
 			const_for(nnodes, llnnode)
 			{
 				#define nnode (**llnnode)
-				auto jlist = nnode.VortexLList;
-				if ( jlist )
-				const_for (jlist, lljobj)
+				for (TObj *ljobj = nnode.vRange.first; ljobj < nnode.vRange.last; ljobj++)
 				{
-					if (!*lljobj) { continue; }
-					VortexInfluence(obj, **lljobj, &S2, &S1);
+					if (!ljobj->g) { continue; }
+					VortexInfluence(*lobj, *ljobj, &S2, &S1);
 				}
 
 				if ( nnode.BodyLList )
 				const_for(nnode.BodyLList, lljatt)
 				{
-					if (!*lljatt) { continue; }
-					SegmentInfluence(obj, (TAtt*)(*lljatt), &S3, &S0, true);
+					if (!*lljatt) { fprintf(stderr, "diffusivefast.cpp:49 lljatt = NULL. Is it possible?\n"); continue; }
+					SegmentInfluence(*lobj, (TAtt*)(*lljatt), &S3, &S0, true);
 				}
 				#undef nnode
 			}
 
-			if ( (sign(S1)!=sign(obj)) || (fabs(S1)<fabs(0.1*obj.g)) ) { S1 = 0.1*obj.g; }
+			// trick or treat? ok, trick.
+			if ( (sign(S1)!=lobj->sign()) || (fabs(S1)<fabs(0.1*lobj->g)) ) { S1 = 0.1*lobj->g; }
 
-			obj.v += obj._1_eps/(Re*S1) * S2;
-			obj.v += (sqr(obj._1_eps)/(Re*(C_2PI-S0))) * S3;
-			#undef obj
+			lobj->v += lobj->_1_eps/(Re*S1) * S2;
+			lobj->v += (sqr(lobj->_1_eps)/(Re*(C_2PI-S0))) * S3;
 		}
 		#undef bnode
 	}
@@ -80,12 +74,9 @@ void diffusivefast::CalcHeatDiffusiveFast()
 	{
 		#define bnode (**llbnode)
 
-		auto hlist = bnode.HeatLList;
-		if ( !hlist ) { continue; }
-		const_for (hlist, llobj)
+		for (TObj *lobj = bnode.hRange.first; lobj < bnode.hRange.last; lobj++)
 		{
-			if (!*llobj) { continue; }
-			#define obj (**llobj)
+			if (!lobj->g) { continue; }
 
 			TVec S2(0,0), S3(0,0);
 			double S1 = 0, S0 = 0;
@@ -94,27 +85,24 @@ void diffusivefast::CalcHeatDiffusiveFast()
 			const_for(nnodes, llnnode)
 			{
 				#define nnode (**llnnode)
-				auto jlist = nnode.HeatLList;
-				if ( jlist )
-				const_for (jlist, lljobj)
+				for (TObj *ljobj = nnode.hRange.first; ljobj < nnode.hRange.last; ljobj++)
 				{
-					if (!*lljobj) { continue; }
-					VortexInfluence(obj, **lljobj, &S2, &S1);
+					if (!ljobj->g) { continue; }
+					VortexInfluence(*lobj, *ljobj, &S2, &S1);
 				}
 
 				if ( nnode.BodyLList )
 				const_for(nnode.BodyLList, lljatt)
 				{
-					if (!*lljatt) { continue; }
-					SegmentInfluence(obj, (TAtt*)(*lljatt), &S3, &S0, false);
+					if (!*lljatt) { fprintf(stderr, "diffusivefast.cpp:97 lljatt = NULL. Is it possible?\n"); continue; }
+					SegmentInfluence(*lobj, (TAtt*)(*lljatt), &S3, &S0, false);
 				}
 				#undef nnode
 			}
 
-			if ( (sign(S1)!=sign(obj)) || (fabs(S1)<fabs(0.1*obj.g)) ) { S1 = 0.1*obj.g; }
+			if ( (sign(S1)!=lobj->sign()) || (fabs(S1)<fabs(0.1*lobj->g)) ) { S1 = 0.1*lobj->g; }
 
-//			cerr << obj._1_eps << " " << S2 << " " << S3 << ' ' << S1 << ' ' << S0 << endl;
-			obj.v += (obj._1_eps*S2+S3)/(S1+S0/sqr(obj._1_eps))/(Pr*Re);
+			lobj->v += (lobj->_1_eps*S2+S3)/(S1+S0/sqr(lobj->_1_eps))/(Pr*Re);
 //			obj.v += obj._1_eps/(Re*S1) * S2;
 //			obj.v += (sqr(obj._1_eps)/(Re*(C_2PI-S0))) * S3;
 		}
