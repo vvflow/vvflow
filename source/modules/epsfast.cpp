@@ -5,9 +5,14 @@
 
 using namespace std;
 
+static vector<TObj> *vList;
+static vector<TObj> *hList;
+
 epsfast::epsfast(Space *sS)
 {
 	S = sS;
+	vList = S->VortexList;
+	hList = S->HeatList;
 	merged_ = 0;
 }
 
@@ -32,14 +37,9 @@ void epsfast::CalcEpsilonFast(bool merge)
 		}
 		merge_criteria_sq = (h2==DBL_MAX)?0:(h2+1) * tmp_merge_criteria_sq;
 
-		auto vlist = bnode.VortexLList;
-		if (vlist)
-		const_for (vlist, llobj)
+		for (TObj *lobj = bnode.vRange.first, lobj < bnode.vRange.last; lobj++)
 		{
-			if (!*llobj) { continue; }
-			#define obj (**llobj)
-			obj._1_eps = 1./max(epsv(bnode, llobj, merge), eps_restriction);
-			#undef obj
+			obj._1_eps = 1./max(epsv(bnode, lobj, merge), eps_restriction);
 		}
 
 		auto hlist = bnode.HeatLList;

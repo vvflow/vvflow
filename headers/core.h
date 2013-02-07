@@ -3,6 +3,6 @@
 
 #include "elementary.h"
 #include "space.h"
-#include "tree.h"
+#include "sorted_tree.h"
 
 #endif /*CORE_H_*/

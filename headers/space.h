@@ -4,7 +4,7 @@
 class Space;
 
 #include "body.h"
-#include "tree.h"
+#include "sorted_tree.h"
 #include "elementary.h"
 
 typedef const char TValues;
@@ -27,7 +27,7 @@ class Space
 		vector<TObj> *HeatList;
 		vector<TObj> *StreakSourceList;
 		vector<TObj> *StreakList;
-		TTree *Tree;
+		TSortedTree *Tree;
 
 		inline void FinishStep(); //update time and coord variables
 
