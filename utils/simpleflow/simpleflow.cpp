@@ -55,9 +55,9 @@ int main(int argc, char** argv)
 	fprintf(f, "Nv\t Nh \n");
 
 	double dl = S->AverageSegmentLength();
-	tree tr(S, 8, dl*20, 0.1);
+	TSortedTree tr(S, 8, dl*20, 0.1);
 	S->Tree = &tr;
-	convectivefast conv(S, dl*0.2);
+	convectivefast conv(S);
 	epsfast eps(S);
 	diffusivefast diff(S);
 	flowmove fm(S);

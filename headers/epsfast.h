@@ -18,7 +18,7 @@ class epsfast
 		void MergeVortexes(TObj *lv1, TObj *lv2);
 		double epsv(const TSortedNode &Node, TObj *lv, double merge_criteria_sq);
 		double epsh(const TSortedNode &Node, TObj *lv, double merge_criteria_sq);
-		TAtt* nearestBodySegment(TVec p);
+		TAtt* nearestBodySegment(TSortedNode &node, TVec p);
 };
 
 #endif

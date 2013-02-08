@@ -25,7 +25,7 @@ void epsfast::CalcEpsilonFast(bool merge)
 	const_for(bnodes, llbnode)
 	{
 		#define bnode (**llbnode)
-		TAtt *nearestAtt = nearestBodySegment(TVec(bnode.x, bnode.y));
+		TAtt *nearestAtt = nearestBodySegment(bnode, TVec(bnode.x, bnode.y));
 
 		double merge_criteria_sq = (merge && nearestAtt) ? 
 		                             0.16 * nearestAtt->dl.abs2() * (1 + (TVec(bnode.x, bnode.y) - *nearestAtt).abs2())
@@ -153,5 +153,50 @@ double epsfast::epsh(const TSortedNode &Node, TObj *lv, double merge_criteria_sq
 	}
 
 	return sqrt(res2);
+}
+
+TAtt* epsfast::nearestBodySegment(TSortedNode &Node, TVec p)
+{
+	TAtt *latt = NULL;
+	double res = DBL_MAX;
+
+	if (!S->BodyList) return NULL;
+
+	const_for (Node.NearNodes, llnnode)
+	{
+		#define nnode (**llnnode)
+		if ( nnode.BodyLList )
+		const_for(nnode.BodyLList, llatt)
+		{
+			if (!*llatt) { fprintf(stderr, "epsfast.cpp:169 llatt = NULL. Is it possible?\n"); continue; }
+
+			double drabs2 = (p - **llatt).abs2();
+			if ( drabs2 < res )
+			{
+				res = drabs2;
+				latt = (TAtt*)*llatt;
+			}
+		}
+		#undef nnode
+	}
+
+	if (latt) return latt;
+
+	const_for(S->BodyList, llbody)
+	const_for((**llbody).List, lobj)
+	{
+		double drabs2 = (p - *lobj).abs2();
+		if ( drabs2 < res )
+		{
+			res = drabs2;
+			latt = lobj;
+		}
+		else
+		{
+			lobj+= 9; //speed up
+		}
+	}
+
+	return latt;
 }
 

@@ -84,13 +84,15 @@ void TSortedNode::definePointerRangesAndSort(vector<TObj> *list)
 	else if (list == hList) { first = center = hRange.first; last = hRange.last; }
 	else if (list == sList) { first = center = sRange.first; last = sRange.last; }
 
+	//fprintf(stderr, "%d %d; first = %x; last = %x\n", i, j, first, last);
 	TObj *p1 = first, *p2 = last-1;
 	while (p1 < p2)
 	{
 		while ( (h<w) ? (p1->rx<x) : (p1->ry<y) ) p1++;
-		while ( (h<w) ? (p2->rx>x) : (p2->ry>y) ) p2--;
+		while ( (h<w) ? (p2->rx>=x) : (p2->ry>=y) ) p2--;
 		if (p1 < p2)
 		{ //swap objects
+			//fprintf(stderr, "swap %x with %x : %c %g (%g, %g) (%g %g)\n", p1, p2, (h>w)?'h':'w', (h>w)?y:x, p1->rx, p1->ry, p2->rx, p2->ry);
 			TObj tmp = *p1;
 			*p1 = *p2;
 			*p2 = tmp;
@@ -260,9 +262,9 @@ void stree::build(bool includeV, bool includeB, bool includeH)
 		}
 	}
 
-	if (includeV) rootNode->vRange.set(vList->begin(), vList->end());
-	if (includeH) rootNode->hRange.set(hList->begin(), hList->end());
-	rootNode->sRange.set(sList->begin(), hList->end());
+	if (includeV) rootNode->vRange.set(vList->begin(), vList->end()); else rootNode->vRange.set(NULL, NULL);
+	if (includeH) rootNode->hRange.set(hList->begin(), hList->end()); else rootNode->hRange.set(NULL, NULL);
+	rootNode->sRange.set(sList->begin(), sList->end());
 
 	bottomNodes->clear();
 
