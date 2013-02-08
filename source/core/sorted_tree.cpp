@@ -56,6 +56,8 @@ void TSortedNode::DivideNode()
 		return;
 	}
 
+	//fprintf(stderr, "%d %d will split: h=%g, w=%g, x=%g, y=%g, size=%d\n", i, j, h, w, x, y, MaxListSize);
+
 	ch1 = new TSortedNode(parent);
 	ch2 = new TSortedNode(parent);
 
@@ -84,12 +86,12 @@ void TSortedNode::definePointerRangesAndSort(vector<TObj> *list)
 	else if (list == hList) { first = center = hRange.first; last = hRange.last; }
 	else if (list == sList) { first = center = sRange.first; last = sRange.last; }
 
-	//fprintf(stderr, "%d %d; first = %x; last = %x\n", i, j, first, last);
+	//if (list == vList) fprintf(stderr, "%d %d; first = %x; last = %x\n", i, j, first, last);
 	TObj *p1 = first, *p2 = last-1;
-	while (p1 < p2)
+	while (p1 <= p2)
 	{
-		while ( (h<w) ? (p1->rx<x) : (p1->ry<y) ) p1++;
-		while ( (h<w) ? (p2->rx>=x) : (p2->ry>=y) ) p2--;
+		while ( (p1<last) && (h<w) ? (p1->rx<x) : (p1->ry<y) ) p1++;
+		while ( (p2>=first) && (h<w) ? (p2->rx>=x) : (p2->ry>=y) ) p2--;
 		if (p1 < p2)
 		{ //swap objects
 			//fprintf(stderr, "swap %x with %x : %c %g (%g, %g) (%g %g)\n", p1, p2, (h>w)?'h':'w', (h>w)?y:x, p1->rx, p1->ry, p2->rx, p2->ry);
@@ -119,9 +121,13 @@ void TSortedNode::Stretch()
 		bl.ry = min(bl.ry, (**llobj).ry);
 	}
 
+	//fprintf(stderr, "%d %d stretch body: l=%g, r=%g, b=%g, t=%g\n", i, j, bl.rx, tr.rx, bl.ry, tr.ry);
+
 	Stretch(vRange, tr, bl);
 	Stretch(hRange, tr, bl);
 	Stretch(sRange, tr, bl);
+
+	//fprintf(stderr, "%d %d stretch objs: l=%g, r=%g, b=%g, t=%g\n", i, j, bl.rx, tr.rx, bl.ry, tr.ry);
 
 	x = (bl+tr).rx * 0.5;
 	y = (bl+tr).ry * 0.5;
