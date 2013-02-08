@@ -76,7 +76,7 @@ void convectivefast::CalcConvectiveFast()
 {
 	auto BottomNodes = S->Tree->getBottomNodes();
 
-	#pragma omp parallel for
+	#pragma omp parallel for schedule(dynamic, 10)
 	const_for (BottomNodes, llbnode)
 	{
 		#define bnode (**llbnode)
