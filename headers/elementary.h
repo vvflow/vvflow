@@ -82,7 +82,7 @@ class TObj: public TVec
 	public:
 		double g;
 		TVec v;
-		double _1_eps; // eps = max (nearest dl on wall,  dist to 2nd nearest vortex)
+		double _1_eps; // eps = max (nearest dl/3 on wall,  dist to 2nd nearest vortex)
 
 		TObj() {}
 		TObj(double rx_, double ry_, double g_):TVec(rx_, ry_) { g=g_; v.zero();}

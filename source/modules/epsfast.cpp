@@ -30,7 +30,7 @@ void epsfast::CalcEpsilonFast(bool merge)
 		double merge_criteria_sq = (merge && nearestAtt) ? 
 		                             0.16 * nearestAtt->dl.abs2() * (1 + (TVec(bnode.x, bnode.y) - *nearestAtt).abs2())
 		                             : 0;
-		double _1_eps_restriction = 1.0/nearestAtt->dl.abs();
+		double _1_eps_restriction = 3.0/nearestAtt->dl.abs();
 
 		for (TObj *lobj = bnode.vRange.first; lobj < bnode.vRange.last; lobj++)
 		{

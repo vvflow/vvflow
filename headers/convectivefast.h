@@ -7,7 +7,7 @@
 class convectivefast
 {
 	public:
-		convectivefast(Space *sS, double sRadiusOfDiscretness);
+		convectivefast(Space *sS);
 		void CalcConvectiveFast();
 		void CalcBoundaryConvective();
 		TVec SpeedSumFast(TVec p);
@@ -24,15 +24,13 @@ class convectivefast
 
 	private:
 		TVec BioSavar(const TObj &obj, const TVec &p);
-		TVec SpeedSum(const TNode &Node, const TVec &p);
+		TVec SpeedSum(const TSortedNode &Node, const TVec &p);
 
 		TVec BoundaryConvective(const TBody &b, const TVec &p);
 		TVec BoundaryConvectiveSlip(const TBody &b, const TVec &p);
 
 	private:
 		Space *S;
-		double Rd2;
-		double Rd;
 
 		int MatrixSize;
 		Matrix *matrix;
@@ -41,7 +39,7 @@ class convectivefast
 		double _2PI_Xi_q(TVec &p, const TAtt &seg, double rd); // in doc 2\pi\Xi_q (1.8)
 		void _2PI_A123(const TAtt &seg, const TBody &b, double *_2PI_A1, double *_2PI_A2, double *_2PI_A3);
 		double ConvectiveInfluence(TVec p, const TAtt &seg, double rd);
-		double NodeInfluence(const TNode &Node, const TAtt &seg, double rd);
+		double NodeInfluence(const TSortedNode &Node, const TAtt &seg);
 		double AttachInfluence(const TAtt &seg, double rd);
 		TVec SegmentInfluence_linear_source(TVec p, const TAtt &seg, double q1, double q2);
 

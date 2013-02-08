@@ -13,11 +13,9 @@ using namespace std;
 
 /****************************** MAIN FUNCTIONS ********************************/
 
-convectivefast::convectivefast(Space *sS, double sRd)
+convectivefast::convectivefast(Space *sS)
 {
 	S = sS;
-	Rd = sRd;
-	Rd2 = Rd*Rd;
 
 	MatrixSize = 0; 
 	const_for(sS->BodyList, llbody)
@@ -31,7 +29,7 @@ convectivefast::convectivefast(Space *sS, double sRd)
 TVec convectivefast::SpeedSumFast(TVec p)
 {
 	TVec res(0, 0);
-	TNode* Node = S->Tree->findNode(p);
+	TSortedNode* Node = S->Tree->findNode(p);
 	if (!Node) return res;
 
 	const_for (Node->FarNodes, llfnode)
@@ -54,22 +52,19 @@ inline
 TVec convectivefast::BioSavar(const TObj &obj, const TVec &p)
 {
 	TVec dr = p - obj;
-	return rotl(dr)*(obj.g / (dr.abs2() + Rd2) );
+	return rotl(dr)*(obj.g / (dr.abs2() + sqr(1./obj._1_eps)) );
 }
 
-TVec convectivefast::SpeedSum(const TNode &Node, const TVec &p)
+TVec convectivefast::SpeedSum(const TSortedNode &Node, const TVec &p)
 {
-	TVec dr, res(0, 0);
+	TVec res(0, 0);
 
 	const_for (Node.NearNodes, llnnode)
 	{
-		auto vlist = (**llnnode).VortexLList;
-		if ( !vlist ) { continue; }
-
-		const_for (vlist, llobj)
+		for (TObj *lobj = (**llnnode).vRange.first; lobj < (**llnnode).vRange.last; lobj++)
 		{
-			if (!*llobj) continue;
-			res+= BioSavar(**llobj, p); 
+			if (!lobj->g) continue;
+			res+= BioSavar(*lobj, p); 
 		}
 	}
 
@@ -115,47 +110,32 @@ void convectivefast::CalcConvectiveFast()
 		Teilor3 *= C_1_PI;
 		Teilor4 *= C_1_2PI;
 
-		TVec dr_local;
+		TVec dr_local, nodeCenter(bnode.x, bnode.y);
 		
-		if (bnode.VortexLList)
+		for (TObj *lobj = bnode.vRange.first; lobj < bnode.vRange.last; lobj++)
 		{
-			const_for (bnode.VortexLList, llobj)
-			{
-				if (!*llobj) {continue;}
-				#define obj (**llobj)
-				dr_local = obj - TVec(bnode.x, bnode.y);
-				obj.v += TVec(Teilor1, Teilor2) + S->InfSpeed() + SpeedSum(bnode, obj) +
-				         TVec(TVec(Teilor3,  Teilor4)*dr_local,
-				              TVec(Teilor4, -Teilor3)*dr_local);
-				#undef obj
-			}
+			if (!lobj->g) {continue;}
+			dr_local = *lobj - nodeCenter;
+			lobj->v += TVec(Teilor1, Teilor2) + S->InfSpeed() + SpeedSum(bnode, *lobj) +
+			         TVec(TVec(Teilor3,  Teilor4)*dr_local,
+			              TVec(Teilor4, -Teilor3)*dr_local);
 		}
 
-		if (bnode.HeatLList)
+		for (TObj *lobj = bnode.hRange.first; lobj < bnode.hRange.last; lobj++)
 		{
-			const_for (bnode.HeatLList, llobj)
-			{
-				if (!*llobj) {continue;}
-				#define obj (**llobj)
-				dr_local = obj - TVec(bnode.x, bnode.y);
-				obj.v += TVec(Teilor1, Teilor2) + S->InfSpeed() + SpeedSum(bnode, obj) +
-				         TVec(TVec(Teilor3,  Teilor4)*dr_local,
-				              TVec(Teilor4, -Teilor3)*dr_local);
-				#undef obj
-			}
+			if (!lobj->g) {continue;}
+			dr_local = *lobj - nodeCenter;
+			lobj->v += TVec(Teilor1, Teilor2) + S->InfSpeed() + SpeedSum(bnode, *lobj) +
+			         TVec(TVec(Teilor3,  Teilor4)*dr_local,
+			              TVec(Teilor4, -Teilor3)*dr_local);
 		}
 
-		if (bnode.StreakLList)
+		for (TObj *lobj = bnode.sRange.first; lobj < bnode.sRange.last; lobj++)
 		{
-			const_for (bnode.StreakLList, llobj)
-			{
-				#define obj (**llobj)
-				dr_local = obj - TVec(bnode.x, bnode.y);
-				obj.v += TVec(Teilor1, Teilor2) + S->InfSpeed() + SpeedSum(bnode, obj) +
-				         TVec(TVec(Teilor3,  Teilor4)*dr_local,
-				              TVec(Teilor4, -Teilor3)*dr_local);
-				#undef obj
-			}
+			dr_local = *lobj - nodeCenter;
+			lobj->v += TVec(Teilor1, Teilor2) + S->InfSpeed() + SpeedSum(bnode, *lobj) +
+			         TVec(TVec(Teilor3,  Teilor4)*dr_local,
+			              TVec(Teilor4, -Teilor3)*dr_local);
 		}
 		#undef bnode
 	}
@@ -205,12 +185,13 @@ void convectivefast::CalcBoundaryConvective()
 
 TVec convectivefast::BoundaryConvective(const TBody &b, const TVec &p)
 {
-	TVec dr, res(0, 0);
+	TVec res(0, 0);
 	auto alist = b.List;
 
 	const_for(alist, latt)
 	{
-		if ((p-*latt).abs2() < latt->dl.abs2())
+		double drabs2 = (p-*latt).abs2();
+		if (drabs2 < latt->dl.abs2())
 		{
 			TVec Vs1 = b.MotionSpeed_slae + b.RotationSpeed_slae * rotl(latt->corner - (b.Position + b.deltaPosition));
 			double g1 = -Vs1 * latt->dl;
@@ -226,8 +207,8 @@ TVec convectivefast::BoundaryConvective(const TBody &b, const TVec &p)
 			TVec Vs = b.MotionSpeed_slae + b.RotationSpeed_slae * rotl(*latt - (b.Position + b.deltaPosition));
 			double g = -Vs * latt->dl;
 			double q = -rotl(Vs) * latt->dl; 
-			dr = p - *latt;
-			res += (dr*q + rotl(dr)*g) /(dr.abs2() + Rd2);
+			TVec dr = p - *latt;
+			res += (dr*q + rotl(dr)*g) / drabs2;
 		}
 		//res+= SegmentInfluence(p, *latt, latt->g, latt->q, 1E-6);
 	}
@@ -395,27 +376,24 @@ void convectivefast::_2PI_A123(const TAtt &seg, const TBody &b, double *_2PI_A1,
 	}
 }
 
-double convectivefast::NodeInfluence(const TNode &Node, const TAtt &seg, double rd)
+double convectivefast::NodeInfluence(const TSortedNode &Node, const TAtt &seg)
 {
 	double res = 0;
 
 	const_for(Node.NearNodes, llnnode)
 	{
-		auto vlist = (**llnnode).VortexLList;
-		if ( !vlist ) { continue; }
-
-		const_for (vlist, llobj)
+		for (TObj *lobj = (**llnnode).vRange.first; lobj < (**llnnode).vRange.last; lobj++)
 		{
-			//if (!*llobj) {continue;}
-			res+= _2PI_Xi_g((**llobj), seg, rd) * (**llobj).g;
+			if (!lobj->g) {continue;}
+			res+= _2PI_Xi_g(*lobj, seg, 1/lobj->_1_eps) * lobj->g;
 		}
 	}
 
 	const_for(Node.FarNodes, llfnode)
 	{
 		#define fnode (**llfnode)
-		res+= _2PI_Xi_g(fnode.CMp, seg, rd) * fnode.CMp.g;
-		res+= _2PI_Xi_g(fnode.CMm, seg, rd) * fnode.CMm.g;
+		res+= _2PI_Xi_g(fnode.CMp, seg, 0) * fnode.CMp.g;
+		res+= _2PI_Xi_g(fnode.CMm, seg, 0) * fnode.CMm.g;
 		#undef fnode
 	}
 
@@ -492,8 +470,8 @@ void convectivefast::fillSlipEquationForSegment(TAtt* seg, bool rightColOnly)
 	//influence of infinite speed
 	*matrix->rightColAtIndex(seg_eq_no) = rotl(S->InfSpeed())*seg->dl;
 	//influence of all free vortices
-	TNode* Node = S->Tree->findNode(*seg);
-	*matrix->rightColAtIndex(seg_eq_no) -= NodeInfluence(*Node, *seg, Rd);
+	TSortedNode* Node = S->Tree->findNode(*seg);
+	*matrix->rightColAtIndex(seg_eq_no) -= NodeInfluence(*Node, *seg);
 }
 
 void convectivefast::fillZeroEquationForSegment(TAtt* seg, bool rightColOnly)
