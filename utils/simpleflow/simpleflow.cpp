@@ -68,7 +68,6 @@ int main(int argc, char** argv)
 
 	while (S->Time < S->Finish)
 	{
-		S->Save("dump.vb");
 		dbg(tr.build());
 		dbg(conv.CalcCirculationFast());
 		dbg(tr.destroy());

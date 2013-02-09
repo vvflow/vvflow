@@ -81,17 +81,17 @@ void TSortedNode::DivideNode()
 
 void TSortedNode::definePointerRangesAndSort(vector<TObj> *list)
 {
-	TObj *first, *center, *last;
-	if (list == vList) { first = center = vRange.first; last = vRange.last; }
-	else if (list == hList) { first = center = hRange.first; last = hRange.last; }
-	else if (list == sList) { first = center = sRange.first; last = sRange.last; }
+	TObj *first, *last;
+	if (list == vList) { first = vRange.first; last = vRange.last; }
+	else if (list == hList) { first = hRange.first; last = hRange.last; }
+	else if (list == sList) { first = sRange.first; last = sRange.last; }
 
 	//if (list == vList) fprintf(stderr, "%d %d; first = %x; last = %x\n", i, j, first, last);
 	TObj *p1 = first, *p2 = last-1;
 	while (p1 <= p2)
 	{
-		while ( (p1<last) && (h<w) ? (p1->rx<x) : (p1->ry<y) ) p1++;
-		while ( (p2>=first) && (h<w) ? (p2->rx>=x) : (p2->ry>=y) ) p2--;
+		while ( (p1<last) && ((h<w) ? (p1->rx<x) : (p1->ry<y)) ) p1++;
+		while ( (p2>=first) && ((h<w) ? (p2->rx>=x) : (p2->ry>=y)) ) p2--;
 		if (p1 < p2)
 		{ //swap objects
 			//fprintf(stderr, "swap %x with %x : %c %g (%g, %g) (%g %g)\n", p1, p2, (h>w)?'h':'w', (h>w)?y:x, p1->rx, p1->ry, p2->rx, p2->ry);
