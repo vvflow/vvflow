@@ -98,6 +98,17 @@ class TObj: public TVec
 		friend short sign(const TObj& p) { return ::sign(p.g); }
 };
 
+class TVec3D
+{
+	public:
+		double x, y, o;
+
+	public
+		TVec3D() {x = y = o = 0;}
+		TVec3D(double _x, double _y, double _o) {x = _x; y = _y; o = _o;}
+		friend istream& operator>> (istream& is, TVec3D& p) 		{ return is >> p.x >> p.y >> p.o; }
+		friend ostream& operator<< (ostream& os, const TVec3D& p) 	{ return os << p.x << " \t" << p.y << " \t" << p.o; }
+};
 
 #endif
 
