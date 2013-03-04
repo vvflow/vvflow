@@ -70,20 +70,27 @@ class TBody
 
 		vector<TAtt> *List;
 
-		double Angle; // in documentation = $\alpha$
-		TVec   Position; // = $\vec R$
-		double deltaAngle; // in doc $\Delta \alpha$
-		TVec   deltaPosition; //in doc $\Delta \vec R$
-		double RotationSpeed_slae; //in doc \omega_?
-		TVec   MotionSpeed_slae; // in doc \vec V_?
-		double RotationSpeed_slae_prev; //\omega_? from previous step
-		TVec   MotionSpeed_slae_prev; //\vec V_? from previous step
+		TVec3D pos; //in doc = $R_bx$, $R_by$, $\alpha_b$
+		TVec3D dPos; // same with delta
+		//double Angle; // in documentation = $\alpha$
+		//TVec   Position; // = $\vec R$
+		//double deltaAngle; // in doc $\Delta \alpha$
+		//TVec   deltaPosition; //in doc $\Delta \vec R$
+		TVec3D Speed_slae;
+		TVec3D Speed_slae_prev;
+		//double RotationSpeed_slae; //in doc \omega_?
+		//TVec   MotionSpeed_slae; // in doc \vec V_?
+		//double RotationSpeed_slae_prev; //\omega_? from previous step
+		//TVec   MotionSpeed_slae_prev; //\vec V_? from previous step
 
-		double kx, ky, ka;
+		TVec3D k; //kx, ky, ka;
+		//double kx, ky, ka;
 		double density; //in doc \frac{\rho_b}{\rho_0}
 
-		TObj Friction, Friction_prev, Force_export; //computed by S->CalcForces
-		TObj Force_born, Force_dead; //computed in flowmove
+		TVec3D Friction, Friction_prev, Force_export; //computed by S->CalcForces
+		//TObj Friction, Friction_prev, Force_export; //computed by S->CalcForces
+		TVec3D Force_born, Force_dead; //computed in flowmove
+		//TObj Force_born, Force_dead; //computed in flowmove
 		double Nusselt; //computed by S->CalcForces
 		double g_dead;
 
@@ -92,9 +99,9 @@ class TBody
 		ShellScript *SpeedX;
 		ShellScript *SpeedY;
 		ShellScript *SpeedO;
-		double getRotation() const;
 		double getSpeedX() const;
 		double getSpeedY() const;
+		double getRotation() const;
 		TVec getMotion() const;
 
 		//see \vec c_s \vert_Rotation

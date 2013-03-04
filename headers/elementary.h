@@ -103,11 +103,38 @@ class TVec3D
 	public:
 		double x, y, o;
 
-	public
+	public:
 		TVec3D() {x = y = o = 0;}
 		TVec3D(double _x, double _y, double _o) {x = _x; y = _y; o = _o;}
 		friend istream& operator>> (istream& is, TVec3D& p) 		{ return is >> p.x >> p.y >> p.o; }
 		friend ostream& operator<< (ostream& os, const TVec3D& p) 	{ return os << p.x << " \t" << p.y << " \t" << p.o; }
+};
+
+class TTime
+{
+	private:
+		// time = value/timescale
+		int32_t value;
+		int32_t timescale;
+
+	public:
+		//TTime() {value = timescale = 0;}
+		TTime(int32_t _value, int32_t _timescale) {value = _value; timescale=_timescale;}
+		static TTime makeWithSeconds(double seconds, int32_t preferredTimescale)
+		{
+			double r;
+			int exp;
+			r = frexp(seconds, &exp);
+			printf("The matissa returned is::%lf\n",r);
+			printf("The exponent value stored in exp is::%d\n",exp);
+			TTime result(int32_t(seconds*preferredTimescale), preferredTimescale);
+			return result;
+		}
+
+	public:
+		double getSeconds() {return double(value)/double(timescale);}
+		int32_t getValue() {return value;}
+		int32_t getTimescale() {return timescale;}
 };
 
 #endif
