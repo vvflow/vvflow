@@ -20,8 +20,6 @@
 #define seek(f) while (fgetc(f)!='\n'){}
 using namespace std;
 
-//#define OVERRIDEMOI 0.35
-
 int main(int argc, char** argv)
 {
 	if (argc < 2)
@@ -125,9 +123,11 @@ int main(int argc, char** argv)
 		dbg(tr.destroy());
 
 		dbg(fm.MoveAndClean(true));
-	        #ifdef OVERRIDEMOI
-        	        S->BodyList->at(0)->overrideMoi_c(OVERRIDEMOI);
-	        #endif
+
+		char *override_moi_env = getenv("VV_OVERRIDEMOI");
+		if (override_moi_env)
+			S->BodyList->at(0)->overrideMoi_c(atof(override_moi_env));
+
 		dbg(fm.CropHeat());
 		S->Time += S->dt;
 

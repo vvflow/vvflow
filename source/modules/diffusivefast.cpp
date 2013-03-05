@@ -54,6 +54,8 @@ void diffusivefast::CalcVortexDiffusiveFast()
 
 			// trick or treat? ok, trick.
 			if ( (sign(S1)!=lobj->sign()) || (fabs(S1)<fabs(0.1*lobj->g)) ) { S1 = 0.1*lobj->g; }
+			if ( S0 > C_PI ) S0 = C_PI;
+			if ( S0 < 0.   ) S0 = 0.;
 
 			lobj->v += lobj->_1_eps/(Re*S1) * S2;
 			lobj->v += (sqr(lobj->_1_eps)/(Re*(C_2PI-S0))) * S3;
@@ -132,13 +134,16 @@ void diffusivefast::SegmentInfluence(const TObj &v, TAtt *rk,
 {
 	TVec dr = v - *rk;
 	double drabs2 = dr.abs2();
+
+	if (drabs2 < rk->dl.abs2()*0.05) { *i0 = C_PI; } //exceed the limit and later (at line 57) crop it
+
 	double drabs = sqrt( drabs2 );
 	double exparg = -drabs*v._1_eps;
 	if ( exparg < ExpArgRestriction ) {return;}
 	double expres = expdef(exparg);
 	TVec dS = rotl(rk->dl);
 	*i3 += dS * expres;
-	*i0 += (drabs*v._1_eps+1)/drabs2*(dr*dS)*expres;
+	*i0 += (drabs*v._1_eps+1.)/drabs2*(dr*dS)*expres;
 
 	if (calc_friction)
 		rk->fric += sqr(v._1_eps) * v.g * expres * dS.abs();
