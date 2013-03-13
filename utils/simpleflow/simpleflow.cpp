@@ -53,7 +53,7 @@ int main(int argc, char** argv)
 	fprintf(f, "Nv\t Nh \n");
 
 	double dl = S->AverageSegmentLength();
-	TSortedTree tr(S, 8, dl*20, 0.1);
+	TSortedTree tr(S, 8, dl*20., dl*200.);
 	S->Tree = &tr;
 	convectivefast conv(S);
 	epsfast eps(S);

@@ -366,8 +366,8 @@ void convectivefast::_2PI_A123(const TAtt &seg, const TBody &b, double *_2PI_A1,
 	}
 	const_for(b.List, latt)
 	{
-		double _2piXi_g = _2PI_Xi_g(*latt, seg, latt->dl.abs()*0.25);
-		double _2piXi_q = _2PI_Xi_q(*latt, seg, latt->dl.abs()*0.25);
+		double _2piXi_g = _2PI_Xi_g(*latt, seg, seg.dl.abs()*0.25);
+		double _2piXi_q = _2PI_Xi_q(*latt, seg, seg.dl.abs()*0.25);
 		TVec Xi(_2piXi_g, _2piXi_q);
 		TVec r0 = *latt - (b.Position + b.deltaPosition);
 //		*A1 -= Xi*latt->dl;
@@ -385,7 +385,7 @@ double convectivefast::NodeInfluence(const TSortedNode &Node, const TAtt &seg)
 		for (TObj *lobj = (**llnnode).vRange.first; lobj < (**llnnode).vRange.last; lobj++)
 		{
 			if (!lobj->g) {continue;}
-			res+= _2PI_Xi_g(*lobj, seg, 1/lobj->_1_eps) * lobj->g;
+			res+= _2PI_Xi_g(*lobj, seg, seg.dl.abs()*0.25) * lobj->g;
 		}
 	}
 
@@ -451,7 +451,7 @@ void convectivefast::fillSlipEquationForSegment(TAtt* seg, bool rightColOnly)
 		#define jbody (**lljbody)
 		const_for(jbody.List, lobj)
 		{
-			*matrix->objectAtIndex(seg_eq_no, lobj->eq_no) = _2PI_Xi_g(lobj->corner, *seg, lobj->dl.abs()*0.25)*C_1_2PI;
+			*matrix->objectAtIndex(seg_eq_no, lobj->eq_no) = _2PI_Xi_g(lobj->corner, *seg, seg->dl.abs()*0.25)*C_1_2PI;
 		}
 
 		double _2PI_A1, _2PI_A2, _2PI_A3;
