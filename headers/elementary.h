@@ -154,6 +154,13 @@ class TTime
 		{
 			return TTime(int32_t(seconds*preferredTimescale), preferredTimescale);
 		}
+		static TTime makeWithSecondsDecimal(double seconds)
+		{
+			uint32_t newTS = 1;
+			while ((int32_t(seconds*newTS)/double(newTS) != seconds) && (newTS<0x19999999)/*0xffffffff/10*/) newTS*= 10;
+			while (!(int32_t(seconds*newTS)%10)) newTS/=10;
+			return TTime(int32_t(seconds*newTS), newTS);
+		}
 		static TTime add(TTime time1, TTime time2)
 		{
 			uint32_t newTS = lcm(time1.timescale, time2.timescale);
