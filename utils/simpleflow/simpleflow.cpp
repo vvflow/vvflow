@@ -53,7 +53,13 @@ int main(int argc, char** argv)
 	fprintf(f, "Nv\t Nh \n");
 
 	double dl = S->AverageSegmentLength();
-	TSortedTree tr(S, 8, dl*20., dl*200.);
+	double BodiesSize;
+	{
+		double w, h;
+		S->getBodyBouundaries(NULL, NULL, &w, &h);
+		BodiesSize = max(w, h);
+	}
+	TSortedTree tr(S, 8, dl*20., BodiesSize*0.2);
 	S->Tree = &tr;
 	convectivefast conv(S);
 	epsfast eps(S);

@@ -610,3 +610,29 @@ double Space::AverageSegmentLength()
 	if (!N) return DBL_MIN;
 	return SurfaceLength / N;
 }
+
+void Space::getBodyBouundaries(double *x, double *y, double *w, double *h)
+{
+	double xmin(DBL_MAX), xmax(-DBL_MAX), ymin(DBL_MAX), ymax(-DBL_MAX);
+	if (BodyList)
+	const_for(BodyList, llbody)
+	{
+		const_for((**llbody).List, lobj)
+		{
+			xmax = max(xmax, lobj->rx);
+			ymax = max(ymax, lobj->ry);
+			xmin = min(xmin, lobj->rx);
+			ymin = min(ymin, lobj->ry);
+		}
+	}
+
+	if (xmin ==  DBL_MAX) xmin = 0.;
+	if (xmax == -DBL_MAX) xmax = 0.;
+	if (ymin ==  DBL_MAX) ymin = 0.;
+	if (ymax == -DBL_MAX) ymax = 0.;
+
+	if (x) *x = (xmin+xmax)*0.5;
+	if (y) *y = (ymin+ymax)*0.5;
+	if (w) *w = (xmax-xmin);
+	if (h) *h = (ymax-ymin);
+}

@@ -65,6 +65,7 @@ class Space
 		double gmax();
 		TVec HydroDynamicMomentum();
 		double AverageSegmentLength();
+		void getBodyBouundaries(double *x = NULL, double *y = NULL, double *w = NULL, double *h = NULL);
 };
 
 #endif /*SPACE_H_*/
