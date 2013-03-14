@@ -5,6 +5,7 @@
 #include <iostream>
 #include "list.h"
 #include "shellscript.h"
+#include "stdint.h"
 using namespace std;
 
 #define bugfix volatile
@@ -110,31 +111,70 @@ class TVec3D
 		friend ostream& operator<< (ostream& os, const TVec3D& p) 	{ return os << p.x << " \t" << p.y << " \t" << p.o; }
 };
 
+uint32_t lcm(uint32_t x, uint32_t y)
+{
+	if (x == y) return x;
+	if (!x || !y) return 1;
+	uint32_t result = 1;
+	uint32_t k = 2;
+	while ((x!=1) || (y!=1))
+	{
+		bool kIsPrime = true;
+		for (int d = 2; d<k/2; d++) { if (!k%d) {kIsPrime = false; break;}}
+		if (!kIsPrime) {k++; continue;}
+		int xk(x%k), yk(y%k);
+		if (!xk || !yk)
+		{
+			if (result > (1<<31)/k) { /*overflow*/ fprintf(stderr, "overflow, %u %u %u %u\n", x, y, k, result ); return result; }
+			result*=k;
+			if (!xk) x/=k;
+			if (!yk) y/=k;
+			k = 2; continue;
+		}
+		k++;
+	}
+	return result;
+}
+
 class TTime
 {
 	private:
 		// time = value/timescale
 		int32_t value;
-		int32_t timescale;
+		uint32_t timescale;
 
 	public:
-		//TTime() {value = timescale = 0;}
-		TTime(int32_t _value, int32_t _timescale) {value = _value; timescale=_timescale;}
-		static TTime makeWithSeconds(double seconds, int32_t preferredTimescale)
+		TTime()
+			:v(value),ts(timescale)
+			{value = timescale = 0;}
+		TTime(int32_t _value, uint32_t _timescale)
+			:v(value),ts(timescale)
+			{value = _value; timescale=_timescale;}
+		static TTime makeWithSeconds(double seconds, uint32_t preferredTimescale)
 		{
-			double r;
-			int exp;
-			r = frexp(seconds, &exp);
-			printf("The matissa returned is::%lf\n",r);
-			printf("The exponent value stored in exp is::%d\n",exp);
-			TTime result(int32_t(seconds*preferredTimescale), preferredTimescale);
-			return result;
+			return TTime(int32_t(seconds*preferredTimescale), preferredTimescale);
+		}
+		static TTime add(TTime time1, TTime time2)
+		{
+			uint32_t newTS = lcm(time1.timescale, time2.timescale);
+			return TTime(
+			              time1.value*newTS/time1.timescale
+			            + time2.value*newTS/time2.timescale
+			            , newTS);
+		}
+		bool divisibleBy(TTime divisor)
+		{
+			// divisible = кратно
+			// dividend = делимое
+			// divisor = делитель
+			uint32_t lcm_ts = lcm(timescale, divisor.timescale);
+			return !((int64_t(value)*lcm_ts/timescale) % (int64_t(divisor.value)*lcm_ts/divisor.timescale));
 		}
 
 	public:
-		double getSeconds() {return double(value)/double(timescale);}
-		int32_t getValue() {return value;}
-		int32_t getTimescale() {return timescale;}
+		operator double() const {return double(value)/double(timescale);}
+		const int32_t &v;
+		const uint32_t &ts;
 };
 
 #endif
