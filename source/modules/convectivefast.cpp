@@ -51,7 +51,7 @@ TVec convectivefast::SpeedSumFast(TVec p)
 inline
 TVec convectivefast::BioSavar(const TObj &obj, const TVec &p)
 {
-	TVec dr = p - obj;
+	TVec dr = p - obj.r;
 	return rotl(dr)*(obj.g / (dr.abs2() + sqr(1./obj._1_eps)) );
 }
 
@@ -88,8 +88,8 @@ void convectivefast::CalcConvectiveFast()
 		{
 			#define fnode (**llfnode)
 
-			TVec DistP = TVec(bnode.x, bnode.y) - fnode.CMp;
-			TVec DistM = TVec(bnode.x, bnode.y) - fnode.CMm;
+			TVec DistP = TVec(bnode.x, bnode.y) - fnode.CMp.r;
+			TVec DistM = TVec(bnode.x, bnode.y) - fnode.CMm.r;
 
 //			double _1_DistPabs = 1./DistP.abs2();
 //			double _1_DistMabs = 1./DistM.abs2();
@@ -99,10 +99,10 @@ void convectivefast::CalcConvectiveFast()
 			double FuncM2 = fnode.CMm.g / sqr(DistM.abs2());
 			#undef fnode
 
-			Teilor1 -= (FuncP1*DistP.ry + FuncM1*DistM.ry);
-			Teilor2 += (FuncP1*DistP.rx + FuncM1*DistM.rx);
-			Teilor3 += (FuncP2*DistP.ry*DistP.rx + FuncM2*DistM.ry*DistM.rx);
-			Teilor4 += (FuncP2 * (sqr(DistP.ry) - sqr(DistP.rx)) + FuncM2 * (sqr(DistM.ry) - sqr(DistM.rx)));
+			Teilor1 -= (FuncP1*DistP.y + FuncM1*DistM.y);
+			Teilor2 += (FuncP1*DistP.x + FuncM1*DistM.x);
+			Teilor3 += (FuncP2*DistP.y*DistP.x + FuncM2*DistM.y*DistM.x);
+			Teilor4 += (FuncP2 * (sqr(DistP.y) - sqr(DistP.x)) + FuncM2 * (sqr(DistM.y) - sqr(DistM.x)));
 		}
 
 		Teilor1 *= C_1_2PI;
@@ -115,8 +115,8 @@ void convectivefast::CalcConvectiveFast()
 		for (TObj *lobj = bnode.vRange.first; lobj < bnode.vRange.last; lobj++)
 		{
 			if (!lobj->g) {continue;}
-			dr_local = *lobj - nodeCenter;
-			lobj->v += TVec(Teilor1, Teilor2) + S->InfSpeed() + SpeedSum(bnode, *lobj) +
+			dr_local = lobj->r - nodeCenter;
+			lobj->v += TVec(Teilor1, Teilor2) + S->InfSpeed() + SpeedSum(bnode, lobj->r) +
 			         TVec(TVec(Teilor3,  Teilor4)*dr_local,
 			              TVec(Teilor4, -Teilor3)*dr_local);
 		}
@@ -124,16 +124,16 @@ void convectivefast::CalcConvectiveFast()
 		for (TObj *lobj = bnode.hRange.first; lobj < bnode.hRange.last; lobj++)
 		{
 			if (!lobj->g) {continue;}
-			dr_local = *lobj - nodeCenter;
-			lobj->v += TVec(Teilor1, Teilor2) + S->InfSpeed() + SpeedSum(bnode, *lobj) +
+			dr_local = lobj->r - nodeCenter;
+			lobj->v += TVec(Teilor1, Teilor2) + S->InfSpeed() + SpeedSum(bnode, lobj->r) +
 			         TVec(TVec(Teilor3,  Teilor4)*dr_local,
 			              TVec(Teilor4, -Teilor3)*dr_local);
 		}
 
 		for (TObj *lobj = bnode.sRange.first; lobj < bnode.sRange.last; lobj++)
 		{
-			dr_local = *lobj - nodeCenter;
-			lobj->v += TVec(Teilor1, Teilor2) + S->InfSpeed() + SpeedSum(bnode, *lobj) +
+			dr_local = lobj->r - nodeCenter;
+			lobj->v += TVec(Teilor1, Teilor2) + S->InfSpeed() + SpeedSum(bnode, lobj->r) +
 			         TVec(TVec(Teilor3,  Teilor4)*dr_local,
 			              TVec(Teilor4, -Teilor3)*dr_local);
 		}
@@ -145,7 +145,7 @@ void convectivefast::CalcBoundaryConvective()
 {
 	const_for(S->BodyList, llbody)
 	{
-		bool calcBC = (!(**llbody).MotionSpeed_slae.iszero() || fabs((**llbody).RotationSpeed_slae) > 1E-10);
+		bool calcBC = !(**llbody).Speed_slae.iszero();
 		bool calcBCS = false;
 		const_for((**llbody).List, latt) { if (latt->bc == bc::slip) {calcBCS = true; break;}}
 
@@ -156,8 +156,8 @@ void convectivefast::CalcBoundaryConvective()
 			#pragma omp parallel for
 			const_for(S->VortexList, lobj)
 			{
-				if (calcBC) lobj->v += BoundaryConvective(**llbody, *lobj)*C_1_2PI;
-				if (calcBCS) lobj->v += BoundaryConvectiveSlip(**llbody, *lobj)*C_1_2PI;
+				if (calcBC) lobj->v += BoundaryConvective(**llbody, lobj->r)*C_1_2PI;
+				if (calcBCS) lobj->v += BoundaryConvectiveSlip(**llbody, lobj->r)*C_1_2PI;
 			}
 		}
 
@@ -166,8 +166,8 @@ void convectivefast::CalcBoundaryConvective()
 			#pragma omp parallel for
 			const_for(S->HeatList, lobj)
 			{
-				if (calcBC) lobj->v += BoundaryConvective(**llbody, *lobj)*C_1_2PI;
-				if (calcBCS) lobj->v += BoundaryConvectiveSlip(**llbody, *lobj)*C_1_2PI;
+				if (calcBC) lobj->v += BoundaryConvective(**llbody, lobj->r)*C_1_2PI;
+				if (calcBCS) lobj->v += BoundaryConvectiveSlip(**llbody, lobj->r)*C_1_2PI;
 			}
 		}
 
@@ -176,8 +176,8 @@ void convectivefast::CalcBoundaryConvective()
 			#pragma omp parallel for
 			const_for(S->StreakList, lobj)
 			{
-				if (calcBC) lobj->v += BoundaryConvective(**llbody, *lobj)*C_1_2PI;
-				if (calcBCS) lobj->v += BoundaryConvectiveSlip(**llbody, *lobj)*C_1_2PI;
+				if (calcBC) lobj->v += BoundaryConvective(**llbody, lobj->r)*C_1_2PI;
+				if (calcBCS) lobj->v += BoundaryConvectiveSlip(**llbody, lobj->r)*C_1_2PI;
 			}
 		}
 	}
@@ -190,24 +190,24 @@ TVec convectivefast::BoundaryConvective(const TBody &b, const TVec &p)
 
 	const_for(alist, latt)
 	{
-		double drabs2 = (p-*latt).abs2();
+		double drabs2 = (p-latt->r).abs2();
 		if (drabs2 < latt->dl.abs2())
 		{
-			TVec Vs1 = b.MotionSpeed_slae + b.RotationSpeed_slae * rotl(latt->corner - (b.Position + b.deltaPosition));
+			TVec Vs1 = b.Speed_slae.r + b.Speed_slae.o * rotl(latt->corner - (b.pos.r + b.dPos.r));
 			double g1 = -Vs1 * latt->dl;
 			double q1 = -rotl(Vs1) * latt->dl; 
 
-			TVec Vs2 = b.MotionSpeed_slae + b.RotationSpeed_slae * rotl(latt->corner + latt->dl - (b.Position + b.deltaPosition));
+			TVec Vs2 = b.Speed_slae.r + b.Speed_slae.o * rotl(latt->corner + latt->dl - (b.pos.r + b.dPos.r));
 			double g2 = -Vs2 * latt->dl;
 			double q2 = -rotl(Vs2) * latt->dl;
 
 			res+= (rotl(SegmentInfluence_linear_source(p, *latt, g1, g2)) + SegmentInfluence_linear_source(p, *latt, q1, q2));
 		} else
 		{
-			TVec Vs = b.MotionSpeed_slae + b.RotationSpeed_slae * rotl(*latt - (b.Position + b.deltaPosition));
+			TVec Vs = b.Speed_slae.r + b.Speed_slae.o * rotl(latt->r - (b.pos.r + b.dPos.r));
 			double g = -Vs * latt->dl;
 			double q = -rotl(Vs) * latt->dl; 
-			TVec dr = p - *latt;
+			TVec dr = p - latt->r;
 			res += (dr*q + rotl(dr)*g) / drabs2;
 		}
 		//res+= SegmentInfluence(p, *latt, latt->g, latt->q, 1E-6);
@@ -249,21 +249,20 @@ bool convectivefast::canUseInverse()
 	{
 		TBody *lbody1 = *llbody1;
 
-		if (lbody1->kx >= 0) return false;
-		if (lbody1->ky >= 0) return false;
-		if (lbody1->ka >= 0) return false;
+		if (lbody1->k.r.x >= 0) return false;
+		if (lbody1->k.r.y >= 0) return false;
+		if (lbody1->k.o >= 0) return false;
 
 		const_for(S->BodyList, llbody2)
 		{
 			TBody *lbody2 = *llbody2;
-			if ((lbody1->getRotation()!=0) || (lbody2->getRotation()!=0))
+			if ((lbody1->getSpeed().o!=0) || (lbody2->getSpeed().o!=0))
 			{
-				if (lbody1->getRotation() != lbody2->getRotation()) return false;
-				if ((lbody1->Position+lbody1->deltaPosition) != (lbody2->Position+lbody2->deltaPosition)) return false;
+				if (lbody1->getSpeed().o != lbody2->getSpeed().o) return false;
+				if ((lbody1->pos.r+lbody1->dPos.r) != (lbody2->pos.r+lbody2->dPos.r)) return false;
 			}
 
-			if (lbody1->getSpeedX() != lbody2->getSpeedX()) return false;
-			if (lbody1->getSpeedY() != lbody2->getSpeedY()) return false;
+			if (lbody1->getSpeed().r != lbody2->getSpeed().r) return false;
 		}
 	}
 
@@ -284,9 +283,9 @@ void convectivefast::CalcCirculationFast()
 
 double convectivefast::_2PI_Xi_g(TVec p, const TAtt &seg, double rd) // in doc 2\pi\Xi_\gamma (1.7)
 {
-	complex<double> z(p.rx, -p.ry);
-	complex<double> zc(seg.rx,-seg.ry);
-	complex<double> dz(seg.dl.rx,-seg.dl.ry);
+	complex<double> z(p.x, -p.y);
+	complex<double> zc(seg.r.x,-seg.r.y);
+	complex<double> dz(seg.dl.x,-seg.dl.y);
 	complex<double> z1 = zc-dz*0.5;
 	complex<double> z2 = zc+dz*0.5;
 
@@ -298,13 +297,13 @@ double convectivefast::_2PI_Xi_g(TVec p, const TAtt &seg, double rd) // in doc 2
 	} else
 	if ((c1<=rd)&&(c2<=rd))
 	{
-		return ((seg-p)*seg.dl)/(rd*rd);
+		return ((seg.r-p)*seg.dl)/(rd*rd);
 	}
 	else
 	{
 		double a0 = seg.dl.abs2();
-		double b0 = (p-seg)*seg.dl;
-		double d  = sqrt(b0*b0-a0*((p-seg).abs2()-rd*rd));
+		double b0 = (p-seg.r)*seg.dl;
+		double d  = sqrt(b0*b0-a0*((p-seg.r).abs2()-rd*rd));
 		double k  = (b0+d)/a0; if ((k<=-0.5)||(k>=0.5)) k = (b0-d)/a0;
 		complex<double> z3 = zc + k*dz;
 
@@ -319,10 +318,10 @@ double convectivefast::_2PI_Xi_g(TVec p, const TAtt &seg, double rd) // in doc 2
 
 double convectivefast::_2PI_Xi_q(TVec &p, const TAtt &seg, double rd) // in doc 2\pi\Xi_q (1.8)
 {
-	if (&p == &seg) { TVec pnew = p+rotl(seg.dl)*0.001; return _2PI_Xi_q(pnew, seg, rd); }
-	complex<double> z(p.rx, -p.ry);
-	complex<double> zc(seg.rx,-seg.ry);
-	complex<double> dz(seg.dl.rx,-seg.dl.ry);
+	if (&p == &seg.r) { TVec pnew = p+rotl(seg.dl)*0.001; return _2PI_Xi_q(pnew, seg, rd); }
+	complex<double> z(p.x, -p.y);
+	complex<double> zc(seg.r.x,-seg.r.y);
+	complex<double> dz(seg.dl.x,-seg.dl.y);
 	complex<double> z1 = zc-dz*0.5;
 	complex<double> z2 = zc+dz*0.5;
 
@@ -334,13 +333,13 @@ double convectivefast::_2PI_Xi_q(TVec &p, const TAtt &seg, double rd) // in doc 
 	} else
 	if ((c1<=rd)&&(c2<=rd))
 	{
-		return ((seg-p)*rotl(seg.dl))/(rd*rd);
+		return ((seg.r-p)*rotl(seg.dl))/(rd*rd);
 	}
 	else
 	{
 		double a0 = seg.dl.abs2();
-		double b0 = (p-seg)*seg.dl;
-		double d  = sqrt(b0*b0-a0*((p-seg).abs2()-rd*rd));
+		double b0 = (p-seg.r)*seg.dl;
+		double d  = sqrt(b0*b0-a0*((p-seg.r).abs2()-rd*rd));
 		double k  = (b0+d)/a0; if ((k<=-0.5)||(k>=0.5)) k = (b0-d)/a0;
 		complex<double> z3 = zc + k*dz;
 
@@ -355,10 +354,10 @@ double convectivefast::_2PI_Xi_q(TVec &p, const TAtt &seg, double rd) // in doc 
 
 void convectivefast::_2PI_A123(const TAtt &seg, const TBody &b, double *_2PI_A1, double *_2PI_A2, double *_2PI_A3)
 {
-	*_2PI_A1 = C_2PI * seg.dl.ry;
-	*_2PI_A2 = -C_2PI * seg.dl.rx;
+	*_2PI_A1 = C_2PI * seg.dl.y;
+	*_2PI_A2 = -C_2PI * seg.dl.x;
 	*_2PI_A3 = 0;
-	if ((b.ka<0) && (!b.getRotation())) 
+	if ((b.k.o<0) && (!b.getSpeed().o)) 
 	{
 		//FIXME econome time. uncomment return
 		//fprintf(stderr, "ret:\t%lf\t%lf\n", seg.corner.rx, seg.corner.ry);
@@ -366,10 +365,10 @@ void convectivefast::_2PI_A123(const TAtt &seg, const TBody &b, double *_2PI_A1,
 	}
 	const_for(b.List, latt)
 	{
-		double _2piXi_g = _2PI_Xi_g(*latt, seg, latt->dl.abs()*0.25);
-		double _2piXi_q = _2PI_Xi_q(*latt, seg, latt->dl.abs()*0.25);
+		double _2piXi_g = _2PI_Xi_g(latt->r, seg, latt->dl.abs()*0.25);
+		double _2piXi_q = _2PI_Xi_q(latt->r, seg, latt->dl.abs()*0.25);
 		TVec Xi(_2piXi_g, _2piXi_q);
-		TVec r0 = *latt - (b.Position + b.deltaPosition);
+		TVec r0 = latt->r - (b.pos.r + b.dPos.r);
 //		*A1 -= Xi*latt->dl;
 //		*A2 -= rotl(Xi)*latt->dl;
 		*_2PI_A3 -= Xi * TVec(rotl(r0) * latt->dl, -latt->dl*r0);
@@ -385,15 +384,15 @@ double convectivefast::NodeInfluence(const TSortedNode &Node, const TAtt &seg)
 		for (TObj *lobj = (**llnnode).vRange.first; lobj < (**llnnode).vRange.last; lobj++)
 		{
 			if (!lobj->g) {continue;}
-			res+= _2PI_Xi_g(*lobj, seg, 1/lobj->_1_eps) * lobj->g;
+			res+= _2PI_Xi_g(lobj->r, seg, 1./lobj->_1_eps) * lobj->g;
 		}
 	}
 
 	const_for(Node.FarNodes, llfnode)
 	{
 		#define fnode (**llfnode)
-		res+= _2PI_Xi_g(fnode.CMp, seg, 0) * fnode.CMp.g;
-		res+= _2PI_Xi_g(fnode.CMm, seg, 0) * fnode.CMm.g;
+		res+= _2PI_Xi_g(fnode.CMp.r, seg, 0) * fnode.CMp.g;
+		res+= _2PI_Xi_g(fnode.CMm.r, seg, 0) * fnode.CMm.g;
 		#undef fnode
 	}
 
@@ -412,10 +411,10 @@ double convectivefast::AttachInfluence(const TAtt &seg, double rd)
 		double res_tmp=0;
 		const_for(body.List, latt)
 		{
-			TVec Vs = body.MotionSpeed_slae + body.RotationSpeed_slae * rotl(*latt - (body.Position + body.deltaPosition));
+			TVec Vs = body.Speed_slae.r + body.Speed_slae.o * rotl(latt->r - (body.pos.r + body.dPos.r));
 			if (latt == &seg) { res_tmp+= -(-rotl(Vs) * latt->dl)*0.5*C_2PI; continue; }
-			res+= _2PI_Xi_g(*latt, seg, rd) * (-Vs * latt->dl);
-			res+= _2PI_Xi_q(*latt, seg, rd) * (-rotl(Vs) * latt->dl);
+			res+= _2PI_Xi_g(latt->r, seg, rd) * (-Vs * latt->dl);
+			res+= _2PI_Xi_q(latt->r, seg, rd) * (-rotl(Vs) * latt->dl);
 		}
 		#undef body
 	}
@@ -426,9 +425,9 @@ double convectivefast::AttachInfluence(const TAtt &seg, double rd)
 TVec convectivefast::SegmentInfluence_linear_source(TVec p, const TAtt &seg, double q1, double q2)
 {
 //	cerr << "orly?" << endl;
-	complex<double> z(p.rx, p.ry);
-	complex<double> zc(seg.rx, seg.ry);
-	complex<double> dz(seg.dl.rx, seg.dl.ry);
+	complex<double> z(p.x, p.y);
+	complex<double> zc(seg.r.x, seg.r.y);
+	complex<double> dz(seg.dl.x, seg.dl.y);
 	complex<double> zs1 = zc-dz*0.5;
 	complex<double> zs2 = zc+dz*0.5;
 	complex<double> z1 = z - zs1;
@@ -470,7 +469,7 @@ void convectivefast::fillSlipEquationForSegment(TAtt* seg, bool rightColOnly)
 	//influence of infinite speed
 	*matrix->rightColAtIndex(seg_eq_no) = rotl(S->InfSpeed())*seg->dl;
 	//influence of all free vortices
-	TSortedNode* Node = S->Tree->findNode(*seg);
+	TSortedNode* Node = S->Tree->findNode(seg->r);
 	*matrix->rightColAtIndex(seg_eq_no) -= NodeInfluence(*Node, *seg);
 }
 
@@ -524,7 +523,7 @@ void convectivefast::fillSteadyEquationForSegment(TAtt* seg, bool rightColOnly)
 	*matrix->solutionAtIndex(seg_eq_no) = &seg->g;
 
 	//right column
-	*matrix->rightColAtIndex(seg_eq_no) = lbody->g_dead + 2*lbody->getArea()*lbody->RotationSpeed_slae_prev;
+	*matrix->rightColAtIndex(seg_eq_no) = lbody->g_dead + 2*lbody->getArea()*lbody->Speed_slae_prev.o;
 	lbody->g_dead = 0;
 }
 
@@ -564,15 +563,15 @@ void convectivefast::fillForceXEquation(TBody* ibody, bool rightColOnly)
 		#define jbody (**lljbody)
 		const_for(jbody.List, lobj)
 		{
-			if ( (ibody==*lljbody) && (ibody->kx >= 0) )
-				*matrix->objectAtIndex(eq_no, lobj->eq_no) = _1_dt * (-lobj->corner.ry);
+			if ( (ibody==*lljbody) && (ibody->k.r.x >= 0) )
+				*matrix->objectAtIndex(eq_no, lobj->eq_no) = _1_dt * (-lobj->corner.y);
 			else
 				*matrix->objectAtIndex(eq_no, lobj->eq_no) = 0;
 		}
 
 		if (ibody == *lljbody)
 		{
-			if (ibody->kx >= 0)
+			if (ibody->k.r.x >= 0)
 			{
 				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = -ibody->getArea()*_1_dt*ibody->density;
 				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = 0;
@@ -594,20 +593,20 @@ void convectivefast::fillForceXEquation(TBody* ibody, bool rightColOnly)
 	}
 
 	//place solution pointer
-	*matrix->solutionAtIndex(eq_no) = &ibody->MotionSpeed_slae.rx;
+	*matrix->solutionAtIndex(eq_no) = &ibody->Speed_slae.r.x;
 
 	//right column
-	if ( ibody->kx >= 0 )
+	if ( ibody->k.r.x >= 0 )
 		*matrix->rightColAtIndex(eq_no) = 
-			- (ibody->density-1.0) * S->gravitation.rx * ibody->getArea()
-			+ ibody->kx * ibody->deltaPosition.rx +
-			- ibody->Friction_prev.rx
-			+ ibody->Force_dead.rx
-			- ibody->density * ibody->getArea() * ibody->MotionSpeed_slae_prev.rx * _1_dt
-			- (-ibody->MotionSpeed_slae_prev.ry) * ibody->RotationSpeed_slae_prev * ibody->getArea()
-			+ sqr(ibody->RotationSpeed_slae_prev) * ibody->getArea() * (ibody->getCom() - ibody->Position - ibody->deltaPosition).rx;
+			- (ibody->density-1.0) * S->gravitation.x * ibody->getArea()
+			+ ibody->k.r.x * ibody->dPos.r.x +
+			- ibody->Friction_prev.r.x
+			+ ibody->Force_dead.r.x
+			- ibody->density * ibody->getArea() * ibody->Speed_slae_prev.r.x * _1_dt
+			- (-ibody->Speed_slae_prev.r.y) * ibody->Speed_slae_prev.o * ibody->getArea()
+			+ sqr(ibody->Speed_slae_prev.o) * ibody->getArea() * (ibody->getCom() - ibody->pos.r - ibody->dPos.r).x;
 	else
-		*matrix->rightColAtIndex(eq_no) = ibody->getSpeedX();
+		*matrix->rightColAtIndex(eq_no) = ibody->getSpeed().r.x;
 }
 
 void convectivefast::fillForceYEquation(TBody* ibody, bool rightColOnly)
@@ -620,15 +619,15 @@ void convectivefast::fillForceYEquation(TBody* ibody, bool rightColOnly)
 		#define jbody (**lljbody)
 		const_for(jbody.List, lobj)
 		{
-			if ( (ibody==*lljbody) && (ibody->ky >= 0) )
-				*matrix->objectAtIndex(eq_no, lobj->eq_no) = _1_dt * (lobj->corner.rx);
+			if ( (ibody==*lljbody) && (ibody->k.r.y >= 0) )
+				*matrix->objectAtIndex(eq_no, lobj->eq_no) = _1_dt * (lobj->corner.x);
 			else
 				*matrix->objectAtIndex(eq_no, lobj->eq_no) = 0;
 		}
 
 		if (ibody == *lljbody)
 		{
-			if (ibody->ky >= 0)
+			if (ibody->k.r.y >= 0)
 			{
 				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = 0;
 				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = -ibody->getArea()*_1_dt*ibody->density;
@@ -649,20 +648,20 @@ void convectivefast::fillForceYEquation(TBody* ibody, bool rightColOnly)
 	}
 
 	//place solution pointer
-	*matrix->solutionAtIndex(eq_no) = &ibody->MotionSpeed_slae.ry;
+	*matrix->solutionAtIndex(eq_no) = &ibody->Speed_slae.r.y;
 
 	//right column
-	if ( ibody->ky >= 0 )
+	if ( ibody->k.r.y >= 0 )
 		*matrix->rightColAtIndex(eq_no) = 
-			- (ibody->density-1.0) * S->gravitation.ry * ibody->getArea()
-			+ ibody->ky * ibody->deltaPosition.ry +
-			- ibody->Friction_prev.ry
-			+ ibody->Force_dead.ry
-			- ibody->density * ibody->getArea() * ibody->MotionSpeed_slae_prev.ry * _1_dt
-			- (ibody->MotionSpeed_slae_prev.rx) * ibody->RotationSpeed_slae_prev * ibody->getArea()
-			+ sqr(ibody->RotationSpeed_slae_prev) * ibody->getArea() * (ibody->getCom() - ibody->Position - ibody->deltaPosition).ry;
+			- (ibody->density-1.0) * S->gravitation.y * ibody->getArea()
+			+ ibody->k.r.y * ibody->dPos.r.y +
+			- ibody->Friction_prev.r.y
+			+ ibody->Force_dead.r.y
+			- ibody->density * ibody->getArea() * ibody->Speed_slae_prev.r.y * _1_dt
+			- (ibody->Speed_slae_prev.r.x) * ibody->Speed_slae_prev.o * ibody->getArea()
+			+ sqr(ibody->Speed_slae_prev.o) * ibody->getArea() * (ibody->getCom() - ibody->pos.r - ibody->dPos.r).y;
 	else
-		*matrix->rightColAtIndex(eq_no) = ibody->getSpeedY();
+		*matrix->rightColAtIndex(eq_no) = ibody->getSpeed().r.y;
 }
 
 void convectivefast::fillMomentEquation(TBody* ibody, bool rightColOnly)
@@ -670,7 +669,7 @@ void convectivefast::fillMomentEquation(TBody* ibody, bool rightColOnly)
 	double _1_dt = 1/S->dt;
 	double _1_2dt = 0.5/S->dt;
 	int eq_no = ibody->eq_forces_no+2;
-	TVec r_c_com = ibody->getCom() - ibody->Position - ibody->deltaPosition;
+	TVec r_c_com = ibody->getCom() - ibody->pos.r - ibody->dPos.r;
 
 	if (!rightColOnly)
 	const_for(S->BodyList, lljbody)
@@ -678,18 +677,18 @@ void convectivefast::fillMomentEquation(TBody* ibody, bool rightColOnly)
 		#define jbody (**lljbody)
 		const_for(jbody.List, lobj)
 		{
-			if ( (ibody==*lljbody) && (ibody->ka >= 0) )
-				*matrix->objectAtIndex(eq_no, lobj->eq_no) = _1_2dt * (lobj->corner - ibody->Position - ibody->deltaPosition).abs2();
+			if ( (ibody==*lljbody) && (ibody->k.o >= 0) )
+				*matrix->objectAtIndex(eq_no, lobj->eq_no) = _1_2dt * (lobj->corner - ibody->pos.r - ibody->dPos.r).abs2();
 			else
 				*matrix->objectAtIndex(eq_no, lobj->eq_no) = 0;
 		}
 
 		if (ibody == *lljbody)
 		{
-			if (ibody->ka >= 0)
+			if (ibody->k.o >= 0)
 			{
-				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = r_c_com.ry*ibody->getArea()*_1_dt;
-				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = -r_c_com.rx*ibody->getArea()*_1_dt;
+				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) =  r_c_com.y*ibody->getArea()*_1_dt;
+				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = -r_c_com.x*ibody->getArea()*_1_dt;
 				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = -ibody->getMoi_c()*_1_dt*(ibody->density+2);
 			} else
 			{
@@ -707,20 +706,20 @@ void convectivefast::fillMomentEquation(TBody* ibody, bool rightColOnly)
 	}
 
 	//place solution pointer
-	*matrix->solutionAtIndex(eq_no) = &ibody->RotationSpeed_slae;
+	*matrix->solutionAtIndex(eq_no) = &ibody->Speed_slae.o;
 
 	//right column
-	if ( ibody->ka >= 0 )
+	if ( ibody->k.o >= 0 )
 		*matrix->rightColAtIndex(eq_no) = 
-			+ ibody->ka * ibody->deltaAngle +
+			+ ibody->k.o * ibody->dPos.o +
 			- (ibody->density-1.0) * (rotl(r_c_com)*S->gravitation) * ibody->getArea()
-			+ ibody->Force_dead.g
-			//- ibody->Friction_prev.g
-			- rotl(r_c_com)*ibody->MotionSpeed_slae_prev * ibody->getArea() * _1_dt
-			- ibody->getMoi_c() * ibody->RotationSpeed_slae_prev * _1_dt * (ibody->density + 2)
-			- (r_c_com * ibody->MotionSpeed_slae_prev) * ibody->RotationSpeed_slae_prev * ibody->getArea();
+			+ ibody->Force_dead.o
+			- ibody->Friction_prev.o
+			- rotl(r_c_com)*ibody->Speed_slae_prev.r * ibody->getArea() * _1_dt
+			- ibody->getMoi_c() * ibody->Speed_slae_prev.o * _1_dt * (ibody->density + 2.)
+			- (r_c_com * ibody->Speed_slae_prev.r) * ibody->Speed_slae_prev.o * ibody->getArea();
 	else
-		*matrix->rightColAtIndex(eq_no) = ibody->getRotation();
+		*matrix->rightColAtIndex(eq_no) = ibody->getSpeed().o;
 }
 
 void convectivefast::FillMatrix(bool rightColOnly)

@@ -28,7 +28,7 @@ void epsfast::CalcEpsilonFast(bool merge)
 		TAtt *nearestAtt = nearestBodySegment(bnode, TVec(bnode.x, bnode.y));
 
 		double merge_criteria_sq = (merge && nearestAtt) ? 
-		                             0.16 * nearestAtt->dl.abs2() * (1 + (TVec(bnode.x, bnode.y) - *nearestAtt).abs2())
+		                             0.16 * nearestAtt->dl.abs2() * (1. + (TVec(bnode.x, bnode.y) - nearestAtt->r).abs2())
 		                             : 0;
 		double _1_eps_restriction = 3.0/nearestAtt->dl.abs();
 
@@ -57,12 +57,11 @@ void epsfast::MergeVortexes(TObj *lv1, TObj *lv2)
 
 	if ( sign(*lv1) == sign(*lv2) )
 	{
-		*lv1 = (*lv1*lv1->g + *lv2*lv2->g)/(lv1->g + lv2->g);
+		lv1->r = (lv1->r*lv1->g + lv2->r*lv2->g)/(lv1->g + lv2->g);
 	}
 	else if ( fabs(lv1->g) < fabs(lv2->g) )
 	{
-		lv1->rx = lv2->rx;
-		lv1->ry = lv2->ry;
+		lv1->r = lv2->r;
 	}
 	//lv1->v = (lv1->v*lv1->g + lv2->v*lv2->g)/(lv1->g + lv2->g);
 	lv1->g+= lv2->g;
@@ -83,7 +82,7 @@ double epsfast::epsv(const TSortedNode &Node, TObj *lv, double merge_criteria_sq
 		for (TObj *lobj = nnode.vRange.first; lobj < nnode.vRange.last; lobj++)
 		{
 			if (!lobj->g || (lv == lobj)) { continue; }
-			double drabs2 = (*lv - *lobj).abs2();
+			double drabs2 = (lv->r - lobj->r).abs2();
 
 			if ( res1 > drabs2 )
 			{
@@ -127,7 +126,7 @@ double epsfast::epsh(const TSortedNode &Node, TObj *lv, double merge_criteria_sq
 		for (TObj *lobj = nnode.vRange.first; lobj < nnode.vRange.last; lobj++)
 		{
 			if (!lobj->g || (lv == lobj)) { continue; }
-			double drabs2 = (*lv - *lobj).abs2();
+			double drabs2 = (lv->r - lobj->r).abs2();
 
 			if ( res1 > drabs2 )
 			{
@@ -170,7 +169,7 @@ TAtt* epsfast::nearestBodySegment(TSortedNode &Node, TVec p)
 		{
 			if (!*llatt) { fprintf(stderr, "epsfast.cpp:169 llatt = NULL. Is it possible?\n"); continue; }
 
-			double drabs2 = (p - **llatt).abs2();
+			double drabs2 = (p - (*llatt)->r).abs2();
 			if ( drabs2 < res )
 			{
 				res = drabs2;
@@ -185,7 +184,7 @@ TAtt* epsfast::nearestBodySegment(TSortedNode &Node, TVec p)
 	const_for(S->BodyList, llbody)
 	const_for((**llbody).List, lobj)
 	{
-		double drabs2 = (p - *lobj).abs2();
+		double drabs2 = (p - lobj->r).abs2();
 		if ( drabs2 < res )
 		{
 			res = drabs2;

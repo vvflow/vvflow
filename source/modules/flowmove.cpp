@@ -29,20 +29,20 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
 	if ( vlist )
 	const_for (vlist, lobj)
 	{
-		*lobj += lobj->v*dt; if(zero_speed) lobj->v.zero();
+		lobj->r += lobj->v*dt; if(zero_speed) lobj->v = TVec(0., 0.);
 
 		TAtt* invalid_inbody = NULL;
 		const_for(S->BodyList, llbody)
 		{
 			if (!invalid_inbody)
-			invalid_inbody = (**llbody).isPointInvalid(*lobj);
+			invalid_inbody = (**llbody).isPointInvalid(lobj->r);
 		}
 
 		if ( remove && invalid_inbody )
 		{
 			TBody *badbody = invalid_inbody->body;
-			badbody->Force_dead += rotl(*lobj) * lobj->g;
-			badbody->Force_dead.g +=  (*lobj - badbody->Position - badbody->deltaPosition).abs2() * lobj->g;
+			badbody->Force_dead.r += rotl(lobj->r) * lobj->g;
+			badbody->Force_dead.o +=  (lobj->r - badbody->pos.r - badbody->dPos.r).abs2() * lobj->g;
 			invalid_inbody->gsum -= lobj->g;
 			badbody->g_dead += lobj->g;
 			CleanedV_++;
@@ -59,20 +59,20 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
 
 	const_for(S->BodyList, llbody)
 	{
-		(**llbody).Force_dead /= dt;
-		(**llbody).Force_dead.g /= 2*dt;
+		(**llbody).Force_dead.r /= dt;
+		(**llbody).Force_dead.o /= 2.*dt;
 	}
 
 	//MOVING HEAT PARTICLES
 	if ( hlist )
 	const_for (hlist, lobj)
 	{
-		*lobj += lobj->v*dt; if(zero_speed) lobj->v.zero();
+		lobj->r += lobj->v*dt; if(zero_speed) lobj->v = TVec(0., 0.);
 
 		TAtt* invalid_inbody = NULL;
 		const_for(S->BodyList, llbody)
 		{
-			invalid_inbody = (**llbody).isPointInvalid(*lobj);
+			invalid_inbody = (**llbody).isPointInvalid(lobj->r);
 			if (invalid_inbody) break;
 		}
 
@@ -86,7 +86,7 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
 		TAtt* inlayer = NULL;
 		const_for(S->BodyList, llbody)
 		{
-			inlayer = (**llbody).isPointInHeatLayer(*lobj);
+			inlayer = (**llbody).isPointInHeatLayer(lobj->r);
 			if (inlayer) break;
 		}
 
@@ -117,12 +117,12 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
 	if ( S->StreakList )
 	const_for (S->StreakList, lobj)
 	{
-		*lobj += lobj->v*dt; lobj->v.zero();
+		lobj->r += lobj->v*dt; lobj->v = TVec(0., 0.);
 
 		TAtt* invalid_inbody = NULL;
 		const_for(S->BodyList, llbody)
 		{
-			if ((**llbody).isPointInvalid(*lobj))
+			if ((**llbody).isPointInvalid(lobj->r))
 			{
 				S->StreakList->erase(lobj);
 				lobj--;
@@ -141,7 +141,7 @@ void flowmove::VortexShed()
 	const_for(S->BodyList, llbody)
 	{
 		#define body (**llbody)
-		body.Force_born.zero();
+		body.Force_born = TVec3D(0., 0., 0.);
 
 		const_for(body.List, latt)
 		{
@@ -149,17 +149,17 @@ void flowmove::VortexShed()
 				{ CleanedV_++; body.g_dead+= latt->g; }
 			else if ( (latt->bc == bc::noslip) || ((latt+1)->bc == bc::noslip) )
 			{
-				ObjCopy = latt->corner + rotl(latt->dl)*1e-4;
+				ObjCopy.r = latt->corner + rotl(latt->dl)*1e-4;
 				ObjCopy.g = latt->g;
-				body.Force_born += rotl(latt->corner) * ObjCopy.g;
-				body.Force_born.g += (latt->corner-body.Position-body.deltaPosition).abs2() * ObjCopy.g;
+				body.Force_born.r += rotl(latt->corner) * ObjCopy.g;
+				body.Force_born.o += (latt->corner-body.pos.r-body.dPos.r).abs2() * ObjCopy.g;
 				latt->gsum+= ObjCopy.g;
 				vlist->push_back(ObjCopy);
 			}
 		}
 
-		body.Force_born /= dt;
-		body.Force_born.g /= 2*dt;
+		body.Force_born.r /= dt;
+		body.Force_born.o /= 2.*dt;
 		#undef body
 	}
 }
@@ -180,7 +180,7 @@ void flowmove::HeatShed()
 				case hc::isolate:
 					if (latt->hsum)
 					{
-						hlist->push_back(TObj(*latt+rotl(latt->dl)*0.5, -latt->hsum));
+						hlist->push_back(TObj(latt->r+rotl(latt->dl)*0.5, -latt->hsum));
 						latt->hsum = 0;
 					}
 					break;
@@ -195,7 +195,7 @@ void flowmove::HeatShed()
 					} else
 					{
 						latt->hsum += tmp_g;
-						hlist->push_back(TObj(*latt+rotl(latt->dl)*0.5, tmp_g));
+						hlist->push_back(TObj(latt->r+rotl(latt->dl)*0.5, tmp_g));
 					}
 				}
 					break;
@@ -203,7 +203,7 @@ void flowmove::HeatShed()
 				{
 					double tmp_g(latt->dl.abs2() * latt->heat_const);
 					latt->hsum += tmp_g;
-					hlist->push_back(TObj(*latt+rotl(latt->dl)*0.5, tmp_g));
+					hlist->push_back(TObj(latt->r+rotl(latt->dl)*0.5, tmp_g));
 				}
 					break;
 			}
@@ -217,14 +217,14 @@ void flowmove::CropHeat(double scale)
 	if (!S->HeatList) return;
 	const_for(S->HeatList, lobj)
 	{
-		if (lobj->rx > scale)
+		if (lobj->r.x > scale)
 			S->HeatList->erase(lobj);
 	}
 }
 
-void flowmove::StreakShed(double shed_dt)
+void flowmove::StreakShed()
 {
-	if (!divisible(S->Time, shed_dt, dt/2)) return;
+	if (!S->Time.divisibleBy(S->streak_dt)) return;
 	const_for(S->StreakSourceList, lobj)
 	{
 		S->StreakList->push_back(*lobj);

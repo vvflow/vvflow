@@ -81,7 +81,7 @@ int main(int argc, char** argv)
 		}
 
 		dbg(fm.VortexShed());
-		dbg(fm.StreakShed(S->streak_dt));
+		dbg(fm.StreakShed());
 
 		dbg(S->CalcForces());
 		if (S->Time > 0) S->SaveProfile(profile, val::Cp | val::Fr | val::Nu);

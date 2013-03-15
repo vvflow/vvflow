@@ -104,6 +104,7 @@ class TVec3D
 		TVec3D(double _x, double _y, double _o) :r(_x, _y)
 			{o = _o;}
 
+		bool iszero() const {return (fabs(r.x)+fabs(r.y)+fabs(o) < 1E-10); }
 		friend istream& operator>> (istream& is, TVec3D& p) { return is >> p.r.x >> p.r.y >> p.o; }
 		friend ostream& operator<< (ostream& os, const TVec3D& p) { return os << p.r.x << " \t" << p.r.y << " \t" << p.o; }
 };

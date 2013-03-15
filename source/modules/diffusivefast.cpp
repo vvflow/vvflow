@@ -116,7 +116,7 @@ inline
 void diffusivefast::VortexInfluence(const TObj &v, const TObj &vj, TVec *i2, double *i1)
 {
 	if ( sign(v) != sign(vj) ) { return; }
-	TVec dr = v - vj;
+	TVec dr = v.r - vj.r;
 	if ( dr.iszero() ) { return; }
 	double drabs = dr.abs();
 	double exparg = -drabs*v._1_eps;
@@ -130,7 +130,7 @@ inline
 void diffusivefast::SegmentInfluence(const TObj &v, TAtt *rk,
                                      TVec *i3, double *i0, bool calc_friction)
 {
-	TVec dr = v - *rk;
+	TVec dr = v.r - rk->r;
 	double drabs2 = dr.abs2();
 	double drabs = sqrt( drabs2 );
 	double exparg = -drabs*v._1_eps;

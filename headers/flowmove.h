@@ -9,7 +9,7 @@ class flowmove
 		flowmove(Space *sS, double sRemoveEps = 1E-10);
 		void MoveAndClean(bool remove, bool zero_speed = true);
 		void VortexShed();
-		void StreakShed(double shed_dt);
+		void StreakShed();
 		void HeatShed();
 		void CropHeat(double scale = 16);
 
