@@ -22,7 +22,7 @@ snode::snode(stree *sParent)
 
 	NearNodes = FarNodes = NULL;
 	ch1 = ch2 = NULL;
-	CMp.zero(); CMm.zero();
+	CMp = CMm = TObj(0., 0., 0.);
 }
 
 snode::~snode()
@@ -90,11 +90,10 @@ void TSortedNode::definePointerRangesAndSort(vector<TObj> *list)
 	TObj *p1 = first, *p2 = last-1;
 	while (p1 <= p2)
 	{
-		while ( (p1<last) && ((h<w) ? (p1->rx<x) : (p1->ry<y)) ) p1++;
-		while ( (p2>=first) && ((h<w) ? (p2->rx>=x) : (p2->ry>=y)) ) p2--;
+		while ( (p1<last) && ((h<w) ? (p1->r.x<x) : (p1->r.y<y)) ) p1++;
+		while ( (p2>=first) && ((h<w) ? (p2->r.x>=x) : (p2->r.y>=y)) ) p2--;
 		if (p1 < p2)
-		{ //swap objects
-			//fprintf(stderr, "swap %x with %x : %c %g (%g, %g) (%g %g)\n", p1, p2, (h>w)?'h':'w', (h>w)?y:x, p1->rx, p1->ry, p2->rx, p2->ry);
+		{
 			TObj tmp = *p1;
 			*p1 = *p2;
 			*p2 = tmp;
@@ -115,10 +114,10 @@ void TSortedNode::Stretch()
 	if (BodyLList)
 	const_for(BodyLList, llobj)
 	{
-		tr.rx = max(tr.rx, (**llobj).rx);
-		tr.ry = max(tr.ry, (**llobj).ry);
-		bl.rx = min(bl.rx, (**llobj).rx);
-		bl.ry = min(bl.ry, (**llobj).ry);
+		tr.x = max(tr.x, (**llobj).r.x);
+		tr.y = max(tr.y, (**llobj).r.y);
+		bl.x = min(bl.x, (**llobj).r.x);
+		bl.y = min(bl.y, (**llobj).r.y);
 	}
 
 	//fprintf(stderr, "%d %d stretch body: l=%g, r=%g, b=%g, t=%g\n", i, j, bl.rx, tr.rx, bl.ry, tr.ry);
@@ -129,20 +128,20 @@ void TSortedNode::Stretch()
 
 	//fprintf(stderr, "%d %d stretch objs: l=%g, r=%g, b=%g, t=%g\n", i, j, bl.rx, tr.rx, bl.ry, tr.ry);
 
-	x = (bl+tr).rx * 0.5;
-	y = (bl+tr).ry * 0.5;
-	h = (tr-bl).ry;
-	w = (tr-bl).rx;
+	x = (bl+tr).x * 0.5;
+	y = (bl+tr).y * 0.5;
+	h = (tr-bl).y;
+	w = (tr-bl).x;
 }
 
 void TSortedNode::Stretch(range &oRange, TVec &tr, TVec &bl)
 {
 	for (TObj *lobj = oRange.first; lobj < oRange.last; lobj++)
 	{
-		tr.rx = max(tr.rx, lobj->rx);
-		tr.ry = max(tr.ry, lobj->ry);
-		bl.rx = min(bl.rx, lobj->rx);
-		bl.ry = min(bl.ry, lobj->ry);
+		tr.x = max(tr.x, lobj->r.x);
+		tr.y = max(tr.y, lobj->r.y);
+		bl.x = min(bl.x, lobj->r.x);
+		bl.y = min(bl.y, lobj->r.y);
 	}
 }
 
@@ -154,7 +153,7 @@ void TSortedNode::DistributeContent(blList *parent, blList **ch1, blList **ch2)
 
 	const_for (parent, llobj)
 	{
-		if ( (h<w) ? ((**llobj).rx<x) : ((**llobj).ry<y) ) 
+		if ( (h<w) ? ((**llobj).r.x<x) : ((**llobj).r.y<y) ) 
 			(**ch1).push_back(*llobj);
 		else
 			(**ch2).push_back(*llobj);
@@ -180,9 +179,9 @@ void TSortedNode::CalculateCMass()
 		sumg = ch1->cm.g + ch2->cm.g; \
 		if ( sumg ) \
 		{ \
-			cm = (ch1->cm * ch1->cm.g + ch2->cm * ch2->cm.g) / sumg; \
+			cm.r = (ch1->cm.r * ch1->cm.g + ch2->cm.r * ch2->cm.g) / sumg; \
 			cm.g = sumg; \
-		} else { cm.zero(); }
+		} else { cm = TObj(); }
 
 	CalculateCMassFromChilds(CMp);
 	CalculateCMassFromChilds(CMm);
@@ -191,32 +190,29 @@ void TSortedNode::CalculateCMass()
 
 void TSortedNode::CalculateCMassFromScratch()
 {
-	CMp.zero();
-	CMm.zero();
+	CMp = CMm = TObj();
 
 	for (TObj *lobj = vRange.first; lobj < vRange.last; lobj++)
 	{
 		if ( lobj->g > 0 )
 		{
-			CMp+= TVec(*lobj) * lobj->g;
+			CMp.r+= lobj->r * lobj->g;
 			CMp.g+= lobj->g;
 		}
 		else
 		{
-			CMm+= TVec(*lobj) * lobj->g;
+			CMm.r+= lobj->r * lobj->g;
 			CMm.g+= lobj->g;
 		}
 	}
 
-	if ( CMp.g ) { CMp/= CMp.g; }
-	if ( CMm.g ) { CMm/= CMm.g; }
+	if ( CMp.g ) { CMp.r/= CMp.g; }
+	if ( CMm.g ) { CMm.r/= CMm.g; }
 }
 
 void TSortedNode::FindNearNodes(TSortedNode* top)
 {
-	TVec dr;
-	dr.rx = top->x - x;
-	dr.ry = top->y - y;
+	TVec dr = TVec(top->x, top->y) - TVec(x, y);
 	double HalfPerim = top->h + top->w + h + w;
 
 	if ( dr.abs2() > parent->farCriteria*sqr(HalfPerim) )
@@ -307,11 +303,11 @@ TSortedNode* stree::findNode(TVec p)
 	{
 		if (Node->h < Node->w)
 		{
-			Node = (p.rx < Node->x) ? Node->ch1 : Node->ch2 ;
+			Node = (p.x < Node->x) ? Node->ch1 : Node->ch2 ;
 		}
 		else
 		{
-			Node = (p.ry < Node->y) ? Node->ch1 : Node->ch2 ;
+			Node = (p.y < Node->y) ? Node->ch1 : Node->ch2 ;
 		}
 	}
 	return Node;

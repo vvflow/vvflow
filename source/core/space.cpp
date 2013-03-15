@@ -23,12 +23,13 @@ Space::Space()
 
 	InfSpeedX = new ShellScript();
 	InfSpeedY = new ShellScript();
-	InfCirculation = 0;
-	gravitation = TVec(0,0);
+	InfCirculation = 0.;
+	gravitation = TVec(0., 0.);
 	Finish = DBL_MAX;
-	Time = dt = Re = Pr = 0;
-	save_dt = streak_dt = profile_dt = DBL_MAX;
-	InfMarker.zero();
+	Time = dt = TTime();
+	save_dt = streak_dt = profile_dt = TTime(INT32_MAX, 1);
+	Re = Pr = 0.;
+	InfMarker = TVec(0., 0.);
 
 	name = new char[64];
 	name[0] = 0;
@@ -42,7 +43,7 @@ void Space::FinishStep()
 		TBody &body = **llbody;
 		body.doRotationAndMotion();
 	}
-	Time+= dt;
+	Time= TTime::add(Time, dt);
 }
 
 /********************************** SAVE/LOAD *********************************/
@@ -120,21 +121,15 @@ void Space::Save(const char* format)
 		#define body (**llbody)
 		// пишем общую информацию о данном теле. 
 		SaveBookmark(fout, ++bookmark, "BData   ");
-		fwrite(&body.Angle, 8, 1, fout);
-		fwrite(&body.Position, 16, 1, fout);
-		fwrite(&body.deltaAngle, 8, 1, fout);
-		fwrite(&body.deltaPosition, 16, 1, fout);
+		fwrite(&body.pos, 24, 1, fout);
+		fwrite(&body.dPos, 24, 1, fout);
 		body.SpeedX->write(fout);
 		body.SpeedY->write(fout);
 		body.SpeedO->write(fout);
-		fwrite(&body.RotationSpeed_slae, 8, 1, fout);
-		fwrite(&body.MotionSpeed_slae, 16, 1, fout);
-		fwrite(&body.RotationSpeed_slae_prev, 8, 1, fout);
-		fwrite(&body.MotionSpeed_slae_prev, 16, 1, fout);
+		fwrite(&body.Speed_slae, 24, 1, fout);
+		fwrite(&body.Speed_slae_prev, 24, 1, fout);
 
-		fwrite(&body.kx, 8, 1, fout);
-		fwrite(&body.ky, 8, 1, fout);
-		fwrite(&body.ka, 8, 1, fout);
+		fwrite(&body.k, 24, 1, fout);
 		fwrite(&body.density, 8, 1, fout);
 
 		fwrite(&body.Force_born, 24, 1, fout);
@@ -221,21 +216,15 @@ void Space::Load(const char* fname)
 			TBody *body = new TBody(this);
 			BodyList->push_back(body);
 
-			fread(&body->Angle, 8, 1, fin);
-			fread(&body->Position, 16, 1, fin);
-			fread(&body->deltaAngle, 8, 1, fin);
-			fread(&body->deltaPosition, 16, 1, fin);
+			fread(&body->pos, 24, 1, fin);
+			fread(&body->dPos, 24, 1, fin);
 			body->SpeedX->read(fin);
 			body->SpeedY->read(fin);
 			body->SpeedO->read(fin);
-			fread(&body->RotationSpeed_slae, 8, 1, fin);
-			fread(&body->MotionSpeed_slae, 16, 1, fin);
-			fread(&body->RotationSpeed_slae_prev, 8, 1, fin);
-			fread(&body->MotionSpeed_slae_prev, 16, 1, fin);
+			fread(&body->Speed_slae, 24, 1, fin);
+			fread(&body->Speed_slae_prev, 24, 1, fin);
 
-			fread(&body->kx, 8, 1, fin);
-			fread(&body->ky, 8, 1, fin);
-			fread(&body->ka, 8, 1, fin);
+			fread(&body->k, 8, 1, fin);
 			fread(&body->density, 8, 1, fin);
 
 			fread(&body->Force_born, 24, 1, fin);
@@ -246,7 +235,7 @@ void Space::Load(const char* fname)
 		{
 			TBody *body = *(BodyList->end()-1);
 
-			TAtt att; att.body = body; att.zero();
+			TAtt att; att.body = body;
 			int64_t size; fread(&size, 8, 1, fin);
 			for (int64_t i=0; i<size; i++)
 			{
@@ -292,7 +281,7 @@ void Space::CalcForces()
 		double tmp_gsum = 0;
 		//TObj tmp_fric(0,0,0);
 		body.Friction_prev = body.Friction;
-		body.Friction.zero();
+		body.Friction = TVec3D();
 
 		const_for(body.List, latt)
 		{
@@ -301,13 +290,13 @@ void Space::CalcForces()
 			latt->Fr += latt->fric * C_NyuDt_Pi;
 			latt->Nu += latt->hsum * (Re*Pr / latt->dl.abs());
 
-			body.Friction -= latt->dl * (latt->fric * C_Nyu_Pi / latt->dl.abs());
-			body.Friction.g -= (rotl(*latt)* latt->dl) * (latt->fric  * C_Nyu_Pi / latt->dl.abs());
+			body.Friction.r -= latt->dl * (latt->fric * C_Nyu_Pi / latt->dl.abs());
+			body.Friction.o -= (rotl(latt->r)* latt->dl) * (latt->fric  * C_Nyu_Pi / latt->dl.abs());
 			body.Nusselt += latt->hsum * (Re*Pr);
 		}
 
-		body.Force_export = TVec(body.Force_born - body.Force_dead);
-		body.Force_export.g = body.Force_born.g - body.Force_dead.g;
+		body.Force_export.r = body.Force_born.r - body.Force_dead.r;
+		body.Force_export.o = body.Force_born.o - body.Force_dead.o;
 		body.Nusselt /= dt;
 	}
 
@@ -315,9 +304,9 @@ void Space::CalcForces()
 	#undef body
 }
 
-void Space::SaveProfile(const char* fname, double save_dt, TValues vals)
+void Space::SaveProfile(const char* fname, TValues vals)
 {
-	if (!divisible(Time, save_dt, dt/2)) return;
+	if (!Time.divisibleBy(profile_dt)) return;
 	int32_t vals_32=vals, N=0;
 	const_for(BodyList, llbody) { N+= (**llbody).size(); }
 	if (!N) return;
@@ -334,8 +323,8 @@ void Space::SaveProfile(const char* fname, double save_dt, TValues vals)
 	{
 		const_for((**llbody).List, latt)
 		{
-			buf[0] = latt->corner.rx;
-			buf[1] = latt->corner.ry;
+			buf[0] = latt->corner.x;
+			buf[1] = latt->corner.y;
 			buf[2] = latt->Cp/save_dt;
 			buf[3] = latt->Fr/save_dt;
 			buf[4] = latt->Nu/save_dt;
@@ -363,10 +352,10 @@ void Space::ZeroForces()
 			latt->ParticleInHeatLayer = -1;
 		}
 
-		(**llbody).Force_dead.zero();
-		(**llbody).Force_born.zero();
-		(**llbody).Friction.zero();
-		(**llbody).Nusselt = 0;
+		(**llbody).Force_dead = TVec3D();
+		(**llbody).Force_born = TVec3D();
+		(**llbody).Friction = TVec3D();
+		(**llbody).Nusselt = 0.;
 	}
 }
 
@@ -380,7 +369,7 @@ int Space::LoadVorticityFromFile(const char* filename)
 	if (!fin) { cerr << "No file called \'" << filename << "\'\n"; return -1; } 
 
 	TObj obj(0, 0, 0);
-	while ( fscanf(fin, "%lf %lf %lf", &obj.rx, &obj.ry, &obj.g)==3 )
+	while ( fscanf(fin, "%lf %lf %lf", &obj.r.x, &obj.r.y, &obj.g)==3 )
 	{
 		VortexList->push_back(obj);
 	}
@@ -421,7 +410,7 @@ int Space::LoadHeatFromFile(const char* filename)
 	if (!fin) { cerr << "No file called " << filename << endl; return -1; }
 
 	TObj obj(0, 0, 0);
-	while ( fscanf(fin, "%lf %lf %lf", &obj.rx, &obj.ry, &obj.g)==3 )
+	while ( fscanf(fin, "%lf %lf %lf", &obj.r.x, &obj.r.y, &obj.g)==3 )
 	{
 		HeatList->push_back(obj);
 	}
@@ -436,7 +425,7 @@ int Space::LoadStreak(const char* filename)
 	if (!fin) { perror("Error opening streak file"); return -1; }
 
 	TObj obj(0, 0, 0);
-	while ( fscanf(fin, "%lf %lf %lf", &obj.rx, &obj.ry, &obj.g)==3 )
+	while ( fscanf(fin, "%lf %lf %lf", &obj.r.x, &obj.r.y, &obj.g)==3 )
 	{
 		StreakList->push_back(obj);
 	}
@@ -451,7 +440,7 @@ int Space::LoadStreakSource(const char* filename)
 	if (!fin) { perror("Error opening streak source file"); return -1; }
 
 	TObj obj(0, 0, 0);
-	while ( fscanf(fin, "%lf %lf %lf", &obj.rx, &obj.ry, &obj.g)==3 )
+	while ( fscanf(fin, "%lf %lf %lf", &obj.r.x, &obj.r.y, &obj.g)==3 )
 	{
 		StreakSourceList->push_back(obj);
 	}
@@ -468,7 +457,7 @@ int Space::LoadBody(const char* filename, int cols)
 	FILE *fin = fopen(filename, "r");
 	if (!fin) { cerr << "No file called " << filename << endl; return -1; } 
 
-	TAtt att; att.body = body; att.zero();
+	TAtt att; att.body = body;
 	att.heat_const = 0;
 	char bc_char('n'), hc_char('n');
 
@@ -481,7 +470,7 @@ int Space::LoadBody(const char* filename, int cols)
 		default: fprintf(stderr, "Bad columns number. Only 2 3 or 5 supported\n"); return -1;
 	}
 
-	while ( fscanf(fin, pattern, &att.corner.rx, &att.corner.ry, &bc_char, &hc_char, &att.heat_const)==cols )
+	while ( fscanf(fin, pattern, &att.corner.x, &att.corner.y, &bc_char, &hc_char, &att.heat_const)==cols )
 	{
 		att.bc = bc::bc(bc_char);
 		att.hc = hc::hc(hc_char);
@@ -540,12 +529,12 @@ void Space::ZeroSpeed()
 {
 	const_for (VortexList, lobj)
 	{
-		lobj->v.zero();
+		lobj->v = TVec();
 	}
 
 	const_for (HeatList, lobj)
 	{
-		lobj->v.zero();
+		lobj->v = TVec();
 	}
 }
 
@@ -556,7 +545,7 @@ double Space::integral()
 
 	const_for (VortexList, obj)
 	{
-		sum += obj->g * obj->abs2();
+		sum += obj->g * obj->r.abs2();
 	}
 
 	return sum;
@@ -590,12 +579,12 @@ double Space::gmax()
 
 TVec Space::HydroDynamicMomentum()
 {
-	TVec res(0, 0);
+	TVec res(0., 0.);
 	if (!VortexList) return res;
 
 	const_for (VortexList, obj)
 	{
-		res += obj->g * TVec(*obj);
+		res += obj->g * obj->r;
 	}
 	return res;
 }

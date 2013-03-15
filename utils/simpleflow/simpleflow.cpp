@@ -84,7 +84,7 @@ int main(int argc, char** argv)
 		dbg(fm.StreakShed(S->streak_dt));
 
 		dbg(S->CalcForces());
-		if (S->Time > 0) S->SaveProfile(profile, S->profile_dt, val::Cp | val::Fr | val::Nu);
+		if (S->Time > 0) S->SaveProfile(profile, val::Cp | val::Fr | val::Nu);
 		fprintf(f, "%-10g \t", S->Time);
 		const_for(S->BodyList, llbody)
 		{

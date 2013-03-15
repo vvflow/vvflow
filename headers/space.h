@@ -38,14 +38,14 @@ class Space
 		void ZeroSpeed();
 		double InfCirculation;
 		TVec gravitation; //gravitational acceleration
-		double Time, dt, Re, Pr, Finish;
-		double save_dt, streak_dt, profile_dt;
+		TTime Time, dt, save_dt, streak_dt, profile_dt;
+		double Re, Pr, Finish;
 
 		void Save(const char* format);
 		void Load(const char* filename);
 		FILE* OpenFile(const char* format);
 		void CalcForces();
-		void SaveProfile(const char* filename, double dt, TValues vals);
+		void SaveProfile(const char* filename, TValues vals);
 		void ZeroForces(); //zero all att-> Cp, Fr, Nu, gsum, fric, hsum variables.
 
 		/***************** SAVE/LOAD ******************/

@@ -39,8 +39,8 @@ class TVec
 	public:
 		TVec()
 			{x = y = 0.;}
-		TVec(double rx, double ry)
-			{x=rx; y=ry;}
+		TVec(double _x, double _y)
+			{x=_x; y=_y;}
 
 		double abs() const {return sqrt(x*x+y*y);}
 		double abs2() const {return x*x+y*y;}
@@ -74,38 +74,38 @@ class TObj
 		TVec r;
 		double g;
 		TVec v;
-	public:
-		const double &rx, &ry, &vx, &vy;
 		double _1_eps; // eps = max (nearest dl/3 on wall,  dist to 2nd nearest vortex)
 
-		TObj()
-			:rx(r.x), ry(r.y), vx(v.x), vy(v.y), r(), v()
+	public:
+		TObj() :r(), v()
 			{g = _1_eps = 0.;}
-		TObj(double rx_, double ry_, double g_)
-			:rx(r.x), ry(r.y), vx(v.x), vy(v.y), r(rx_, ry_), v()
+		TObj(double rx_, double ry_, double g_) :r(rx_, ry_), v()
 			{ g=g_; _1_eps = 0.;}
-		TObj(TVec r_, double g_)
-			:rx(r.x), ry(r.y), vx(v.x), vy(v.y), r(r_), v()
+		TObj(TVec r_, double g_) :r(r_), v()
 			{ g=g_; _1_eps = 0.;}
 
 		int sign() { return ::sign(g); }
 
 		//TObj& operator= (const TVec& p) { rx=p.rx; ry=p.ry; return *this; }
-		friend istream& operator>> (istream& is, TObj& p) 		{ return is >> p.r.x >> p.r.y >> p.g; }
-		friend ostream& operator<< (ostream& os, const TObj& p) 	{ return os << p.rx << " \t" << p.ry << " \t" << p.g; }
+		friend istream& operator>> (istream& is, TObj& p) { return is >> p.r.x >> p.r.y >> p.g; }
+		friend ostream& operator<< (ostream& os, const TObj& p) { return os << p.r.x << " \t" << p.r.y << " \t" << p.g; }
 		friend short sign(const TObj& p) { return ::sign(p.g); }
 };
 
 class TVec3D
 {
 	public:
-		double x, y, o;
+		TVec r;
+		double o;
 
 	public:
-		TVec3D() {x = y = o = 0;}
-		TVec3D(double _x, double _y, double _o) {x = _x; y = _y; o = _o;}
-		friend istream& operator>> (istream& is, TVec3D& p) 		{ return is >> p.x >> p.y >> p.o; }
-		friend ostream& operator<< (ostream& os, const TVec3D& p) 	{ return os << p.x << " \t" << p.y << " \t" << p.o; }
+		TVec3D() :r()
+			{o = 0.;}
+		TVec3D(double _x, double _y, double _o) :r(_x, _y)
+			{o = _o;}
+
+		friend istream& operator>> (istream& is, TVec3D& p) { return is >> p.r.x >> p.r.y >> p.o; }
+		friend ostream& operator<< (ostream& os, const TVec3D& p) { return os << p.r.x << " \t" << p.r.y << " \t" << p.o; }
 };
 
 uint32_t lcm(uint32_t x, uint32_t y)
@@ -135,17 +135,15 @@ uint32_t lcm(uint32_t x, uint32_t y)
 
 class TTime
 {
-	private:
+	public:
 		// time = value/timescale
 		int32_t value;
 		uint32_t timescale;
 
 	public:
 		TTime()
-			:v(value),ts(timescale)
 			{value = timescale = 0;}
 		TTime(int32_t _value, uint32_t _timescale)
-			:v(value),ts(timescale)
 			{value = _value; timescale=_timescale;}
 		static TTime makeWithSeconds(double seconds, uint32_t preferredTimescale)
 		{
@@ -177,8 +175,6 @@ class TTime
 
 	public:
 		operator double() const {return double(value)/double(timescale);}
-		const int32_t &v;
-		const uint32_t &ts;
 };
 
 #endif

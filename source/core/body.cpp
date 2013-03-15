@@ -47,16 +47,15 @@ TBody::TBody(Space *sS)
 	SpeedY = new ShellScript;
 	SpeedO = new ShellScript;
 
-	Angle = deltaAngle = 0; Position = deltaPosition = TVec(0,0);
+	pos = dPos = TVec3D(0., 0., 0.);
 	g_dead = 0;
-	Position = TVec(0,0);
-	Friction = Friction_prev = TObj(0,0,0);
-	Force_born = Force_dead = TObj(0,0,0);
+	Friction = Friction_prev = TVec3D(0,0,0);
+	Force_born = Force_dead = TVec3D(0,0,0);
 	_surface = _area = 0;
-	_com.zero();
+	_com = TVec(0., 0.);
 	_moi_c = _moi_com = 0;
-	kx = ky = ka = -1;
-	density = 1;
+	k = TVec3D(-1., -1., -1.);
+	density = 1.;
 }
 
 TBody::~TBody()
@@ -69,36 +68,14 @@ TBody::~TBody()
 	delete SpeedO;
 }
 
-double TBody::getRotation() const
-{ return SpeedO->getValue(S->Time); }
-double TBody::getSpeedX() const
-{ return SpeedX->getValue(S->Time); }
-double TBody::getSpeedY() const
-{ return SpeedY->getValue(S->Time); }
-TVec TBody::getMotion() const
-{ return TVec(getSpeedX(), getSpeedY());}
-
-/*int TBody::LoadFromFile(const char* filename, int start_eq_no)
+TVec3D TBody::getSpeed() const
 {
-	if (!this) return -1;
-	if ( !List ) return -1;
-	FILE *fin = fopen(filename, "r");
-	if (!fin) { cerr << "No file called " << filename << endl; return -1; } 
-
-	TObj obj(0, 0, 0);
-	TAtt att(this, start_eq_no); att.zero();
-	while ( fscanf(fin, "%lf %lf %d", &obj.rx, &obj.ry, &att.bc)==3 )
-	{
-		List->push_back(obj);
-		AttachList->push_back(att);
-		att.eq_no++;
-	}
-
-	fclose(fin);
-	InsideIsValid = isInsideValid();
-	UpdateAttach();
-	return 0;
-}*/
+	return TVec3D(
+	              SpeedX->getValue(S->Time),
+	              SpeedY->getValue(S->Time),
+	              SpeedO->getValue(S->Time)
+	             );
+}
 
 void TBody::doRotationAndMotion()
 {
@@ -112,29 +89,29 @@ void TBody::doRotationAndMotion()
 
 void TBody::doRotation()
 {
-	double angle_slae = RotationSpeed_slae * S->dt; //in doc \omega_? \Delta t
-	double angle_solid = SpeedO->getValue(S->Time) * S->dt; // in doc \omega \Delta t
+	double angle_slae = Speed_slae.o * S->dt; //in doc \omega_? \Delta t
+	double angle_solid = getSpeed().o * S->dt; //in doc \omega \Delta t
 	const_for (List, lobj)
 	{
-		TVec dr = lobj->corner - (Position + deltaPosition);
-		lobj->corner = Position + deltaPosition + dr*cos(angle_slae) + rotl(dr)*sin(angle_slae);
+		TVec dr = lobj->corner - (pos.r + dPos.r);
+		lobj->corner = pos.r + dPos.r + dr*cos(angle_slae) + rotl(dr)*sin(angle_slae);
 	}
-	Angle += angle_solid;
-	deltaAngle += angle_slae - angle_solid;
-	RotationSpeed_slae_prev = RotationSpeed_slae;
+	pos.o += angle_solid;
+	dPos.o += angle_slae - angle_solid;
+	Speed_slae_prev.o = Speed_slae.o;
 }
 
 void TBody::doMotion()
 {
-	TVec delta_slae = MotionSpeed_slae * S->dt;
-	TVec delta_solid = TVec(SpeedX->getValue(S->Time), SpeedY->getValue(S->Time)) * S->dt;
+	TVec delta_slae = Speed_slae.r * S->dt;
+	TVec delta_solid = getSpeed().r * S->dt;
 	const_for (List, lobj)
 	{
 		lobj->corner += delta_slae;
 	}
-	Position += delta_solid;
-	deltaPosition += delta_slae - delta_solid;
-	MotionSpeed_slae_prev = MotionSpeed_slae;
+	pos.r += delta_solid;
+	dPos.r += delta_slae - delta_solid;
+	Speed_slae_prev.r = Speed_slae.r;
 }
 
 void TBody::doUpdateSegments()
@@ -147,7 +124,7 @@ void TBody::doUpdateSegments()
 	const_for (List, lobj)
 	{
 		lobj->dl = (lobj+1)->corner - lobj->corner;
-		*lobj = 0.5*((lobj+1)->corner + lobj->corner);
+		lobj->r = 0.5*((lobj+1)->corner + lobj->corner);
 	}
 }
 
@@ -165,7 +142,7 @@ TAtt* TBody::isPointInHeatLayer(TVec p)
 		TVec tmp(0, 0);
 		const_for(List, lobj)
 		{
-			tmp = *lobj + rotl(lobj->dl);
+			tmp = lobj->r + rotl(lobj->dl);
 			HeatLayerList->push_back(tmp);
 		}
 	}
@@ -190,21 +167,21 @@ TAtt* TBody::isPointInContour(TVec p, vector<T> *list)
 		TVec vj = corner<T>(j);
 
 		if ((
-			(vi.ry < vj.ry) && (vi.ry < p.ry) && (p.ry <= vj.ry) &&
-			((vj.ry - vi.ry) * (p.rx - vi.rx) > (vj.rx - vi.rx) * (p.ry - vi.ry))
+			(vi.y < vj.y) && (vi.y < p.y) && (p.y <= vj.y) &&
+			((vj.y - vi.y) * (p.x - vi.x) > (vj.x - vi.x) * (p.y - vi.y))
 			) || (
-			(vi.ry > vj.ry) && (vi.ry > p.ry) && (p.ry >= vj.ry) &&
-			((vj.ry - vi.ry) * (p.rx - vi.rx) < (vj.rx - vi.rx) * (p.ry - vi.ry))
+			(vi.y > vj.y) && (vi.y > p.y) && (p.y >= vj.y) &&
+			((vj.y - vi.y) * (p.x - vi.x) < (vj.x - vi.x) * (p.y - vi.y))
 		)) res = !res;
 	}
 
 	if (res)
 	const_for(List, latt)
 	{
-		if ((*latt-p).abs2()<nearest_dr2)
+		if ((latt->r - p).abs2()<nearest_dr2)
 		{
 			nearest = latt;
-			nearest_dr2 = (*latt-p).abs2();
+			nearest_dr2 = (latt->r - p).abs2();
 		}
 	}
 
@@ -214,23 +191,23 @@ TAtt* TBody::isPointInContour(TVec p, vector<T> *list)
 void TBody::doFillProperties()
 {
 	_surface = _area = _moi_c = _moi_com = 0;
-	_com.zero();
+	_com = TVec(0., 0.);
 	double _12moi_0 = 0;
 	const_for (List, latt)
 	{
 		_surface+= latt->dl.abs();
-		_area+= latt->ry*latt->dl.rx;
-		_com-= *latt * (rotl(latt->corner) * (latt+1)->corner);
+		_area+= latt->r.y*latt->dl.x;
+		_com-= latt->r * (rotl(latt->corner) * (latt+1)->corner);
 		_12moi_0 -= (latt->corner.abs2() + latt->corner*(latt+1)->corner + (latt+1)->corner.abs2())
 		            *  (rotl(latt->corner) * (latt+1)->corner);
 	}
 	_com = _com/(3*_area);
 	_moi_com = _12moi_0/12. - _area*_com.abs2();
-	_moi_c = _moi_com + _area*(Position + deltaPosition - _com).abs2();
+	_moi_c = _moi_com + _area*(pos.r + dPos.r - _com).abs2();
 }
 
 inline double atan2(const TVec &p)
 {
-	return atan2(p.ry, p.rx);
+	return atan2(p.y, p.x);
 }
 

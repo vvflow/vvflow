@@ -52,10 +52,11 @@ class TAtt : public TObj
 		hc::HeatCondition hc;
 		long ParticleInHeatLayer;
 
-		TAtt(){}
+		TAtt()
+			:TObj()
+			{gsum = hsum = fric = Cp = Fr = Nu = 0.; ParticleInHeatLayer = -1;}
 		//TAtt(TBody *body, int eq_no);
-		void zero() { rx = ry = g = gsum = hsum = /*FIXME fric?*/ Cp = Fr = Nu = 0; ParticleInHeatLayer = -1; }
-		TAtt& operator= (const TVec& p) { rx=p.rx; ry=p.ry; return *this; }
+		//void zero() { r.x = r.y = g = gsum = hsum = /*FIXME fric?*/ Cp = Fr = Nu = 0; ParticleInHeatLayer = -1; }
 
 	public:
 		int eq_no;
@@ -99,10 +100,7 @@ class TBody
 		ShellScript *SpeedX;
 		ShellScript *SpeedY;
 		ShellScript *SpeedO;
-		double getSpeedX() const;
-		double getSpeedY() const;
-		double getRotation() const;
-		TVec getMotion() const;
+		TVec3D getSpeed() const;
 
 		//see \vec c_s \vert_Rotation
 		void doRotationAndMotion();

@@ -17,7 +17,7 @@ node::node(tree *sParent)
 	StreakLList = NULL;
 	NearNodes = FarNodes = NULL;
 	ch1 = ch2 = NULL;
-	CMp.zero(); CMm.zero();
+	CMp = CMm = TObj(0., 0., 0.);
 }
 
 node::~node()
@@ -84,19 +84,19 @@ void TNode::Stretch()
 
 	if ( VortexLList )
 	{
-		tr = bl = **VortexLList->begin();
+		tr = bl = (*VortexLList->begin())->r;
 	} else
 	if ( BodyLList )
 	{
-		tr = bl = **BodyLList->begin();
+		tr = bl = (*BodyLList->begin())->r;
 	} else
 	if ( HeatLList )
 	{
-		tr = bl = **HeatLList->begin();
+		tr = bl = (*HeatLList->begin())->r;
 	} else
 	if ( StreakLList )
 	{
-		tr = bl = **StreakLList->begin();
+		tr = bl = (*StreakLList->begin())->r;
 	}
 
 	#define ResizeNode(List) \
@@ -105,10 +105,10 @@ void TNode::Stretch()
 			const_for (List, obj) \
 			{ \
 				TObj &o = **obj; \
-				tr.rx = max(tr.rx, o.rx); \
-				tr.ry = max(tr.ry, o.ry); \
-				bl.rx = min(bl.rx, o.rx); \
-				bl.ry = min(bl.ry, o.ry); \
+				tr.x = max(tr.x, o.r.x); \
+				tr.y = max(tr.y, o.r.y); \
+				bl.x = min(bl.x, o.r.x); \
+				bl.y = min(bl.y, o.r.y); \
 			} \
 		}
 
@@ -118,10 +118,10 @@ void TNode::Stretch()
 	ResizeNode(StreakLList);
 	#undef ResizeNode
 
-	x = (bl+tr).rx * 0.5;
-	y = (bl+tr).ry * 0.5;
-	h = (tr-bl).ry;
-	w = (tr-bl).rx;
+	x = (bl+tr).x * 0.5;
+	y = (bl+tr).y * 0.5;
+	h = (tr-bl).y;
+	w = (tr-bl).x;
 }
 
 void TNode::DistributeContent(content *parent, content **ch1, content **ch2)
@@ -132,7 +132,7 @@ void TNode::DistributeContent(content *parent, content **ch1, content **ch2)
 
 	const_for (parent, llobj)
 	{
-		if ( (h<w) ? ((**llobj).rx<x) : ((**llobj).ry<y) ) 
+		if ( (h<w) ? ((**llobj).r.x<x) : ((**llobj).r.y<y) ) 
 			(**ch1).push_back(*llobj);
 		else
 			(**ch2).push_back(*llobj);
@@ -158,9 +158,9 @@ void TNode::CalculateCMass()
 		sumg = ch1->cm.g + ch2->cm.g; \
 		if ( sumg ) \
 		{ \
-			cm = (ch1->cm * ch1->cm.g + ch2->cm * ch2->cm.g) / sumg; \
+			cm.r = (ch1->cm.r * ch1->cm.g + ch2->cm.r * ch2->cm.g) / sumg; \
 			cm.g = sumg; \
-		} else { cm.zero(); }
+		} else { cm = TObj(0., 0., 0.); }
 
 	CalculateCMassFromChilds(CMp);
 	CalculateCMassFromChilds(CMm);
@@ -169,8 +169,7 @@ void TNode::CalculateCMass()
 
 void TNode::CalculateCMassFromScratch()
 {
-	CMp.zero();
-	CMm.zero();
+	CMp = CMm = TObj(0., 0., 0.);
 	if ( !VortexLList ) return;
 
 	const_for (VortexLList, llObj)
@@ -178,25 +177,25 @@ void TNode::CalculateCMassFromScratch()
 		TObj &Obj = **llObj;
 		if ( Obj.g > 0 )
 		{
-			CMp+= Obj * Obj.g;
+			CMp.r+= Obj.r * Obj.g;
 			CMp.g+= Obj.g;
 		}
 		else
 		{
-			CMm+= Obj * Obj.g;
+			CMm.r+= Obj.r * Obj.g;
 			CMm.g+= Obj.g;
 		}
 	}
 
-	if ( CMp.g ) { CMp/= CMp.g; }
-	if ( CMm.g ) { CMm/= CMm.g; }
+	if ( CMp.g ) { CMp.r/= CMp.g; }
+	if ( CMm.g ) { CMm.r/= CMm.g; }
 }
 
 void TNode::FindNearNodes(TNode* top)
 {
 	TVec dr;
-	dr.rx = top->x - x;
-	dr.ry = top->y - y;
+	dr.x = top->x - x;
+	dr.y = top->y - y;
 	double HalfPerim = top->h + top->w + h + w;
 
 	if ( dr.abs2() > parent->farCriteria*sqr(HalfPerim) )
@@ -279,11 +278,11 @@ TNode* tree::findNode(TVec p)
 	{
 		if (Node->h < Node->w)
 		{
-			Node = (p.rx < Node->x) ? Node->ch1 : Node->ch2 ;
+			Node = (p.x < Node->x) ? Node->ch1 : Node->ch2 ;
 		}
 		else
 		{
-			Node = (p.ry < Node->y) ? Node->ch1 : Node->ch2 ;
+			Node = (p.y < Node->y) ? Node->ch1 : Node->ch2 ;
 		}
 	}
 	return Node;
