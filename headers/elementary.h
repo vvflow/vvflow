@@ -109,31 +109,6 @@ class TVec3D
 		friend ostream& operator<< (ostream& os, const TVec3D& p) { return os << p.r.x << " \t" << p.r.y << " \t" << p.o; }
 };
 
-uint32_t lcm(uint32_t x, uint32_t y)
-{
-	if (x == y) return x;
-	if (!x || !y) return 1;
-	uint32_t result = 1;
-	uint32_t k = 2;
-	while ((x!=1) || (y!=1))
-	{
-		bool kIsPrime = true;
-		for (int d = 2; d<k/2; d++) { if (!k%d) {kIsPrime = false; break;}}
-		if (!kIsPrime) {k++; continue;}
-		int xk(x%k), yk(y%k);
-		if (!xk || !yk)
-		{
-			if (result > (1<<31)/k) { /*overflow*/ fprintf(stderr, "overflow, %u %u %u %u\n", x, y, k, result ); return result; }
-			result*=k;
-			if (!xk) x/=k;
-			if (!yk) y/=k;
-			k = 2; continue;
-		}
-		k++;
-	}
-	return result;
-}
-
 class TTime
 {
 	public:
@@ -176,6 +151,32 @@ class TTime
 
 	public:
 		operator double() const {return double(value)/double(timescale);}
+
+	private:
+		static uint32_t lcm(uint32_t x, uint32_t y)
+		{
+			if (x == y) return x;
+			if (!x || !y) return 1;
+			uint32_t result = 1;
+			uint32_t k = 2;
+			while ((x!=1) || (y!=1))
+			{
+				bool kIsPrime = true;
+				for (int d = 2; d<k/2; d++) { if (!k%d) {kIsPrime = false; break;}}
+				if (!kIsPrime) {k++; continue;}
+				int xk(x%k), yk(y%k);
+				if (!xk || !yk)
+				{
+					if (result > (1<<31)/k) { /*overflow*/ return result; }
+					result*=k;
+					if (!xk) x/=k;
+					if (!yk) y/=k;
+					k = 2; continue;
+				}
+				k++;
+			}
+			return result;
+		}
 };
 
 #endif

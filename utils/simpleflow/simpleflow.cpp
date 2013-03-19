@@ -74,7 +74,7 @@ int main(int argc, char** argv)
 
 		dbg(fm.HeatShed());
 
-		if (divisible(S->Time, S->save_dt, S->dt/4)  && (S->Time > 0))
+		if (S->Time.divisibleBy(S->save_dt)  && (double(S->Time) > 0))
 		{
 			char tmp_filename[256]; sprintf(tmp_filename, "%s/%%06d.vb", dir);
 			S->Save(tmp_filename);
@@ -85,28 +85,28 @@ int main(int argc, char** argv)
 
 		dbg(S->CalcForces());
 		if (S->Time > 0) S->SaveProfile(profile, val::Cp | val::Fr | val::Nu);
-		fprintf(f, "%-10g \t", S->Time);
+		fprintf(f, "%-10g \t", double(S->Time));
 		const_for(S->BodyList, llbody)
 		{
 		fprintf(f, "%-+20e\t %-+20e\t %-+20e\t %-+20e\t %-+20e\t %-+20e\t %-+20e\t ",
-		             (**llbody).Force_export.rx,
-		             (**llbody).Force_export.ry,
-		             (**llbody).Force_export.g,
-		             (**llbody).Friction.rx,
-		             (**llbody).Friction.ry,
-		             (**llbody).Friction.g,
+		             (**llbody).Force_export.r.x,
+		             (**llbody).Force_export.r.y,
+		             (**llbody).Force_export.o,
+		             (**llbody).Friction.r.x,
+		             (**llbody).Friction.r.y,
+		             (**llbody).Friction.o,
 		             (**llbody).Nusselt);
 		fprintf(f, "%-+20e\t %-+20e\t %-+20e\t %-+20e\t %-+20e\t %-+20e\t ",
-		             (**llbody).Position.rx,
-		             (**llbody).Position.ry,
-		             (**llbody).Angle,
-		             (**llbody).deltaPosition.rx,
-		             (**llbody).deltaPosition.ry,
-		             (**llbody).deltaAngle);
+		             (**llbody).pos.r.x,
+		             (**llbody).pos.r.y,
+		             (**llbody).pos.o,
+		             (**llbody).dPos.r.x,
+		             (**llbody).dPos.r.y,
+		             (**llbody).dPos.o);
 		fprintf(f, "%-+20e\t %-+20e\t %-+20e\t ",
-		             (**llbody).MotionSpeed_slae.rx,
-		             (**llbody).MotionSpeed_slae.ry,
-		             (**llbody).RotationSpeed_slae);
+		             (**llbody).Speed_slae.r.x,
+		             (**llbody).Speed_slae.r.y,
+		             (**llbody).Speed_slae.o);
 		}
 		fprintf(f, "%-10ld \t%-10ld \n",
 		             S->VortexList->size_safe(),
@@ -129,9 +129,9 @@ int main(int argc, char** argv)
         	        S->BodyList->at(0)->overrideMoi_c(OVERRIDEMOI);
 	        #endif
 		dbg(fm.CropHeat());
-		S->Time += S->dt;
+		S->Time = TTime::add(S->Time, S->dt);
 
-		fprintf(stderr, "\r%-10g \t%-10d \t%-10d", S->Time, S->VortexList->size_safe(), S->HeatList->size_safe());
+		fprintf(stderr, "\r%-10g \t%-10d \t%-10d", double(S->Time), S->VortexList->size_safe(), S->HeatList->size_safe());
 	}
 
 	fprintf(stderr, "\n");

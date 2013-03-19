@@ -37,7 +37,7 @@ void sensors::loadFile(const char* file)
 
 	slist = new vector<TVec>();
 	TVec vec(0, 0);
-	while ( fscanf(fin, "%lf %lf", &vec.rx, &vec.ry)==2 )
+	while ( fscanf(fin, "%lf %lf", &vec.x, &vec.y)==2 )
 	{
 		slist->push_back(vec);
 	}
@@ -49,11 +49,11 @@ void sensors::output()
 {
 	if (!fout) return;
 
-	fprintf(fout, "%lg", S->Time);
+	fprintf(fout, "%lg", double(S->Time));
 	const_for(slist, lvec)
 	{
 		TVec tmp = conv->SpeedSumFast(*lvec);
-		fprintf(fout, " \t%lg \t%lg", tmp.rx, tmp.ry);
+		fprintf(fout, " \t%lg \t%lg", tmp.x, tmp.y);
 	}
 	fprintf(fout, "\n");
 	fflush(fout);
