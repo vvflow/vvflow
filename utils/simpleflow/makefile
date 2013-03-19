@@ -1,10 +1,14 @@
 CC = icc -O3 -openmp -g -debug all
 
-all:
-	$(CC) simpleflow.cpp -o vvhd_sf $(VVHD) -std=c++0x -mkl=parallel
-	$(CC) t_simpleflow.cpp -o t_vvhd_sf $(VVHD) -std=c++0x -mkl=parallel
-	$(CC) vvcompose.cpp -o vvcompose $(VVHD) -std=c++0x -mkl=parallel
-	$(CC) vvxtract.cpp -o vvxtract $(VVHD) -std=c++0x -mkl=parallel
+all: vvhd_sf t_vvhd_sf vvcompose vvxtract
+
+vvhd_sf: simpleflow.cpp
+t_vvhd_sf: t_simpleflow.cpp
+vvcompose: vvcompose.cpp
+vvxtract: vvxtract.cpp
+
+t_vvhd_sf vvhd_sf vvcompose vvxtract:
+	$(CC) $^ -o $@ $(VVHD) -std=c++0x -mkl=parallel
 
 clean:
 	rm -f t_vvhd_sf vvhd_sf vvcompose vvxtract

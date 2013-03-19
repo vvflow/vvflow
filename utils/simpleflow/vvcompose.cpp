@@ -25,8 +25,8 @@ void transformBody(TBody* body, double x, double y, double a)
 {
 	const_for (body->List, lobj)
 	{
-		TVec dr = lobj->corner - (body->Position + body->deltaPosition);
-		lobj->corner = TVec(x, y) + body->Position + body->deltaPosition + dr*cos(a) + rotl(dr)*sin(a);
+		TVec dr = lobj->corner - (body->pos.r + body->dPos.r);
+		lobj->corner = TVec(x, y) + body->pos.r + body->dPos.r + dr*cos(a) + rotl(dr)*sin(a);
 	}
 	body->doUpdateSegments();
 	body->doFillProperties();
@@ -84,31 +84,31 @@ int main(int argc, char *argv[])
 			getBodyFromArg(S, argv[i]+4)->SpeedO->initWithString(argv[i+1]);
 		} else if (beginsWith(argv[i], "-bx"))
 		{
-			getBodyFromArg(S, argv[i]+3)->Position.rx = atof(argv[i+1]);
+			getBodyFromArg(S, argv[i]+3)->pos.r.x = atof(argv[i+1]);
 		} else if (beginsWith(argv[i], "-by"))
 		{
-			getBodyFromArg(S, argv[i]+3)->Position.ry = atof(argv[i+1]);
+			getBodyFromArg(S, argv[i]+3)->pos.r.y = atof(argv[i+1]);
 		} else if (beginsWith(argv[i], "-ba"))
 		{
-			getBodyFromArg(S, argv[i]+3)->Angle = atof(argv[i+1]);
+			getBodyFromArg(S, argv[i]+3)->pos.o = atof(argv[i+1]);
 		} else if (beginsWith(argv[i], "-bdx"))
 		{
-			getBodyFromArg(S, argv[i]+4)->deltaPosition.rx = atof(argv[i+1]);
+			getBodyFromArg(S, argv[i]+4)->dPos.r.x = atof(argv[i+1]);
 		} else if (beginsWith(argv[i], "-bdy"))
 		{
-			getBodyFromArg(S, argv[i]+4)->deltaPosition.ry = atof(argv[i+1]);
+			getBodyFromArg(S, argv[i]+4)->dPos.r.y = atof(argv[i+1]);
 		} else if (beginsWith(argv[i], "-bda"))
 		{
-			getBodyFromArg(S, argv[i]+4)->deltaAngle = atof(argv[i+1]);
+			getBodyFromArg(S, argv[i]+4)->dPos.o = atof(argv[i+1]);
 		} else if (beginsWith(argv[i], "-bkx"))
 		{
-			getBodyFromArg(S, argv[i]+4)->kx = atof(argv[i+1]);
+			getBodyFromArg(S, argv[i]+4)->k.r.x = atof(argv[i+1]);
 		} else if (beginsWith(argv[i], "-bky"))
 		{
-			getBodyFromArg(S, argv[i]+4)->ky = atof(argv[i+1]);
+			getBodyFromArg(S, argv[i]+4)->k.r.y = atof(argv[i+1]);
 		} else if (beginsWith(argv[i], "-bka"))
 		{
-			getBodyFromArg(S, argv[i]+4)->ka = atof(argv[i+1]);
+			getBodyFromArg(S, argv[i]+4)->k.o = atof(argv[i+1]);
 		} else if (beginsWith(argv[i], "-brho"))
 		{
 			getBodyFromArg(S, argv[i]+5)->density = atof(argv[i+1]);
@@ -151,25 +151,25 @@ int main(int argc, char *argv[])
 			S->InfCirculation = atof(argv[i+1]);
 		} else if (!strcmp(argv[i], "-gx"))
 		{
-			S->gravitation.rx = atof(argv[i+1]);
+			S->gravitation.x = atof(argv[i+1]);
 		} else if (!strcmp(argv[i], "-gy"))
 		{
-			S->gravitation.ry = atof(argv[i+1]);
+			S->gravitation.y = atof(argv[i+1]);
 		} else if (!strcmp(argv[i], "-t"))
 		{
-			S->Time = atof(argv[i+1]);
+			S->Time = TTime::makeWithSecondsDecimal(atof(argv[i+1]));
 		} else if (!strcmp(argv[i], "-dt"))
 		{
-			S->dt = atof(argv[i+1]);
+			S->dt = TTime::makeWithSecondsDecimal(atof(argv[i+1]));
 		} else if (!strcmp(argv[i], "-dt_save"))
 		{
-			S->save_dt = atof(argv[i+1]);
+			S->save_dt = TTime::makeWithSecondsDecimal(atof(argv[i+1]));
 		} else if (!strcmp(argv[i], "-dt_streak"))
 		{
-			S->streak_dt = atof(argv[i+1]);
+			S->streak_dt = TTime::makeWithSecondsDecimal(atof(argv[i+1]));
 		} else if (!strcmp(argv[i], "-dt_profile"))
 		{
-			S->profile_dt = atof(argv[i+1]);
+			S->profile_dt = TTime::makeWithSecondsDecimal(atof(argv[i+1]));
 		} else if (!strcmp(argv[i], "-re"))
 		{
 			S->Re = atof(argv[i+1]);
