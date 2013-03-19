@@ -33,7 +33,7 @@ bool PointIsInvalid(Space *S, TVec p)
 FILE *fout;
 double Rd2;
 TVec RefFrame_Speed;
-inline double atan(TVec p) {return atan(p.ry/p.rx);}
+inline double atan(TVec p) {return atan(p.y/p.x);}
 
 double Psi(Space* S, TVec p)
 {
@@ -46,45 +46,41 @@ double Psi(Space* S, TVec p)
 		double psi_g_tmp=0, psi_q_tmp=0;
 
 		//fprintf(stderr, "body %lf\n", b.RotationSpeed_slae);
-		if ((b.MotionSpeed_slae.abs() > 1e-5) || (fabs(b.RotationSpeed_slae) > 1e-5))
+		if (!b.Speed_slae.iszero())
 		const_for(b.List, latt)
 		{
-			TVec Vs = b.MotionSpeed_slae + b.RotationSpeed_slae * rotl(*latt - (b.Position + b.deltaPosition));
+			TVec Vs = b.Speed_slae.r + b.Speed_slae.o * rotl(latt->r - (b.pos.r + b.dPos.r));
 			double g = -Vs * latt->dl;
 			double q = -rotl(Vs) * latt->dl;
-			psi_g_tmp+= log((p-*latt).abs2() + Rd2) * g;
-			psi_q_tmp+= atan(p-*latt) * q;
+			psi_g_tmp+= log((p-latt->r).abs2() + Rd2) * g;
+			psi_q_tmp+= atan(p-latt->r) * q;
 			//fprintf(stderr, "attach %lf\n", b.RotationSpeed_slae);
 		}
 		//psi1-= (psi_g_tmp*0.5 + psi_q_tmp) * C_1_2PI;
 
 		const_for(b.List, latt)
 		{
-			psi2 += log((p-*latt).abs2() + Rd2) * latt->g;
+			psi2 += log((p-latt->r).abs2() + Rd2) * latt->g;
 		}
 
 		#undef b
 	}
 	psi2*= -0.5*C_1_2PI;
 
-	TNode* Node = S->Tree->findNode(p);
+	TSortedNode* Node = S->Tree->findNode(p);
 	if (!Node) return 0;
 	const_for (Node->FarNodes, llfnode)
 	{
 		TObj obj = (**llfnode).CMp;
-		psi3+= log((p-obj).abs2() + Rd2)*obj.g;
+		psi3+= log((p-obj.r).abs2() + Rd2)*obj.g;
 		obj = (**llfnode).CMm;
-		psi3+= log((p-obj).abs2() + Rd2)*obj.g;
+		psi3+= log((p-obj.r).abs2() + Rd2)*obj.g;
 	}
 	const_for (Node->NearNodes, llnnode)
 	{
-		#define vlist (**llnnode).VortexLList
-		if ( !vlist ) { continue; }
-
-		const_for (vlist, llobj)
+		for (TObj *lobj = (**llnnode).vRange.first; lobj < (**llnnode).vRange.last; lobj++)
 		{
-			if (!*llobj) continue;
-			psi3+= log((p-**llobj).abs2() + Rd2)*(**llobj).g;
+			psi3+= log((p-lobj->r).abs2() + Rd2) * lobj->g;
 		}
 	}
 	psi3*= -0.5*C_1_2PI;
@@ -105,7 +101,7 @@ int main(int argc, char *argv[])
 	printer my_printer;
 
 	double dl = S->AverageSegmentLength(); Rd2 = dl*dl/25;
-	S->Tree = new tree(S, 8, dl*20, 0.3);
+	S->Tree = new TSortedTree(S, 8, dl*20, 0.3);
 
 	/**************************** LOAD ARGUMENTS ******************************/
 	double xmin, xmax, ymin, ymax, prec;

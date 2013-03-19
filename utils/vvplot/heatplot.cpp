@@ -36,7 +36,7 @@ bool PointIsInvalid(Space *S, TVec p)
 	return false;
 }
 
-double eps2h(const TNode &Node, TVec p)
+double eps2h(const TSortedNode &Node, TVec p)
 {
 	TVec dr;
 	double res1, res2;
@@ -45,14 +45,9 @@ double eps2h(const TNode &Node, TVec p)
 	const_for(Node.NearNodes, llnnode)
 	{
 		#define nnode (**llnnode)
-
-		auto *hlist = nnode.HeatLList;
-		if (!hlist) {continue;}
-		const_for (hlist, llobj)
+		for (TObj *lobj = nnode.hRange.first; lobj < nnode.hRange.last; lobj++)
 		{
-			if (!*llobj) { continue; }
-			#define obj (**llobj)
-			dr = p - obj;
+			dr = p - lobj->r;
 			double drabs2 = dr.abs2();
 			if ( drabs2 ) {
 			if ( res1 > drabs2 )
@@ -64,7 +59,6 @@ double eps2h(const TNode &Node, TVec p)
 			{
 				res2 = drabs2;
 			}}
-			#undef obj
 		}
 		#undef nnode
 	}
@@ -75,7 +69,7 @@ double eps2h(const TNode &Node, TVec p)
 	return res2;
 }
 
-TObj* Nearest(TNode &Node, TVec p)
+TObj* Nearest(TSortedNode &Node, TVec p)
 {
 	TVec dr(0, 0);
 	double resr = DBL_MAX;
@@ -83,40 +77,38 @@ TObj* Nearest(TNode &Node, TVec p)
 
 	const_for(Node.NearNodes, llnnode)
 	{
-		TNode &nnode = **llnnode;
-
-		auto list = nnode.HeatLList;
-		if ( !list ) { continue; }
-		const_for (list, llobj)
+		#define nnode (**llnnode)
+		for (TObj *lobj = nnode.hRange.first; lobj < nnode.hRange.last; lobj++)
 		{
-			dr = p - **llobj;
+			dr = p - lobj->r;
 			double drabs2 = dr.abs2();
 			if ( !drabs2 ) continue;
 			if ( drabs2 <= resr )
 			{
-				res = *llobj;
+				res = lobj;
 				resr = drabs2;
 			}
 		}
+		#undef nnode
 	}
 
 	return res;
 }
 
-double h2(TNode &Node, TVec p)
+double h2(TSortedNode &Node, TVec p)
 {
 	double resh2 = DBL_MAX;
 
 	const_for(Node.NearNodes, llnnode)
 	{
-		TNode &nnode = **llnnode;
-
+		#define nnode (**llnnode)
 		auto blist = nnode.BodyLList;
 		if ( !blist ) { continue; }
 		const_for (blist, llobj)
 		{
-			resh2 = min(resh2, (p-**llobj).abs2());
+			resh2 = min(resh2, (p-(**llobj).r).abs2());
 		}
+		#undef nnode
 	}
 
 	return resh2;
@@ -126,7 +118,7 @@ double Temperature(Space* S, TVec p)
 {
 	double T=0;
 	auto *hlist = S->HeatList;
-	TNode* bnode = S->Tree->findNode(p);
+	TSortedNode* bnode = S->Tree->findNode(p);
 
 	//return  bnode->NearNodes->size_safe();
 	TObj* nrst = Nearest(*bnode, p);
@@ -136,13 +128,10 @@ double Temperature(Space* S, TVec p)
 	const_for(bnode->NearNodes, llnnode)
 	{
 		#define nnode (**llnnode)
-
-		auto *hlist = nnode.HeatLList;
-		if (!hlist) {continue;}
-		const_for (hlist, llobj)
+		for (TObj *lobj = nnode.hRange.first; lobj < nnode.hRange.last; lobj++)
 		{
-			double exparg = -(p-**llobj).abs2() * (**llobj).v.rx; // v.rx stores eps^(-2)
-			T+= (exparg>-10) ? (**llobj).v.ry * exp(exparg) : 0; // v.ry stores g*eps(-2)
+			double exparg = -(p-lobj->r).abs2() * lobj->v.x; // v.rx stores eps^(-2)
+			T+= (exparg>-10) ? lobj->v.y * exp(exparg) : 0; // v.ry stores g*eps(-2)
 		}
 		#undef nnode
 	}
@@ -178,17 +167,16 @@ int main(int argc, char *argv[])
 	S->VortexList = NULL;
 
 	dl = S->AverageSegmentLength();
-	S->Tree = new tree(S, 8, dl*20, DBL_MAX);
+	S->Tree = new TSortedTree(S, 8, dl*20, DBL_MAX);
 	S->Tree->build();
 
 	#pragma omp parallel for
 	const_for(S->Tree->getBottomNodes(), llbnode)
 	{
-		if (!(**llbnode).HeatLList) continue;
-		const_for((**llbnode).HeatLList, llobj)
+		for (TObj *lobj = (**llbnode).hRange.first; lobj < (**llbnode).hRange.last; lobj++)
 		{
-			(**llobj).v.rx = 1./(sqr(EPS_MULT)*max(eps2h(**llbnode, **llobj), sqr(0.6*dl)));
-			(**llobj).v.ry = (**llobj).v.rx*(**llobj).g;
+			lobj->v.x = 1./(sqr(EPS_MULT)*max(eps2h(**llbnode, lobj->r), sqr(0.6*dl)));
+			lobj->v.y = lobj->v.x * lobj->g;
 		}
 	}
 

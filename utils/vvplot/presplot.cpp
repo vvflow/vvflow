@@ -47,26 +47,26 @@ double Pressure(Space* S, convectivefast *conv, TVec p, double precision)
 		//first addend
 		const_for(b.List, latt)
 		{
-			TVec Vs = b.MotionSpeed_slae + b.RotationSpeed_slae * rotl(*latt - (b.Position + b.deltaPosition));
+			TVec Vs = b.Speed_slae.r + b.Speed_slae.o * rotl(latt->r - (b.pos.r + b.dPos.r));
 			double g = -Vs * latt->dl;
 			double q = -rotl(Vs) * latt->dl;
-			_2PI_Cp += (rotl(K(*latt, p))*g + K(*latt, p)*q) * Vs;
+			_2PI_Cp += (rotl(K(latt->r, p))*g + K(latt->r, p)*q) * Vs;
 		}
 
 		//second addend
 		double gtmp = 0;
 		const_for(b.List, latt)
 		{
-			TVec Vs = b.MotionSpeed_slae + b.RotationSpeed_slae * rotl(*latt - (b.Position + b.deltaPosition));
+			TVec Vs = b.Speed_slae.r + b.Speed_slae.o * rotl(latt->r - (b.pos.r + b.dPos.r));
 			gtmp+= latt->gsum;
-			_2PI_Cp -= (latt->dl/S->dt * rotl(K(*latt, p))) * gtmp;
+			_2PI_Cp -= (latt->dl/S->dt * rotl(K(latt->r, p))) * gtmp;
 		}
 		#undef b
 	}
 
 	const_for(S->VortexList, lobj)
 	{
-		_2PI_Cp+= (lobj->v * rotl(K(*lobj, p))) * lobj->g;
+		_2PI_Cp+= (lobj->v * rotl(K(lobj->r, p))) * lobj->g;
 	}
 
 	TVec LocalSpeed = conv->SpeedSumFast(p);
@@ -94,9 +94,9 @@ int main(int argc, char *argv[])
 	S->Load(argv[1]);
 
 	double dl = S->AverageSegmentLength();
-	tree tr(S, 8, dl*20, 0.1);
+	TSortedTree tr(S, 8, dl*20, 0.1);
 	S->Tree = &tr;
-	convectivefast conv(S, dl*0.2);
+	convectivefast conv(S);
 	epsfast eps(S);
 	diffusivefast diff(S);
 	flowmove fm(S);
