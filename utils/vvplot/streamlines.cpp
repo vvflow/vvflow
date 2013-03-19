@@ -67,7 +67,7 @@ double Psi(Space* S, TVec p)
 	}
 	psi2*= -0.5*C_1_2PI;
 
-	TNode* Node = S->Tree->findNode(p);
+	TSortedNode* Node = S->Tree->findNode(p);
 	if (!Node) return 0;
 	const_for (Node->FarNodes, llfnode)
 	{
@@ -78,13 +78,9 @@ double Psi(Space* S, TVec p)
 	}
 	const_for (Node->NearNodes, llnnode)
 	{
-		#define vlist (**llnnode).VortexLList
-		if ( !vlist ) { continue; }
-
-		const_for (vlist, llobj)
+		for (TObj *lobj = (**llnnode).vRange.first; lobj < (**llnnode).vRange.last; lobj++)
 		{
-			if (!*llobj) continue;
-			psi3+= log((p-**llobj).abs2() + Rd2)*(**llobj).g;
+			psi3+= log((p-*lobj).abs2() + Rd2)*(*lobj).g;
 		}
 	}
 	psi3*= -0.5*C_1_2PI;
@@ -105,7 +101,7 @@ int main(int argc, char *argv[])
 	printer my_printer;
 
 	double dl = S->AverageSegmentLength(); Rd2 = dl*dl/25;
-	S->Tree = new tree(S, 8, dl*20, 0.3);
+	S->Tree = new TSortedTree(S, 8, dl*20, 0.3);
 
 	/**************************** LOAD ARGUMENTS ******************************/
 	double xmin, xmax, ymin, ymax, prec;
