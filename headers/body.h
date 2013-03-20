@@ -37,6 +37,8 @@ class TAtt : public TObj
 		//rx, ry: center coordinates ; $\vec r$ in doc
 		//g: unkonown circulation $\gamma$ in doc
 		TVec corner; //$\vec c$ in doc
+		// v variable isnt used
+		//_1_eps always stores 3.0/dl.abs()
 		//double gatt, qatt; //$q_\att, \gamma_\att$ in doc
 
 		double gsum; //filled by flowmove: MoveAndClean() & VortexShed()
