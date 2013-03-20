@@ -147,6 +147,7 @@ void TBody::doUpdateSegments()
 	const_for (List, lobj)
 	{
 		lobj->dl = (lobj+1)->corner - lobj->corner;
+		lobj->_1_eps = 3.0/lobj->dl.abs();
 		*lobj = 0.5*((lobj+1)->corner + lobj->corner);
 	}
 }
