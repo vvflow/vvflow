@@ -29,6 +29,8 @@ warnings 		:= -Wall
 INCLUDE 		:= headers/
 
 INSTALLDIR 		:= ~/.libVVHDinstall
+GITINFO         := -DDEF_GITINFO="\"$(shell git log -1 | head -n1 | cut -d" " -f2)\""
+GITDIFF 		:= -DDEF_GITDIFF="\"$(shell git diff --name-only)\""
 
 #‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾#
 #                    TARGETS                     #
@@ -54,7 +56,10 @@ uninstall:
 #________________________________________________#
 
 bin/%.o: %.cpp headers/%.h headers/elementary.h | bin/
-	$(CC) $< $(optimization) $(warnings) $(addprefix -I, $(INCLUDE)) -c -o $@ -std=c++0x
+	$(CC) $< -o $@ \
+	$(optimization) $(warnings) $(addprefix -I, $(INCLUDE)) -c -std=c++0x \
+	$(GITINFO) \
+	$(GITDIFF)
 
 bin/libVVHDcore.a: $(patsubst %, bin/%.o, $(core_objects))
 bin/libVVHDmodules.a: $(patsubst %, bin/%.o, $(modules_objects))

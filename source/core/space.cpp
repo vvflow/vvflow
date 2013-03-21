@@ -12,6 +12,17 @@ using namespace std;
 #include "space.h"
 const char *current_version = "v: 1.2  "; //binary file format
 
+#ifndef DEF_GITINFO
+	#define DEF_GITINFO "not available"
+#endif
+#ifndef DEF_GITDIFF
+	#define DEF_GITDIFF "not available"
+#endif
+static const char* gitInfo = DEF_GITINFO;
+static const char* gitDiff = DEF_GITDIFF;
+const char* Space::getGitInfo() {return gitInfo;}
+const char* Space::getGitDiff() {return gitDiff;}
+
 Space::Space()
 {
 	VortexList = NULL; //new vector<TObj>();
@@ -186,7 +197,7 @@ void Space::Load(const char* fname)
 			char version[8]; fread(&version, 8, 1, fin);
 			if (eq(version, current_version) <= 8)
 			{
-				fprintf(stderr, "Cant read version \"%s\". Current version is \"%s\"", version, current_version);
+				fprintf(stderr, "Cant read version \"%s\". Current version is \"%s\"\n", version, current_version);
 				exit(1);
 			}
 

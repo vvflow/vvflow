@@ -54,6 +54,8 @@ class Space
 		int LoadHeatFromFile(const char* filename);
 		int LoadStreak(const char* filename);
 		int LoadStreakSource(const char* filename);
+		const char* getGitInfo();
+		const char* getGitDiff();
 
 		int LoadBody(const char* filename, int cols=5);
 		void EnumerateBodies();

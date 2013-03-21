@@ -45,6 +45,8 @@ int main(int argc, char** argv)
 	#pragma omp master
 		fprintf(f, "\nOMP_NUM_THREADS = \t%d\n", omp_get_num_threads());
 	fprintf(f, "Working dir = \t%s\n", dir);
+	fprintf(f, "Git commit  = \t%s\n", S->getGitInfo());
+	fprintf(f, "Git diff    = \t%s\n", S->getGitDiff());
 	fflush(f);
 
 	/**************************************************************************/

@@ -1,5 +1,6 @@
 CC = icc -O3 -openmp -g -debug all
 
+.PHONY: vvhd_sf t_vvhd_sf vvcompose vvxtract
 all: vvhd_sf t_vvhd_sf vvcompose vvxtract
 
 vvhd_sf: simpleflow.cpp
