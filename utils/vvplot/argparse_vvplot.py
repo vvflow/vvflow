@@ -138,6 +138,14 @@ parser.add_argument(
 	help='draw time label in top left corner'
 )
 
+parser.add_argument(
+	'--blankbody',
+	metavar="N",
+	type = int,
+	default = 0,
+	help='do not fill body (numeration starts with 1)'
+)
+
 ################################################################################
 def axis_range(string):
 	if len(string) == 0:

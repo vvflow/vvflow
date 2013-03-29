@@ -11,7 +11,7 @@ _vvplot(){
 		case "$cur" in
 			-*)
 				COMPREPLY=($(compgen -W '-b -f -g -h -H -i -n -O -p -P -s -t \
-					-v -V -w -x -y  --size --nooverride --referenceframe \
+					-v -V -w -x -y --blankbody --size --nooverride --referenceframe \
 					--streamlines --pressure --colorbox --timelabel \
 					--force --grayscale'  -- ${cur}));;
 			*)

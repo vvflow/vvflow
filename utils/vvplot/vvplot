@@ -259,6 +259,7 @@ vortex_style = "circles lc rgb variable fs transparent solid 0.3 noborder"
 heat_style = "circles lc rgb 'black' fs transparent solid 0.3 noborder"
 ink_style = "circles lc rgb 'black' fs transparent solid 1 noborder"
 body_style = "filledcurve lc rgb '#adadad' lw 2 fs solid border -1"
+body_clear = "filledcurve lc rgb '#adadad' lw 2 fs transparent solid 0 border -1 "
 """ % (
 	ternary(args.mode_colorbox, """set colorbox horizontal user origin .1,.02 size .8,.04""", "unset colorbox"),
 	ternary(args.mode_timelabel, """set label "t = %f" at graph 0.05, 0.90 front""" % time, '')
@@ -367,7 +368,8 @@ if args.plot_isotherms:
 
 if args.plot_body:
 	for b in bodies:
-		gp.write("""%s '%s' binary record=%d skip=%d format='%%7float64' u 1:2 w @body_style""" % (delim.get(), fin_name, b[1], b[0]+8))
+		gp.write("""%s '%s' binary record=%d skip=%d format='%%7float64' u 1:2 w @%s"""
+		         % (delim.get(), fin_name, b[1], b[0]+8, ternary(args.blankbody-1==bodies.index(b), "body_clear", "body_style")))
 
 gp.write("\n")
 gp.flush()
