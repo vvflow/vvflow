@@ -123,7 +123,7 @@ double epsfast::epsh(const TSortedNode &Node, TObj *lv, double merge_criteria_sq
 	const_for(Node.NearNodes, llnnode)
 	{
 		#define nnode (**llnnode)
-		for (TObj *lobj = nnode.vRange.first; lobj < nnode.vRange.last; lobj++)
+		for (TObj *lobj = nnode.hRange.first; lobj < nnode.hRange.last; lobj++)
 		{
 			if (!lobj->g || (lv == lobj)) { continue; }
 			double drabs2 = (lv->r - lobj->r).abs2();
