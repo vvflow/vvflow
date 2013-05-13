@@ -57,6 +57,10 @@ uninstall:
 
 bin/%.o: %.cpp headers/%.h headers/elementary.h | bin/
 	$(CC) $< -o $@ \
+	$(optimization) $(warnings) $(addprefix -I, $(INCLUDE)) -c -std=c++0x
+
+bin/space.o: space.cpp headers/space.h headers/elementary.h | bin/
+	$(CC) $< -o $@ \
 	$(optimization) $(warnings) $(addprefix -I, $(INCLUDE)) -c -std=c++0x \
 	$(GITINFO) \
 	$(GITDIFF)

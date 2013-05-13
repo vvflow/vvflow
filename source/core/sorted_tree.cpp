@@ -81,8 +81,9 @@ void TSortedNode::DivideNode()
 
 void TSortedNode::definePointerRangesAndSort(vector<TObj> *list)
 {
+	if (!list) {return;}
 	TObj *first, *last;
-	if (list == vList) { first = vRange.first; last = vRange.last; }
+	if (list == vList)      { first = vRange.first; last = vRange.last; }
 	else if (list == hList) { first = hRange.first; last = hRange.last; }
 	else if (list == sList) { first = sRange.first; last = sRange.last; }
 
@@ -264,9 +265,9 @@ void stree::build(bool includeV, bool includeB, bool includeH)
 		}
 	}
 
-	if (includeV) rootNode->vRange.set(vList->begin(), vList->end()); else rootNode->vRange.set(NULL, NULL);
-	if (includeH) rootNode->hRange.set(hList->begin(), hList->end()); else rootNode->hRange.set(NULL, NULL);
-	rootNode->sRange.set(sList->begin(), sList->end());
+	if (includeV && vList) rootNode->vRange.set(vList->begin(), vList->end()); else rootNode->vRange.set(NULL, NULL);
+	if (includeH && hList) rootNode->hRange.set(hList->begin(), hList->end()); else rootNode->hRange.set(NULL, NULL);
+	if (sList)             rootNode->sRange.set(sList->begin(), sList->end());
 
 	bottomNodes->clear();
 
