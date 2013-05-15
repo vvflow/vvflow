@@ -3,6 +3,9 @@
 #include "string.h"
 #include "matrix.h"
 
+#define NDEBUG
+#include "assert.h"
+
 #define sqr(x) x*x
 
 Matrix::Matrix(int size_)
@@ -39,6 +42,7 @@ double* Matrix::rightColAtIndex(int i)
 
 void Matrix::solveUsingInverseMatrix(bool useInverseMatrix)
 {
+	assert(!testNan());
 	if (useInverseMatrix)
 	{
 		if (!inverseMatrixIsOk_)
@@ -142,3 +146,45 @@ void Matrix::transpose(double* A, int N)
 	}
 }
 
+void Matrix::save(const char* filename)
+{
+	if (!bodyMatrixIsOk_) { perror("Matrix is not filled"); return; }
+	FILE *fout = fopen(filename, "w");
+	if (!fout) { perror("Error saving the matrix"); return; }
+
+	for (int i=0; i<size; i++)
+	{
+		for (int j=0; j<size; j++)
+		{
+			fprintf(fout, "%lf\t", BodyMatrix[i*size+j]);
+		}
+		fprintf(fout, "\t%lf\n", RightCol[i]);
+	}
+}
+
+bool Matrix::testNan()
+{
+	if (!bodyMatrixIsOk_) { perror("Test Nan: matrix is not filled"); return false; }
+	bool foundNan = false;
+	for (int i=0; i<size; i++)
+	{
+		for (int j=0; j<size; j++)
+		{
+			double el = BodyMatrix[i*size+j];
+			if (el != el)
+			{
+				fprintf(stderr, "Nan element in matrix: row %d, col %d\n", i, j);
+				foundNan = true;
+			}
+		}
+
+			double el = RightCol[i];
+			if (el != el)
+			{
+				fprintf(stderr, "Nan element in rightcol: row %d\n", i);
+				foundNan = true;
+			}
+	}
+
+	return foundNan;
+}

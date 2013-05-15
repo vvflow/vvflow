@@ -371,6 +371,9 @@ if args.plot_body:
 		gp.write("""%s '%s' binary record=%d skip=%d format='%%7float64' u 1:2 w @%s"""
 		         % (delim.get(), fin_name, b[1], b[0]+8, ternary(args.blankbody-1==bodies.index(b), "body_clear", "body_style")))
 
+if args.tree:
+	gp.write("""%s '%s' using 1:2:($3/2):($4/2) with boxxy fill empty lc rgb 'red'""" % (delim.get(), args.tree))
+
 gp.write("\n")
 gp.flush()
 gp.close()

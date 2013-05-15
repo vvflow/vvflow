@@ -182,7 +182,7 @@ void TSortedNode::CalculateCMass()
 		{ \
 			cm.r = (ch1->cm.r * ch1->cm.g + ch2->cm.r * ch2->cm.g) / sumg; \
 			cm.g = sumg; \
-		} else { cm = TObj(); }
+		} else { cm = TObj(x, y, 0); }
 
 	CalculateCMassFromChilds(CMp);
 	CalculateCMassFromChilds(CMm);
@@ -207,8 +207,8 @@ void TSortedNode::CalculateCMassFromScratch()
 		}
 	}
 
-	if ( CMp.g ) { CMp.r/= CMp.g; }
-	if ( CMm.g ) { CMm.r/= CMm.g; }
+	if ( CMp.g ) { CMp.r/= CMp.g; } else {CMp.r = TVec(x, y);}
+	if ( CMm.g ) { CMm.r/= CMm.g; } else {CMm.r = TVec(x, y);}
 }
 
 void TSortedNode::FindNearNodes(TSortedNode* top)

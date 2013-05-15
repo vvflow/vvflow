@@ -231,4 +231,12 @@ parser.add_argument(
 	        default:  \'%(default)s\'"""
 )
 
+################################################################################
+parser.add_argument(
+	'--tree',
+	metavar='FILE',
+	dest='tree',
+	help='draw tree nodes from file'
+)
+
 args = parser.parse_args()
