@@ -33,11 +33,11 @@ int main(int argc, char **argv)
 			printf("Finish    = %g\n", S->Finish);
 
 
-		if (S->save_dt < DBL_MAX)
+		if (S->save_dt.value < INT32_MAX)
 			printf("dt_save = %g\n", double(S->save_dt));
-		if (S->streak_dt < DBL_MAX)
+		if (S->streak_dt.value < INT32_MAX)
 			printf("dt_streak = %g\n", double(S->streak_dt));
-		if (S->profile_dt < DBL_MAX)
+		if (S->profile_dt.value < INT32_MAX)
 			printf("dt_profile = %g\n", double(S->profile_dt));
 
 			printf("\n");

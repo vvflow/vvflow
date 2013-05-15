@@ -10,7 +10,7 @@
 using namespace std;
 
 #include "space.h"
-const char *current_version = "v: 1.2  "; //binary file format
+const char *current_version = "v: 1.3  "; //binary file format
 
 #ifndef DEF_GITINFO
 	#define DEF_GITINFO "not available"
