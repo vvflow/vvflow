@@ -149,7 +149,8 @@ timestamp = struct.unpack("q", fin.read(8))
 realtime = os.popen("date -d \"1970-01-01 %d sec GMT\" +\"%%F %%H:%%M:%%S\"" % timestamp).read()
 
 fin.seek(skips['head'])
-time, marker_x, marker_y = struct.unpack("8x64x d 48x d d", fin.read(144));
+time_value, time_timescale, marker_x, marker_y = struct.unpack("8x64x i I 48x d d", fin.read(144));
+time = float(time_value)/float(time_timescale)
 
 fin.close()
 
