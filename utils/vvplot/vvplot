@@ -168,9 +168,15 @@ elif args.referenceframe == 'f':
 try:
 	vv_prec_hi = os.getenv("VV_PREC_HI") or 500.0
 	vv_prec_hi = (xmax-xmin)/float(vv_prec_hi)
-	vv_prec_lo = (xmax-xmin)/200.0
 except ValueError as e:
 	print "vvplot: error: environment VV_PREC_HI: %s" % e.message
+	exit()
+
+try:
+	vv_prec_lo = os.getenv("VV_PREC_LO") or 200.0
+	vv_prec_lo = (xmax-xmin)/float(vv_prec_lo)
+except ValueError as e:
+	print "vvplot: error: environment VV_PREC_LO: %s" % e.message
 	exit()
 
 try:
