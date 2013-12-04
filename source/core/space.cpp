@@ -235,7 +235,7 @@ void Space::Load(const char* fname)
 			fread(&body->Speed_slae, 24, 1, fin);
 			fread(&body->Speed_slae_prev, 24, 1, fin);
 
-			fread(&body->k, 8, 1, fin);
+			fread(&body->k, 24, 1, fin);
 			fread(&body->density, 8, 1, fin);
 
 			fread(&body->Force_born, 24, 1, fin);
