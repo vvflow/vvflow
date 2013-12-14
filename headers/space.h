@@ -69,4 +69,9 @@ class Space
 		double AverageSegmentLength();
 };
 
+extern "C"
+{
+	Space* Space_new();
+}
+
 #endif /*SPACE_H_*/

@@ -610,3 +610,10 @@ double Space::AverageSegmentLength()
 	if (!N) return DBL_MIN;
 	return SurfaceLength / N;
 }
+
+///////////////////////////////////////////////////////////////////////////
+
+Space* Space_new()
+{
+	return new Space;
+}

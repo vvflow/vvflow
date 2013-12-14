@@ -37,7 +37,7 @@ GITDIFF 		:= -DDEF_GITDIFF="\"$(shell git diff --name-only)\""
 #________________________________________________#
 
 
-all: $(patsubst %, bin/libVVHD%.a, $(parts))
+all: bin/libvvhd.a bin/libvvhd.so
 
 clean:
 	rm -rf bin
@@ -57,19 +57,20 @@ uninstall:
 
 bin/%.o: %.cpp headers/%.h headers/elementary.h | bin/
 	$(CC) $< -o $@ \
-	$(optimization) $(warnings) $(addprefix -I, $(INCLUDE)) -c -std=c++0x
+	$(optimization) $(warnings) $(addprefix -I, $(INCLUDE)) -c -std=c++0x -fPIC
 
 bin/space.o: space.cpp headers/space.h headers/elementary.h | bin/
 	$(CC) $< -o $@ \
-	$(optimization) $(warnings) $(addprefix -I, $(INCLUDE)) -c -std=c++0x \
+	$(optimization) $(warnings) $(addprefix -I, $(INCLUDE)) -c -std=c++0x -fPIC \
 	$(GITINFO) \
 	$(GITDIFF)
 
-bin/libVVHDcore.a: $(patsubst %, bin/%.o, $(core_objects))
-bin/libVVHDmodules.a: $(patsubst %, bin/%.o, $(modules_objects))
-bin/libVVHD%.a:
+bin/libvvhd.a: $(patsubst %, bin/%.o, $(core_objects) $(modules_objects))
 	$(AR) ruc $@ $^
 	ranlib $@
+
+bin/libvvhd.so: $(patsubst %, bin/%.o, $(core_objects))
+	icc -shared -Wl,-soname,libvvhd.so -o $@ $^ -openmp -mkl=parallel
 
 bin/:
 	mkdir $@ -p
