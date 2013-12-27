@@ -7,7 +7,7 @@ from decimal import Decimal
 import argparse
 
 my_epilog="""SCRIPT
-	SCRIPT is a bash comand that will be executed at each time step. It can use $t
+	SCRIPT is a bash command that will be executed at each time step. It can use $t
 	variable to retrieve current time and must print a single resulting value.
 	Examples:
 	'echo 1' - returns constant value.
@@ -17,11 +17,10 @@ my_epilog="""SCRIPT
 parser = argparse.ArgumentParser(description='Compose binary vvhd file',
 	epilog=my_epilog, formatter_class=argparse.RawDescriptionHelpFormatter);
 
-
 parser.add_argument(
 	'-i',
 	metavar="FILE",
-	type=argparse.FileType('r'),
+	#type=h5py.File,
 	#dest='input',
 	#action='store_true',
 	help='input file'
@@ -34,35 +33,58 @@ parser.add_argument(
 	help='output file'
 )
 
-parser.add_argument(
-	'-b',
-	metavar="FILE",
-	#dest='output',
-	action='append',
-	help='load body'
-)
-
-parser.add_argument(
-	'--bvx', '--bvy', '--bvo',
-	metavar="SCRIPT",
-	#dest='output',
-	action='store_true',
-	help='set body velocity'
-)
-
-parser.add_argument(
-	'-m',
-	nargs=3,
-	metavar=("N", "dx", "dy"),
-	#dest='output',
+group_header = parser.add_argument_group('general parameters')
+group_header.add_argument('-t', '--time', metavar="TIME", type=Fraction, help='set current time')
+group_header.add_argument('-f', '--finish', metavar="TIME", type=Fraction, help='set time to stop calculation')
+group_header.add_argument('--caption', help='set file caption')
+group_header.add_argument('--dt-save', metavar="DT", type=Fraction, help='set binary saving delta')
+group_header.add_argument('--dt-streak', metavar="DT", type=Fraction, help='set streak shed delta')
+group_header.add_argument('--dt-profile', metavar="DT", type=Fraction, help='set velocity sensors measurement delta')
+group_header.add_argument('--re', metavar="RE", type=float, help='set 1/viscosity value')
+group_header.add_argument('--pr', metavar="PR", type=float, help='set Prandtl number')
+group_header.add_argument('--ix', metavar="SCRIPT", help='set script for infinity X speed')
+group_header.add_argument('--iy', metavar="SCRIPT", help='set script for infinity Y speed')
+group_header.add_argument('--ig', metavar='GAMMA', type=float, help='set constant circulation at infinity')
+group_header.add_argument(
+	'--gravity',
+	nargs=2,
+	metavar=("GX", "GY"),
 	type=float,
-	action='append',
-	help='Move Nth body by (dy, dy)'
+	help='set gravity vector (gx, gy)'
 )
+
+group_lists = parser.add_argument_group('loading lists from plain text')
+group_lists.add_argument('--vort', metavar='FILE', action='append', help='load vortex domains')
+group_lists.add_argument('--heat', metavar='FILE', action='append', help='load heat domains')
+group_lists.add_argument('--body', '-b', metavar='FILE', action='append', help='load body')
+group_lists.add_argument('--ink', '--streak', metavar='FILE', action='append', help='load streak particles')
+group_lists.add_argument('--ink-source', '--streak-source', metavar='FILE', action='append', help='load streak sources')
+
+
+# group1 = parser.add_argument_group('working with bodies')
+
+# for arg in ['--bvx', '--bvy', '--bvo']:
+# 	group1.add_argument(
+# 		arg,
+# 		metavar="SCRIPT",
+# 		required=False,
+# 		#dest='output',
+# 		help='set body velocity'
+# 	)
+
+# for arg in ['-mx', '-my']:
+# 	group1.add_argument(
+# 		arg,
+# 		#nargs=1,
+# 		#metavar="a", #("N", "dx", "dy"),
+# 		dest='move',
+# 		#type=float,
+# 		action='append_const', const=arg,
+# 		help='Move Nth body by (dx, dy)'
+# 	)
 
 args = parser.parse_args()
-print args
-exit(0)
+
 ###############################################################################################
 ###############################################################################################
 ###############################################################################################
