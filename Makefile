@@ -28,7 +28,7 @@ VPATH := $(addprefix source/, $(parts) )
 warnings 		:= -Wall
 INCLUDE 		:= headers/
 
-INSTALLDIR 		:= ~/.libVVHDinstall
+INSTALLDIR 		:= $(HOME)/.local
 GITINFO         := -DDEF_GITINFO="\"$(shell git log -1 | head -n1 | cut -d" " -f2)\""
 GITDIFF 		:= -DDEF_GITDIFF="\"$(shell git diff --name-only)\""
 
@@ -43,7 +43,7 @@ clean:
 	rm -rf bin
 
 install: | $(INSTALLDIR)/lib/ $(INSTALLDIR)/include/
-	cp $(patsubst %, bin/libVVHD%.a, $(parts)) -t $(INSTALLDIR)/lib/
+	cp bin/libvvhd.a bin/libvvhd.so -t $(INSTALLDIR)/lib/
 	cp headers/*.h -t $(INSTALLDIR)/include/
 
 uninstall:
