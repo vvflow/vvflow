@@ -9,7 +9,7 @@ vvcompose: vvcompose.cpp
 vvxtract: vvxtract.cpp
 
 t_vvhd_sf vvhd_sf vvcompose vvxtract:
-	$(CC) $^ -o $@ $(VVHD) -std=c++0x -mkl=parallel
+	$(CC) $^ -o $@ $(VVHD) -std=c++0x -mkl=parallel -lhdf5 -lhdf5_cpp
 
 clean:
 	rm -f t_vvhd_sf vvhd_sf vvcompose vvxtract

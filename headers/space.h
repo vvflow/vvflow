@@ -42,6 +42,7 @@ class Space
 		double Re, Pr, Finish;
 
 		void Save(const char* format);
+		void Save_hdf5(const char* format);
 		void Load(const char* filename);
 		FILE* OpenFile(const char* format);
 		void CalcForces();

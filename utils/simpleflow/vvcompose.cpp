@@ -204,7 +204,7 @@ int main(int argc, char *argv[])
 			return -1;
 		}
 	}
-	S->Save(output);
+	S->Save_hdf5(output);
 
 	return 0;
 }

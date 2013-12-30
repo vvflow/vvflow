@@ -7,6 +7,7 @@
 #include <cstring>
 #include <fstream>
 #include <time.h>
+#include <assert.h>
 using namespace std;
 
 #include "space.h"
@@ -165,6 +166,134 @@ void Space::Save(const char* format)
 	}
 
 	fclose(fout);
+}
+
+#include "hdf5.h"
+static hid_t TYPE_STRING;
+static hid_t TYPE_TIME;
+static hid_t TYPE_VEC;
+static hid_t TYPE_OBJ;
+static hid_t DATASPACE_SCALAR;
+static hid_t DATASPACE_LIST;
+
+void attribute_double(hid_t file_id, const char *name, double value)
+{
+	hid_t attribute_id = H5Acreate2(file_id, name, H5T_IEEE_F64LE, DATASPACE_SCALAR, H5P_DEFAULT, H5P_DEFAULT);
+	assert(attribute_id>=0);
+	assert(H5Awrite(attribute_id, H5T_NATIVE_DOUBLE, &value)>=0);
+	assert(H5Aclose(attribute_id)>=0);
+}
+
+void attribute_time(hid_t file_id, const char *name, TTime value)
+{
+	hid_t attribute_id = H5Acreate(file_id, name, TYPE_TIME, DATASPACE_SCALAR, H5P_DEFAULT);
+	assert(attribute_id>=0);
+	assert(H5Awrite(attribute_id, TYPE_TIME, &value)>=0);
+	assert(H5Aclose(attribute_id)>=0);
+}
+
+void attribute_vec(hid_t file_id, const char *name, TVec value)
+{
+	hid_t attribute_id = H5Acreate(file_id, name, TYPE_VEC, DATASPACE_SCALAR, H5P_DEFAULT);
+	assert(attribute_id>=0);
+	assert(H5Awrite(attribute_id, TYPE_VEC, &value)>=0);
+	assert(H5Aclose(attribute_id)>=0);
+}
+
+void attribute_string(hid_t file_id, const char *name, const char *value)
+{
+	hid_t attribute_id = H5Acreate(file_id, name, TYPE_STRING, DATASPACE_SCALAR, H5P_DEFAULT);
+	assert(attribute_id>=0);
+	assert(H5Awrite(attribute_id, TYPE_STRING, &value)>=0);
+	assert(H5Aclose(attribute_id)>=0);
+}
+
+void Space::Save_hdf5(const char* format)
+{
+	char fname[64]; sprintf(fname, format, int(Time/dt+0.5));
+	//FILE *fout = fopen(fname, "wb");
+	//if (!fout) { perror("Error saving the space"); return; }
+	herr_t status;
+	hid_t file_id = H5Fcreate(fname, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+	assert(file_id>=0);
+
+	TYPE_STRING = H5Tcopy(H5T_C_S1);
+    H5Tset_size(TYPE_STRING, H5T_VARIABLE);
+    
+    // TTime struct
+    assert((TYPE_TIME = H5Tcreate(H5T_COMPOUND, 8))>=0);
+    assert(H5Tinsert(TYPE_TIME, "value", 0, H5T_STD_I32LE)>=0);
+    assert(H5Tinsert(TYPE_TIME, "timescale", 4, H5T_STD_U32LE)>=0);
+    
+    // TVec struct
+    assert((TYPE_VEC = H5Tcreate(H5T_COMPOUND, 16))>=0);
+    assert(H5Tinsert(TYPE_VEC, "x", 0, H5T_IEEE_F64LE)>=0);
+    assert(H5Tinsert(TYPE_VEC, "y", 8, H5T_IEEE_F64LE)>=0);
+
+	// TObj struct
+    assert((TYPE_OBJ = H5Tcreate(H5T_COMPOUND, 24))>=0);
+    assert(H5Tinsert(TYPE_OBJ, "x", 0, H5T_IEEE_F64LE)>=0);
+    assert(H5Tinsert(TYPE_OBJ, "y", 8, H5T_IEEE_F64LE)>=0);
+    assert(H5Tinsert(TYPE_OBJ, "g", 16, H5T_IEEE_F64LE)>=0);
+
+    // Scalar dataspace
+    assert((DATASPACE_SCALAR = H5Screate(H5S_SCALAR))>=0);
+
+    // 1D dataspace
+    hsize_t dim = VortexList->size();
+    hsize_t dim2 = VortexList->size()*2;
+    hsize_t maxdim = dim;
+    hsize_t maxdim2 = dim*2;
+    hsize_t chunkdim = 512;
+    hid_t prop = H5Pcreate(H5P_DATASET_CREATE);
+    H5Pset_chunk(prop, 1, &chunkdim);
+    H5Pset_deflate(prop, 9);
+
+    hid_t vort_dataspace = H5Screate_simple(1, &dim, &maxdim);
+    hid_t mem_dataspace = H5Screate_simple(1, &dim2, &maxdim2);
+    assert(vort_dataspace>=0);
+    hsize_t offset = 0;
+    hsize_t stride = 2;
+    hsize_t count = dim;
+    H5Sselect_hyperslab(mem_dataspace, H5S_SELECT_SET, &offset, &stride, &count, NULL);
+    hid_t vort_dataset = H5Dcreate2(file_id, "vort", TYPE_OBJ, vort_dataspace, H5P_DEFAULT, prop, H5P_DEFAULT);
+    assert(vort_dataset>=0);
+    H5Dwrite(vort_dataset, TYPE_OBJ, mem_dataspace, vort_dataspace, H5P_DEFAULT, VortexList->begin());
+    H5Dclose(vort_dataset);
+
+	
+	attribute_string(file_id, "caption", name);
+	attribute_time(file_id, "time", Time);
+	attribute_time(file_id, "dt", dt);
+	attribute_time(file_id, "dt_save", save_dt);
+	attribute_time(file_id, "dt_streak", streak_dt);
+	attribute_time(file_id, "dt_profile", profile_dt);
+	attribute_double(file_id, "re", Re);
+	attribute_double(file_id, "pr", Pr);
+	attribute_vec(file_id, "inf_marker", InfMarker);
+	attribute_string(file_id, "inf_speed_x", InfSpeedX->getScript());
+	attribute_string(file_id, "inf_speed_y", InfSpeedY->getScript());
+	attribute_double(file_id, "inf_circulation", InfCirculation);
+	attribute_vec(file_id, "gravity", gravitation);
+	attribute_double(file_id, "time_to_finish", Finish);
+
+	time_t rt; time(&rt);
+	char *timestr = ctime(&rt); timestr[strlen(timestr)-1] = 0;
+	attribute_string(file_id, "time_local", timestr);
+
+
+	/*hid_t dataspace_id = H5Screate(H5S_SCALAR);
+	hid_t dataset_id = H5Dcreate(file_id, "/abcde", H5T_IEEE_F64LE, dataspace_id, H5P_DEFAULT);
+	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &Re);
+	dataset_id = H5Dcreate(file_id, "/dfnn", H5T_IEEE_F64LE, dataspace_id, H5P_DEFAULT);
+	double a = 5.5;
+	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &a);
+	H5Dclose(dataset_id);
+	*/
+	//status = H5Dclose(dataset_id);
+	assert(H5Sclose(DATASPACE_SCALAR)>=0);
+	status = H5Fclose(file_id);
+	//H5T_STRING
 }
 
 int eq(const char *str1, const char *str2)
