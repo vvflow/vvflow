@@ -68,7 +68,7 @@ int main(int argc, char** argv)
 		S->BodyList->at(0)->overrideMoi_c(OVERRIDEMOI);
 	#endif
 
-	while (S->Time < S->Finish)
+	while (S->Time < S->Finish + S->dt/2)
 	{
 		dbg(tr.build());
 		dbg(conv.CalcCirculationFast());
