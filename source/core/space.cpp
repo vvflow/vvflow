@@ -171,13 +171,40 @@ void Space::Save(const char* format)
 #include "hdf5.h"
 static hid_t TYPE_STRING;
 static hid_t TYPE_TIME;
+static hid_t TYPE_BOOL;
 static hid_t TYPE_VEC;
+static hid_t TYPE_VEC3D;
 static hid_t TYPE_OBJ;
+
+static hid_t TYPE_ATT;
+struct ATT {
+	double x, y, g, gsum;
+};
+
+static hid_t TYPE_ATT_DETAILED;
+struct ATT_DETAILED {
+	double x, y, g, gsum;
+	bc::BoundaryCondition bc;
+	hc::HeatCondition hc;
+	double heat_const;
+};
+
+static hid_t TYPE_BC;
+static hid_t TYPE_HC;
 static hid_t DATASPACE_SCALAR;
 static hid_t DATASPACE_LIST;
 
+void attribute_bool(hid_t file_id, const char *name, bool value)
+{
+	hid_t attribute_id = H5Acreate2(file_id, name, TYPE_BOOL, DATASPACE_SCALAR, H5P_DEFAULT, H5P_DEFAULT);
+	assert(attribute_id>=0);
+	assert(H5Awrite(attribute_id, TYPE_BOOL, &value)>=0);
+	assert(H5Aclose(attribute_id)>=0);
+}
+
 void attribute_double(hid_t file_id, const char *name, double value)
 {
+	if (!value) return;
 	hid_t attribute_id = H5Acreate2(file_id, name, H5T_IEEE_F64LE, DATASPACE_SCALAR, H5P_DEFAULT, H5P_DEFAULT);
 	assert(attribute_id>=0);
 	assert(H5Awrite(attribute_id, H5T_NATIVE_DOUBLE, &value)>=0);
@@ -186,6 +213,7 @@ void attribute_double(hid_t file_id, const char *name, double value)
 
 void attribute_time(hid_t file_id, const char *name, TTime value)
 {
+	if (value.value == INT32_MAX) return;
 	hid_t attribute_id = H5Acreate(file_id, name, TYPE_TIME, DATASPACE_SCALAR, H5P_DEFAULT);
 	assert(attribute_id>=0);
 	assert(H5Awrite(attribute_id, TYPE_TIME, &value)>=0);
@@ -194,18 +222,119 @@ void attribute_time(hid_t file_id, const char *name, TTime value)
 
 void attribute_vec(hid_t file_id, const char *name, TVec value)
 {
+	if (!value.x && !value.y) return;
 	hid_t attribute_id = H5Acreate(file_id, name, TYPE_VEC, DATASPACE_SCALAR, H5P_DEFAULT);
 	assert(attribute_id>=0);
 	assert(H5Awrite(attribute_id, TYPE_VEC, &value)>=0);
 	assert(H5Aclose(attribute_id)>=0);
 }
 
+void attribute_vec3d(hid_t file_id, const char *name, TVec3D value)
+{
+	if (value.iszero()) return;
+	hid_t attribute_id = H5Acreate(file_id, name, TYPE_VEC3D, DATASPACE_SCALAR, H5P_DEFAULT);
+	assert(attribute_id>=0);
+	assert(H5Awrite(attribute_id, TYPE_VEC3D, &value)>=0);
+	assert(H5Aclose(attribute_id)>=0);
+}
+
 void attribute_string(hid_t file_id, const char *name, const char *value)
 {
+	if (!strlen(value)) return;
 	hid_t attribute_id = H5Acreate(file_id, name, TYPE_STRING, DATASPACE_SCALAR, H5P_DEFAULT);
 	assert(attribute_id>=0);
 	assert(H5Awrite(attribute_id, TYPE_STRING, &value)>=0);
 	assert(H5Aclose(attribute_id)>=0);
+}
+
+void dataset_list(hid_t file_id, const char *name, vector<TObj> *list)
+{
+	// 1D dataspace
+	hsize_t dim = list->size_safe();
+	if (dim == 0) return;
+	hsize_t dim2 = dim*2;
+	hsize_t chunkdim = 512;
+	hid_t prop = H5Pcreate(H5P_DATASET_CREATE);
+	H5Pset_chunk(prop, 1, &chunkdim);
+	H5Pset_deflate(prop, 9);
+
+	hid_t file_dataspace = H5Screate_simple(1, &dim, &dim);
+	hid_t mem_dataspace = H5Screate_simple(1, &dim2, &dim2);
+	assert(file_dataspace>=0);
+	hsize_t offset = 0;
+	hsize_t stride = 2;
+	hsize_t count = dim;
+	H5Sselect_hyperslab(mem_dataspace, H5S_SELECT_SET, &offset, &stride, &count, NULL);
+	hid_t file_dataset = H5Dcreate2(file_id, name, TYPE_OBJ, file_dataspace, H5P_DEFAULT, prop, H5P_DEFAULT);
+	assert(file_dataset>=0);
+	H5Dwrite(file_dataset, TYPE_OBJ, mem_dataspace, file_dataspace, H5P_DEFAULT, list->begin());
+	H5Dclose(file_dataset);
+}
+
+void dataset_body(hid_t file_id, const char* name, TBody *body)
+{
+	assert(body);
+
+	hc::HeatCondition heat_condition = body->List->begin()->hc;
+	double heat_const = body->List->begin()->heat_const;
+	bc::BoundaryCondition special_bc;
+	bc::BoundaryCondition general_bc = bc::zero;
+	long int special_bc_segment = -1;
+
+	hsize_t dim = body->size();
+	struct ATT *mem = (struct ATT*)malloc(sizeof(struct ATT)*dim);
+	for(hsize_t i=0; i<dim; i++)
+	{
+		TAtt latt = body->List->at(i);
+		mem[i].x = latt.corner.x;
+		mem[i].y = latt.corner.y;
+		mem[i].g = latt.g;
+		mem[i].gsum = latt.gsum;
+
+		if ( (latt.bc != bc::slip) &&
+			(latt.bc != bc::noslip) )
+		{
+			if (special_bc_segment>=0) assert(0);
+			special_bc = (latt.bc == bc::zero) ? bc::zero : bc::steady;
+			special_bc_segment = i;
+		} else
+		{
+			if ( (general_bc != bc::zero) && (latt.bc != general_bc) ) assert(0);
+			general_bc = latt.bc;
+		}
+
+		if (heat_const != latt.heat_const) assert(0);
+		if (heat_condition != latt.hc) assert(0);
+	}
+
+	hsize_t chunkdim = 512;
+	hid_t prop = H5Pcreate(H5P_DATASET_CREATE);
+	H5Pset_chunk(prop, 1, &chunkdim);
+	H5Pset_deflate(prop, 9);
+
+	hid_t file_dataspace = H5Screate_simple(1, &dim, &dim);
+	assert(file_dataspace>=0);
+
+	hid_t file_dataset = H5Dcreate2(file_id, name, TYPE_ATT, file_dataspace, H5P_DEFAULT, prop, H5P_DEFAULT);
+	assert(file_dataset>=0);
+
+	attribute_bool(file_dataset, "simplified_dataset", 1);
+	attribute_vec3d(file_dataset, "holder_position", body->pos);
+	attribute_vec3d(file_dataset, "delta_position", body->dPos);
+	attribute_string(file_dataset, "speed_x", body->SpeedX->getScript());
+	attribute_string(file_dataset, "speed_y", body->SpeedY->getScript());
+	attribute_string(file_dataset, "speed_o", body->SpeedO->getScript());
+	attribute_vec3d(file_dataset, "speed_slae", body->Speed_slae);
+	attribute_vec3d(file_dataset, "speed_slae_prev", body->Speed_slae_prev);
+	attribute_vec3d(file_dataset, "spring_const", body->k);
+	attribute_double(file_dataset, "density", body->density);
+	attribute_vec3d(file_dataset, "force_born", body->Force_born);
+	attribute_vec3d(file_dataset, "force_dead", body->Force_dead);
+	attribute_vec3d(file_dataset, "friction_prev", body->Friction_prev);
+
+	H5Dwrite(file_dataset, TYPE_ATT, H5S_ALL, file_dataspace, H5P_DEFAULT, mem);
+	H5Dclose(file_dataset);
+	free(mem);
 }
 
 void Space::Save_hdf5(const char* format)
@@ -218,49 +347,71 @@ void Space::Save_hdf5(const char* format)
 	assert(file_id>=0);
 
 	TYPE_STRING = H5Tcopy(H5T_C_S1);
-    H5Tset_size(TYPE_STRING, H5T_VARIABLE);
-    
-    // TTime struct
-    assert((TYPE_TIME = H5Tcreate(H5T_COMPOUND, 8))>=0);
-    assert(H5Tinsert(TYPE_TIME, "value", 0, H5T_STD_I32LE)>=0);
-    assert(H5Tinsert(TYPE_TIME, "timescale", 4, H5T_STD_U32LE)>=0);
-    
-    // TVec struct
-    assert((TYPE_VEC = H5Tcreate(H5T_COMPOUND, 16))>=0);
-    assert(H5Tinsert(TYPE_VEC, "x", 0, H5T_IEEE_F64LE)>=0);
-    assert(H5Tinsert(TYPE_VEC, "y", 8, H5T_IEEE_F64LE)>=0);
+	H5Tset_size(TYPE_STRING, H5T_VARIABLE);
+	
+	// TTime struct
+	assert((TYPE_TIME = H5Tcreate(H5T_COMPOUND, 8))>=0);
+	assert(H5Tinsert(TYPE_TIME, "value", 0, H5T_STD_I32LE)>=0);
+	assert(H5Tinsert(TYPE_TIME, "timescale", 4, H5T_STD_U32LE)>=0);
+
+	// Bool is a enum in HDF5
+	assert((TYPE_BOOL = H5Tenum_create(H5T_NATIVE_INT))>=0);
+	{
+		int val = 0;
+		val = 0; assert(H5Tenum_insert(TYPE_BOOL, "FALSE", &val)>=0);
+		val = 1; assert(H5Tenum_insert(TYPE_BOOL, "TRUE", &val)>=0);
+	}
+	
+	// TVec struct
+	assert((TYPE_VEC = H5Tcreate(H5T_COMPOUND, 16))>=0);
+	assert(H5Tinsert(TYPE_VEC, "x", 0, H5T_NATIVE_DOUBLE)>=0);
+	assert(H5Tinsert(TYPE_VEC, "y", 8, H5T_NATIVE_DOUBLE)>=0);
+
+	// TVec3D struct
+	assert((TYPE_VEC3D = H5Tcreate(H5T_COMPOUND, 24))>=0);
+	assert(H5Tinsert(TYPE_VEC3D, "x", 0, H5T_NATIVE_DOUBLE)>=0);
+	assert(H5Tinsert(TYPE_VEC3D, "y", 8, H5T_NATIVE_DOUBLE)>=0);
+	assert(H5Tinsert(TYPE_VEC3D, "o", 16, H5T_NATIVE_DOUBLE)>=0);
 
 	// TObj struct
-    assert((TYPE_OBJ = H5Tcreate(H5T_COMPOUND, 24))>=0);
-    assert(H5Tinsert(TYPE_OBJ, "x", 0, H5T_IEEE_F64LE)>=0);
-    assert(H5Tinsert(TYPE_OBJ, "y", 8, H5T_IEEE_F64LE)>=0);
-    assert(H5Tinsert(TYPE_OBJ, "g", 16, H5T_IEEE_F64LE)>=0);
+	assert((TYPE_OBJ = H5Tcreate(H5T_COMPOUND, 24))>=0);
+	assert(H5Tinsert(TYPE_OBJ, "x", 0, H5T_NATIVE_DOUBLE)>=0);
+	assert(H5Tinsert(TYPE_OBJ, "y", 8, H5T_NATIVE_DOUBLE)>=0);
+	assert(H5Tinsert(TYPE_OBJ, "g", 16, H5T_NATIVE_DOUBLE)>=0);
 
-    // Scalar dataspace
-    assert((DATASPACE_SCALAR = H5Screate(H5S_SCALAR))>=0);
+	// BoundaryCondition enum`
+	assert((TYPE_BC = H5Tenum_create(H5T_NATIVE_INT))>=0);
+	{
+		bc::BoundaryCondition val;
+		val = bc::slip;       assert(H5Tenum_insert(TYPE_BC, "slip", &val)>=0);
+		val = bc::noslip;     assert(H5Tenum_insert(TYPE_BC, "noslip", &val)>=0);
+		val = bc::zero;       assert(H5Tenum_insert(TYPE_BC, "zero", &val)>=0);
+		val = bc::steady;     assert(H5Tenum_insert(TYPE_BC, "steady", &val)>=0);
+		val = bc::inf_steady; assert(H5Tenum_insert(TYPE_BC, "inf_steady", &val)>=0);
+	}
 
-    // 1D dataspace
-    hsize_t dim = VortexList->size();
-    hsize_t dim2 = VortexList->size()*2;
-    hsize_t maxdim = dim;
-    hsize_t maxdim2 = dim*2;
-    hsize_t chunkdim = 512;
-    hid_t prop = H5Pcreate(H5P_DATASET_CREATE);
-    H5Pset_chunk(prop, 1, &chunkdim);
-    H5Pset_deflate(prop, 9);
+	// HeatCondition enum`
+	assert((TYPE_HC = H5Tenum_create(H5T_NATIVE_INT))>=0);
+	{
+		hc::HeatCondition val;
+		val = hc::neglect;	assert(H5Tenum_insert(TYPE_HC, "neglect", &val)>=0);
+		val = hc::isolate;	assert(H5Tenum_insert(TYPE_HC, "isolate", &val)>=0);
+		val = hc::const_t;	assert(H5Tenum_insert(TYPE_HC, "const_t", &val)>=0);
+		val = hc::const_W;	assert(H5Tenum_insert(TYPE_HC, "const_w", &val)>=0);
+	}
 
-    hid_t vort_dataspace = H5Screate_simple(1, &dim, &maxdim);
-    hid_t mem_dataspace = H5Screate_simple(1, &dim2, &maxdim2);
-    assert(vort_dataspace>=0);
-    hsize_t offset = 0;
-    hsize_t stride = 2;
-    hsize_t count = dim;
-    H5Sselect_hyperslab(mem_dataspace, H5S_SELECT_SET, &offset, &stride, &count, NULL);
-    hid_t vort_dataset = H5Dcreate2(file_id, "vort", TYPE_OBJ, vort_dataspace, H5P_DEFAULT, prop, H5P_DEFAULT);
-    assert(vort_dataset>=0);
-    H5Dwrite(vort_dataset, TYPE_OBJ, mem_dataspace, vort_dataspace, H5P_DEFAULT, VortexList->begin());
-    H5Dclose(vort_dataset);
+	// TAtt struct
+	assert((TYPE_ATT = H5Tcreate(H5T_COMPOUND, sizeof(struct ATT)))>=0);
+	assert(H5Tinsert(TYPE_ATT, "x", HOFFSET(struct ATT, x), H5T_NATIVE_DOUBLE)>=0);
+	assert(H5Tinsert(TYPE_ATT, "y", HOFFSET(struct ATT, y), H5T_NATIVE_DOUBLE)>=0);
+	assert(H5Tinsert(TYPE_ATT, "g", HOFFSET(struct ATT, g), H5T_NATIVE_DOUBLE)>=0);
+	assert(H5Tinsert(TYPE_ATT, "gsum", HOFFSET(struct ATT, gsum), H5T_NATIVE_DOUBLE)>=0);
+	//assert(H5Tinsert(TYPE_ATT, "boundary_condition", HOFFSET(struct ATT, bc), TYPE_BC)>=0);
+	//assert(H5Tinsert(TYPE_ATT, "heat_condition", HOFFSET(struct ATT, hc), TYPE_HC)>=0);
+	//assert(H5Tinsert(TYPE_ATT, "heat_const", HOFFSET(struct ATT, heat_const), H5T_IEEE_F64LE)>=0);
 
+	// Scalar dataspace
+	assert((DATASPACE_SCALAR = H5Screate(H5S_SCALAR))>=0);
 	
 	attribute_string(file_id, "caption", name);
 	attribute_time(file_id, "time", Time);
@@ -276,11 +427,24 @@ void Space::Save_hdf5(const char* format)
 	attribute_double(file_id, "inf_circulation", InfCirculation);
 	attribute_vec(file_id, "gravity", gravitation);
 	attribute_double(file_id, "time_to_finish", Finish);
+	attribute_string(file_id, "git_info", gitInfo);
+	attribute_string(file_id, "git_diff", gitDiff);
 
 	time_t rt; time(&rt);
 	char *timestr = ctime(&rt); timestr[strlen(timestr)-1] = 0;
 	attribute_string(file_id, "time_local", timestr);
 
+	dataset_list(file_id, "vort", VortexList);
+	dataset_list(file_id, "heat", HeatList);
+	dataset_list(file_id, "ink", StreakList);
+	dataset_list(file_id, "ink_source", StreakSourceList);
+
+	const_for(BodyList, llbody)
+	{
+		char body_name[16];
+		sprintf(body_name, "body%02d", int(llbody-BodyList->begin()));
+		dataset_body(file_id, body_name, *llbody);
+	}
 
 	/*hid_t dataspace_id = H5Screate(H5S_SCALAR);
 	hid_t dataset_id = H5Dcreate(file_id, "/abcde", H5T_IEEE_F64LE, dataspace_id, H5P_DEFAULT);

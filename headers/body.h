@@ -54,6 +54,12 @@ class TAtt : public TObj
 		hc::HeatCondition hc;
 		long ParticleInHeatLayer;
 
+		//TODO идея на будущее. Убираем граничное условие из класса Att, добавляем bool slip,
+		// добавляем special_bc каждому телу и int special_bc_segment.
+		// еще надо бы избавиться от inf_steady и автоматом выбирать его у первого из тел.
+		//TODO такая же схема с теплом - константу выносим в TBody, выбор температура/мощность тоже,
+		// оставляем bool isolate
+
 		TAtt()
 			:TObj()
 			{gsum = hsum = fric = Cp = Fr = Nu = 0.; ParticleInHeatLayer = -1;}
