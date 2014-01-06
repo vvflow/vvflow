@@ -7,6 +7,8 @@ class Space;
 #include "sorted_tree.h"
 #include "elementary.h"
 
+#include <iostream>
+
 typedef const char TValues;
 namespace val
 {
@@ -19,7 +21,7 @@ class Space
 {
 	public:
 		Space();
-		char* name;
+		std::string caption;
 		time_t realtime;
 
 		vector<TBody*> *BodyList;
@@ -42,7 +44,6 @@ class Space
 		double Re, Pr, Finish;
 
 		void Save(const char* format);
-		void Save_hdf5(const char* format);
 		void Load(const char* filename);
 		FILE* OpenFile(const char* format);
 		void CalcForces();
@@ -68,6 +69,9 @@ class Space
 		double gmax();
 		TVec HydroDynamicMomentum();
 		double AverageSegmentLength();
+
+	private:
+		void Load_v1_3(const char* filename);
 };
 
 #endif /*SPACE_H_*/

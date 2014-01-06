@@ -181,7 +181,7 @@ int main(int argc, char *argv[])
 			S->Finish = atof(argv[i+1]);
 		} else if (!strcmp(argv[i], "-name"))
 		{
-			S->name = argv[i+1];
+			S->caption = argv[i+1];
 		} else if (!strcmp(argv[i], "-o"))
 		{
 			output = argv[i+1];
@@ -204,7 +204,7 @@ int main(int argc, char *argv[])
 			return -1;
 		}
 	}
-	S->Save_hdf5(output);
+	S->Save(output);
 
 	return 0;
 }
