@@ -171,67 +171,57 @@ void init_hdf_types(hid_t fid)
 	assert((DATASPACE_SCALAR = H5Screate(H5S_SCALAR))>=0);
 }
 
-void attribute_write_bool(hid_t file_id, const char *name, bool value)
+void attribute_write(hid_t hid, const char *name, bool value)
 {
-	hid_t attribute_id = H5Acreate2(file_id, name, TYPE_BOOL, DATASPACE_SCALAR, H5P_DEFAULT, H5P_DEFAULT);
+	hid_t attribute_id = H5Acreate2(hid, name, TYPE_BOOL, DATASPACE_SCALAR, H5P_DEFAULT, H5P_DEFAULT);
 	assert(attribute_id>=0);
 	assert(H5Awrite(attribute_id, TYPE_BOOL, &value)>=0);
 	assert(H5Aclose(attribute_id)>=0);
 }
 
-void attribute_write_double(hid_t file_id, const char *name, double value)
+void attribute_write(hid_t hid, const char *name, double value)
 {
 	if (!value) return;
-	hid_t attribute_id = H5Acreate2(file_id, name, H5T_IEEE_F64LE, DATASPACE_SCALAR, H5P_DEFAULT, H5P_DEFAULT);
+	hid_t attribute_id = H5Acreate2(hid, name, H5T_IEEE_F64LE, DATASPACE_SCALAR, H5P_DEFAULT, H5P_DEFAULT);
 	assert(attribute_id>=0);
 	assert(H5Awrite(attribute_id, H5T_NATIVE_DOUBLE, &value)>=0);
 	assert(H5Aclose(attribute_id)>=0);
 }
 
-void attribute_write_time(hid_t file_id, const char *name, TTime value)
+void attribute_write(hid_t hid, const char *name, TTime time)
 {
-	if (value.value == INT32_MAX) return;
-	hid_t attribute_id = H5Acreate2(file_id, name, TYPE_TIME, DATASPACE_SCALAR, H5P_DEFAULT, H5P_DEFAULT);
+	if (time.value == INT32_MAX) return;
+	hid_t attribute_id = H5Acreate2(hid, name, TYPE_TIME, DATASPACE_SCALAR, H5P_DEFAULT, H5P_DEFAULT);
 	assert(attribute_id>=0);
-	assert(H5Awrite(attribute_id, TYPE_TIME, &value)>=0);
+	assert(H5Awrite(attribute_id, TYPE_TIME, &time)>=0);
 	assert(H5Aclose(attribute_id)>=0);
 }
 
-void attribute_write_vec(hid_t file_id, const char *name, TVec value)
+void attribute_write(hid_t hid, const char *name, TVec vec)
 {
-	if (!value.x && !value.y) return;
-	hid_t attribute_id = H5Acreate2(file_id, name, TYPE_VEC, DATASPACE_SCALAR, H5P_DEFAULT, H5P_DEFAULT);
+	if (vec.iszero()) return;
+	hid_t attribute_id = H5Acreate2(hid, name, TYPE_VEC, DATASPACE_SCALAR, H5P_DEFAULT, H5P_DEFAULT);
 	assert(attribute_id>=0);
-	assert(H5Awrite(attribute_id, TYPE_VEC, &value)>=0);
+	assert(H5Awrite(attribute_id, TYPE_VEC, &vec)>=0);
 	assert(H5Aclose(attribute_id)>=0);
 }
 
-void attribute_write_vec3d(hid_t file_id, const char *name, TVec3D value)
+void attribute_write(hid_t hid, const char *name, TVec3D vec3d)
 {
-	if (value.iszero()) return;
-	hid_t attribute_id = H5Acreate2(file_id, name, TYPE_VEC3D, DATASPACE_SCALAR, H5P_DEFAULT, H5P_DEFAULT);
+	if (vec3d.iszero()) return;
+	hid_t attribute_id = H5Acreate2(hid, name, TYPE_VEC3D, DATASPACE_SCALAR, H5P_DEFAULT, H5P_DEFAULT);
 	assert(attribute_id>=0);
-	assert(H5Awrite(attribute_id, TYPE_VEC3D, &value)>=0);
+	assert(H5Awrite(attribute_id, TYPE_VEC3D, &vec3d)>=0);
 	assert(H5Aclose(attribute_id)>=0);
 }
 
-void attribute_write_string(hid_t file_id, const char *name, const char *value)
+void attribute_write(hid_t hid, const char *name, const char *str)
 {
-	if (!strlen(value)) return;
-	hid_t attribute_id = H5Acreate2(file_id, name, TYPE_STRING, DATASPACE_SCALAR, H5P_DEFAULT, H5P_DEFAULT);
+	if (!strlen(str)) return;
+	hid_t attribute_id = H5Acreate2(hid, name, TYPE_STRING, DATASPACE_SCALAR, H5P_DEFAULT, H5P_DEFAULT);
 	assert(attribute_id>=0);
-	assert(H5Awrite(attribute_id, TYPE_STRING, &value)>=0);
+	assert(H5Awrite(attribute_id, TYPE_STRING, &str)>=0);
 	assert(H5Aclose(attribute_id)>=0);
-}
-
-void attribute_write(hid_t hid, const char *name, const std::string &str)
-{
-	if (!str.size()) return;
-	hid_t aid = H5Acreate2(hid, name, TYPE_STRING, DATASPACE_SCALAR, H5P_DEFAULT, H5P_DEFAULT);
-	assert(aid>=0);
-	const char *c_str = str.c_str();
-	assert(H5Awrite(aid, TYPE_STRING, &c_str)>=0);
-	assert(H5Aclose(aid)>=0);
 }
 
 /********************************************/
@@ -343,19 +333,19 @@ void dataset_write_body(hid_t file_id, const char* name, TBody *body)
 	hid_t file_dataset = H5Dcreate2(file_id, name, TYPE_ATT, file_dataspace, H5P_DEFAULT, prop, H5P_DEFAULT);
 	assert(file_dataset>=0);
 
-	attribute_write_bool(file_dataset, "simplified_dataset", 1);
-	attribute_write_vec3d(file_dataset, "holder_position", body->pos);
-	attribute_write_vec3d(file_dataset, "delta_position", body->dPos);
-	attribute_write_string(file_dataset, "speed_x", body->SpeedX->getScript());
-	attribute_write_string(file_dataset, "speed_y", body->SpeedY->getScript());
-	attribute_write_string(file_dataset, "speed_o", body->SpeedO->getScript());
-	attribute_write_vec3d(file_dataset, "speed_slae", body->Speed_slae);
-	attribute_write_vec3d(file_dataset, "speed_slae_prev", body->Speed_slae_prev);
-	attribute_write_vec3d(file_dataset, "spring_const", body->k);
-	attribute_write_double(file_dataset, "density", body->density);
-	attribute_write_vec3d(file_dataset, "force_born", body->Force_born);
-	attribute_write_vec3d(file_dataset, "force_dead", body->Force_dead);
-	attribute_write_vec3d(file_dataset, "friction_prev", body->Friction_prev);
+	attribute_write(file_dataset, "simplified_dataset", true);
+	attribute_write(file_dataset, "holder_position", body->pos);
+	attribute_write(file_dataset, "delta_position", body->dPos);
+	attribute_write(file_dataset, "speed_x", body->SpeedX->getScript());
+	attribute_write(file_dataset, "speed_y", body->SpeedY->getScript());
+	attribute_write(file_dataset, "speed_o", body->SpeedO->getScript());
+	attribute_write(file_dataset, "speed_slae", body->Speed_slae);
+	attribute_write(file_dataset, "speed_slae_prev", body->Speed_slae_prev);
+	attribute_write(file_dataset, "spring_const", body->k);
+	attribute_write(file_dataset, "density", body->density);
+	attribute_write(file_dataset, "force_born", body->Force_born);
+	attribute_write(file_dataset, "force_dead", body->Force_dead);
+	attribute_write(file_dataset, "friction_prev", body->Friction_prev);
 
 	H5Dwrite(file_dataset, TYPE_ATT, H5S_ALL, file_dataspace, H5P_DEFAULT, mem);
 	H5Dclose(file_dataset);
@@ -369,26 +359,26 @@ void Space::Save(const char* format)
 	assert(file_id>=0);
 	init_hdf_types(file_id);
 	
-	attribute_write_string(file_id, "caption", caption.c_str());
-	attribute_write_time(file_id, "time", Time);
-	attribute_write_time(file_id, "dt", dt);
-	attribute_write_time(file_id, "dt_save", save_dt);
-	attribute_write_time(file_id, "dt_streak", streak_dt);
-	attribute_write_time(file_id, "dt_profile", profile_dt);
-	attribute_write_double(file_id, "re", Re);
-	attribute_write_double(file_id, "pr", Pr);
-	attribute_write_vec(file_id, "inf_marker", InfMarker);
-	attribute_write_string(file_id, "inf_speed_x", InfSpeedX->getScript());
-	attribute_write_string(file_id, "inf_speed_y", InfSpeedY->getScript());
-	attribute_write_double(file_id, "inf_circulation", InfCirculation);
-	attribute_write_vec(file_id, "gravity", gravitation);
-	attribute_write_double(file_id, "time_to_finish", Finish);
-	attribute_write_string(file_id, "git_info", gitInfo);
-	attribute_write_string(file_id, "git_diff", gitDiff);
+	attribute_write(file_id, "caption", caption.c_str());
+	attribute_write(file_id, "time", Time);
+	attribute_write(file_id, "dt", dt);
+	attribute_write(file_id, "dt_save", save_dt);
+	attribute_write(file_id, "dt_streak", streak_dt);
+	attribute_write(file_id, "dt_profile", profile_dt);
+	attribute_write(file_id, "re", Re);
+	attribute_write(file_id, "pr", Pr);
+	attribute_write(file_id, "inf_marker", InfMarker);
+	attribute_write(file_id, "inf_speed_x", InfSpeedX->getScript());
+	attribute_write(file_id, "inf_speed_y", InfSpeedY->getScript());
+	attribute_write(file_id, "inf_circulation", InfCirculation);
+	attribute_write(file_id, "gravity", gravitation);
+	attribute_write(file_id, "time_to_finish", Finish);
+	attribute_write(file_id, "git_info", gitInfo);
+	attribute_write(file_id, "git_diff", gitDiff);
 
 	time_t rt; time(&rt);
 	char *timestr = ctime(&rt); timestr[strlen(timestr)-1] = 0;
-	attribute_write_string(file_id, "time_local", timestr);
+	attribute_write(file_id, "time_local", timestr);
 
 	dataset_write_list(file_id, "vort", VortexList);
 	dataset_write_list(file_id, "heat", HeatList);
