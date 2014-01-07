@@ -10,6 +10,7 @@
 using namespace std;
 
 #include "space.h"
+#include "space_hdf.cpp"
 
 #ifndef DEF_GITINFO
 	#define DEF_GITINFO "not available"
@@ -64,193 +65,6 @@ void Space::FinishStep()
 888    888 8888888P"  888         "Y8888P"
 */
 
-#include "hdf5.h"
-static hid_t TYPE_STRING;
-static hid_t TYPE_TIME;
-static hid_t TYPE_BOOL;
-static hid_t TYPE_VEC;
-static hid_t TYPE_VEC3D;
-static hid_t TYPE_OBJ;
-
-static hid_t TYPE_ATT;
-struct ATT {
-	double x, y, g, gsum;
-};
-
-static hid_t TYPE_ATT_DETAILED;
-struct ATT_DETAILED {
-	double x, y, g, gsum;
-	bc::BoundaryCondition bc;
-	hc::HeatCondition hc;
-	double heat_const;
-};
-
-static hid_t TYPE_BC;
-static hid_t TYPE_HC;
-static hid_t DATASPACE_SCALAR;
-static hid_t DATASPACE_LIST;
-
-void init_hdf_types(hid_t fid)
-{
-
-	TYPE_STRING = H5Tcopy(H5T_C_S1);
-	H5Tset_size(TYPE_STRING, H5T_VARIABLE);
-	assert(H5Tcommit2(fid, "string_t", TYPE_STRING, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)>=0);
-
-	// TTime struct
-	assert((TYPE_TIME = H5Tcreate(H5T_COMPOUND, 8))>=0);
-	assert(H5Tinsert(TYPE_TIME, "value", 0, H5T_STD_I32LE)>=0);
-	assert(H5Tinsert(TYPE_TIME, "timescale", 4, H5T_STD_U32LE)>=0);
-	H5Tpack(TYPE_TIME);
-	assert(H5Tcommit2(fid, "fraction_t", TYPE_TIME, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)>=0);
-
-	// Bool is a enum in HDF5
-	assert((TYPE_BOOL = H5Tenum_create(H5T_NATIVE_INT))>=0);
-	{
-		int val = 0;
-		val = 0; assert(H5Tenum_insert(TYPE_BOOL, "FALSE", &val)>=0);
-		val = 1; assert(H5Tenum_insert(TYPE_BOOL, "TRUE", &val)>=0);
-	}
-	assert(H5Tcommit2(fid, "bool_t", TYPE_BOOL, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)>=0);
-	
-	// TVec struct
-	assert((TYPE_VEC = H5Tcreate(H5T_COMPOUND, 16))>=0);
-	assert(H5Tinsert(TYPE_VEC, "x", 0, H5T_NATIVE_DOUBLE)>=0);
-	assert(H5Tinsert(TYPE_VEC, "y", 8, H5T_NATIVE_DOUBLE)>=0);
-	H5Tpack(TYPE_VEC);
-	assert(H5Tcommit2(fid, "vec_t", TYPE_VEC, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)>=0);
-
-	// TVec3D struct
-	assert((TYPE_VEC3D = H5Tcreate(H5T_COMPOUND, 24))>=0);
-	assert(H5Tinsert(TYPE_VEC3D, "x", 0, H5T_NATIVE_DOUBLE)>=0);
-	assert(H5Tinsert(TYPE_VEC3D, "y", 8, H5T_NATIVE_DOUBLE)>=0);
-	assert(H5Tinsert(TYPE_VEC3D, "o", 16, H5T_NATIVE_DOUBLE)>=0);
-	H5Tpack(TYPE_VEC3D);
-	assert(H5Tcommit2(fid, "vec3d_t", TYPE_VEC3D, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)>=0);
-
-	// TObj struct
-	assert((TYPE_OBJ = H5Tcreate(H5T_COMPOUND, 24))>=0);
-	assert(H5Tinsert(TYPE_OBJ, "x", 0, H5T_NATIVE_DOUBLE)>=0);
-	assert(H5Tinsert(TYPE_OBJ, "y", 8, H5T_NATIVE_DOUBLE)>=0);
-	assert(H5Tinsert(TYPE_OBJ, "g", 16, H5T_NATIVE_DOUBLE)>=0);
-	H5Tpack(TYPE_OBJ);
-	assert(H5Tcommit2(fid, "obj_t", TYPE_OBJ, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)>=0);
-
-	// BoundaryCondition enum`
-	assert((TYPE_BC = H5Tenum_create(H5T_NATIVE_INT))>=0);
-	{
-		bc::BoundaryCondition val;
-		val = bc::slip;       assert(H5Tenum_insert(TYPE_BC, "slip", &val)>=0);
-		val = bc::noslip;     assert(H5Tenum_insert(TYPE_BC, "noslip", &val)>=0);
-		val = bc::zero;       assert(H5Tenum_insert(TYPE_BC, "zero", &val)>=0);
-		val = bc::steady;     assert(H5Tenum_insert(TYPE_BC, "steady", &val)>=0);
-		val = bc::inf_steady; assert(H5Tenum_insert(TYPE_BC, "inf_steady", &val)>=0);
-	}
-	assert(H5Tcommit2(fid, "boundary_condition_t", TYPE_BC, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)>=0);
-
-	// HeatCondition enum`
-	assert((TYPE_HC = H5Tenum_create(H5T_NATIVE_INT))>=0);
-	{
-		hc::HeatCondition val;
-		val = hc::neglect;	assert(H5Tenum_insert(TYPE_HC, "neglect", &val)>=0);
-		val = hc::isolate;	assert(H5Tenum_insert(TYPE_HC, "isolate", &val)>=0);
-		val = hc::const_t;	assert(H5Tenum_insert(TYPE_HC, "const_t", &val)>=0);
-		val = hc::const_W;	assert(H5Tenum_insert(TYPE_HC, "const_w", &val)>=0);
-	}
-	assert(H5Tcommit2(fid, "heat_condition_t", TYPE_HC, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)>=0);
-
-	// TAtt struct
-	assert((TYPE_ATT = H5Tcreate(H5T_COMPOUND, sizeof(struct ATT)))>=0);
-	assert(H5Tinsert(TYPE_ATT, "x", HOFFSET(struct ATT, x), H5T_NATIVE_DOUBLE)>=0);
-	assert(H5Tinsert(TYPE_ATT, "y", HOFFSET(struct ATT, y), H5T_NATIVE_DOUBLE)>=0);
-	assert(H5Tinsert(TYPE_ATT, "g", HOFFSET(struct ATT, g), H5T_NATIVE_DOUBLE)>=0);
-	assert(H5Tinsert(TYPE_ATT, "gsum", HOFFSET(struct ATT, gsum), H5T_NATIVE_DOUBLE)>=0);
-	assert(H5Tcommit2(fid, "body_attach_t", TYPE_ATT, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)>=0);
-
-	// Scalar dataspace
-	assert((DATASPACE_SCALAR = H5Screate(H5S_SCALAR))>=0);
-}
-
-void attribute_write(hid_t hid, const char *name, bool value)
-{
-	hid_t attribute_id = H5Acreate2(hid, name, TYPE_BOOL, DATASPACE_SCALAR, H5P_DEFAULT, H5P_DEFAULT);
-	assert(attribute_id>=0);
-	assert(H5Awrite(attribute_id, TYPE_BOOL, &value)>=0);
-	assert(H5Aclose(attribute_id)>=0);
-}
-
-void attribute_write(hid_t hid, const char *name, double value)
-{
-	if (!value) return;
-	hid_t attribute_id = H5Acreate2(hid, name, H5T_IEEE_F64LE, DATASPACE_SCALAR, H5P_DEFAULT, H5P_DEFAULT);
-	assert(attribute_id>=0);
-	assert(H5Awrite(attribute_id, H5T_NATIVE_DOUBLE, &value)>=0);
-	assert(H5Aclose(attribute_id)>=0);
-}
-
-void attribute_write(hid_t hid, const char *name, TTime time)
-{
-	if (time.value == INT32_MAX) return;
-	hid_t attribute_id = H5Acreate2(hid, name, TYPE_TIME, DATASPACE_SCALAR, H5P_DEFAULT, H5P_DEFAULT);
-	assert(attribute_id>=0);
-	assert(H5Awrite(attribute_id, TYPE_TIME, &time)>=0);
-	assert(H5Aclose(attribute_id)>=0);
-}
-
-void attribute_write(hid_t hid, const char *name, TVec vec)
-{
-	if (vec.iszero()) return;
-	hid_t attribute_id = H5Acreate2(hid, name, TYPE_VEC, DATASPACE_SCALAR, H5P_DEFAULT, H5P_DEFAULT);
-	assert(attribute_id>=0);
-	assert(H5Awrite(attribute_id, TYPE_VEC, &vec)>=0);
-	assert(H5Aclose(attribute_id)>=0);
-}
-
-void attribute_write(hid_t hid, const char *name, TVec3D vec3d)
-{
-	if (vec3d.iszero()) return;
-	hid_t attribute_id = H5Acreate2(hid, name, TYPE_VEC3D, DATASPACE_SCALAR, H5P_DEFAULT, H5P_DEFAULT);
-	assert(attribute_id>=0);
-	assert(H5Awrite(attribute_id, TYPE_VEC3D, &vec3d)>=0);
-	assert(H5Aclose(attribute_id)>=0);
-}
-
-void attribute_write(hid_t hid, const char *name, const char *str)
-{
-	if (!strlen(str)) return;
-	hid_t attribute_id = H5Acreate2(hid, name, TYPE_STRING, DATASPACE_SCALAR, H5P_DEFAULT, H5P_DEFAULT);
-	assert(attribute_id>=0);
-	assert(H5Awrite(attribute_id, TYPE_STRING, &str)>=0);
-	assert(H5Aclose(attribute_id)>=0);
-}
-
-/********************************************/
-/********************************************/
-/********************************************/
-/********************************************/
-/********************************************/
-
-void attribute_read_string(hid_t file_id, const char *name, char **buf)
-{
-	/*hid_t aid = H5Aopen(file_id, name, H5P_DEFAULT);
-	assert(aid>=0);
-	assert(H5Aread(aid, TYPE_STRING, buf)>=0);
-	assert(H5Aclose(aid)>=0);*/
-}
-
-void attribute_read(hid_t hid, const char *name, std::string &buf)
-{
-	if (!H5Aexists(hid, name)) return;
-	hid_t aid = H5Aopen(hid, name, H5P_DEFAULT);
-	assert(aid>=0);
-
-	char *c_buf;
-	assert(H5Aread(aid, TYPE_STRING, &c_buf)>=0);
-	buf = c_buf;
-	free(c_buf);
-	assert(H5Aclose(aid)>=0);
-}
-
 /*
  .d8888b.         d8888 888     888 8888888888
 d88P  Y88b       d88888 888     888 888
@@ -262,8 +76,14 @@ Y88b  d88P  d8888888888    Y888P    888
  "Y8888P"  d88P     888     Y8P     8888888888
 */
 
-void dataset_write_list(hid_t file_id, const char *name, vector<TObj> *list)
+void dataset_write_list(const char *name, vector<TObj> *list)
 {
+	if (!commited_obj)
+	{
+		commited_obj = true;
+		H5Tcommit2(fid, "obj_t", obj_t, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	}
+	
 	// 1D dataspace
 	hsize_t dim = list->size_safe();
 	if (dim == 0) return;
@@ -280,15 +100,22 @@ void dataset_write_list(hid_t file_id, const char *name, vector<TObj> *list)
 	hsize_t stride = 2;
 	hsize_t count = dim;
 	H5Sselect_hyperslab(mem_dataspace, H5S_SELECT_SET, &offset, &stride, &count, NULL);
-	hid_t file_dataset = H5Dcreate2(file_id, name, TYPE_OBJ, file_dataspace, H5P_DEFAULT, prop, H5P_DEFAULT);
+	hid_t file_dataset = H5Dcreate2(fid, name, obj_t, file_dataspace, H5P_DEFAULT, prop, H5P_DEFAULT);
 	assert(file_dataset>=0);
-	H5Dwrite(file_dataset, TYPE_OBJ, mem_dataspace, file_dataspace, H5P_DEFAULT, list->begin());
+	H5Dwrite(file_dataset, obj_t, mem_dataspace, file_dataspace, H5P_DEFAULT, list->begin());
 	H5Dclose(file_dataset);
 }
 
-void dataset_write_body(hid_t file_id, const char* name, TBody *body)
+void dataset_write_body(const char* name, TBody *body)
 {
 	assert(body);
+	if (!commited_body_stuff)
+	{
+		commited_body_stuff = true;
+		H5Tcommit2(fid, "boundary_condition_t", bc_t, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		H5Tcommit2(fid, "heat_condition_t", hc_t, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		H5Tcommit2(fid, "body_attach_t", att_t, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	}
 
 	hc::HeatCondition heat_condition = body->List->begin()->hc;
 	double heat_const = body->List->begin()->heat_const;
@@ -330,7 +157,7 @@ void dataset_write_body(hid_t file_id, const char* name, TBody *body)
 	hid_t file_dataspace = H5Screate_simple(1, &dim, &dim);
 	assert(file_dataspace>=0);
 
-	hid_t file_dataset = H5Dcreate2(file_id, name, TYPE_ATT, file_dataspace, H5P_DEFAULT, prop, H5P_DEFAULT);
+	hid_t file_dataset = H5Dcreate2(fid, name, att_t, file_dataspace, H5P_DEFAULT, prop, H5P_DEFAULT);
 	assert(file_dataset>=0);
 
 	attribute_write(file_dataset, "simplified_dataset", true);
@@ -347,7 +174,7 @@ void dataset_write_body(hid_t file_id, const char* name, TBody *body)
 	attribute_write(file_dataset, "force_dead", body->Force_dead);
 	attribute_write(file_dataset, "friction_prev", body->Friction_prev);
 
-	H5Dwrite(file_dataset, TYPE_ATT, H5S_ALL, file_dataspace, H5P_DEFAULT, mem);
+	H5Dwrite(file_dataset, att_t, H5S_ALL, file_dataspace, H5P_DEFAULT, mem);
 	H5Dclose(file_dataset);
 	free(mem);
 }
@@ -355,45 +182,45 @@ void dataset_write_body(hid_t file_id, const char* name, TBody *body)
 void Space::Save(const char* format)
 {
 	char fname[64]; sprintf(fname, format, int(Time/dt+0.5));
-	hid_t file_id = H5Fcreate(fname, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-	assert(file_id>=0);
-	init_hdf_types(file_id);
+	fid = H5Fcreate(fname, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+	assert(fid>=0);
+	datatypes_create_all();
 	
-	attribute_write(file_id, "caption", caption.c_str());
-	attribute_write(file_id, "time", Time);
-	attribute_write(file_id, "dt", dt);
-	attribute_write(file_id, "dt_save", save_dt);
-	attribute_write(file_id, "dt_streak", streak_dt);
-	attribute_write(file_id, "dt_profile", profile_dt);
-	attribute_write(file_id, "re", Re);
-	attribute_write(file_id, "pr", Pr);
-	attribute_write(file_id, "inf_marker", InfMarker);
-	attribute_write(file_id, "inf_speed_x", InfSpeedX->getScript());
-	attribute_write(file_id, "inf_speed_y", InfSpeedY->getScript());
-	attribute_write(file_id, "inf_circulation", InfCirculation);
-	attribute_write(file_id, "gravity", gravitation);
-	attribute_write(file_id, "time_to_finish", Finish);
-	attribute_write(file_id, "git_info", gitInfo);
-	attribute_write(file_id, "git_diff", gitDiff);
+	attribute_write(fid, "caption", caption.c_str());
+	attribute_write(fid, "time", Time);
+	attribute_write(fid, "dt", dt);
+	attribute_write(fid, "dt_save", save_dt);
+	attribute_write(fid, "dt_streak", streak_dt);
+	attribute_write(fid, "dt_profile", profile_dt);
+	attribute_write(fid, "re", Re);
+	attribute_write(fid, "pr", Pr);
+	attribute_write(fid, "inf_marker", InfMarker);
+	attribute_write(fid, "inf_speed_x", InfSpeedX->getScript());
+	attribute_write(fid, "inf_speed_y", InfSpeedY->getScript());
+	attribute_write(fid, "inf_circulation", InfCirculation);
+	attribute_write(fid, "gravity", gravitation);
+	attribute_write(fid, "time_to_finish", Finish);
+	attribute_write(fid, "git_info", gitInfo);
+	attribute_write(fid, "git_diff", gitDiff);
 
 	time_t rt; time(&rt);
 	char *timestr = ctime(&rt); timestr[strlen(timestr)-1] = 0;
-	attribute_write(file_id, "time_local", timestr);
+	attribute_write(fid, "time_local", timestr);
 
-	dataset_write_list(file_id, "vort", VortexList);
-	dataset_write_list(file_id, "heat", HeatList);
-	dataset_write_list(file_id, "ink", StreakList);
-	dataset_write_list(file_id, "ink_source", StreakSourceList);
+	dataset_write_list("vort", VortexList);
+	dataset_write_list("heat", HeatList);
+	dataset_write_list("ink", StreakList);
+	dataset_write_list("ink_source", StreakSourceList);
 
 	const_for(BodyList, llbody)
 	{
 		char body_name[16];
 		sprintf(body_name, "body%02zd", BodyList->find(llbody));
-		dataset_write_body(file_id, body_name, *llbody);
+		dataset_write_body(body_name, *llbody);
 	}
 
-	assert(H5Sclose(DATASPACE_SCALAR)>=0);
-	assert(H5Fclose(file_id)>=0);
+	datatypes_close_all();
+	assert(H5Fclose(fid)>=0);
 }
 
 /*
@@ -419,30 +246,24 @@ void Space::Load(const char* fname)
 
 	hid_t fid = H5Fopen(fname, H5F_ACC_RDONLY, H5P_DEFAULT);
 	assert(fid>=0);
-	init_hdf_types(fid);
+	datatypes_create_all();
 
-	// attribute_read_string(fid, "caption", &name);
-	// printf("NAME: %s\n", name);
-
-	std::string abc;
-	attribute_read(fid, "caption", abc);
-	std::cout << "NAME: " << abc << std::endl;
-	// attribute_read_time(fid, "time", Time);
-	// attribute_read_time(fid, "dt", dt);
-	// attribute_read_time(fid, "dt_save", save_dt);
-	// attribute_read_time(fid, "dt_streak", streak_dt);
-	// attribute_read_time(fid, "dt_profile", profile_dt);
-	// attribute_read_double(fid, "re", Re);
-	// attribute_read_double(fid, "pr", Pr);
-	// attribute_read_vec(fid, "inf_marker", InfMarker);
-	// attribute_read_string(fid, "inf_speed_x", InfSpeedX->getScript());
-	// attribute_read_string(fid, "inf_speed_y", InfSpeedY->getScript());
-	// attribute_read_double(fid, "inf_circulation", InfCirculation);
-	// attribute_read_vec(fid, "gravity", gravitation);
-	// attribute_read_double(fid, "time_to_finish", Finish);
-	// attribute_read_string(fid, "git_info", gitInfo);
-	// attribute_read_string(fid, "git_diff", gitDiff);
-
+	attribute_read(fid, "caption", caption);
+	attribute_read(fid, "time", Time);
+	attribute_read(fid, "dt", dt);
+	attribute_read(fid, "dt_save", save_dt);
+	attribute_read(fid, "dt_streak", streak_dt);
+	attribute_read(fid, "dt_profile", profile_dt);
+	attribute_read(fid, "re", Re);
+	attribute_read(fid, "pr", Pr);
+	attribute_read(fid, "inf_marker", InfMarker);
+	// attribute_read(fid, "inf_speed_x", InfSpeedX->getScript());
+	// attribute_read(fid, "inf_speed_y", InfSpeedY->getScript());
+	attribute_read(fid, "inf_circulation", InfCirculation);
+	attribute_read(fid, "gravity", gravitation);
+	attribute_read(fid, "time_to_finish", Finish);
+	
+	datatypes_close_all();
 	assert(H5Fclose(fid)>=0);
 }
 
