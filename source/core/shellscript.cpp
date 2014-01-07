@@ -5,22 +5,23 @@
 #include "float.h"
 
 
-ShellScript::ShellScript()
-{
-	script = new char[1024];
-	*script = 0;
-	cacheTime1 = -DBL_MAX; cacheValue1 = 0.;
-	cacheTime2 = -DBL_MAX; cacheValue2 = 0.;
-}
+ShellScript::ShellScript():
+			script(),
+			cacheTime1(-DBL_MAX),
+			cacheTime2(-DBL_MAX),
+			cacheValue1(),
+			cacheValue2() {}
 
-void ShellScript::initWithString(const char *str)
-{
-	strcpy(script, str);
-}
+ShellScript::ShellScript(const std::string &s):
+			script(s),
+			cacheTime1(-DBL_MAX),
+			cacheTime2(-DBL_MAX),
+			cacheValue1(),
+			cacheValue2() {}
 
-double ShellScript::getValue(double t)
+double ShellScript::getValue(double t) const
 {
-	if (!strlen(script))
+	if (!script.size())
 		return 0;
 
 	if (t == cacheTime2)
@@ -29,8 +30,8 @@ double ShellScript::getValue(double t)
 	if (t == cacheTime1)
 		return cacheValue1;
 
-	char *exec = new char[strlen(script)+64];
-	sprintf(exec, "t=%lf; T=%lf; %s", t, t, script);
+	char *exec = new char[script.size()+64];
+	sprintf(exec, "t=%lf; T=%lf; %s", t, t, script.c_str());
 	double resultValue;
 	FILE *pipe = popen(exec,"r");
 	if (pipe)
@@ -49,25 +50,6 @@ double ShellScript::getValue(double t)
 	}
 
 	return resultValue;
-}
-
-void ShellScript::write(FILE* file)
-{
-	int32_t len = strlen(script)+1;
-	fwrite(&len, 4, 1, file);
-	fwrite(script, 1, len, file);
-}
-
-void ShellScript::read(FILE* file)
-{
-	int32_t len;
-	fread(&len, 4, 1, file);
-	fread(script, 1, len, file);
-}
-
-const char* ShellScript::getScript()
-{
-	return script;
 }
 
 

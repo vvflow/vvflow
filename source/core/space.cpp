@@ -23,7 +23,10 @@ static const char* gitDiff = DEF_GITDIFF;
 const char* Space::getGitInfo() {return gitInfo;}
 const char* Space::getGitDiff() {return gitDiff;}
 
-Space::Space(): caption()
+Space::Space():
+	caption(),
+	InfSpeedX(),
+	InfSpeedY()
 {
 	VortexList = NULL; //new vector<TObj>();
 	HeatList = NULL; //new vector<TObj>();
@@ -32,8 +35,6 @@ Space::Space(): caption()
 	StreakSourceList = new vector<TObj>();
 	StreakList = new vector<TObj>();
 
-	InfSpeedX = new ShellScript();
-	InfSpeedY = new ShellScript();
 	InfCirculation = 0.;
 	gravitation = TVec(0., 0.);
 	Finish = DBL_MAX;
@@ -163,9 +164,9 @@ void dataset_write_body(const char* name, TBody *body)
 	attribute_write(file_dataset, "simplified_dataset", true);
 	attribute_write(file_dataset, "holder_position", body->pos);
 	attribute_write(file_dataset, "delta_position", body->dPos);
-	attribute_write(file_dataset, "speed_x", body->SpeedX->getScript());
-	attribute_write(file_dataset, "speed_y", body->SpeedY->getScript());
-	attribute_write(file_dataset, "speed_o", body->SpeedO->getScript());
+	attribute_write(file_dataset, "speed_x", body->SpeedX.script.c_str());
+	attribute_write(file_dataset, "speed_y", body->SpeedY.script.c_str());
+	attribute_write(file_dataset, "speed_o", body->SpeedO.script.c_str());
 	attribute_write(file_dataset, "speed_slae", body->Speed_slae);
 	attribute_write(file_dataset, "speed_slae_prev", body->Speed_slae_prev);
 	attribute_write(file_dataset, "spring_const", body->k);
@@ -195,8 +196,8 @@ void Space::Save(const char* format)
 	attribute_write(fid, "re", Re);
 	attribute_write(fid, "pr", Pr);
 	attribute_write(fid, "inf_marker", InfMarker);
-	attribute_write(fid, "inf_speed_x", InfSpeedX->getScript());
-	attribute_write(fid, "inf_speed_y", InfSpeedY->getScript());
+	attribute_write(fid, "inf_speed_x", InfSpeedX.script.c_str());
+	attribute_write(fid, "inf_speed_y", InfSpeedY.script.c_str());
 	attribute_write(fid, "inf_circulation", InfCirculation);
 	attribute_write(fid, "gravity", gravitation);
 	attribute_write(fid, "time_to_finish", Finish);
@@ -257,8 +258,8 @@ void Space::Load(const char* fname)
 	attribute_read(fid, "re", Re);
 	attribute_read(fid, "pr", Pr);
 	attribute_read(fid, "inf_marker", InfMarker);
-	// attribute_read(fid, "inf_speed_x", InfSpeedX->getScript());
-	// attribute_read(fid, "inf_speed_y", InfSpeedY->getScript());
+	attribute_read(fid, "inf_speed_x", InfSpeedX.script);
+	attribute_read(fid, "inf_speed_y", InfSpeedY.script);
 	attribute_read(fid, "inf_circulation", InfCirculation);
 	attribute_read(fid, "gravity", gravitation);
 	attribute_read(fid, "time_to_finish", Finish);
@@ -299,6 +300,17 @@ void LoadList(vector<TObj> *&list, FILE* fin)
 	}
 }
 
+void read_shell_script(FILE* file, ShellScript &script)
+{
+	int32_t len;
+	fread(&len, 4, 1, file);
+	char *str = new char[len+1];
+	fread(str, 1, len, file);
+	str[len] = 0;
+	script = str;
+	delete[] str;
+}
+
 void Space::Load_v1_3(const char* fname)
 {
 	FILE *fin = fopen(fname, "rb");
@@ -335,8 +347,8 @@ void Space::Load_v1_3(const char* fname)
 			fread(&Re, 8, 1, fin);
 			fread(&Pr, 8, 1, fin);
 			fread(&InfMarker, 16, 1, fin);
-			InfSpeedX->read(fin);
-			InfSpeedY->read(fin);
+			read_shell_script(fin, InfSpeedX);
+			read_shell_script(fin, InfSpeedY);
 			fread(&InfCirculation, 8, 1, fin);
 			fread(&gravitation, 16, 1, fin);
 			fread(&Finish, 8, 1, fin);
@@ -354,9 +366,9 @@ void Space::Load_v1_3(const char* fname)
 
 			fread(&body->pos, 24, 1, fin);
 			fread(&body->dPos, 24, 1, fin);
-			body->SpeedX->read(fin);
-			body->SpeedY->read(fin);
-			body->SpeedO->read(fin);
+			read_shell_script(fin, body->SpeedX);
+			read_shell_script(fin, body->SpeedY);
+			read_shell_script(fin, body->SpeedO);
 			fread(&body->Speed_slae, 24, 1, fin);
 			fread(&body->Speed_slae_prev, 24, 1, fin);
 

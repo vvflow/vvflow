@@ -37,15 +37,14 @@ HeatCondition hc(int i)
 	return neglect;
 }}
 
-TBody::TBody(Space *sS)
+TBody::TBody(Space *sS):
+	SpeedX(),
+	SpeedY(),
+	SpeedO()
 {
 	S = sS;
 	List = new vector<TAtt>();
 	HeatLayerList = new vector<TVec>();
-
-	SpeedX = new ShellScript;
-	SpeedY = new ShellScript;
-	SpeedO = new ShellScript;
 
 	pos = dPos = TVec3D(0., 0., 0.);
 	g_dead = 0;
@@ -62,18 +61,14 @@ TBody::~TBody()
 {
 	delete List;
 	delete HeatLayerList;
-
-	delete SpeedX;
-	delete SpeedY;
-	delete SpeedO;
 }
 
 TVec3D TBody::getSpeed() const
 {
 	return TVec3D(
-	              SpeedX->getValue(S->Time),
-	              SpeedY->getValue(S->Time),
-	              SpeedO->getValue(S->Time)
+	              SpeedX.getValue(S->Time),
+	              SpeedY.getValue(S->Time),
+	              SpeedO.getValue(S->Time)
 	             );
 }
 

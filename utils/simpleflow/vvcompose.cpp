@@ -75,13 +75,13 @@ int main(int argc, char *argv[])
 			S->LoadBody(argv[i+1], argv[i][2]?atoi(argv[i]+2):5);
 		} else if (beginsWith(argv[i], "-bvx"))
 		{
-			getBodyFromArg(S, argv[i]+4)->SpeedX->initWithString(argv[i+1]);
+			getBodyFromArg(S, argv[i]+4)->SpeedX = argv[i+1];
 		} else if (beginsWith(argv[i], "-bvy"))
 		{
-			getBodyFromArg(S, argv[i]+4)->SpeedY->initWithString(argv[i+1]);
+			getBodyFromArg(S, argv[i]+4)->SpeedY = argv[i+1];
 		} else if (beginsWith(argv[i], "-bvo"))
 		{
-			getBodyFromArg(S, argv[i]+4)->SpeedO->initWithString(argv[i+1]);
+			getBodyFromArg(S, argv[i]+4)->SpeedO = argv[i+1];
 		} else if (beginsWith(argv[i], "-bx"))
 		{
 			getBodyFromArg(S, argv[i]+3)->pos.r.x = atof(argv[i+1]);
@@ -142,10 +142,10 @@ int main(int argc, char *argv[])
 			S->LoadStreakSource(argv[i+1]);
 		} else if (!strcmp(argv[i], "-ix"))
 		{
-			S->InfSpeedX->initWithString(argv[i+1]);
+			S->InfSpeedX = argv[i+1];
 		} else if (!strcmp(argv[i], "-iy"))
 		{
-			S->InfSpeedY->initWithString(argv[i+1]);
+			S->InfSpeedY = argv[i+1];
 		} else if (!strcmp(argv[i], "-ig"))
 		{
 			S->InfCirculation = atof(argv[i+1]);

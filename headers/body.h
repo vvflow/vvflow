@@ -105,9 +105,9 @@ class TBody
 
 	public:
 		//functions \vec V(t), \omega(t)
-		ShellScript *SpeedX;
-		ShellScript *SpeedY;
-		ShellScript *SpeedO;
+		ShellScript SpeedX;
+		ShellScript SpeedY;
+		ShellScript SpeedO;
 		TVec3D getSpeed() const;
 
 		//see \vec c_s \vert_Rotation

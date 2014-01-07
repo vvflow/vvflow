@@ -33,9 +33,9 @@ class Space
 
 		inline void FinishStep(); //update time and coord variables
 
-		ShellScript *InfSpeedX;
-		ShellScript *InfSpeedY;
-		TVec InfSpeed() {return TVec(InfSpeedX->getValue(Time), InfSpeedY->getValue(Time));}
+		ShellScript InfSpeedX;
+		ShellScript InfSpeedY;
+		TVec InfSpeed() {return TVec(InfSpeedX.getValue(Time), InfSpeedY.getValue(Time));}
 		TVec InfMarker;
 		void ZeroSpeed();
 		double InfCirculation;
