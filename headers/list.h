@@ -20,6 +20,7 @@ class list
 		void push_back(const T &item);
 		void erase(T* item);
 		void clear();
+		void resize(size_t n, const T &val);
 		T& at(size_t i);
 		size_t find(T* item);
 		T* begin();
@@ -39,7 +40,7 @@ class list
 template <class T> inline
 list<T>::list()
 {
-	maxsize = 4;
+	maxsize = 256;
 	begin_ = reinterpret_cast<T*>( malloc(maxsize*sizeof(T)) );
 	size_ = 0;
 	end_ = begin_;
@@ -70,6 +71,19 @@ template <class T> inline
 void list<T>::clear() { size_=0; end_ = begin_; }
 
 template <class T> inline
+void list<T>::resize(size_t n, const T &val)
+{
+	maxsize = (n-1) & (~0xffl);
+	realloc_();
+	for (T* t = end_; t<begin_+n; t++)
+	{
+		*t = val;
+	}
+	size_ = n;
+	end_ = begin_ + size_;
+}
+
+template <class T> inline
 T& list<T>::at(size_t i) { return begin_[i]; }
 
 template <class T> inline
@@ -90,7 +104,7 @@ size_t list<T>::size_safe() { return this ? size_ : 0; }
 template <class T>
 void list<T>::realloc_()
 {
-		maxsize*= 2;
+		maxsize+= 256;
 		begin_ = reinterpret_cast<T*>( realloc(begin_, maxsize*sizeof(T)) );
 		end_ = begin_ + size_;
 }

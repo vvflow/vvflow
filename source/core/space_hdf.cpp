@@ -12,9 +12,11 @@ static hid_t vec_t;      bool commited_vec = false;
 static hid_t vec3d_t;    bool commited_vec3d = false;
 static hid_t obj_t;      bool commited_obj = false;
 static hid_t bc_t;       bool commited_body_stuff = false;
-static hid_t hc_t;
+static hid_t hc_t;       bool commited_hc = false;
 static hid_t att_t;
 // static hid_t att_detailed_t;
+
+static const hsize_t numbers[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
 
 struct ATT {
 	double x, y, g, gsum;
@@ -102,9 +104,10 @@ void attribute_write(hid_t hid, const char *name, bool value)
 		H5Tcommit2(fid, "bool_t", bool_t, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	}
 
+	int v = value;
 	hid_t aid = H5Acreate2(hid, name, bool_t, DATASPACE_SCALAR, H5P_DEFAULT, H5P_DEFAULT);
 	assert(aid>=0);
-	assert(H5Awrite(aid, bool_t, &value)>=0);
+	assert(H5Awrite(aid, bool_t, &v)>=0);
 	assert(H5Aclose(aid)>=0);
 }
 
@@ -140,6 +143,30 @@ void attribute_read(hid_t hid, const char *name, double &value)
 	assert(aid>=0);
 
 	assert(H5Aread(aid, H5T_NATIVE_DOUBLE, &value)>=0);
+	assert(H5Aclose(aid)>=0);
+}
+
+/******************************************************************************
+***** LONG INT ****************************************************************
+******************************************************************************/
+
+void attribute_write(hid_t hid, const char *name, long int value)
+{
+	if (value == 0) return;
+	hid_t aid = H5Acreate2(hid, name, H5T_NATIVE_LONG, DATASPACE_SCALAR, H5P_DEFAULT, H5P_DEFAULT);
+	assert(aid>=0);
+	assert(H5Awrite(aid, H5T_NATIVE_LONG, &value)>=0);
+	assert(H5Aclose(aid)>=0);
+}
+
+void attribute_read(hid_t hid, const char *name, long int &value)
+{
+	if (!H5Aexists(hid, name)) { value = 0; return; }
+
+	hid_t aid = H5Aopen(hid, name, H5P_DEFAULT);
+	assert(aid>=0);
+
+	assert(H5Aread(aid, H5T_NATIVE_LONG, &value)>=0);
 	assert(H5Aclose(aid)>=0);
 }
 
@@ -200,6 +227,59 @@ void attribute_read(hid_t hid, const char *name, TVec3D &vec3d)
 	assert(aid>=0);
 
 	assert(H5Aread(aid, vec3d_t, &vec3d)>=0);
+	assert(H5Aclose(aid)>=0);
+}
+
+/******************************************************************************
+***** BOUNDARY CONDITION ******************************************************
+******************************************************************************/
+
+void attribute_write(hid_t hid, const char *name, bc::BoundaryCondition bc)
+{
+	hid_t aid = H5Acreate2(hid, name, bc_t, DATASPACE_SCALAR, H5P_DEFAULT, H5P_DEFAULT);
+	assert(aid>=0);
+	assert(H5Awrite(aid, bc_t, &bc)>=0);
+	assert(H5Aclose(aid)>=0);
+}
+
+void attribute_read(hid_t hid, const char *name, bc::BoundaryCondition &bc)
+{
+	assert(H5Aexists(hid, name));
+
+	hid_t aid = H5Aopen(hid, name, H5P_DEFAULT);
+	assert(aid>=0);
+
+	assert(H5Aread(aid, bc_t, &bc)>=0);
+	assert(H5Aclose(aid)>=0);
+}
+
+/******************************************************************************
+***** HEAT CONDITION **********************************************************
+******************************************************************************/
+
+void attribute_write(hid_t hid, const char *name, hc::HeatCondition hc)
+{
+	if (hc == hc::neglect) return;
+	if (!commited_hc)
+	{
+		commited_hc = true;
+		H5Tcommit2(fid, "heat_condition_t", hc_t, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	}
+
+	hid_t aid = H5Acreate2(hid, name, hc_t, DATASPACE_SCALAR, H5P_DEFAULT, H5P_DEFAULT);
+	assert(aid>=0);
+	assert(H5Awrite(aid, hc_t, &hc)>=0);
+	assert(H5Aclose(aid)>=0);
+}
+
+void attribute_read(hid_t hid, const char *name, hc::HeatCondition &hc)
+{
+	if(!H5Aexists(hid, name)) { hc = hc::neglect; return; }
+
+	hid_t aid = H5Aopen(hid, name, H5P_DEFAULT);
+	assert(aid>=0);
+
+	assert(H5Aread(aid, hc_t, &hc)>=0);
 	assert(H5Aclose(aid)>=0);
 }
 

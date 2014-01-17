@@ -96,13 +96,8 @@ void dataset_write_list(const char *name, vector<TObj> *list)
 
 	hid_t file_dataspace = H5Screate_simple(1, &dim, &dim);
 	hid_t mem_dataspace = H5Screate_simple(1, &dim2, &dim2);
-	assert(file_dataspace>=0);
-	hsize_t offset = 0;
-	hsize_t stride = 2;
-	hsize_t count = dim;
-	H5Sselect_hyperslab(mem_dataspace, H5S_SELECT_SET, &offset, &stride, &count, NULL);
+	H5Sselect_hyperslab(mem_dataspace, H5S_SELECT_SET, &numbers[0], &numbers[2], &dim, NULL);
 	hid_t file_dataset = H5Dcreate2(fid, name, obj_t, file_dataspace, H5P_DEFAULT, prop, H5P_DEFAULT);
-	assert(file_dataset>=0);
 	H5Dwrite(file_dataset, obj_t, mem_dataspace, file_dataspace, H5P_DEFAULT, list->begin());
 	H5Dclose(file_dataset);
 }
@@ -114,14 +109,13 @@ void dataset_write_body(const char* name, TBody *body)
 	{
 		commited_body_stuff = true;
 		H5Tcommit2(fid, "boundary_condition_t", bc_t, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-		H5Tcommit2(fid, "heat_condition_t", hc_t, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 		H5Tcommit2(fid, "body_attach_t", att_t, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	}
 
 	hc::HeatCondition heat_condition = body->List->begin()->hc;
 	double heat_const = body->List->begin()->heat_const;
-	bc::BoundaryCondition special_bc;
 	bc::BoundaryCondition general_bc = bc::zero;
+	bc::BoundaryCondition special_bc;
 	long int special_bc_segment = -1;
 
 	hsize_t dim = body->size();
@@ -174,6 +168,12 @@ void dataset_write_body(const char* name, TBody *body)
 	attribute_write(file_dataset, "force_born", body->Force_born);
 	attribute_write(file_dataset, "force_dead", body->Force_dead);
 	attribute_write(file_dataset, "friction_prev", body->Friction_prev);
+
+	attribute_write(file_dataset, "general_bc", general_bc);
+	attribute_write(file_dataset, "special_bc", special_bc);
+	attribute_write(file_dataset, "special_bc_segment", special_bc_segment);
+	attribute_write(file_dataset, "heat_condition", heat_condition);
+	attribute_write(file_dataset, "heat_const", heat_const);
 
 	H5Dwrite(file_dataset, att_t, H5S_ALL, file_dataspace, H5P_DEFAULT, mem);
 	H5Dclose(file_dataset);
@@ -235,7 +235,85 @@ void Space::Save(const char* format)
 88888888  "Y88888P"  d88P     888 8888888P"
 */
 
-#include "H5Cpp.h"
+void dataset_read_list(const char *name, vector<TObj> *&list)
+{
+	if (!H5Lexists(fid, name, H5P_DEFAULT)) return;
+	if (!list) list = new vector<TObj>;
+
+	hid_t dataset = H5Dopen2(fid, name, H5P_DEFAULT);
+	assert (dataset>=0);
+	hid_t file_dataspace = H5Dget_space(dataset);
+	assert(file_dataspace>=0);
+	hsize_t dim; H5Sget_simple_extent_dims(file_dataspace, &dim, &dim);
+	hsize_t dim2 = dim*2;
+	hid_t mem_dataspace = H5Screate_simple(1, &dim2, &dim2);
+	assert(mem_dataspace>=0);
+	list->resize(dim, TObj());
+	hsize_t offset = 0;
+	hsize_t stride = 2;
+	hsize_t count = dim;
+	assert(H5Sselect_hyperslab(mem_dataspace, H5S_SELECT_SET, &offset, &stride, &count, NULL)>=0);
+
+	assert(H5Dread(dataset, obj_t, mem_dataspace, file_dataspace, H5P_DEFAULT, list->begin())>=0);
+	H5Dclose(dataset);
+}
+
+void dataset_read_body(const char* name, TBody *&body)
+{
+	if (!H5Lexists(fid, name, H5P_DEFAULT)) return;
+
+	hid_t dataset = H5Dopen2(fid, name, H5P_DEFAULT);
+	assert (dataset>=0);
+	hid_t file_dataspace = H5Dget_space(dataset);
+	assert(file_dataspace>=0);
+	hsize_t dim; H5Sget_simple_extent_dims(file_dataspace, &dim, &dim);
+	
+	assert(attribute_read_bool(dataset, "simplified_dataset"));
+
+	attribute_read(dataset, "holder_position", body->pos);
+	attribute_read(dataset, "delta_position", body->dPos);
+	attribute_read(dataset, "speed_x", body->SpeedX.script);
+	attribute_read(dataset, "speed_y", body->SpeedY.script);
+	attribute_read(dataset, "speed_o", body->SpeedO.script);
+	attribute_read(dataset, "speed_slae", body->Speed_slae);
+	attribute_read(dataset, "speed_slae_prev", body->Speed_slae_prev);
+	attribute_read(dataset, "spring_const", body->k);
+	attribute_read(dataset, "density", body->density);
+	attribute_read(dataset, "force_born", body->Force_born);
+	attribute_read(dataset, "force_dead", body->Force_dead);
+	attribute_read(dataset, "friction_prev", body->Friction_prev);
+
+	hc::HeatCondition heat_condition;
+	double heat_const;
+	bc::BoundaryCondition general_bc;
+	bc::BoundaryCondition special_bc;
+	long int special_bc_segment;
+	attribute_read(dataset, "general_bc", general_bc);
+	attribute_read(dataset, "special_bc", special_bc);
+	attribute_read(dataset, "special_bc_segment", special_bc_segment);
+	attribute_read(dataset, "heat_condition", heat_condition);
+	attribute_read(dataset, "heat_const", heat_const);
+
+	struct ATT *mem = (struct ATT*)malloc(sizeof(struct ATT)*dim);
+	assert(H5Dread(dataset, att_t, H5S_ALL, file_dataspace, H5P_DEFAULT, mem)>=0);
+
+	for(hsize_t i=0; i<dim; i++)
+	{
+		TAtt latt;
+		latt.corner.x = mem[i].x;
+		latt.corner.y = mem[i].y;
+		latt.g = mem[i].g;
+		latt.gsum = mem[i].gsum;
+
+		latt.bc = (i==special_bc_segment)?special_bc:general_bc;
+		latt.hc = heat_condition;
+		latt.heat_const = heat_const;
+		body->List->push_back(latt);
+	}
+
+	H5Dclose(dataset);
+	free(mem);
+}
 
 void Space::Load(const char* fname)
 {
@@ -245,7 +323,7 @@ void Space::Load(const char* fname)
 		return;
 	}
 
-	hid_t fid = H5Fopen(fname, H5F_ACC_RDONLY, H5P_DEFAULT);
+	fid = H5Fopen(fname, H5F_ACC_RDONLY, H5P_DEFAULT);
 	assert(fid>=0);
 	datatypes_create_all();
 
@@ -263,6 +341,26 @@ void Space::Load(const char* fname)
 	attribute_read(fid, "inf_circulation", InfCirculation);
 	attribute_read(fid, "gravity", gravitation);
 	attribute_read(fid, "time_to_finish", Finish);
+
+	dataset_read_list("vort", VortexList);
+	dataset_read_list("heat", HeatList);
+	dataset_read_list("ink", StreakList);
+	dataset_read_list("ink_source", StreakSourceList);
+
+	for (size_t b=0; true; b++)
+	{
+		char body_name[16];
+		sprintf(body_name, "body%02zd", b);
+		TBody *body = new TBody(this);
+		dataset_read_body(body_name, body);
+		if (body->size())
+			BodyList->push_back(body);
+		else
+		{
+			delete body;
+			break;
+		}
+	}
 	
 	datatypes_close_all();
 	assert(H5Fclose(fid)>=0);
