@@ -10,10 +10,8 @@ static hid_t fraction_t; bool commited_fraction = false;
 static hid_t bool_t;     bool commited_bool = false;
 static hid_t vec_t;      bool commited_vec = false;
 static hid_t vec3d_t;    bool commited_vec3d = false;
-static hid_t obj_t;      bool commited_obj = false;
-static hid_t bc_t;       bool commited_body_stuff = false;
+static hid_t bc_t;       bool commited_bc = false;
 static hid_t hc_t;       bool commited_hc = false;
-static hid_t att_t;
 // static hid_t att_detailed_t;
 
 static const hsize_t numbers[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
@@ -236,6 +234,12 @@ void attribute_read(hid_t hid, const char *name, TVec3D &vec3d)
 
 void attribute_write(hid_t hid, const char *name, bc::BoundaryCondition bc)
 {
+	if (!commited_bc)
+	{
+		commited_bc = true;
+		H5Tcommit2(fid, "boundary_condition_t", bc_t, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	}
+	
 	hid_t aid = H5Acreate2(hid, name, bc_t, DATASPACE_SCALAR, H5P_DEFAULT, H5P_DEFAULT);
 	assert(aid>=0);
 	assert(H5Awrite(aid, bc_t, &bc)>=0);
@@ -294,8 +298,7 @@ void datatypes_create_all()
 	commited_bool = false;
 	commited_vec = false;
 	commited_vec3d = false;
-	commited_obj = false;
-	commited_body_stuff = false;
+	commited_bc = false;
 
 	string_t = H5Tcopy(H5T_C_S1);
 	H5Tset_size(string_t, H5T_VARIABLE);
@@ -319,12 +322,6 @@ void datatypes_create_all()
 	H5Tinsert(vec3d_t, "o", 16, H5T_NATIVE_DOUBLE);
 	H5Tpack(vec3d_t);
 
-	obj_t = H5Tcreate(H5T_COMPOUND, 24);
-	H5Tinsert(obj_t, "x", 0, H5T_NATIVE_DOUBLE);
-	H5Tinsert(obj_t, "y", 8, H5T_NATIVE_DOUBLE);
-	H5Tinsert(obj_t, "g", 16, H5T_NATIVE_DOUBLE);
-	H5Tpack(obj_t);
-
 	bc_t = H5Tenum_create(H5T_NATIVE_INT);
 	{int val = bc::slip;       H5Tenum_insert(bc_t, "slip",       &val);}
 	{int val = bc::noslip;     H5Tenum_insert(bc_t, "noslip",     &val);}
@@ -338,12 +335,6 @@ void datatypes_create_all()
 	{int val = hc::const_t;	H5Tenum_insert(hc_t, "const_t", &val);}
 	{int val = hc::const_W;	H5Tenum_insert(hc_t, "const_w", &val);}
 
-	att_t = H5Tcreate(H5T_COMPOUND, sizeof(struct ATT));
-	H5Tinsert(att_t, "x", HOFFSET(struct ATT, x), H5T_NATIVE_DOUBLE);
-	H5Tinsert(att_t, "y", HOFFSET(struct ATT, y), H5T_NATIVE_DOUBLE);
-	H5Tinsert(att_t, "g", HOFFSET(struct ATT, g), H5T_NATIVE_DOUBLE);
-	H5Tinsert(att_t, "gsum", HOFFSET(struct ATT, gsum), H5T_NATIVE_DOUBLE);
-
 	// Scalar dataspace
 	DATASPACE_SCALAR = H5Screate(H5S_SCALAR);
 }
@@ -355,10 +346,8 @@ void datatypes_close_all()
 	if (bool_t>0) { H5Tclose(bool_t); bool_t = 0; }
 	if (vec_t>0) { H5Tclose(vec_t); vec_t = 0; }
 	if (vec3d_t>0) { H5Tclose(vec3d_t); vec3d_t = 0; }
-	if (obj_t>0) { H5Tclose(obj_t); obj_t = 0; }
 	if (bc_t>0) { H5Tclose(bc_t); bc_t = 0; }
 	if (hc_t>0) { H5Tclose(hc_t); hc_t = 0; }
-	if (att_t>0) { H5Tclose(att_t); att_t = 0; }
-
+	
 	H5Sclose(DATASPACE_SCALAR); DATASPACE_SCALAR = 0;
 }

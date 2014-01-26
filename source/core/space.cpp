@@ -78,39 +78,30 @@ Y88b  d88P  d8888888888    Y888P    888
 */
 
 void dataset_write_list(const char *name, vector<TObj> *list)
-{
-	if (!commited_obj)
-	{
-		commited_obj = true;
-		H5Tcommit2(fid, "obj_t", obj_t, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-	}
-	
+{	
 	// 1D dataspace
-	hsize_t dim = list->size_safe();
-	if (dim == 0) return;
-	hsize_t dim2 = dim*2;
-	hsize_t chunkdim = 512;
+	hsize_t dims[2] = {list->size_safe(), 3};
+	if (dims[0] == 0) return;
+	hsize_t dims2[2] = {dims[0]*2, dims[1]};
+	hsize_t chunkdims[2] = {512, 3};
 	hid_t prop = H5Pcreate(H5P_DATASET_CREATE);
-	H5Pset_chunk(prop, 1, &chunkdim);
+	H5Pset_chunk(prop, 2, chunkdims);
 	H5Pset_deflate(prop, 9);
 
-	hid_t file_dataspace = H5Screate_simple(1, &dim, &dim);
-	hid_t mem_dataspace = H5Screate_simple(1, &dim2, &dim2);
-	H5Sselect_hyperslab(mem_dataspace, H5S_SELECT_SET, &numbers[0], &numbers[2], &dim, NULL);
-	hid_t file_dataset = H5Dcreate2(fid, name, obj_t, file_dataspace, H5P_DEFAULT, prop, H5P_DEFAULT);
-	H5Dwrite(file_dataset, obj_t, mem_dataspace, file_dataspace, H5P_DEFAULT, list->begin());
+	hid_t file_dataspace = H5Screate_simple(2, dims, dims);
+	assert(file_dataspace>=0);
+	hid_t mem_dataspace = H5Screate_simple(2, dims2, dims2);
+	hsize_t start[2] = {0, 0};
+	hsize_t stride[2] = {2, 1};
+	H5Sselect_hyperslab(mem_dataspace, H5S_SELECT_SET, start, stride, dims, NULL);
+	hid_t file_dataset = H5Dcreate2(fid, name, H5T_NATIVE_DOUBLE, file_dataspace, H5P_DEFAULT, prop, H5P_DEFAULT);
+	H5Dwrite(file_dataset, H5T_NATIVE_DOUBLE, mem_dataspace, file_dataspace, H5P_DEFAULT, list->begin());
 	H5Dclose(file_dataset);
 }
 
 void dataset_write_body(const char* name, TBody *body)
 {
 	assert(body);
-	if (!commited_body_stuff)
-	{
-		commited_body_stuff = true;
-		H5Tcommit2(fid, "boundary_condition_t", bc_t, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-		H5Tcommit2(fid, "body_attach_t", att_t, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-	}
 
 	hc::HeatCondition heat_condition = body->List->begin()->hc;
 	double heat_const = body->List->begin()->heat_const;
@@ -118,9 +109,9 @@ void dataset_write_body(const char* name, TBody *body)
 	bc::BoundaryCondition special_bc;
 	long int special_bc_segment = -1;
 
-	hsize_t dim = body->size();
-	struct ATT *mem = (struct ATT*)malloc(sizeof(struct ATT)*dim);
-	for(hsize_t i=0; i<dim; i++)
+	hsize_t dims[2] = {body->size(), 4};
+	struct ATT *mem = (struct ATT*)malloc(sizeof(struct ATT)*dims[0]);
+	for(hsize_t i=0; i<dims[0]; i++)
 	{
 		TAtt latt = body->List->at(i);
 		mem[i].x = latt.corner.x;
@@ -144,15 +135,15 @@ void dataset_write_body(const char* name, TBody *body)
 		if (heat_condition != latt.hc) assert(0);
 	}
 
-	hsize_t chunkdim = 512;
+	hsize_t chunkdims[2] = {512, 4};
 	hid_t prop = H5Pcreate(H5P_DATASET_CREATE);
-	H5Pset_chunk(prop, 1, &chunkdim);
+	H5Pset_chunk(prop, 2, chunkdims);
 	H5Pset_deflate(prop, 9);
 
-	hid_t file_dataspace = H5Screate_simple(1, &dim, &dim);
+	hid_t file_dataspace = H5Screate_simple(2, dims, dims);
 	assert(file_dataspace>=0);
 
-	hid_t file_dataset = H5Dcreate2(fid, name, att_t, file_dataspace, H5P_DEFAULT, prop, H5P_DEFAULT);
+	hid_t file_dataset = H5Dcreate2(fid, name, H5T_NATIVE_DOUBLE, file_dataspace, H5P_DEFAULT, prop, H5P_DEFAULT);
 	assert(file_dataset>=0);
 
 	attribute_write(file_dataset, "simplified_dataset", true);
@@ -175,7 +166,7 @@ void dataset_write_body(const char* name, TBody *body)
 	attribute_write(file_dataset, "heat_condition", heat_condition);
 	attribute_write(file_dataset, "heat_const", heat_const);
 
-	H5Dwrite(file_dataset, att_t, H5S_ALL, file_dataspace, H5P_DEFAULT, mem);
+	H5Dwrite(file_dataset, H5T_NATIVE_DOUBLE, H5S_ALL, file_dataspace, H5P_DEFAULT, mem);
 	H5Dclose(file_dataset);
 	free(mem);
 }
@@ -244,17 +235,16 @@ void dataset_read_list(const char *name, vector<TObj> *&list)
 	assert (dataset>=0);
 	hid_t file_dataspace = H5Dget_space(dataset);
 	assert(file_dataspace>=0);
-	hsize_t dim; H5Sget_simple_extent_dims(file_dataspace, &dim, &dim);
-	hsize_t dim2 = dim*2;
-	hid_t mem_dataspace = H5Screate_simple(1, &dim2, &dim2);
+	hsize_t dims[2]; H5Sget_simple_extent_dims(file_dataspace, dims, dims);
+	hsize_t dims2[2] = {dims[0]*2, dims[1]};
+	hid_t mem_dataspace = H5Screate_simple(2, dims2, dims2);
 	assert(mem_dataspace>=0);
-	list->resize(dim, TObj());
-	hsize_t offset = 0;
-	hsize_t stride = 2;
-	hsize_t count = dim;
-	assert(H5Sselect_hyperslab(mem_dataspace, H5S_SELECT_SET, &offset, &stride, &count, NULL)>=0);
+	list->resize(dims[0], TObj());
+	hsize_t offset[2] = {0, 0};
+	hsize_t stride[2] = {2, 1};
+	assert(H5Sselect_hyperslab(mem_dataspace, H5S_SELECT_SET, offset, stride, dims, NULL)>=0);
 
-	assert(H5Dread(dataset, obj_t, mem_dataspace, file_dataspace, H5P_DEFAULT, list->begin())>=0);
+	assert(H5Dread(dataset, H5T_NATIVE_DOUBLE, mem_dataspace, file_dataspace, H5P_DEFAULT, list->begin())>=0);
 	H5Dclose(dataset);
 }
 
@@ -266,7 +256,7 @@ void dataset_read_body(const char* name, TBody *&body)
 	assert (dataset>=0);
 	hid_t file_dataspace = H5Dget_space(dataset);
 	assert(file_dataspace>=0);
-	hsize_t dim; H5Sget_simple_extent_dims(file_dataspace, &dim, &dim);
+	hsize_t dims[2]; H5Sget_simple_extent_dims(file_dataspace, dims, dims);
 	
 	assert(attribute_read_bool(dataset, "simplified_dataset"));
 
@@ -294,10 +284,10 @@ void dataset_read_body(const char* name, TBody *&body)
 	attribute_read(dataset, "heat_condition", heat_condition);
 	attribute_read(dataset, "heat_const", heat_const);
 
-	struct ATT *mem = (struct ATT*)malloc(sizeof(struct ATT)*dim);
-	assert(H5Dread(dataset, att_t, H5S_ALL, file_dataspace, H5P_DEFAULT, mem)>=0);
+	struct ATT *mem = (struct ATT*)malloc(sizeof(struct ATT)*dims[0]);
+	assert(H5Dread(dataset, H5T_NATIVE_DOUBLE, H5S_ALL, file_dataspace, H5P_DEFAULT, mem)>=0);
 
-	for(hsize_t i=0; i<dim; i++)
+	for(hsize_t i=0; i<dims[0]; i++)
 	{
 		TAtt latt;
 		latt.corner.x = mem[i].x;
