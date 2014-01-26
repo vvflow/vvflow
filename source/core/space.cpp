@@ -248,9 +248,13 @@ void dataset_read_list(const char *name, vector<TObj> *&list)
 	H5Dclose(dataset);
 }
 
-void dataset_read_body(const char* name, TBody *&body)
+herr_t dataset_read_body(hid_t g_id, const char *name, const H5L_info_t *info, void *op_data)
 {
-	if (!H5Lexists(fid, name, H5P_DEFAULT)) return;
+	if (strncmp(name, "body", 4) != 0) return 0;
+
+	Space *S = (Space*)op_data;
+	TBody *body = new TBody(S);
+	S->BodyList->push_back(body);
 
 	hid_t dataset = H5Dopen2(fid, name, H5P_DEFAULT);
 	assert (dataset>=0);
@@ -303,6 +307,7 @@ void dataset_read_body(const char* name, TBody *&body)
 
 	H5Dclose(dataset);
 	free(mem);
+	return 0;
 }
 
 void Space::Load(const char* fname)
@@ -337,20 +342,7 @@ void Space::Load(const char* fname)
 	dataset_read_list("ink", StreakList);
 	dataset_read_list("ink_source", StreakSourceList);
 
-	for (size_t b=0; true; b++)
-	{
-		char body_name[16];
-		sprintf(body_name, "body%02zd", b);
-		TBody *body = new TBody(this);
-		dataset_read_body(body_name, body);
-		if (body->size())
-			BodyList->push_back(body);
-		else
-		{
-			delete body;
-			break;
-		}
-	}
+	H5Literate(fid, H5_INDEX_NAME, H5_ITER_NATIVE, NULL, dataset_read_body, this);
 	
 	datatypes_close_all();
 	assert(H5Fclose(fid)>=0);
