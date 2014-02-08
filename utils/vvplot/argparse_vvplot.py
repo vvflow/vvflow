@@ -4,6 +4,7 @@ import argparse
 
 my_epilog="""Additional environmental variables:
 VV_PREC_HI - horiz resolution of temperature and pressure fields (default 500; affects -opPt)
+VV_PREC_LO - horiz resolution of streamlines (default 200; affects -s)
 VV_ISOPSI - streamlines levels (default $(seq -s \' \' -10 0.1 10); affects -s)
 VV_ISOTHERMS - temperature isolines (default $(seq -s \' \' 0.05 0.05 0.95); affects -o)
 VV_VORT_RANGE - change contrast of vorticity field (default 50; affects -g)

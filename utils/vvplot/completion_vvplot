@@ -6,7 +6,7 @@ _vvplot(){
 
 	if [[ ${COMP_CWORD} == 1 ]]
 	then
-		COMPREPLY=($(compgen -f -X '!*.vb' -o plusdirs  -- ${cur}))
+		COMPREPLY=($(compgen -f -X '!*.h5' -o plusdirs  -- ${cur}))
 	else
 		case "$cur" in
 			-*)

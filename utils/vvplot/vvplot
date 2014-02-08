@@ -4,6 +4,7 @@ import sys
 import math
 import os
 import struct
+import h5py
 import subprocess
 import argparse_vvplot
 args = argparse_vvplot.args
@@ -119,40 +120,21 @@ except Exception as s:
 ################################################################################
 ## READING BINARY HEADER
 
-skips_list = struct.unpack("q8x q8x q8x 16x q8x", fin.read(80))
-skips = {'head': skips_list[0],
-         'vort': skips_list[1],
-         'heat': skips_list[2],
-         'ink' : skips_list[3]}
-del skips_list
+file = h5py.File(fin_name, "r")
+# print 'caption = '+file.attrs['caption']
+# print 'Re = '+str(file.attrs['re']);
 
-sizes = dict()
-for part in ('vort', 'heat', 'ink'):
-	fin.seek(skips[part])
-	sizes[part] = struct.unpack("q", fin.read(8))[0]
+realtime = file.attrs['time_local']
+time = (lambda frac: float(frac[0])/float(frac[1]))(file.attrs['time'])
+try:
+	marker_x, marker_y = file.attrs['inf_marker']
+except:
+	marker_x, marker_y = [0, 0]
 
-bodies = list()
-for i in range(5, 64):
-	fin.seek(i*16)
-	bookmark = fin.read(16)
-	bookmark_name = bookmark[8:]
-	if bookmark_name.startswith("Body"):
-		b_skip = struct.unpack("q", bookmark[0:8])[0]
-		fin.seek(b_skip)
-		b_size = struct.unpack("q", fin.read(8))[0]
-		bodies.append( (b_skip, b_size) )
-	elif bookmark_name.startswith(chr(0)):
-		break
-
-fin.seek(skips['vort'] - 8)
-timestamp = struct.unpack("q", fin.read(8))
-realtime = os.popen("date -d \"1970-01-01 %d sec GMT\" +\"%%F %%H:%%M:%%S\"" % timestamp).read()
-
-fin.seek(skips['head'])
-time_value, time_timescale, marker_x, marker_y = struct.unpack("8x64x i I 48x d d", fin.read(144));
-time = float(time_value)/float(time_timescale)
-
-fin.close()
+datasets = file.keys()
+bodies = [str(b) for b in datasets if str(b)[0:4] == "body"]
+lists = [str(l) for l in datasets if str(l) in ["vort", "heat", "ink", "ink_source"]]
+file.close()
 
 ################################################################################
 ## 
@@ -349,20 +331,20 @@ if args.plot_temperature:
 if args.plot_vorticity:
 	gp.write("""%s '%s.vrtc' w image""" % (delim.get(), fin_name))
 
-if args.plot_vortexes_bold and sizes['vort'] > 0:
-	gp.write("""%s '%s' binary record=%d skip=%d format='%%3float64'""" % (delim.get(), fin_name, sizes['vort'], skips['vort']+8))
+if args.plot_vortexes_bold and 'vort' in lists:
+	gp.write("""%s '< h5totxt %s -s " " -d vort'""" % (delim.get(), fin_name))
 	gp.write(""" u 1:2:(%f):(color($3)) w @vortex_style""" % vv_prec_hi)
 
-if args.plot_vortexes and sizes['vort'] > 0:
-	gp.write("""%s '%s' binary record=%d skip=%d format='%%3float64'""" % (delim.get(), fin_name, sizes['vort'], skips['vort']+8))
+if args.plot_vortexes and 'vort' in lists:
+	gp.write("""%s '< h5totxt %s -s " " -d vort'""" % (delim.get(), fin_name))
 	gp.write(""" u 1:2:(color($3)) w @dots""")
 
-if args.plot_heat and size['heat'] > 0:
-	gp.write("""%s '%s' binary record=%d skip=%d format='%%3float64' """ % (delim.get(), fin_name, sizes['heat'], skips['heat']+8))
+if args.plot_heat and 'heat' in lists:
+	gp.write("""%s '< h5totxt %s -s " " -d heat'""" % (delim.get(), fin_name))
 	gp.write(""" u 1:2:(%f) w @heat_style""" % vv_prec_hi)
 
-if args.plot_ink and sizes['ink'] > 0:
-	gp.write("""%s '%s' binary record=%d skip=%d format='%%3float64' """ % (delim.get(), fin_name, sizes['ink'], skips['ink']+8))
+if args.plot_ink and 'ink' in lists:
+	gp.write("""%s '< h5totxt %s -s " " -d ink'""" % (delim.get(), fin_name))
 	gp.write(""" u 1:2:(%f) w @ink_style""" % vv_prec_hi)
 
 if args.plot_streamlines:
@@ -375,8 +357,8 @@ if args.plot_isotherms:
 
 if args.plot_body:
 	for b in bodies:
-		gp.write("""%s '%s' binary record=%d skip=%d format='%%7float64' u 1:2 w @%s"""
-		         % (delim.get(), fin_name, b[1], b[0]+8, ternary(args.blankbody-1==bodies.index(b), "body_clear", "body_style")))
+		gp.write("""%s '< h5totxt %s -s " " -d %s' u 1:2 w @%s"""
+			% (delim.get(), fin_name, b, ternary(args.blankbody-1==bodies.index(b), "body_clear", "body_style")))
 
 if args.tree:
 	gp.write("""%s '%s' using 1:2:($3/2):($4/2) with boxxy fill empty lc rgb 'red'""" % (delim.get(), args.tree))
