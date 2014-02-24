@@ -1,5 +1,0 @@
-#!/usr/bin/awk -f
-#This script joins all columns except two first
-
-FNR==NR{a[$1$2]=$3;next}
-{print FNR " " NR " " $0 "\t" a[$1$2]}

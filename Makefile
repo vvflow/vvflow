@@ -47,7 +47,7 @@ install: | $(INSTALLDIR)/lib/ $(INSTALLDIR)/include/
 	cp headers/*.h -t $(INSTALLDIR)/include/
 
 uninstall:
-	rm -f $(patsubst %, $(INSTALLDIR)/lib/libVVHD%.a, $(parts))
+	rm -f $(patsubst %, $(INSTALLDIR)/lib/libvvhd.%, a so)
 	rm -f $(patsubst headers/%, $(INSTALLDIR)/include/%, $(wildcard headers/*.h))
 	rmdir $(INSTALLDIR)/lib/ $(INSTALLDIR)/include/ $(INSTALLDIR)/ --ignore-fail-on-non-empty
 
@@ -69,15 +69,12 @@ bin/libvvhd.a: $(patsubst %, bin/%.o, $(core_objects) $(modules_objects))
 	$(AR) ruc $@ $^
 	ranlib $@
 
-bin/libvvhd.so: $(patsubst %, bin/%.o, $(core_objects))
-	icc -shared -Wl,-soname,libvvhd.so -o $@ $^ -openmp -mkl=parallel
+bin/libvvhd.so: $(patsubst %, bin/%.o, $(core_objects) $(modules_objects))
+	icc -shared -fPIC -Wl,-soname,libvvhd.so -o $@ $^ -openmp -mkl=parallel
 
 bin/:
 	mkdir $@ -p
 
 $(INSTALLDIR)/%:
 	mkdir $@ -p
-
-export_vars:
-	export VVHD="-I $(INSTALLDIR)/include -L $(INSTALLDIR)/lib -lVVHDmodules -lVVHDcore"
 

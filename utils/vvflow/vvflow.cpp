@@ -33,10 +33,10 @@ int main(int argc, char** argv)
 	Space *S = new Space();
 	S->Load(argv[1]);
 
-	char dir[256]; sprintf(dir, "results_%s", S->name);
-	char stepdata[256]; sprintf(stepdata, "stepdata_%s", S->name);
-	char profile[256]; sprintf(profile, "profile_%s", S->name);
-	char sensors_output[256]; sprintf(sensors_output, "velocity_%s", S->name);
+	char dir[256]; sprintf(dir, "results_%s", S->caption.c_str());
+	char stepdata[256]; sprintf(stepdata, "stepdata_%s", S->caption.c_str());
+	char profile[256]; sprintf(profile, "profile_%s", S->caption.c_str());
+	char sensors_output[256]; sprintf(sensors_output, "velocity_%s", S->caption.c_str());
 
 	mkdir(dir, 0777);
 

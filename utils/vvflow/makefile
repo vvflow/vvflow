@@ -4,14 +4,17 @@ PREFIX = ~/.local
 .PHONY: vvflow
 all: vvflow
 
-vvflow: vvflow.cpp sensors.cpp
-	$(CC) $^ -o $@ $(VVHD) -std=c++0x -mkl=parallel -lhdf5 -lhdf5_cpp
+vvflow: vvflow.cpp
+	$(CC) $^ -o $@ -std=c++0x -mkl=parallel -lhdf5 -lhdf5_cpp -Wl,-Bdynamic -lvvhd
 
 clean:
 	rm -f vvflow
 
-install:
-	cp vvflow calc.py ~/.bin/
+install: | $(PREFIX)/bin
+	cp vvflow calc.py $(PREFIX)/bin/
+
+$(PREFIX)/bin:
+	mkdir -p $@
 
 uninstall:
 	rm -f $(PREFIX)/bin/vvflow $(PREFIX)/bin/calc.py
