@@ -74,4 +74,9 @@ class Space
 		void Load_v1_3(const char* filename);
 };
 
+extern "C"
+{
+	Space* Space_new();
+}
+
 #endif /*SPACE_H_*/
