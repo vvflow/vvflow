@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 from sys import argv
-from math import sin, cos, pi
+from math import *
 
 allargs = "";
 if len(argv) > 1:
