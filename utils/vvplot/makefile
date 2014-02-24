@@ -7,7 +7,7 @@ exes:= $(patsubst %,%_exe, $(names))
 all: $(exes)
 
 %_exe: %.cpp
-	$(CC) $^ -o $@ -std=c++0x -mkl=parallel -lvvhd
+	$(CC) $^ -o $@ -std=c++0x -mkl=parallel -lvvhd -lhdf5
 
 clean:
 	rm -f $(exes)
