@@ -83,7 +83,7 @@ void dataset_write_list(const char *name, vector<TObj> *list)
 	hsize_t dims[2] = {list->size_safe(), 3};
 	if (dims[0] == 0) return;
 	hsize_t dims2[2] = {dims[0]*2, dims[1]};
-	hsize_t chunkdims[2] = {512, 3};
+	hsize_t chunkdims[2] = {min(512, dims[0]), 3};
 	hid_t prop = H5Pcreate(H5P_DATASET_CREATE);
 	H5Pset_chunk(prop, 2, chunkdims);
 	H5Pset_deflate(prop, 9);
@@ -135,7 +135,7 @@ void dataset_write_body(const char* name, TBody *body)
 		if (heat_condition != latt.hc) assert(0);
 	}
 
-	hsize_t chunkdims[2] = {512, 4};
+	hsize_t chunkdims[2] = {min(512, dims[0]), 4};
 	hid_t prop = H5Pcreate(H5P_DATASET_CREATE);
 	H5Pset_chunk(prop, 2, chunkdims);
 	H5Pset_deflate(prop, 9);
