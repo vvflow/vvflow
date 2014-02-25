@@ -293,7 +293,7 @@ herr_t dataset_read_body(hid_t g_id, const char *name, const H5L_info_t *info, v
 
 	for(hsize_t i=0; i<dims[0]; i++)
 	{
-		TAtt latt;
+		TAtt latt; latt.body = body;
 		latt.corner.x = mem[i].x;
 		latt.corner.y = mem[i].y;
 		latt.g = mem[i].g;
