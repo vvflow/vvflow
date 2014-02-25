@@ -271,7 +271,7 @@ bool convectivefast::canUseInverse()
 
 void convectivefast::CalcCirculationFast()
 {
-	bool use_inverse = canUseInverse();
+	bool use_inverse = canUseInverse() && S->Time>0;
 
 	if (matrix->bodyMatrixIsOk())
 		FillMatrix(true);
@@ -563,7 +563,7 @@ void convectivefast::fillForceXEquation(TBody* ibody, bool rightColOnly)
 		#define jbody (**lljbody)
 		const_for(jbody.List, lobj)
 		{
-			if ( (ibody==*lljbody) && (ibody->k.r.x >= 0) )
+			if ( (ibody==*lljbody) && (ibody->k.r.x >= 0 && S->Time>0) )
 				*matrix->objectAtIndex(eq_no, lobj->eq_no) = _1_dt * (-lobj->corner.y);
 			else
 				*matrix->objectAtIndex(eq_no, lobj->eq_no) = 0;
@@ -571,7 +571,7 @@ void convectivefast::fillForceXEquation(TBody* ibody, bool rightColOnly)
 
 		if (ibody == *lljbody)
 		{
-			if (ibody->k.r.x >= 0)
+			if (ibody->k.r.x >= 0 && S->Time>0)
 			{
 				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = -ibody->getArea()*_1_dt*ibody->density;
 				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = 0;
@@ -596,7 +596,7 @@ void convectivefast::fillForceXEquation(TBody* ibody, bool rightColOnly)
 	*matrix->solutionAtIndex(eq_no) = &ibody->Speed_slae.r.x;
 
 	//right column
-	if ( ibody->k.r.x >= 0 )
+	if ( ibody->k.r.x >= 0 && S->Time>0 )
 		*matrix->rightColAtIndex(eq_no) = 
 			- (ibody->density-1.0) * S->gravitation.x * ibody->getArea()
 			+ ibody->k.r.x * ibody->dPos.r.x +
@@ -619,7 +619,7 @@ void convectivefast::fillForceYEquation(TBody* ibody, bool rightColOnly)
 		#define jbody (**lljbody)
 		const_for(jbody.List, lobj)
 		{
-			if ( (ibody==*lljbody) && (ibody->k.r.y >= 0) )
+			if ( (ibody==*lljbody) && (ibody->k.r.y >= 0 && S->Time>0) )
 				*matrix->objectAtIndex(eq_no, lobj->eq_no) = _1_dt * (lobj->corner.x);
 			else
 				*matrix->objectAtIndex(eq_no, lobj->eq_no) = 0;
@@ -627,7 +627,7 @@ void convectivefast::fillForceYEquation(TBody* ibody, bool rightColOnly)
 
 		if (ibody == *lljbody)
 		{
-			if (ibody->k.r.y >= 0)
+			if (ibody->k.r.y >= 0 && S->Time>0)
 			{
 				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = 0;
 				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = -ibody->getArea()*_1_dt*ibody->density;
@@ -651,7 +651,7 @@ void convectivefast::fillForceYEquation(TBody* ibody, bool rightColOnly)
 	*matrix->solutionAtIndex(eq_no) = &ibody->Speed_slae.r.y;
 
 	//right column
-	if ( ibody->k.r.y >= 0 )
+	if ( ibody->k.r.y >= 0 && S->Time>0 )
 		*matrix->rightColAtIndex(eq_no) = 
 			- (ibody->density-1.0) * S->gravitation.y * ibody->getArea()
 			+ ibody->k.r.y * ibody->dPos.r.y +
@@ -677,7 +677,7 @@ void convectivefast::fillMomentEquation(TBody* ibody, bool rightColOnly)
 		#define jbody (**lljbody)
 		const_for(jbody.List, lobj)
 		{
-			if ( (ibody==*lljbody) && (ibody->k.o >= 0) )
+			if ( (ibody==*lljbody) && (ibody->k.o >= 0 && S->Time>0) )
 				*matrix->objectAtIndex(eq_no, lobj->eq_no) = _1_2dt * (lobj->corner - ibody->pos.r - ibody->dPos.r).abs2();
 			else
 				*matrix->objectAtIndex(eq_no, lobj->eq_no) = 0;
@@ -685,7 +685,7 @@ void convectivefast::fillMomentEquation(TBody* ibody, bool rightColOnly)
 
 		if (ibody == *lljbody)
 		{
-			if (ibody->k.o >= 0)
+			if (ibody->k.o >= 0 && S->Time>0)
 			{
 				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) =  r_c_com.y*ibody->getArea()*_1_dt;
 				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = -r_c_com.x*ibody->getArea()*_1_dt;
@@ -709,7 +709,7 @@ void convectivefast::fillMomentEquation(TBody* ibody, bool rightColOnly)
 	*matrix->solutionAtIndex(eq_no) = &ibody->Speed_slae.o;
 
 	//right column
-	if ( ibody->k.o >= 0 )
+	if ( ibody->k.o >= 0 && S->Time>0)
 		*matrix->rightColAtIndex(eq_no) = 
 			+ ibody->k.o * ibody->dPos.o +
 			- (ibody->density-1.0) * (rotl(r_c_com)*S->gravitation) * ibody->getArea()

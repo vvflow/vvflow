@@ -305,6 +305,9 @@ herr_t dataset_read_body(hid_t g_id, const char *name, const H5L_info_t *info, v
 		body->List->push_back(latt);
 	}
 
+	body->doUpdateSegments();
+	body->doFillProperties();
+
 	H5Dclose(dataset);
 	free(mem);
 	return 0;
@@ -343,6 +346,7 @@ void Space::Load(const char* fname)
 	dataset_read_list("ink_source", StreakSourceList);
 
 	H5Literate(fid, H5_INDEX_NAME, H5_ITER_NATIVE, NULL, dataset_read_body, this);
+	EnumerateBodies();
 	
 	datatypes_close_all();
 	assert(H5Fclose(fid)>=0);
@@ -735,12 +739,17 @@ void Space::EnumerateBodies()
 	{
 		const_for((**llbody).List, latt)
 		{
-			if (latt->bc == bc::inf_steady)
+			if (latt->bc == bc::inf_steady || latt->bc == bc::steady)
 			{
 				if (bodyWithInfSteadyBC)
+				{
 					latt->bc = bc::steady;
+				}
 				else
+				{
+					latt->bc = bc::inf_steady;
 					bodyWithInfSteadyBC = *llbody;
+				}
 			}
 			latt->eq_no = eq_no;
 			eq_no++;

@@ -81,7 +81,7 @@ void Matrix::solveUsingInverseMatrix(bool useInverseMatrix)
 
 		if (info)
 		{
-			fprintf(stderr, "dgetsv_() failed with info = %d\n", info);
+			fprintf(stderr, "dgesv_() failed with info = %d\n", info);
 			exit(-2);
 		}
 
