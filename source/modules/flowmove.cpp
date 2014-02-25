@@ -134,8 +134,8 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
 
 void flowmove::VortexShed()
 {
+	if (!S->VortexList) S->VortexList = new vector<TObj>();
 	auto vlist = S->VortexList;
-	if (!vlist) return;
 	TObj ObjCopy(0, 0, 0);
 
 	const_for(S->BodyList, llbody)
@@ -166,8 +166,8 @@ void flowmove::VortexShed()
 
 void flowmove::HeatShed()
 {
+	if (!S->HeatList) S->HeatList = new vector<TObj>();
 	auto hlist = S->HeatList;
-	if (!hlist) return;
 	TObj ObjCopy(0, 0, 0);
 
 	const_for(S->BodyList, llbody)

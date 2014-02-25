@@ -5,9 +5,6 @@
 using namespace std;
 
 const int Tree_MaxListSize = 16;
-static vector<TObj> *vList;
-static vector<TObj> *hList;
-static vector<TObj> *sList;
 
 /********************* TSortedNode class *****************************/
 
@@ -64,9 +61,9 @@ void TSortedNode::DivideNode()
 	ch1->i = ch2->i = i+1; //DEBUG
 	ch1->j = j*2; ch2->j = j*2+1; //DEBUG
 
-	definePointerRangesAndSort(vList);
-	definePointerRangesAndSort(hList);
-	definePointerRangesAndSort(sList);
+	definePointerRangesAndSort(parent->S->VortexList);
+	definePointerRangesAndSort(parent->S->HeatList);
+	definePointerRangesAndSort(parent->S->StreakList);
 
 	DistributeContent(BodyLList, &ch1->BodyLList, &ch2->BodyLList);
 	delete BodyLList; BodyLList = NULL;
@@ -83,11 +80,10 @@ void TSortedNode::definePointerRangesAndSort(vector<TObj> *list)
 {
 	if (!list) {return;}
 	TObj *first, *last;
-	if (list == vList)      { first = vRange.first; last = vRange.last; }
-	else if (list == hList) { first = hRange.first; last = hRange.last; }
-	else if (list == sList) { first = sRange.first; last = sRange.last; }
+	if (list == parent->S->VortexList)      { first = vRange.first; last = vRange.last; }
+	else if (list == parent->S->HeatList)   { first = hRange.first; last = hRange.last; }
+	else if (list == parent->S->StreakList) { first = sRange.first; last = sRange.last; }
 
-	//if (list == vList) fprintf(stderr, "%d %d; first = %x; last = %x\n", i, j, first, last);
 	TObj *p1 = first, *p2 = last-1;
 	while (p1 <= p2)
 	{
@@ -101,9 +97,9 @@ void TSortedNode::definePointerRangesAndSort(vector<TObj> *list)
 		}
 	}
 
-	if (list == vList) { ch1->vRange.set(first, p1); ch2->vRange.set(p1, last); }
-	else if (list == hList) { ch1->hRange.set(first, p1); ch2->hRange.set(p1, last); }
-	else if (list == sList) { ch1->sRange.set(first, p1); ch2->sRange.set(p1, last); }
+	if (list == parent->S->VortexList)      { ch1->vRange.set(first, p1); ch2->vRange.set(p1, last); }
+	else if (list == parent->S->HeatList)   { ch1->hRange.set(first, p1); ch2->hRange.set(p1, last); }
+	else if (list == parent->S->StreakList) { ch1->sRange.set(first, p1); ch2->sRange.set(p1, last); }
 
 	return;
 }
@@ -237,9 +233,6 @@ void TSortedNode::FindNearNodes(TSortedNode* top)
 stree::stree(Space *sS, int sFarCriteria, double sMinNodeSize, double sMaxNodeSize)
 {
 	S = sS;
-	vList = S->VortexList;
-	hList = S->HeatList;
-	sList = S->StreakList;
 	farCriteria = sFarCriteria;
 	minNodeSize = sMinNodeSize;
 	maxNodeSize = sMaxNodeSize;
@@ -265,9 +258,9 @@ void stree::build(bool includeV, bool includeB, bool includeH)
 		}
 	}
 
-	if (includeV && vList) rootNode->vRange.set(vList->begin(), vList->end()); else rootNode->vRange.set(NULL, NULL);
-	if (includeH && hList) rootNode->hRange.set(hList->begin(), hList->end()); else rootNode->hRange.set(NULL, NULL);
-	if (sList)             rootNode->sRange.set(sList->begin(), sList->end());
+	if (includeV && S->VortexList) rootNode->vRange.set(S->VortexList->begin(), S->VortexList->end()); else rootNode->vRange.set(NULL, NULL);
+	if (includeH && S->HeatList)   rootNode->hRange.set(S->HeatList->begin(), S->HeatList->end()); else rootNode->hRange.set(NULL, NULL);
+	if (S->StreakList)             rootNode->sRange.set(S->StreakList->begin(), S->StreakList->end());
 
 	bottomNodes->clear();
 
