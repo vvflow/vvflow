@@ -159,6 +159,10 @@ void dataset_write_body(const char* name, TBody *body)
 	attribute_write(file_dataset, "force_born", body->Force_born);
 	attribute_write(file_dataset, "force_dead", body->Force_dead);
 	attribute_write(file_dataset, "friction_prev", body->Friction_prev);
+	
+	attribute_write(file_dataset, "area", body->getArea());
+	attribute_write(file_dataset, "com", body->getCom());
+	attribute_write(file_dataset, "moi_c", body->getMoi_c());
 
 	attribute_write(file_dataset, "general_bc", general_bc);
 	attribute_write(file_dataset, "special_bc", special_bc);
