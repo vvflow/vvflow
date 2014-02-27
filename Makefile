@@ -20,7 +20,7 @@ CC		= icc -O3 -g -openmp
 AR		= xiar
 
 parts 	:= core modules
-core_objects 	:= space body tree shellscript sorted_tree
+core_objects 	:= space body tree shellscript sorted_tree stepdata
 modules_objects := flowmove epsfast diffusivefast convective convectivefast matrix
 VPATH := $(addprefix source/, $(parts) ) 
 # VPATH is special make var 

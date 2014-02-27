@@ -4,5 +4,6 @@
 #include "elementary.h"
 #include "space.h"
 #include "sorted_tree.h"
+#include "stepdata.h"
 
 #endif /*CORE_H_*/
