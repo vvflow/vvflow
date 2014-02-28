@@ -33,28 +33,29 @@ int main(int argc, char** argv)
 	Space *S = new Space();
 	S->Load(argv[1]);
 
-	char dir[256]; sprintf(dir, "results_%s", S->caption.c_str());
-	char stepdata[256]; sprintf(stepdata, "stepdata_%s", S->caption.c_str());
+	char dir[256]; sprintf(dir, "results_%s", S->caption.c_str()); mkdir(dir, 0777);
 	char profile[256]; sprintf(profile, "profile_%s", S->caption.c_str());
 	char sensors_output[256]; sprintf(sensors_output, "velocity_%s", S->caption.c_str());
 
-	mkdir(dir, 0777);
 
-	FILE *f = fopen(stepdata, "a");
-	#pragma omp parallel
-	#pragma omp master
-		fprintf(f, "\nOMP_NUM_THREADS = \t%d\n", omp_get_num_threads());
-	fprintf(f, "Working dir = \t%s\n", dir);
-	fprintf(f, "Git commit  = \t%s\n", S->getGitInfo());
-	fprintf(f, "Git diff    = \t%s\n", S->getGitDiff());
-	fflush(f);
+	Stepdata *stepdata = new Stepdata(S);
+	stepdata->create("stepdata_%s.h5");
+
+	// FILE *f = fopen(stepdata, "a");
+	// #pragma omp parallel
+	// #pragma omp master
+	// 	fprintf(f, "\nOMP_NUM_THREADS = \t%d\n", omp_get_num_threads());
+	// fprintf(f, "Working dir = \t%s\n", dir);
+	// fprintf(f, "Git commit  = \t%s\n", S->getGitInfo());
+	// fprintf(f, "Git diff    = \t%s\n", S->getGitDiff());
+	// fflush(f);
 
 	/**************************************************************************/
 
-	fprintf(f, "%-10s \t", "Time");
-	for (int i=0; i<S->BodyList->size(); i++)
-	fprintf(f, "Fx\t Fy\t Mz\t Friction_x\t Firc_y\t Fric_m\t NUsselt/L\t PosX\t PosY\t Angle\t DeltaPosX\t DeltaPosY\t DeltaAngle\t SpeedX\t SpeedY\t SpeedO\t ");
-	fprintf(f, "Nv\t Nh \n");
+	// fprintf(f, "%-10s \t", "Time");
+	// for (int i=0; i<S->BodyList->size(); i++)
+	// fprintf(f, "Fx\t Fy\t Mz\t Friction_x\t Firc_y\t Fric_m\t NUsselt/L\t PosX\t PosY\t Angle\t DeltaPosX\t DeltaPosY\t DeltaAngle\t SpeedX\t SpeedY\t SpeedO\t ");
+	// fprintf(f, "Nv\t Nh \n");
 
 	double dl = S->AverageSegmentLength();
 	TSortedTree tr(S, 8, dl*5, dl*100);
@@ -87,7 +88,8 @@ int main(int argc, char** argv)
 
 		dbg(S->CalcForces());
 		if (S->Time > 0) S->SaveProfile(profile, val::Cp | val::Fr | val::Nu);
-		fprintf(f, "%-10g \t", double(S->Time));
+		stepdata->write();
+		/*fprintf(f, "%-10g \t", double(S->Time));
 		const_for(S->BodyList, llbody)
 		{
 		fprintf(f, "%-+20e\t %-+20e\t %-+20e\t %-+20e\t %-+20e\t %-+20e\t %-+20e\t ",
@@ -113,7 +115,7 @@ int main(int argc, char** argv)
 		fprintf(f, "%-10ld \t%-10ld \n",
 		             S->VortexList->size_safe(),
 		             S->HeatList->size_safe());
-		fflush(f);
+		fflush(f);*/
 
 		S->ZeroForces();
 
@@ -137,5 +139,6 @@ int main(int argc, char** argv)
 	}
 
 	fprintf(stderr, "\n");
-	fclose(f);
+	// fclose(f);
+	stepdata->close();
 }
