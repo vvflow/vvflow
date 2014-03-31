@@ -97,7 +97,7 @@ void Stepdata::create(const char *format)
 		int body_n = S->BodyList->find(llbody);
 		char body_name[16];
 		sprintf(body_name, "body%02d", body_n);
-		hid_t body_g_hid = H5Gcreate(file_hid, body_name, 0);
+		hid_t body_g_hid = H5Gcreate2(file_hid, body_name, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
 		force_d_hid[body_n] = create_dataset(body_g_hid, "force", 3);
 		friction_d_hid[body_n] = create_dataset(body_g_hid, "friction", 3);
