@@ -132,7 +132,20 @@ except:
 	marker_x, marker_y = [0, 0]
 
 datasets = file.keys()
-bodies = [str(b) for b in datasets if str(b)[0:4] == "body"]
+# bodies = [str(b) for b in datasets if str(b)[0:4] == "body"]
+bodies = []
+for b in datasets:
+	if str(b)[0:4] == "body":
+		name = str(b)
+		try:
+			holder_position = file[b].attrs['holder_position']
+		except:
+			holder_position = (0, 0, 0)
+		try:
+			delta_position = file[b].attrs['delta_position']
+		except:
+			delta_position = (0, 0, 0)
+		bodies.append({'name':name, 'holder_position':holder_position, 'delta_position':delta_position})
 lists = [str(l) for l in datasets if str(l) in ["vort", "heat", "ink", "ink_source"]]
 file.close()
 
@@ -358,7 +371,15 @@ if args.plot_isotherms:
 if args.plot_body:
 	for b in bodies:
 		gp.write("""%s '< h5totxt %s -s " " -d %s' u 1:2 w @%s"""
-			% (delim.get(), fin_name, b, ternary(args.blankbody-1==bodies.index(b), "body_clear", "body_style")))
+			% (delim.get(), fin_name, b['name'], ternary(args.blankbody-1==bodies.index(b), "body_clear", "body_style")))
+		if args.plot_spring:
+			p1 = b['holder_position']
+			dp = b['delta_position']
+			p2 = (p1[0]+dp[0], p1[1]+dp[1], p1[2]+dp[2])
+			gp.write("""%s '< echo %f %f %f %f' w vectors nohead lc rgb 'black' lw 1.5"""
+				% (delim.get(), p1[0], p1[1], dp[0], dp[1]))
+			gp.write("""%s '< printf "%f %f\\n%f %f\\n"' u 1:2:(1.5*%f) w circles lc rgb 'black' fs solid noborder"""
+				% (delim.get(), p1[0], p1[1], p2[0], p2[1], vv_prec_hi))
 
 if args.tree:
 	gp.write("""%s '%s' using 1:2:($3/2):($4/2) with boxxy fill empty lc rgb 'red'""" % (delim.get(), args.tree))

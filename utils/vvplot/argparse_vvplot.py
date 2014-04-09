@@ -140,6 +140,13 @@ parser.add_argument(
 )
 
 parser.add_argument(
+	'--spring',
+	dest='plot_spring',
+	action='store_true',
+	help='draw body spring'
+)
+
+parser.add_argument(
 	'--blankbody',
 	metavar="N",
 	type = int,
