@@ -6,6 +6,7 @@ import os
 import struct
 import h5py
 import subprocess
+import logging
 import argparse_vvplot
 args = argparse_vvplot.args
 
@@ -26,6 +27,11 @@ def ternary(cond, a, b):
 		return a
 	else:
 		return b
+
+logger = logging.getLogger("vvplot")
+log_level = logging.DEBUG if args.debug else logging.ERROR
+log_format = '%(name)s: %(levelname)s: %(message)s'
+logging.basicConfig(format=log_format, level=log_level)
 
 ################################################################################
 ## WORK WITH FILENAMES
@@ -192,11 +198,11 @@ boundaries = (str(xmin - vv_prec_lo),
 pids = list()
 
 home = os.getenv("HOME")
-presplot_exe = os.path.join(home, ".bin/presplot_exe")
-heatplot_exe = os.path.join(home, ".bin/heatplot_exe")
-vorticity_exe = os.path.join(home, ".bin/vorticity_exe")
-streamlines_exe = os.path.join(home, ".bin/streamlines_exe")
-isoline_exe = os.path.join(home, ".bin/isoline_exe")
+presplot_exe = os.path.join(home, ".local/bin/presplot_exe")
+heatplot_exe = os.path.join(home, ".local/bin/heatplot_exe")
+vorticity_exe = os.path.join(home, ".local/bin/vorticity_exe")
+streamlines_exe = os.path.join(home, ".local/bin/streamlines_exe")
+isoline_exe = os.path.join(home, ".local/bin/isoline_exe")
 
 #PRESS FIELD
 if args.plot_pressure or args.plot_isopressure:

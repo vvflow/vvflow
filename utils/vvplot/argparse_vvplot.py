@@ -247,4 +247,12 @@ parser.add_argument(
 	help='draw tree nodes from file'
 )
 
+parser.add_argument(
+	'--debug',
+	dest='debug',
+	action='store_true',
+	help='show some debug information'
+)
+
+
 args = parser.parse_args()
