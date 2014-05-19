@@ -93,6 +93,7 @@ class TBody
 		//TVec   MotionSpeed_slae_prev; //\vec V_? from previous step
 
 		TVec3D k; //kx, ky, ka;
+		TVec3D damping;
 		//double kx, ky, ka;
 		double density; //in doc \frac{\rho_b}{\rho_0}
 

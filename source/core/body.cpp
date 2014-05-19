@@ -54,6 +54,7 @@ TBody::TBody(Space *sS):
 	_com = TVec(0., 0.);
 	_moi_c = _moi_com = 0;
 	k = TVec3D(-1., -1., -1.);
+	damping = TVec3D(0,0,0);
 	density = 1.;
 }
 

@@ -155,6 +155,7 @@ void dataset_write_body(const char* name, TBody *body)
 	attribute_write(file_dataset, "speed_slae", body->Speed_slae);
 	attribute_write(file_dataset, "speed_slae_prev", body->Speed_slae_prev);
 	attribute_write(file_dataset, "spring_const", body->k);
+	attribute_write(file_dataset, "spring_damping", body->damping);
 	attribute_write(file_dataset, "density", body->density);
 	attribute_write(file_dataset, "force_born", body->Force_born);
 	attribute_write(file_dataset, "force_dead", body->Force_dead);
@@ -276,6 +277,7 @@ herr_t dataset_read_body(hid_t g_id, const char *name, const H5L_info_t *info, v
 	attribute_read(dataset, "speed_slae", body->Speed_slae);
 	attribute_read(dataset, "speed_slae_prev", body->Speed_slae_prev);
 	attribute_read(dataset, "spring_const", body->k);
+	attribute_read(dataset, "spring_damping", body->damping);
 	attribute_read(dataset, "density", body->density);
 	attribute_read(dataset, "force_born", body->Force_born);
 	attribute_read(dataset, "force_dead", body->Force_dead);
