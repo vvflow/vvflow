@@ -573,7 +573,8 @@ void convectivefast::fillForceXEquation(TBody* ibody, bool rightColOnly)
 		{
 			if (ibody->k.r.x >= 0 && S->Time>0)
 			{
-				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = -ibody->getArea()*_1_dt*ibody->density;
+				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = -ibody->getArea()*_1_dt*ibody->density
+				                                                      -ibody->damping.r.x;
 				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = 0;
 				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = 0;
 			} else
@@ -630,7 +631,8 @@ void convectivefast::fillForceYEquation(TBody* ibody, bool rightColOnly)
 			if (ibody->k.r.y >= 0 && S->Time>0)
 			{
 				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = 0;
-				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = -ibody->getArea()*_1_dt*ibody->density;
+				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = -ibody->getArea()*_1_dt*ibody->density
+				                                                      -ibody->damping.r.y;
 				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = 0;
 			} else
 			{
@@ -689,7 +691,8 @@ void convectivefast::fillMomentEquation(TBody* ibody, bool rightColOnly)
 			{
 				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) =  r_c_com.y*ibody->getArea()*_1_dt;
 				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = -r_c_com.x*ibody->getArea()*_1_dt;
-				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = -ibody->getMoi_c()*_1_dt*(ibody->density+2);
+				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = -ibody->getMoi_c()*_1_dt*(ibody->density+2)
+				                                                      -ibody->damping.o;
 			} else
 			{
 				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = 0;

@@ -42,6 +42,7 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "-bx, -by, -ba float --- body initial coordinates (x, y, alpha)\n");
 		fprintf(stderr, "-bdx, -bdy, -bda float --- body spring deformation (delta x, delta y, delta alpha)\n");
 		fprintf(stderr, "-bkx, -bky, -bka float --- body spring koefficient\n");
+		fprintf(stderr, "-bkdx, -bkdy, -bkda float --- body spring damping\n");
 		fprintf(stderr, "-brho float --- body density\n");
 		fprintf(stderr, "-mx, -my float --- move body without changing position and deltaposition variables\n");
 		fprintf(stderr, "-ma, -md float --- rotate body around r_0. Value is in radians and degrees correspondigly\n");
@@ -109,6 +110,15 @@ int main(int argc, char *argv[])
 		} else if (beginsWith(argv[i], "-bka"))
 		{
 			getBodyFromArg(S, argv[i]+4)->k.o = atof(argv[i+1]);
+		} else if (beginsWith(argv[i], "-bkdx"))
+		{
+			getBodyFromArg(S, argv[i]+5)->damping.r.x = atof(argv[i+1]);
+		} else if (beginsWith(argv[i], "-bkdy"))
+		{
+			getBodyFromArg(S, argv[i]+5)->damping.r.y = atof(argv[i+1]);
+		} else if (beginsWith(argv[i], "-bkda"))
+		{
+			getBodyFromArg(S, argv[i]+5)->damping.o = atof(argv[i+1]);
 		} else if (beginsWith(argv[i], "-brho"))
 		{
 			getBodyFromArg(S, argv[i]+5)->density = atof(argv[i+1]);
