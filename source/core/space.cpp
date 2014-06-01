@@ -319,7 +319,7 @@ herr_t dataset_read_body(hid_t g_id, const char *name, const H5L_info_t *info, v
 	return 0;
 }
 
-void Space::Load(const char* fname)
+void Space::Load(const char* fname, std::string *info)
 {
 	if (!H5Fis_hdf5(fname))
 	{
@@ -345,6 +345,13 @@ void Space::Load(const char* fname)
 	attribute_read(fid, "inf_circulation", InfCirculation);
 	attribute_read(fid, "gravity", gravitation);
 	attribute_read(fid, "time_to_finish", Finish);
+
+	if (info)
+	{
+		attribute_read(fid, "git_info", info[0]);
+		attribute_read(fid, "git_diff", info[1]);
+		attribute_read(fid, "time_local", info[2]);
+	}
 
 	dataset_read_list("vort", VortexList);
 	dataset_read_list("heat", HeatList);

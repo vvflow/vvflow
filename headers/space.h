@@ -44,7 +44,7 @@ class Space
 		double Re, Pr, Finish;
 
 		void Save(const char* format);
-		void Load(const char* filename);
+		void Load(const char* filename, std::string *info = NULL);
 		FILE* OpenFile(const char* format);
 		void CalcForces();
 		void SaveProfile(const char* filename, TValues vals);
