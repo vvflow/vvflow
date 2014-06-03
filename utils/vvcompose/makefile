@@ -1,22 +1,22 @@
 CC = icc -O3 -openmp -g -debug all
 PREFIX = ~/.local
 
-.PHONY: vvflow
-all: vvflow
+.PHONY: vvcompose
+all: vvcompose
 
-vvflow: vvflow.cpp
-	$(CC) $^ -o $@ -std=c++0x -mkl=parallel -lhdf5 -lvvhd
+vvcompose: vvcompose.cpp
+	$(CC) $^ -o $@ -std=c++0x -mkl=parallel -lhdf5 -Wl,-Bstatic -lvvhd -Wl,-Bdynamic
 
 clean:
-	rm -f vvflow
+	rm -f vvcompose
 
 install: | $(PREFIX)/bin
-	cp vvflow calc.py $(PREFIX)/bin/
+	cp vvcompose $(PREFIX)/bin/
 
 $(PREFIX)/bin:
 	mkdir -p $@
 
 uninstall:
-	rm -f $(PREFIX)/bin/vvflow $(PREFIX)/bin/calc.py
+	rm -f $(PREFIX)/bin/vvcompose
 
 
