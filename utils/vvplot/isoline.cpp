@@ -8,7 +8,7 @@
 //#include "core.h"
 using namespace std;
 
-#define Panic {cerr << "Bad file!\n"; return -3;}
+#define Panic {fprintf(stderr, "Bad file!\n %lg %lg %lg\n", x, y, z); return -3;}
 
 struct vec { double x, y; };
 typedef struct vec Vec;
@@ -127,8 +127,10 @@ int main(int argc, char **argv)
 			data[(jmax+1)*imax + j] = z; fixz();
 
 			if (fscanf(fin, "%lf %lf %lf", &x, &y, &z) != 3)
+			{
 				if (j==jmax) {go=false;}
 				else Panic;
+			}
 		}
 	}
 
