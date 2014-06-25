@@ -1,6 +1,8 @@
 #include "core.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 #include <iostream>
 #include <fstream>
 #include <math.h>
@@ -157,16 +159,79 @@ void attribute_write(hid_t hid, const char *name, float value)
 	assert(H5Aclose(aid)>=0);
 }
 
+void print_help(bool with_details)
+{
+	printf("usage: vvmap [-g] [-h] [-p {s,o,b,f}] [-s] [-t] [-x {g,p,s}]\n");
+	printf("             FILE xmin xmax ymin ymax spacing\n");
+	if (!with_details) return;
+	// printf("[FILE] [OPTIONS] xmin xmax ymin ymax spacing\n");
+	printf("vvmap calculates vorticity distribution on a regular mesh\n");
+	printf("Options:\n");
+	printf("  -g    calculate vorticity\n");
+	printf("  -h    show this message and exit\n");
+	printf("  -p {s,o,b,f}\n");
+	printf("        calculate static or dynamic pressure in given reference frame (original/body/fluid)\n");
+	printf("  -s    calculate stream function\n");
+	printf("  -t    calculate temperature function\n");
+	printf("  -x {g,p,s}\n        extract given mesh in binary format (adopted for gnuplot)\n");
+	printf("Environment:\n        VV_EPS_MULT - Domains smoothing coefficient. Default 2.\n");
+}
+
 int main(int argc, char *argv[])
 {
-	if ( argc != 7)\
+	char c;
+	char *filename;
+	bool arg_g = false;
+	char arg_p = '\0';
+	char arg_x = '\0';
+
+	while ((c = getopt(argc, argv, "ghp:")) != -1)
 	{
-		fprintf(stderr, "Usage: vvmap ", argv[0]);
-		fprintf(stderr, "[FILE] xmin xmax ymin ymax spacing\n");
-		fprintf(stderr, "vvmap calculates stream function distribution on a regular mesh\n");
-		fprintf(stderr, "Environment:\n\tVV_EPS_MULT - Vortexes smoothing coefficient. Default 2.\n");
+		     if (c == 'g') arg_g = true;
+		else if (c == 'h') { print_help(true); return 0; }
+		else if (c == 'p')
+		{
+			if (!strcmp(optarg, "s") ||
+				!strcmp(optarg, "o") ||
+				!strcmp(optarg, "b") ||
+				!strcmp(optarg, "f")) arg_p = optarg[0];
+			else
+			{
+				print_help(false);
+				fprintf(stderr, "vvmap: error: argument -p: invalid choice: '%s' (choose from 's', 'o', 'b', 'f')\n", optarg);
+				return -1;
+			}
+		}
+		else if (c == '?')
+		{
+			print_help(false);
+			if (optopt == 'p')
+				fprintf (stderr, "vvmap: error: argument -p: expected 1 argument\n");
+			else
+				fprintf (stderr, "vvmap: error: unrecognized arguments: -%c\n", optopt);
+			return -1;
+		}
+		else return -1;
+	}
+	if (argc - optind < 6)
+	{
+		print_help(false);
+		fprintf(stderr, "vvmap: error: too few arguments\n");
+		return -1;
+	} else if (argc - optind > 6)
+	{
+		print_help(false);
+		fprintf(stderr, "vvmap: error: unrecognized arguments: %s\n", argv[optind+6]);
 		return -1;
 	}
+	if (!arg_g && !arg_p && !arg_x)
+	{
+		print_help(false);
+		fprintf(stderr, "vvmap: error: at least one of arguments -g, -p, -x is requred\n");
+		return -1;
+	}
+	printf("g=%s p=%c x=%c\n", arg_g?"true":"false", arg_p?arg_p:'-', arg_x?arg_x:'-');
+	return 0;
 
 	char *mult_env = getenv("VV_EPS_MULT");
 	EPS_MULT = mult_env ? atof(mult_env) : 2;
