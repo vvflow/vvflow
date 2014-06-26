@@ -11,6 +11,7 @@
 
 #include "flowmove.h"
 #include "epsfast.h"
+#include "argparse.h"
 
 const double ExpArgRestriction = -8.;
 double dl;
@@ -184,6 +185,11 @@ int main(int argc, char *argv[])
 	bool arg_g = false;
 	char arg_p = '\0';
 	char arg_x = '\0';
+	double xmin = 0;
+	double xmax = 0;
+	double ymin = 0;
+	double ymax = 0;
+	double spacing = 0;
 
 	while ((c = getopt(argc, argv, "ghp:")) != -1)
 	{
@@ -213,31 +219,49 @@ int main(int argc, char *argv[])
 		}
 		else return -1;
 	}
-	if (argc - optind < 6)
-	{
-		print_help(false);
-		fprintf(stderr, "vvmap: error: too few arguments\n");
-		return -1;
-	} else if (argc - optind > 6)
-	{
-		print_help(false);
-		fprintf(stderr, "vvmap: error: unrecognized arguments: %s\n", argv[optind+6]);
-		return -1;
-	}
 	if (!arg_g && !arg_p && !arg_x)
 	{
 		print_help(false);
 		fprintf(stderr, "vvmap: error: at least one of arguments -g, -p, -x is requred\n");
 		return -1;
 	}
-	printf("g=%s p=%c x=%c\n", arg_g?"true":"false", arg_p?arg_p:'-', arg_x?arg_x:'-');
-	return 0;
+	if (argc - optind != 6)
+	{
+		print_help(false);
+		fprintf(stderr, "vvmap: error: too %s arguments\n", (argc-optind<6)?"few":"many");
+		return -1;
+	} else
+	{
+		filename = argv[optind];
+		FILE *test = fopen(filename, "r");
+		if (!test)
+		{
+			print_help(false);
+			fprintf(stderr, "vvmap: error: argument FILE: can't open '%s': [Errno %d] %s\n", argv[optind], errno, strerror(errno));
+			return -1;
+		}
+		fclose(test);
+
+		#define check(index, arg) \
+			if (sscanf(argv[optind+index], "%lf\0", &arg) != 1) \
+			{ \
+				print_help(false); \
+				fprintf(stderr, "vvmap: error: argument %s: invalid float value: '%s'\n", #arg, argv[optind+index]); \
+				return -1; \
+			}
+		check(1, xmin);
+		check(2, xmax);
+		check(3, ymin);
+		check(4, ymax);
+		check(5, spacing);
+		#undef check
+	}
 
 	char *mult_env = getenv("VV_EPS_MULT");
 	EPS_MULT = mult_env ? atof(mult_env) : 2;
 
 	Space *S = new Space();
-	S->Load(argv[1]);
+	S->Load(filename);
 	flowmove fm(S);
 	fm.VortexShed();
 	printer my_printer;
@@ -256,14 +280,6 @@ int main(int argc, char *argv[])
 			lobj->v.y = lobj->v.x * lobj->g;
 		}
 	}
-
-	/************** READ ARGUMENTS ****************/
-	double xmin = atof(argv[2]);
-	double xmax = atof(argv[3]);
-	double ymin = atof(argv[4]);
-	double ymax = atof(argv[5]);
-	double spacing = atof(argv[6]);
-	/******************************************/
 
 	int total = int((xmax-xmin)/spacing + 1)*int((ymax-ymin)/spacing + 1);
 	int now=0;

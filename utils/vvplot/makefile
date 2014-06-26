@@ -7,7 +7,7 @@ exes:= $(patsubst %,%_exe, $(names))
 all: $(exes)
 
 vvmap: vvmap.cpp
-	$(CC) $^ -o $@ -g -std=c++0x -mkl=parallel -lhdf5 -Wl,-Bstatic -lvvhd -Wl,-Bdynamic
+	$(CC) $^ -o $@ -g -std=c++0x -mkl=parallel -lhdf5 -largparse -Wl,-Bstatic -lvvhd -Wl,-Bdynamic
 %_exe: %.cpp
 	$(CC) $^ -o $@ -g -std=c++0x -mkl=parallel -lhdf5 -Wl,-Bstatic -lvvhd -Wl,-Bdynamic
 
