@@ -4,15 +4,19 @@ names:= presplot isoline streamlines heatplot vorticity vvdistrib vvmap
 scripts:= vvplot argparse_vvplot.py
 exes:= $(patsubst %,%_exe, $(names))
 
-all: $(exes)
+all: $(exes) libvvplot.so
 
 vvmap: vvmap.cpp
-	$(CC) $^ -o $@ -g -std=c++0x -mkl=parallel -lhdf5 -largparse -Wl,-Bstatic -lvvhd -Wl,-Bdynamic
+	$(CC) $^ -o $@ -g -std=c++0x -mkl=parallel -lhdf5 -Wl,-Bstatic -lvvhd -Wl,-Bdynamic
 %_exe: %.cpp
 	$(CC) $^ -o $@ -g -std=c++0x -mkl=parallel -lhdf5 -Wl,-Bstatic -lvvhd -Wl,-Bdynamic
 
+libvvplot.so: $(patsubst %,source/%.cpp, map_extract map_vorticity)
+	icc $^ -o $@ -shared -fPIC -openmp -std=c++0x -Wl,-soname,libvvplot.so -Wl,-e,main -lhdf5 -Wl,-Bstatic -lvvhd -Wl,-Bdynamic -liomp5 -static-intel
+
 clean:
 	rm -f $(exes)
+	rm -f libvvplot.so
 
 install: | $(PREFIX)/bin
 	cp $(scripts) $(exes) $(PREFIX)/bin
