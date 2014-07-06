@@ -12,9 +12,9 @@
 #include "flowmove.h"
 #include "epsfast.h"
 
-const double ExpArgRestriction = -8.;
-double dl;
-double EPS_MULT;
+static const double ExpArgRestriction = -8.;
+static double dl;
+static double EPS_MULT;
 using namespace std;
 
 double eps2h(const TSortedNode &Node, TVec p)

@@ -201,10 +201,7 @@ boundaries = (str(xmin - vv_prec_lo),
 pids = list()
 
 home = os.getenv("HOME")
-presplot_exe = os.path.join(home, ".local/bin/presplot_exe")
 heatplot_exe = os.path.join(home, ".local/bin/heatplot_exe")
-vorticity_exe = os.path.join(home, ".local/bin/vorticity_exe")
-streamlines_exe = os.path.join(home, ".local/bin/streamlines_exe")
 isoline_exe = os.path.join(home, ".local/bin/isoline_exe")
 c_boundaries = (ctypes.c_double(xmin - vv_prec_lo),
 		ctypes.c_double(xmax + vv_prec_lo),
@@ -228,11 +225,8 @@ if args.plot_vorticity and (not libvvplot.map_check(h5_fid, "map_vorticity", *c_
 	libvvplot.map_vorticity(h5_fid, *c_boundaries)
 
 #PSI FUNCTION FIELD
-if args.plot_streamlines:
-	if not os.path.exists("%s.psi" % fin_name) or args.mode_force:
-		pids.append(os.spawnvp(os.P_NOWAIT, streamlines_exe,
-		               (streamlines_exe, fin_name,
-		               str(vv_prec_lo)) + boundaries + tuple(args.streamlines)));
+if args.plot_streamlines and (not libvvplot.map_check(h5_fid, "map_streamfunction.%s"%args.streamlines, *c_boundaries) or args.mode_force):
+	libvvplot.map_streamfunction(h5_fid, ctypes.c_char(args.streamlines), *c_boundaries) # fixme: use vv_prec_lo here
 
 for i in pids:
 	os.waitpid(i, 0)
@@ -372,6 +366,7 @@ if args.plot_ink and 'ink' in lists:
 	gp.write(""" u 1:2:(%f) w @ink_style""" % vv_prec_hi)
 
 if args.plot_streamlines:
+	# gp.write("""%s '< libvvplot.so %s map_streamfunction.%s' binary format='%%float%%float%%float' w image""" % (delim.get(), fin_name, args.streamlines))
 	vv_isopsi = os.getenv("VV_ISOPSI") or os.popen("seq -s ' ' -10 0.1 10").read()[:-1]
 	gp.write("""%s "< isoline_exe %s.psi %s" w lines lw 1.5 lc rgb 'black'""" % (delim.get(), fin_name, vv_isopsi))
 

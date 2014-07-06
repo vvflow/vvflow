@@ -11,14 +11,12 @@
 #include "flowmove.h"
 #include "hdf5.h"
 
-const double S1Restriction = 1E-6;
-const double ExpArgRestriction = -8.;
-typedef void* pointer;
+static const double S1Restriction = 1E-6;
+static const double ExpArgRestriction = -8.;
 using namespace std;
 #define dbg(a) { cerr << #a << "... "; a; cerr << "done\n"; }
 //#define dbg(a) a
 
-FILE *fout;
 double Rd2;
 
 inline
