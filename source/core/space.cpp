@@ -231,13 +231,20 @@ void Space::Save(const char* format)
 88888888  "Y88888P"  d88P     888 8888888P"
 */
 
-void dataset_read_list(const char *name, vector<TObj> *&list)
+void dataset_read_list(hid_t fid, const char *name, vector<TObj> *&list)
 {
 	if (!H5Lexists(fid, name, H5P_DEFAULT)) return;
 	if (!list) list = new vector<TObj>;
 
 	hid_t dataset = H5Dopen2(fid, name, H5P_DEFAULT);
-	assert (dataset>=0);
+	if (dataset < 0)
+	{
+		H5Epop(H5E_DEFAULT, H5Eget_num(H5E_DEFAULT)-1);
+		H5Eprint2(H5E_DEFAULT, stderr);
+		fprintf(stderr, "error: dataset_read_list: can't open dataset '%s'\n", name);
+		return;
+	}
+
 	hid_t file_dataspace = H5Dget_space(dataset);
 	assert(file_dataspace>=0);
 	hsize_t dims[2]; H5Sget_simple_extent_dims(file_dataspace, dims, dims);
@@ -249,7 +256,14 @@ void dataset_read_list(const char *name, vector<TObj> *&list)
 	hsize_t stride[2] = {2, 1};
 	assert(H5Sselect_hyperslab(mem_dataspace, H5S_SELECT_SET, offset, stride, dims, NULL)>=0);
 
-	assert(H5Dread(dataset, H5T_NATIVE_DOUBLE, mem_dataspace, file_dataspace, H5P_DEFAULT, list->begin())>=0);
+	herr_t err = H5Dread(dataset, H5T_NATIVE_DOUBLE, mem_dataspace, file_dataspace, H5P_DEFAULT, list->begin());
+	if (err < 0)
+	{
+		H5Epop(H5E_DEFAULT, H5Eget_num(H5E_DEFAULT)-1);
+		H5Eprint2(H5E_DEFAULT, stderr);
+		fprintf(stderr, "error: dataset_read_list: can't read dataset '%s'\n", name);
+		return;
+	}
 	H5Dclose(dataset);
 }
 
@@ -261,13 +275,19 @@ herr_t dataset_read_body(hid_t g_id, const char *name, const H5L_info_t *info, v
 	TBody *body = new TBody(S);
 	S->BodyList->push_back(body);
 
-	hid_t dataset = H5Dopen2(fid, name, H5P_DEFAULT);
-	assert (dataset>=0);
+	hid_t dataset = H5Dopen2(g_id, name, H5P_DEFAULT);
+	if (dataset < 0)
+	{
+		H5Epop(H5E_DEFAULT, H5Eget_num(H5E_DEFAULT)-1);
+		H5Eprint2(H5E_DEFAULT, stderr);
+		fprintf(stderr, "error: dataset_read_body: can't open dataset '%s'\n", name);
+		return -1;
+	}
 	hid_t file_dataspace = H5Dget_space(dataset);
 	assert(file_dataspace>=0);
 	hsize_t dims[2]; H5Sget_simple_extent_dims(file_dataspace, dims, dims);
 	
-	assert(attribute_read_bool(dataset, "simplified_dataset"));
+	assert(attribute_read_bool(dataset, "simplified_dataset") && "feature not supported yet");
 
 	attribute_read(dataset, "holder_position", body->pos);
 	attribute_read(dataset, "delta_position", body->dPos);
@@ -327,8 +347,22 @@ void Space::Load(const char* fname, std::string *info)
 		return;
 	}
 
-	fid = H5Fopen(fname, H5F_ACC_RDONLY, H5P_DEFAULT);
-	assert(fid>=0);
+	H5Eset_auto2(H5E_DEFAULT, NULL, NULL);
+	hid_t fid = H5Fopen(fname, H5F_ACC_RDONLY, H5P_DEFAULT);
+	if (fid < 0)
+	{
+		H5Epop(H5E_DEFAULT, H5Eget_num(H5E_DEFAULT)-1);
+		H5Eprint2(H5E_DEFAULT, stderr);
+		fprintf(stderr, "error: Space::Load: can't open file '%s'\n", fname);
+		return;
+	}
+	Load(fid, info);
+
+	H5Fclose(fid);
+}
+
+void Space::Load(hid_t fid, std::string *info)
+{
 	datatypes_create_all();
 
 	attribute_read(fid, "caption", caption);
@@ -353,16 +387,15 @@ void Space::Load(const char* fname, std::string *info)
 		attribute_read(fid, "time_local", info[2]);
 	}
 
-	dataset_read_list("vort", VortexList);
-	dataset_read_list("heat", HeatList);
-	dataset_read_list("ink", StreakList);
-	dataset_read_list("ink_source", StreakSourceList);
+	dataset_read_list(fid, "vort", VortexList);
+	dataset_read_list(fid, "heat", HeatList);
+	dataset_read_list(fid, "ink", StreakList);
+	dataset_read_list(fid, "ink_source", StreakSourceList);
 
 	H5Literate(fid, H5_INDEX_NAME, H5_ITER_NATIVE, NULL, dataset_read_body, this);
 	EnumerateBodies();
 	
 	datatypes_close_all();
-	assert(H5Fclose(fid)>=0);
 }
 
 /*
@@ -850,9 +883,11 @@ double Space::AverageSegmentLength()
 	return SurfaceLength / N;
 }
 
-///////////////////////////////////////////////////////////////////////////
-
-Space* Space_new()
+bool Space::PointIsInBody(TVec p)
 {
-	return new Space;
+	const_for(BodyList, llbody)
+	{
+		if ((**llbody).isPointInvalid(p)) return true;
+	}
+	return false;
 }

@@ -17,15 +17,6 @@ double dl;
 double EPS_MULT;
 using namespace std;
 
-bool PointIsInvalid(Space *S, TVec p)
-{
-	const_for(S->BodyList, llbody)
-	{
-		if ((**llbody).isPointInvalid(p)) return true;
-	}
-	return false;
-}
-
 double eps2h(const TSortedNode &Node, TVec p)
 {
 	TVec dr;
@@ -135,8 +126,8 @@ double Vorticity(Space* S, TVec p)
 }
 
 extern "C" {
-int map_save(const char *filename, const char *dsetname, const float* data, const hsize_t *dims, double xmin, double xmax, double ymin, double ymax, double spacing);
-int map_vorticity(char *filename, double xmin, double xmax, double ymin, double ymax, double spacing)
+int map_save(hid_t fid, const char *dsetname, const float* data, const hsize_t *dims, double xmin, double xmax, double ymin, double ymax, double spacing);
+int map_vorticity(hid_t fid, double xmin, double xmax, double ymin, double ymax, double spacing)
 {
 	char *mult_env = getenv("VV_EPS_MULT");
 	EPS_MULT = mult_env ? atof(mult_env) : 2;
@@ -146,7 +137,7 @@ int map_vorticity(char *filename, double xmin, double xmax, double ymin, double 
 	**************************************************************************/
 
 	Space *S = new Space();
-	S->Load(filename);
+	S->Load(fid);
 	flowmove fm(S);
 	fm.VortexShed();
 	S->HeatList = NULL;
@@ -177,7 +168,7 @@ int map_vorticity(char *filename, double xmin, double xmax, double ymin, double 
 		{
 			double y = ymin + double(yj)*spacing;
 			TVec xy(x,y);
-			mem[xi*dims[1]+yj] = PointIsInvalid(S, xy) ? 0 : Vorticity(S, xy);
+			mem[xi*dims[1]+yj] = S->PointIsInBody(xy) ? 0 : Vorticity(S, xy);
 		}
 	}
 
@@ -185,7 +176,7 @@ int map_vorticity(char *filename, double xmin, double xmax, double ymin, double 
 	*** SAVE RESULTS **********************************************************
 	**************************************************************************/
 
-	map_save(filename, "vorticity", mem, dims, xmin, xmax, ymin, ymax, spacing);
+	map_save(fid, "map_vorticity", mem, dims, xmin, xmax, ymin, ymax, spacing);
 	free(mem);
 
 	return 0;

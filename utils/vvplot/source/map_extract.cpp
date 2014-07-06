@@ -52,7 +52,7 @@ void attribute_read_double(hid_t hid, const char *name, double &value)
 
 extern "C" {
 bool map_check(
-	const char *filename,
+	hid_t fid,
 	const char *dsetname,
 	double xmin,
 	double xmax,
@@ -60,14 +60,6 @@ bool map_check(
 	double ymax,
 	double spacing)
 {
-	hid_t fid = H5Fopen(filename, H5F_ACC_RDWR, H5P_DEFAULT);
-	if (fid < 0)
-	{
-		H5Epop(H5E_DEFAULT, H5Eget_num(H5E_DEFAULT)-1);
-		H5Eprint2(H5E_DEFAULT, stderr);
-		fprintf(stderr, "error: argument file: can't open file '%s'\n", filename);
-		exit(-1);
-	}
 	if (!H5Lexists(fid, dsetname, H5P_DEFAULT)) return false;
 	hid_t dataset = H5Dopen2(fid, dsetname, H5P_DEFAULT);
 	if (dataset < 0)
@@ -91,16 +83,16 @@ bool map_check(
 	result &= attr[2] <= ymin;
 	result &= attr[3] >= ymax;
 	result &= attr[4] <= spacing;
-	H5Fclose(fid);
-	fprintf(stderr, "%s %s %lf %lf %lf %lf %lf\n", filename, dsetname, xmin, xmax, ymin, ymax, spacing);
-	fprintf(stderr, "%lf %lf %lf %lf %lf\n", attr[0], attr[1], attr[2], attr[3], attr[4]);
-	fprintf(stderr, "returning %s\n", result?"true":"false");
+	// fprintf(stderr, "%s %s %lf %lf %lf %lf %lf\n", filename, dsetname, xmin, xmax, ymin, ymax, spacing);
+	// fprintf(stderr, "%lf %lf %lf %lf %lf\n", attr[0], attr[1], attr[2], attr[3], attr[4]);
+	// fprintf(stderr, "returning %s\n", result?"true":"false");
+	H5Dclose(dataset);
 	return result;
 }}
 
 extern "C" {
 int map_save(
-	const char *filename,
+	hid_t fid,
 	const char *dsetname,
 	const float* data, const hsize_t *dims,
 	double xmin,
@@ -111,14 +103,6 @@ int map_save(
 {
 	// Create HDF file
 	H5Eset_auto2(H5E_DEFAULT, NULL, NULL);
-	hid_t fid = H5Fopen(filename, H5F_ACC_RDWR, H5P_DEFAULT);
-	if (fid < 0)
-	{
-		H5Epop(H5E_DEFAULT, H5Eget_num(H5E_DEFAULT)-1);
-		H5Eprint2(H5E_DEFAULT, stderr);
-		fprintf(stderr, "error: argument file: can't open file '%s'\n", filename);
-		return 2;
-	}
 
 	// Create dataspace and dataset
 	DATASPACE_SCALAR = H5Screate(H5S_SCALAR);
@@ -157,24 +141,15 @@ int map_save(
 	H5Dclose(file_dataset);
 	H5Sclose(DATASPACE_SCALAR);
 	H5Sclose(file_dataspace);
-	H5Fclose(fid);
+	// H5Fclose(fid);
 
 	return 0;
 }}
 
 extern "C" {
-int map_extract(const char *filename, const char *dsetname)
+int map_extract(hid_t fid, const char *dsetname)
 {
 	H5Eset_auto2(H5E_DEFAULT, NULL, NULL);
-	fid = H5Fopen(filename, H5F_ACC_RDONLY, H5P_DEFAULT);
-	if (fid < 0)
-	{
-		H5Epop(H5E_DEFAULT, H5Eget_num(H5E_DEFAULT)-1);
-		H5Eprint2(H5E_DEFAULT, stderr);
-		fprintf(stderr, "error: argument file: can't open file '%s'\n", filename);
-		return 2;
-	}
-
 	hid_t dataset = H5Dopen2(fid, dsetname, H5P_DEFAULT);
 	if (dataset < 0)
 	{
@@ -227,7 +202,6 @@ int map_extract(const char *filename, const char *dsetname)
 
 	H5Sclose(dataspace);
 	H5Dclose(dataset);
-	H5Fclose(fid);
 	// printf("%s\n", argv[0]);
 	return 0;
 
@@ -256,7 +230,17 @@ int main()
 		_exit(1);
 	}
 
-	map_extract(argv[1], argv[2]);
+	H5Eset_auto2(H5E_DEFAULT, NULL, NULL);
+	fid = H5Fopen(argv[1], H5F_ACC_RDONLY, H5P_DEFAULT);
+	if (fid < 0)
+	{
+		H5Epop(H5E_DEFAULT, H5Eget_num(H5E_DEFAULT)-1);
+		H5Eprint2(H5E_DEFAULT, stderr);
+		fprintf(stderr, "error: argument file: can't open file '%s'\n", argv[1]);
+		return 2;
+	}
+	map_extract(fid, argv[2]);
+	H5Fclose(fid);
 
 	_exit(0);
 }//}

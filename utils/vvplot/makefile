@@ -1,6 +1,6 @@
 CC = icc -O3 -openmp
 PREFIX=$(HOME)/.local
-names:= presplot isoline streamlines heatplot vorticity vvdistrib vvmap
+names:= isoline streamlines heatplot vvdistrib
 scripts:= vvplot argparse_vvplot.py
 exes:= $(patsubst %,%_exe, $(names))
 
@@ -11,8 +11,8 @@ vvmap: vvmap.cpp
 %_exe: %.cpp
 	$(CC) $^ -o $@ -g -std=c++0x -mkl=parallel -lhdf5 -Wl,-Bstatic -lvvhd -Wl,-Bdynamic
 
-libvvplot.so: $(patsubst %,source/%.cpp, map_extract map_vorticity)
-	icc $^ -o $@ -shared -fPIC -openmp -std=c++0x -Wl,-soname,libvvplot.so -Wl,-e,main -lhdf5 -Wl,-Bstatic -lvvhd -Wl,-Bdynamic -liomp5 -static-intel
+libvvplot.so: $(patsubst %,source/%.cpp, map_extract map_vorticity map_pressure)
+	icc $^ -o $@ -shared -fPIC -openmp -mkl -std=c++0x -Wl,-soname,libvvplot.so,-e,main -lhdf5 -Wl,-Bstatic -lvvhd -Wl,-Bdynamic -liomp5
 
 clean:
 	rm -f $(exes)

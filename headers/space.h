@@ -45,6 +45,7 @@ class Space
 
 		void Save(const char* format);
 		void Load(const char* filename, std::string *info = NULL);
+		void Load(int fid, std::string *info = NULL);
 		FILE* OpenFile(const char* format);
 		void CalcForces();
 		void SaveProfile(const char* filename, TValues vals);
@@ -69,14 +70,10 @@ class Space
 		double gmax();
 		TVec HydroDynamicMomentum();
 		double AverageSegmentLength();
+		bool PointIsInBody(TVec p);
 
 	private:
 		void Load_v1_3(const char* filename);
 };
-
-extern "C"
-{
-	Space* Space_new();
-}
 
 #endif /*SPACE_H_*/

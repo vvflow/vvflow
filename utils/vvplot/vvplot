@@ -127,36 +127,36 @@ except Exception as s:
 ################################################################################
 ## READING BINARY HEADER
 
-file = h5py.File(fin_name, "r")
-# print dir(file)
-# print file.fid
-# print 'caption = '+file.attrs['caption']
-# print 'Re = '+str(file.attrs['re']);
+h5_file = h5py.File(fin_name, "r+")
+h5_fid = h5_file.fid.id
+# print dir(h5_file)
+# print h5_file.fid
+# print 'caption = '+h5_file.attrs['caption']
+# print 'Re = '+str(h5_file.attrs['re']);
 
-realtime = file.attrs['time_local']
-time = (lambda frac: float(frac[0])/float(frac[1]))(file.attrs['time'])
+realtime = h5_file.attrs['time_local']
+time = (lambda frac: float(frac[0])/float(frac[1]))(h5_file.attrs['time'])
 try:
-	marker_x, marker_y = file.attrs['inf_marker']
+	marker_x, marker_y = h5_file.attrs['inf_marker']
 except:
 	marker_x, marker_y = [0, 0]
 
-datasets = file.keys()
+datasets = h5_file.keys()
 # bodies = [str(b) for b in datasets if str(b)[0:4] == "body"]
 bodies = []
 for b in datasets:
 	if str(b)[0:4] == "body":
 		name = str(b)
 		try:
-			holder_position = file[b].attrs['holder_position']
+			holder_position = h5_file[b].attrs['holder_position']
 		except:
 			holder_position = (0, 0, 0)
 		try:
-			delta_position = file[b].attrs['delta_position']
+			delta_position = h5_file[b].attrs['delta_position']
 		except:
 			delta_position = (0, 0, 0)
 		bodies.append({'name':name, 'holder_position':holder_position, 'delta_position':delta_position})
 lists = [str(l) for l in datasets if str(l) in ["vort", "heat", "ink", "ink_source"]]
-file.close()
 
 ################################################################################
 ## 
@@ -214,11 +214,8 @@ c_boundaries = (ctypes.c_double(xmin - vv_prec_lo),
 libvvplot = ctypes.cdll.LoadLibrary("%s/libvvplot.so" % os.path.abspath(os.path.dirname(sys.argv[0])))
 
 #PRESS FIELD
-if args.plot_pressure or args.plot_isopressure:
-	if not os.path.exists("%s.%c.map" % (fin_name, args.pressure)) or args.mode_force:
-		pids.append(os.spawnvp(os.P_NOWAIT, presplot_exe, \
-		               (presplot_exe, fin_name,
-		               str(vv_prec_hi)) + boundaries + tuple(args.pressure)));
+if (args.plot_pressure or args.plot_isopressure) and (not libvvplot.map_check(h5_fid, "map_pressure.%s"%args.pressure, *c_boundaries) or args.mode_force):
+	libvvplot.map_pressure(h5_fid, ctypes.c_char(args.pressure), *c_boundaries)
 
 #TEMPERATURE FIELD
 if args.plot_temperature or args.plot_isotherms:
@@ -227,12 +224,8 @@ if args.plot_temperature or args.plot_isotherms:
 		               (heatplot_exe, fin_name, str(vv_prec_hi)) + boundaries));
 
 #VORTICITY FIELD
-if args.plot_vorticity and (not libvvplot.map_check(fin_name, "vorticity", *c_boundaries) or args.mode_force):
-	libvvplot.map_vorticity(fin_name, *c_boundaries)
-	print "OK"
-	# if not os.path.exists("%s.vrtc" % fin_name) or args.mode_force:
-	# 	pids.append(os.spawnvp(os.P_NOWAIT, vorticity_exe,
-	# 	              (vorticity_exe, fin_name, str(vv_prec_hi)) + boundaries));
+if args.plot_vorticity and (not libvvplot.map_check(h5_fid, "map_vorticity", *c_boundaries) or args.mode_force):
+	libvvplot.map_vorticity(h5_fid, *c_boundaries)
 
 #PSI FUNCTION FIELD
 if args.plot_streamlines:
@@ -244,6 +237,7 @@ if args.plot_streamlines:
 for i in pids:
 	os.waitpid(i, 0)
 
+h5_file.close()
 if args.mode_dry: exit()
 #TODOread more about subprocess module
 
@@ -350,7 +344,7 @@ if args.plot_temperature:
 
 delim = delimiter()
 if args.plot_pressure or args.plot_isopressure:
-	gp.write("""%s '%s.%c.map' w image""" % (delim.get(), fin_name, args.pressure))
+	gp.write("""%s '< libvvplot.so %s map_pressure.%s' binary format='%%float%%float%%float' w image""" % (delim.get(), fin_name, args.pressure))
 	if args.plot_isopressure:
 		vv_isopres = os.popen("seq -s ' ' -1.5 0.075757576 1").read()[:-1]
 		gp.write("""%s "< %s %s.%c.map %s" w lines lw 1 lc rgb '#9999cc'""" % (delim.get(), isoline_exe, fin_name, args.pressure, vv_isopres))
@@ -359,7 +353,7 @@ if args.plot_temperature:
 	gp.write("""%s '%s.heat' w image""" % (delim.get(), fin_name))
 
 if args.plot_vorticity:
-	gp.write("""%s '< libvvplot.so %s vorticity' binary format='%%float%%float%%float' w image""" % (delim.get(), fin_name))
+	gp.write("""%s '< libvvplot.so %s map_vorticity' binary format='%%float%%float%%float' w image""" % (delim.get(), fin_name))
 
 if args.plot_vortexes_bold and 'vort' in lists:
 	gp.write("""%s '< h5totxt %s -s " " -d vort'""" % (delim.get(), fin_name))
