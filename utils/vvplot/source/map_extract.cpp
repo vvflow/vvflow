@@ -200,6 +200,7 @@ int map_extract(hid_t fid, const char *dsetname)
 	// fwrite(dims, sizeof(hsize_t), 2, stdout);
 	// fwrite(&xmin, sizeof(double), 1, stdout);
 
+	free(mem);
 	H5Sclose(dataspace);
 	H5Dclose(dataset);
 	// printf("%s\n", argv[0]);
