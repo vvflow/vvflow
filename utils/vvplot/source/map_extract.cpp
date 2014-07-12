@@ -1,12 +1,12 @@
 #include "stdio.h"
 #include "unistd.h"
+#include "string.h"
 #include "malloc.h"
-#include "assert.h"
-#include "hdf5.h"
+#include "libvvplot_api.h"
 #include "core.h"
 
 const char interp[] __attribute__((section(".interp"))) = "/lib64/ld-linux-x86-64.so.2";
-static char buffer[256];
+static char buffer[4096];
 Space *S = NULL;
 hid_t fid;
 
@@ -27,27 +27,15 @@ void get_args(int *argc, char **argv)
 	fclose(argf);
 }
 
-static hid_t DATASPACE_SCALAR;
-inline
-void attribute_write(hid_t hid, const char *name, double value)
+static hid_t DATASPACE_SCALAR = -1;
+inline void attribute_write(hid_t hid, const char *name, double value)
 {
-	if (value == 0) return;
+	// if (value == 0) return;
+	if (DATASPACE_SCALAR<0) DATASPACE_SCALAR = H5Screate(H5S_SCALAR);
 	hid_t aid = H5Acreate2(hid, name, H5T_NATIVE_DOUBLE, DATASPACE_SCALAR, H5P_DEFAULT, H5P_DEFAULT);
-	assert(aid>=0);
-	assert(H5Awrite(aid, H5T_NATIVE_DOUBLE, &value)>=0);
-	assert(H5Aclose(aid)>=0);
-}
-
-inline
-void attribute_read_double(hid_t hid, const char *name, double &value)
-{
-	if (!H5Aexists(hid, name)) { value = 0; return; }
-
-	hid_t aid = H5Aopen(hid, name, H5P_DEFAULT);
-	assert(aid>=0);
-
-	assert(H5Aread(aid, H5T_NATIVE_DOUBLE, &value)>=0);
-	assert(H5Aclose(aid)>=0);
+	if (aid < 0) return;
+	H5Awrite(aid, H5T_NATIVE_DOUBLE, &value);
+	H5Aclose(aid);
 }
 
 extern "C" {
@@ -102,10 +90,9 @@ int map_save(
 	double spacing)
 {
 	// Create HDF file
-	H5Eset_auto2(H5E_DEFAULT, NULL, NULL);
+	// H5Eset_auto2(H5E_DEFAULT, NULL, NULL);
 
 	// Create dataspace and dataset
-	DATASPACE_SCALAR = H5Screate(H5S_SCALAR);
 	hid_t file_dataspace = H5Screate_simple(2, dims, dims);
 	if (file_dataspace < 0)
 	{
@@ -208,39 +195,61 @@ int map_extract(hid_t fid, const char *dsetname)
 
 }}
 
-// extern "C" {
+void print_version()
+{
+	fprintf(stderr, "libvvplot.so compiled with:\n");
+	fprintf(stderr, " - libvvhd git_commit %s\n", Space().getGitInfo());
+	unsigned ver[3];
+	H5get_libversion(&ver[0], &ver[1], &ver[2]);
+	fprintf(stderr, " - libhdf version %u.%u.%u\n", ver[0], ver[1], ver[2]);
+	fflush(stderr);
+}
+
+void print_help()
+{
+	fprintf(stderr, "Usage: libvvplot.so {-h,-v,-M,-I} FILE DATASET [ARGS]\n");
+	fprintf(stderr, "Options:\n");
+	fprintf(stderr, " -h : show this message\n");
+	fprintf(stderr, " -v : show version info\n");
+	fprintf(stderr, " -M : extract a binary dataset from hdf file\n");
+	fprintf(stderr, " -I : plot isolines on a dataset with constants in args\n");
+	fflush(stderr);
+}
+
 int main()
 {
 	int argc = 0;
-	char *argv[256];
+	char *argv[512];
 	get_args(&argc, argv);
 
-	// for (int i=0; i<argc; i++)
-	// {
-	// 	printf("%d %s\n", i, argv[i]);
-	// }
-
-	if (argc != 3)
-	{
-		fprintf(stderr, "libvvplot.so compiled with:\n");
-		fprintf(stderr, " - libvvhd git_commit %s\n", Space().getGitInfo());
-		unsigned ver[3];
-		H5get_libversion(&ver[0], &ver[1], &ver[2]);
-		fprintf(stderr, " - libhdf version %u.%u.%u\n", ver[0], ver[1], ver[2]);
-		fprintf(stderr, "It can be executed to extract a map from hdf file:\n   usage: libvvplot.so file dataset\n");
-		_exit(1);
-	}
+	char mode;
+	     if (argc<2) { print_help(); _exit(1); }
+	else if (!strcmp(argv[1], "-h")) { print_help(); _exit(0); }
+	else if (!strcmp(argv[1], "-v")) { print_version(); _exit(0); }
+	else if (argc < 4) { print_help(); _exit(1); }
+	else if (!strcmp(argv[1], "-I") || !strcmp(argv[1], "-M")) {;}
+	else {fprintf(stderr, "Bad option '%s'. See '-h' for help.\n", argv[1]); _exit(-1); }
 
 	H5Eset_auto2(H5E_DEFAULT, NULL, NULL);
-	fid = H5Fopen(argv[1], H5F_ACC_RDONLY, H5P_DEFAULT);
+	fid = H5Fopen(argv[2], H5F_ACC_RDONLY, H5P_DEFAULT);
 	if (fid < 0)
 	{
 		H5Epop(H5E_DEFAULT, H5Eget_num(H5E_DEFAULT)-1);
 		H5Eprint2(H5E_DEFAULT, stderr);
-		fprintf(stderr, "error: argument file: can't open file '%s'\n", argv[1]);
+		fprintf(stderr, "error: argument file: can't open file '%s'\n", argv[2]);
 		return 2;
 	}
-	map_extract(fid, argv[2]);
+
+	if (!strcmp(argv[1], "-M"))
+	{
+		map_extract(fid, argv[3]);
+	}
+	else if (!strcmp(argv[1], "-I"))
+	{
+		float vals[512];
+		for (int i=4; i<argc; i++) { sscanf(argv[i], "%f", &vals[i-4]); }
+		map_isoline(fid, argv[3], vals, argc-4);
+	}
 	H5Fclose(fid);
 
 	_exit(0);

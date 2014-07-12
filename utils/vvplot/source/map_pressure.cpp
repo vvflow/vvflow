@@ -5,6 +5,7 @@
 #include <math.h>
 
 #include "core.h"
+#include "libvvplot_api.h"
 #include "convectivefast.h"
 #include "epsfast.h"
 #include "diffusivefast.h"
@@ -71,7 +72,6 @@ double Pressure(Space* S, convectivefast *conv, TVec p, char RefFrame, double pr
 	return Cp_static; // not used
 }
 extern "C" {
-int map_save(hid_t fid, const char *dsetname, const float* data, const hsize_t *dims, double xmin, double xmax, double ymin, double ymax, double spacing);
 int map_pressure(hid_t fid, char RefFrame, double xmin, double xmax, double ymin, double ymax, double spacing)
 {
 	Space *S = new Space();

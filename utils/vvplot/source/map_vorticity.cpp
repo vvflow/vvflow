@@ -9,6 +9,8 @@
 #include <assert.h>
 #include "hdf5.h"
 
+
+#include "libvvplot_api.h"
 #include "flowmove.h"
 #include "epsfast.h"
 
@@ -126,7 +128,6 @@ double Vorticity(Space* S, TVec p)
 }
 
 extern "C" {
-int map_save(hid_t fid, const char *dsetname, const float* data, const hsize_t *dims, double xmin, double xmax, double ymin, double ymax, double spacing);
 int map_vorticity(hid_t fid, double xmin, double xmax, double ymin, double ymax, double spacing)
 {
 	char *mult_env = getenv("VV_EPS_MULT");

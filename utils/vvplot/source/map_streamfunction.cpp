@@ -4,6 +4,7 @@
 #include <math.h>
 #include <time.h>
 
+#include "libvvplot_api.h"
 #include "core.h"
 #include "hdf5.h"
 
@@ -65,7 +66,6 @@ double Psi(Space* S, TVec p)
 }
 
 extern "C" {
-int map_save(hid_t fid, const char *dsetname, const float* data, const hsize_t *dims, double xmin, double xmax, double ymin, double ymax, double spacing);
 int map_streamfunction(hid_t fid, char RefFrame, double xmin, double xmax, double ymin, double ymax, double spacing)
 {
 	Space *S = new Space();

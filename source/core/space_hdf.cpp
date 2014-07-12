@@ -2,7 +2,11 @@
 #include "hdf5.h"
 
 static hid_t fid;
-static hid_t DATASPACE_SCALAR;
+static hid_t DATASPACE_SCALAR()
+{
+	static hid_t d = H5Screate(H5S_SCALAR);
+	return d;
+}
 
 // DATATYPES
 static hid_t string_t;   bool commited_string = false;
@@ -40,7 +44,7 @@ void attribute_write(hid_t hid, const char *name, const char *str)
 		commited_string = true;
 	}
 
-	hid_t aid = H5Acreate2(hid, name, string_t, DATASPACE_SCALAR, H5P_DEFAULT, H5P_DEFAULT);
+	hid_t aid = H5Acreate2(hid, name, string_t, DATASPACE_SCALAR(), H5P_DEFAULT, H5P_DEFAULT);
 	assert(aid>=0);
 	assert(H5Awrite(aid, string_t, &str)>=0);
 	assert(H5Aclose(aid)>=0);
@@ -73,7 +77,7 @@ void attribute_write(hid_t hid, const char *name, TTime time)
 		H5Tcommit2(fid, "fraction_t", fraction_t, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	}
 
-	hid_t aid = H5Acreate2(hid, name, fraction_t, DATASPACE_SCALAR, H5P_DEFAULT, H5P_DEFAULT);
+	hid_t aid = H5Acreate2(hid, name, fraction_t, DATASPACE_SCALAR(), H5P_DEFAULT, H5P_DEFAULT);
 	assert(aid>=0);
 	assert(H5Awrite(aid, fraction_t, &time)>=0);
 	assert(H5Aclose(aid)>=0);
@@ -103,7 +107,7 @@ void attribute_write(hid_t hid, const char *name, bool value)
 	}
 
 	int v = value;
-	hid_t aid = H5Acreate2(hid, name, bool_t, DATASPACE_SCALAR, H5P_DEFAULT, H5P_DEFAULT);
+	hid_t aid = H5Acreate2(hid, name, bool_t, DATASPACE_SCALAR(), H5P_DEFAULT, H5P_DEFAULT);
 	assert(aid>=0);
 	assert(H5Awrite(aid, bool_t, &v)>=0);
 	assert(H5Aclose(aid)>=0);
@@ -127,7 +131,7 @@ bool attribute_read_bool(hid_t hid, const char *name)
 void attribute_write(hid_t hid, const char *name, double value)
 {
 	if (value == 0) return;
-	hid_t aid = H5Acreate2(hid, name, H5T_NATIVE_DOUBLE, DATASPACE_SCALAR, H5P_DEFAULT, H5P_DEFAULT);
+	hid_t aid = H5Acreate2(hid, name, H5T_NATIVE_DOUBLE, DATASPACE_SCALAR(), H5P_DEFAULT, H5P_DEFAULT);
 	assert(aid>=0);
 	assert(H5Awrite(aid, H5T_NATIVE_DOUBLE, &value)>=0);
 	assert(H5Aclose(aid)>=0);
@@ -151,7 +155,7 @@ void attribute_read(hid_t hid, const char *name, double &value)
 void attribute_write(hid_t hid, const char *name, long int value)
 {
 	if (value == 0) return;
-	hid_t aid = H5Acreate2(hid, name, H5T_NATIVE_LONG, DATASPACE_SCALAR, H5P_DEFAULT, H5P_DEFAULT);
+	hid_t aid = H5Acreate2(hid, name, H5T_NATIVE_LONG, DATASPACE_SCALAR(), H5P_DEFAULT, H5P_DEFAULT);
 	assert(aid>=0);
 	assert(H5Awrite(aid, H5T_NATIVE_LONG, &value)>=0);
 	assert(H5Aclose(aid)>=0);
@@ -181,7 +185,7 @@ void attribute_write(hid_t hid, const char *name, TVec vec)
 		H5Tcommit2(fid, "vec_t", vec_t, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	}
 
-	hid_t aid = H5Acreate2(hid, name, vec_t, DATASPACE_SCALAR, H5P_DEFAULT, H5P_DEFAULT);
+	hid_t aid = H5Acreate2(hid, name, vec_t, DATASPACE_SCALAR(), H5P_DEFAULT, H5P_DEFAULT);
 	assert(aid>=0);
 	assert(H5Awrite(aid, vec_t, &vec)>=0);
 	assert(H5Aclose(aid)>=0);
@@ -211,7 +215,7 @@ void attribute_write(hid_t hid, const char *name, TVec3D vec3d)
 		H5Tcommit2(fid, "vec3d_t", vec3d_t, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	}
 
-	hid_t aid = H5Acreate2(hid, name, vec3d_t, DATASPACE_SCALAR, H5P_DEFAULT, H5P_DEFAULT);
+	hid_t aid = H5Acreate2(hid, name, vec3d_t, DATASPACE_SCALAR(), H5P_DEFAULT, H5P_DEFAULT);
 	assert(aid>=0);
 	assert(H5Awrite(aid, vec3d_t, &vec3d)>=0);
 	assert(H5Aclose(aid)>=0);
@@ -240,7 +244,7 @@ void attribute_write(hid_t hid, const char *name, bc::BoundaryCondition bc)
 		H5Tcommit2(fid, "boundary_condition_t", bc_t, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	}
 	
-	hid_t aid = H5Acreate2(hid, name, bc_t, DATASPACE_SCALAR, H5P_DEFAULT, H5P_DEFAULT);
+	hid_t aid = H5Acreate2(hid, name, bc_t, DATASPACE_SCALAR(), H5P_DEFAULT, H5P_DEFAULT);
 	assert(aid>=0);
 	assert(H5Awrite(aid, bc_t, &bc)>=0);
 	assert(H5Aclose(aid)>=0);
@@ -270,7 +274,7 @@ void attribute_write(hid_t hid, const char *name, hc::HeatCondition hc)
 		H5Tcommit2(fid, "heat_condition_t", hc_t, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	}
 
-	hid_t aid = H5Acreate2(hid, name, hc_t, DATASPACE_SCALAR, H5P_DEFAULT, H5P_DEFAULT);
+	hid_t aid = H5Acreate2(hid, name, hc_t, DATASPACE_SCALAR(), H5P_DEFAULT, H5P_DEFAULT);
 	assert(aid>=0);
 	assert(H5Awrite(aid, hc_t, &hc)>=0);
 	assert(H5Aclose(aid)>=0);
@@ -334,9 +338,6 @@ void datatypes_create_all()
 	{int val = hc::isolate;	H5Tenum_insert(hc_t, "isolate", &val);}
 	{int val = hc::const_t;	H5Tenum_insert(hc_t, "const_t", &val);}
 	{int val = hc::const_W;	H5Tenum_insert(hc_t, "const_w", &val);}
-
-	// Scalar dataspace
-	DATASPACE_SCALAR = H5Screate(H5S_SCALAR);
 }
 
 void datatypes_close_all()
@@ -348,6 +349,4 @@ void datatypes_close_all()
 	if (vec3d_t>0) { H5Tclose(vec3d_t); vec3d_t = 0; }
 	if (bc_t>0) { H5Tclose(bc_t); bc_t = 0; }
 	if (hc_t>0) { H5Tclose(hc_t); hc_t = 0; }
-	
-	H5Sclose(DATASPACE_SCALAR); DATASPACE_SCALAR = 0;
 }

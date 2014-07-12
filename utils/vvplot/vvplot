@@ -226,7 +226,12 @@ if args.plot_vorticity and (not libvvplot.map_check(h5_fid, "map_vorticity", *c_
 
 #PSI FUNCTION FIELD
 if args.plot_streamlines and (not libvvplot.map_check(h5_fid, "map_streamfunction.%s"%args.streamlines, *c_boundaries) or args.mode_force):
-	libvvplot.map_streamfunction(h5_fid, ctypes.c_char(args.streamlines), *c_boundaries) # fixme: use vv_prec_lo here
+	libvvplot.map_streamfunction(h5_fid, ctypes.c_char(args.streamlines),
+		ctypes.c_double(xmin - vv_prec_lo),
+		ctypes.c_double(xmax + vv_prec_lo),
+		ctypes.c_double(ymin - vv_prec_lo),
+		ctypes.c_double(ymax + vv_prec_lo),
+		ctypes.c_double(vv_prec_lo))
 
 for i in pids:
 	os.waitpid(i, 0)
@@ -338,7 +343,7 @@ if args.plot_temperature:
 
 delim = delimiter()
 if args.plot_pressure or args.plot_isopressure:
-	gp.write("""%s '< libvvplot.so %s map_pressure.%s' binary format='%%float%%float%%float' w image""" % (delim.get(), fin_name, args.pressure))
+	gp.write("""%s '< libvvplot.so -M %s map_pressure.%s' binary format='%%float%%float%%float' w image""" % (delim.get(), fin_name, args.pressure))
 	if args.plot_isopressure:
 		vv_isopres = os.popen("seq -s ' ' -1.5 0.075757576 1").read()[:-1]
 		gp.write("""%s "< %s %s.%c.map %s" w lines lw 1 lc rgb '#9999cc'""" % (delim.get(), isoline_exe, fin_name, args.pressure, vv_isopres))
@@ -347,7 +352,7 @@ if args.plot_temperature:
 	gp.write("""%s '%s.heat' w image""" % (delim.get(), fin_name))
 
 if args.plot_vorticity:
-	gp.write("""%s '< libvvplot.so %s map_vorticity' binary format='%%float%%float%%float' w image""" % (delim.get(), fin_name))
+	gp.write("""%s '< libvvplot.so -M %s map_vorticity' binary format='%%float%%float%%float' w image""" % (delim.get(), fin_name))
 
 if args.plot_vortexes_bold and 'vort' in lists:
 	gp.write("""%s '< h5totxt %s -s " " -d vort'""" % (delim.get(), fin_name))
@@ -366,9 +371,9 @@ if args.plot_ink and 'ink' in lists:
 	gp.write(""" u 1:2:(%f) w @ink_style""" % vv_prec_hi)
 
 if args.plot_streamlines:
-	# gp.write("""%s '< libvvplot.so %s map_streamfunction.%s' binary format='%%float%%float%%float' w image""" % (delim.get(), fin_name, args.streamlines))
+	# gp.write("""%s '< libvvplot.so -M %s map_streamfunction.%s' binary format='%%float%%float%%float' w image""" % (delim.get(), fin_name, args.streamlines))
 	vv_isopsi = os.getenv("VV_ISOPSI") or os.popen("seq -s ' ' -10 0.1 10").read()[:-1]
-	gp.write("""%s "< isoline_exe %s.psi %s" w lines lw 1.5 lc rgb 'black'""" % (delim.get(), fin_name, vv_isopsi))
+	gp.write("""%s '< libvvplot.so -I %s map_streamfunction.%s %s' binary format='%%float%%float' w lines lw 1.5 lc rgb 'black'""" % (delim.get(), fin_name, args.streamlines, vv_isopsi))
 
 if args.plot_isotherms:
 	vv_isotherms = os.getenv("VV_ISOTHERMS") or os.popen("seq -s ' ' 0.05 0.05 0.95").read()[:-1]
