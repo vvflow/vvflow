@@ -21,6 +21,7 @@ extern "C" {
 	int map_save(hid_t fid, const char *dsetname, const float* data, const hsize_t *dims,
 		double xmin, double xmax, double ymin, double ymax, double spacing);
 	int map_extract(hid_t fid, const char *dsetname);
+	int list_extract(hid_t fid, const char *dsetname);
 	int map_isoline(hid_t fid, const char *dsetname, float *_cvals, int _cnum);
 
 	int map_pressure(hid_t fid, char RefFrame, double xmin, double xmax, double ymin, double ymax, double spacing);

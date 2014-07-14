@@ -5,28 +5,6 @@
 #include "libvvplot_api.h"
 #include "core.h"
 
-const char interp[] __attribute__((section(".interp"))) = "/lib64/ld-linux-x86-64.so.2";
-static char buffer[4096];
-Space *S = NULL;
-hid_t fid;
-
-inline
-void get_args(int *argc, char **argv)
-{
-	FILE* argf = fopen("/proc/self/cmdline", "rb");
-	size_t len = fread(buffer, 1, sizeof(buffer), argf);
-	// for (int i=0; i<256; i++) printf("%c", buffer[i]?buffer[i]:'*'); printf("\n");
-	for (char *p1=buffer, *p2=buffer; p1 < buffer+len; p1++)
-	{
-		if (*p1==0)
-		{
-			argv[(*argc)++] = p2;
-			p2=p1+1;
-		}
-	}
-	fclose(argf);
-}
-
 static hid_t DATASPACE_SCALAR = -1;
 inline void attribute_write(hid_t hid, const char *name, double value)
 {
@@ -195,63 +173,46 @@ int map_extract(hid_t fid, const char *dsetname)
 
 }}
 
-void print_version()
+extern "C" {
+int list_extract(hid_t fid, const char *dsetname)
 {
-	fprintf(stderr, "libvvplot.so compiled with:\n");
-	fprintf(stderr, " - libvvhd git_commit %s\n", Space().getGitInfo());
-	unsigned ver[3];
-	H5get_libversion(&ver[0], &ver[1], &ver[2]);
-	fprintf(stderr, " - libhdf version %u.%u.%u\n", ver[0], ver[1], ver[2]);
-	fflush(stderr);
-}
-
-void print_help()
-{
-	fprintf(stderr, "Usage: libvvplot.so {-h,-v,-M,-I} FILE DATASET [ARGS]\n");
-	fprintf(stderr, "Options:\n");
-	fprintf(stderr, " -h : show this message\n");
-	fprintf(stderr, " -v : show version info\n");
-	fprintf(stderr, " -M : extract a binary dataset from hdf file\n");
-	fprintf(stderr, " -I : plot isolines on a dataset with constants in args\n");
-	fflush(stderr);
-}
-
-int main()
-{
-	int argc = 0;
-	char *argv[512];
-	get_args(&argc, argv);
-
-	char mode;
-	     if (argc<2) { print_help(); _exit(1); }
-	else if (!strcmp(argv[1], "-h")) { print_help(); _exit(0); }
-	else if (!strcmp(argv[1], "-v")) { print_version(); _exit(0); }
-	else if (argc < 4) { print_help(); _exit(1); }
-	else if (!strcmp(argv[1], "-I") || !strcmp(argv[1], "-M")) {;}
-	else {fprintf(stderr, "Bad option '%s'. See '-h' for help.\n", argv[1]); _exit(-1); }
-
 	H5Eset_auto2(H5E_DEFAULT, NULL, NULL);
-	fid = H5Fopen(argv[2], H5F_ACC_RDONLY, H5P_DEFAULT);
-	if (fid < 0)
+	hid_t dataset = H5Dopen2(fid, dsetname, H5P_DEFAULT);
+	if (dataset < 0)
 	{
 		H5Epop(H5E_DEFAULT, H5Eget_num(H5E_DEFAULT)-1);
 		H5Eprint2(H5E_DEFAULT, stderr);
-		fprintf(stderr, "error: argument file: can't open file '%s'\n", argv[2]);
-		return 2;
+		fprintf(stderr, "error: argument dataset: can't open dataset '%s'\n", dsetname);
+		return 3;
 	}
 
-	if (!strcmp(argv[1], "-M"))
+	hid_t dataspace = H5Dget_space(dataset);
+	if (dataspace < 0)
 	{
-		map_extract(fid, argv[3]);
+		H5Epop(H5E_DEFAULT, H5Eget_num(H5E_DEFAULT)-1);
+		H5Eprint2(H5E_DEFAULT, stderr);
+		return 5;
 	}
-	else if (!strcmp(argv[1], "-I"))
+	hsize_t dims[2];
+	H5Sget_simple_extent_dims(dataspace, dims, dims);
+	double *mem = (double*)malloc(sizeof(double)*dims[0]*dims[1]);
+	herr_t err = H5Dread(dataset, H5T_NATIVE_DOUBLE, H5S_ALL, dataspace, H5P_DEFAULT, mem);
+	if (err < 0)
 	{
-		float vals[512];
-		for (int i=4; i<argc; i++) { sscanf(argv[i], "%f", &vals[i-4]); }
-		map_isoline(fid, argv[3], vals, argc-4);
+		H5Epop(H5E_DEFAULT, H5Eget_num(H5E_DEFAULT)-1);
+		H5Eprint2(H5E_DEFAULT, stderr);
+		return 5;
 	}
-	H5Fclose(fid);
 
-	_exit(0);
-}//}
+	fwrite(mem, sizeof(double), dims[0]*dims[1], stdout);
+	fflush(stdout);
+	// assert(c == dims[0]*dims[1]);
+	// fwrite(dims, sizeof(hsize_t), 2, stdout);
+	// fwrite(&xmin, sizeof(double), 1, stdout);
 
+	free(mem);
+	H5Sclose(dataspace);
+	H5Dclose(dataset);
+
+	return 0;
+}}

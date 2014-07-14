@@ -11,23 +11,14 @@ import logging
 import argparse_vvplot
 args = argparse_vvplot.args
 
-class delimiter:
+def delimiter():
 	"""First time it prints 'plot', else it prints comma
 	"""
-	def __init__(self):
-		self.first = True;
-	def get(self):
-		if self.first:
-			self.first = False
-			return "plot"
-		else:
-			return ","
-
-def ternary(cond, a, b):
-	if cond:
-		return a
-	else:
-		return b
+	try:
+		return delimiter.comma
+	except:
+		delimiter.comma = ","
+		return "plot"
 
 logger = logging.getLogger("vvplot")
 log_level = logging.DEBUG if args.debug else logging.ERROR
@@ -246,7 +237,7 @@ gp = os.popen("gnuplot", "w")
 gp.write("""
 set terminal pngcairo enhanced %s size %d, %d font "FreeSerif, 26"
 set output '%s'
-""" % (ternary(args.mode_bw, "mono", "color"), pic_w, pic_h, fout_name))
+""" % ("mono" if args.mode_bw else "color", pic_w, pic_h, fout_name))
 
 gp.write("""
 set lmargin 0
@@ -262,9 +253,15 @@ set xrange [%f: %f]
 set yrange [%f: %f]
 """ % (xmin, xmax, ymin, ymax))
 
+if args.mode_colorbox:
+	gp.write("set colorbox horizontal user origin .1,.02 size .8,.04")
+else:
+	gp.write("unset colorbox")
+
+if args.mode_timelabel:
+	gp.write("""set label "t = %f" at graph 0.05, 0.90 front""" % time)
+
 gp.write("""
-%s
-%s
 set macros
 dots = "dots lc rgb variable"
 vortex_style = "circles lc rgb variable fs transparent solid 0.3 noborder"
@@ -272,11 +269,7 @@ heat_style = "circles lc rgb 'black' fs transparent solid 0.3 noborder"
 ink_style = "circles lc rgb 'black' fs transparent solid 1 noborder"
 body_style = "filledcurve lc rgb '#adadad' lw 2 fs solid border -1"
 body_clear = "filledcurve lc rgb '#adadad' lw 2 fs transparent solid 0 border -1 "
-""" % (
-	ternary(args.mode_colorbox, """set colorbox horizontal user origin .1,.02 size .8,.04""", "unset colorbox"),
-	ternary(args.mode_timelabel, """set label "t = %f" at graph 0.05, 0.90 front""" % time, '')
-	)
-)
+""")
 
 if args.mode_bw:
 	gp.write("""
@@ -341,25 +334,26 @@ if args.plot_temperature:
 		set palette defined (0 "#0829d5", 0.3 "#1ffcff", 0.5 "red", 1 "yellow", 2 "white")
 		""")
 
-delim = delimiter()
+# parameters = {",": delimiter()}
 if args.plot_pressure or args.plot_isopressure:
-	gp.write("""%s '< libvvplot.so -M %s map_pressure.%s' binary format='%%float%%float%%float' w image""" % (delim.get(), fin_name, args.pressure))
+	gp.write("""%s '< libvvplot -M %s map_pressure.%s' binary format='%%float%%float%%float' w image""" % (delim.get(), fin_name, args.pressure))
 	if args.plot_isopressure:
 		vv_isopres = os.popen("seq -s ' ' -1.5 0.075757576 1").read()[:-1]
-		gp.write("""%s "< %s %s.%c.map %s" w lines lw 1 lc rgb '#9999cc'""" % (delim.get(), isoline_exe, fin_name, args.pressure, vv_isopres))
+		gp.write("""%s '< libvvplot -I %s map_pressure.%s %s' binary format='%%float%%float' w lines lw 1 lc rgb '#9999cc'""" % (delim.get(), fin_name, args.pressure, vv_isopres))
 
 if args.plot_temperature:
 	gp.write("""%s '%s.heat' w image""" % (delim.get(), fin_name))
 
 if args.plot_vorticity:
-	gp.write("""%s '< libvvplot.so -M %s map_vorticity' binary format='%%float%%float%%float' w image""" % (delim.get(), fin_name))
+	gp.write("""%s '< libvvplot -M %s map_vorticity' binary format='%%3float' w image""" % (delim.get(), fin_name))
 
 if args.plot_vortexes_bold and 'vort' in lists:
 	gp.write("""%s '< h5totxt %s -s " " -d vort'""" % (delim.get(), fin_name))
 	gp.write(""" u 1:2:(%f):(color($3)) w @vortex_style""" % vv_prec_hi)
 
 if args.plot_vortexes and 'vort' in lists:
-	gp.write("""%s '< h5totxt %s -s " " -d vort'""" % (delim.get(), fin_name))
+	gp.write("""{plot} '< libvvplot -L {fin_name} vort'""".format(plot=delimiter(), fin_name=fin_name))
+	gp.write(""" binary format='%3double'""")
 	gp.write(""" u 1:2:(color($3)) w @dots""")
 
 if args.plot_heat and 'heat' in lists:
@@ -371,9 +365,9 @@ if args.plot_ink and 'ink' in lists:
 	gp.write(""" u 1:2:(%f) w @ink_style""" % vv_prec_hi)
 
 if args.plot_streamlines:
-	# gp.write("""%s '< libvvplot.so -M %s map_streamfunction.%s' binary format='%%float%%float%%float' w image""" % (delim.get(), fin_name, args.streamlines))
+	# gp.write("""%s '< libvvplot -M %s map_streamfunction.%s' binary format='%%float%%float%%float' w image""" % (delim.get(), fin_name, args.streamlines))
 	vv_isopsi = os.getenv("VV_ISOPSI") or os.popen("seq -s ' ' -10 0.1 10").read()[:-1]
-	gp.write("""%s '< libvvplot.so -I %s map_streamfunction.%s %s' binary format='%%float%%float' w lines lw 1.5 lc rgb 'black'""" % (delim.get(), fin_name, args.streamlines, vv_isopsi))
+	gp.write("""%s '< libvvplot -I %s map_streamfunction.%s %s' binary format='%%float%%float' w lines lw 1.5 lc rgb 'black'""" % (delim.get(), fin_name, args.streamlines, vv_isopsi))
 
 if args.plot_isotherms:
 	vv_isotherms = os.getenv("VV_ISOTHERMS") or os.popen("seq -s ' ' 0.05 0.05 0.95").read()[:-1]
@@ -381,16 +375,17 @@ if args.plot_isotherms:
 
 if args.plot_body:
 	for b in bodies:
-		gp.write("""%s '< h5totxt %s -s " " -d %s' u 1:2 w @%s"""
-			% (delim.get(), fin_name, b['name'], ternary(args.blankbody-1==bodies.index(b), "body_clear", "body_style")))
+		gp.write("""{plot} '< h5totxt {file} -s " " -d {body}' u 1:2 w @{style}""".format(
+			plot=delimiter(), file=fin_name, body=b['name'],
+			style="body_clear" if args.blankbody-1==bodies.index(b) else "body_style"))
 		if args.plot_spring:
 			p1 = b['holder_position']
 			dp = b['delta_position']
 			p2 = (p1[0]+dp[0], p1[1]+dp[1], p1[2]+dp[2])
 			gp.write("""%s '< echo %f %f %f %f' w vectors nohead lc rgb 'black' lw 1.5"""
-				% (delim.get(), p1[0], p1[1], dp[0], dp[1]))
+				% (delimiter, p1[0], p1[1], dp[0], dp[1]))
 			gp.write("""%s '< printf "%f %f\\n%f %f\\n"' u 1:2:(1.5*%f) w circles lc rgb 'black' fs solid noborder"""
-				% (delim.get(), p1[0], p1[1], p2[0], p2[1], vv_prec_hi))
+				% (delimiter, p1[0], p1[1], p2[0], p2[1], vv_prec_hi))
 
 if args.tree:
 	gp.write("""%s '%s' using 1:2:($3/2):($4/2) with boxxy fill empty lc rgb 'red'""" % (delim.get(), args.tree))
