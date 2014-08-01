@@ -45,6 +45,7 @@ TBody::TBody(Space *sS):
 	S = sS;
 	List = new vector<TAtt>();
 	HeatLayerList = new vector<TVec>();
+	root_body = NULL;
 
 	pos = dPos = TVec3D(0., 0., 0.);
 	g_dead = 0;
@@ -62,6 +63,11 @@ TBody::~TBody()
 {
 	delete List;
 	delete HeatLayerList;
+}
+
+int TBody::getIndex()
+{
+	return S->BodyList->indexOf(this);
 }
 
 TVec3D TBody::getSpeed() const

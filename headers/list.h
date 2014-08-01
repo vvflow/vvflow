@@ -23,6 +23,7 @@ class list
 		void resize(size_t n, const T &val);
 		T& at(size_t i);
 		size_t find(T* item);
+		size_t indexOf(T item);
 		T* begin();
 		T* end();
 		size_t size();
@@ -88,6 +89,17 @@ T& list<T>::at(size_t i) { return begin_[i]; }
 
 template <class T> inline
 size_t list<T>::find(T* item) { return item-begin_;}
+
+template <class T> inline
+size_t list<T>::indexOf(T item)
+{
+	int i=0;
+	for (T* t = begin_; t<end_; t++, i++)
+	{
+		if (*t == item) return i;
+	}
+	return -1;
+}
 
 template <class T> inline
 T* list<T>::begin() { return begin_; }

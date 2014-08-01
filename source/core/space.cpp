@@ -77,7 +77,7 @@ Y88b  d88P  d8888888888    Y888P    888
  "Y8888P"  d88P     888     Y8P     8888888888
 */
 
-void dataset_write_list(const char *name, vector<TObj> *list)
+void Space::dataset_write_list(const char *name, vector<TObj> *list)
 {	
 	// 1D dataspace
 	hsize_t dims[2] = {list->size_safe(), 3};
@@ -99,7 +99,7 @@ void dataset_write_list(const char *name, vector<TObj> *list)
 	H5Dclose(file_dataset);
 }
 
-void dataset_write_body(const char* name, TBody *body)
+void Space::dataset_write_body(const char* name, TBody *body)
 {
 	assert(body);
 
@@ -147,6 +147,11 @@ void dataset_write_body(const char* name, TBody *body)
 	assert(file_dataset>=0);
 
 	attribute_write(file_dataset, "simplified_dataset", true);
+
+	char root_body_name[16];
+	sprintf(root_body_name, "body%02zd", BodyList->indexOf(body->root_body));
+	attribute_write(file_dataset, "root_body", root_body_name);
+	
 	attribute_write(file_dataset, "holder_position", body->pos);
 	attribute_write(file_dataset, "delta_position", body->dPos);
 	attribute_write(file_dataset, "speed_x", body->SpeedX.script.c_str());
@@ -302,6 +307,12 @@ herr_t dataset_read_body(hid_t g_id, const char *name, const H5L_info_t *info, v
 	attribute_read(dataset, "force_born", body->Force_born);
 	attribute_read(dataset, "force_dead", body->Force_dead);
 	attribute_read(dataset, "friction_prev", body->Friction_prev);
+
+	std::string root_body_name;
+	int root_body_idx;
+	attribute_read(dataset, "root_body", root_body_name);
+	sscanf(root_body_name.c_str(), "body%d", &root_body_idx);
+	body->root_body = S->BodyList->at(root_body_idx);
 
 	hc::HeatCondition heat_condition;
 	double heat_const;

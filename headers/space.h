@@ -74,6 +74,8 @@ class Space
 
 	private:
 		void Load_v1_3(const char* filename);
+		void dataset_write_list(const char *name, vector<TObj> *list);
+		void dataset_write_body(const char* name, TBody *body);
 };
 
 #endif /*SPACE_H_*/

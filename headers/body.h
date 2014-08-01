@@ -76,8 +76,10 @@ class TBody
 	public:
 		TBody(Space *sS);
 		~TBody();
+		int getIndex(); // index of body in Space list
 
 		vector<TAtt> *List;
+		TBody *root_body;
 
 		TVec3D pos; //in doc = $R_bx$, $R_by$, $\alpha_b$
 		TVec3D dPos; // same with delta
