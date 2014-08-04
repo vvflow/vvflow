@@ -20,7 +20,7 @@ clean:
 	rm -f libvvplot.so
 
 install: | $(PREFIX)/bin
-	cp $(scripts) $(exes) $(PREFIX)/bin
+	cp $(scripts) $(exes) libvvplot.so libvvplot $(PREFIX)/bin
 	bash -c "source completion_vvplot; _install_vvplot_completion"
 
 $(PREFIX)/bin:
