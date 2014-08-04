@@ -148,9 +148,12 @@ void Space::dataset_write_body(const char* name, TBody *body)
 
 	attribute_write(file_dataset, "simplified_dataset", true);
 
-	char root_body_name[16];
-	sprintf(root_body_name, "body%02zd", BodyList->indexOf(body->root_body));
-	attribute_write(file_dataset, "root_body", root_body_name);
+	if (body->root_body)
+	{
+		char root_body_name[16];
+		sprintf(root_body_name, "body%02zd", BodyList->indexOf(body->root_body));
+		attribute_write(file_dataset, "root_body", root_body_name);
+	}
 	
 	attribute_write(file_dataset, "holder_position", body->pos);
 	attribute_write(file_dataset, "delta_position", body->dPos);
@@ -311,8 +314,10 @@ herr_t dataset_read_body(hid_t g_id, const char *name, const H5L_info_t *info, v
 	std::string root_body_name;
 	int root_body_idx;
 	attribute_read(dataset, "root_body", root_body_name);
-	sscanf(root_body_name.c_str(), "body%d", &root_body_idx);
-	body->root_body = S->BodyList->at(root_body_idx);
+	if (sscanf(root_body_name.c_str(), "body%d", &root_body_idx) == 1)
+		body->root_body = S->BodyList->at(root_body_idx);
+	else
+		body->root_body = NULL;
 
 	hc::HeatCondition heat_condition;
 	double heat_const;
