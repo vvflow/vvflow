@@ -199,7 +199,11 @@ c_boundaries = (ctypes.c_double(xmin - vv_prec_lo),
 		ctypes.c_double(ymin - vv_prec_lo),
 		ctypes.c_double(ymax + vv_prec_lo),
 		ctypes.c_double(vv_prec_hi))
-libvvplot = ctypes.cdll.LoadLibrary("%s/libvvplot.so" % os.path.abspath(os.path.dirname(sys.argv[0])))
+try:
+	libvvplot = ctypes.cdll.LoadLibrary("%s/libvvplot.so" % os.path.abspath(os.path.dirname(sys.argv[0])))
+except OSError as e:
+	print 'Can not load libvvplot.so: %s' % e
+	exit(-1)
 
 #PRESS FIELD
 if (args.plot_pressure or args.plot_isopressure) and (not libvvplot.map_check(h5_fid, "map_pressure.%s"%args.pressure, *c_boundaries) or args.mode_force):
@@ -336,19 +340,19 @@ if args.plot_temperature:
 
 # parameters = {",": delimiter()}
 if args.plot_pressure or args.plot_isopressure:
-	gp.write("""%s '< libvvplot -M %s map_pressure.%s' binary format='%%float%%float%%float' w image""" % (delim.get(), fin_name, args.pressure))
+	gp.write("""%s '< libvvplot -M %s map_pressure.%s' binary format='%%float%%float%%float' w image""" % (delimiter(), fin_name, args.pressure))
 	if args.plot_isopressure:
 		vv_isopres = os.popen("seq -s ' ' -1.5 0.075757576 1").read()[:-1]
-		gp.write("""%s '< libvvplot -I %s map_pressure.%s %s' binary format='%%float%%float' w lines lw 1 lc rgb '#9999cc'""" % (delim.get(), fin_name, args.pressure, vv_isopres))
+		gp.write("""%s '< libvvplot -I %s map_pressure.%s %s' binary format='%%float%%float' w lines lw 1 lc rgb '#9999cc'""" % (delimiter(), fin_name, args.pressure, vv_isopres))
 
 if args.plot_temperature:
-	gp.write("""%s '%s.heat' w image""" % (delim.get(), fin_name))
+	gp.write("""%s '%s.heat' w image""" % (delimiter(), fin_name))
 
 if args.plot_vorticity:
-	gp.write("""%s '< libvvplot -M %s map_vorticity' binary format='%%3float' w image""" % (delim.get(), fin_name))
+	gp.write("""%s '< libvvplot -M %s map_vorticity' binary format='%%3float' w image""" % (delimiter(), fin_name))
 
 if args.plot_vortexes_bold and 'vort' in lists:
-	gp.write("""%s '< h5totxt %s -s " " -d vort'""" % (delim.get(), fin_name))
+	gp.write("""%s '< h5totxt %s -s " " -d vort'""" % (delimiter(), fin_name))
 	gp.write(""" u 1:2:(%f):(color($3)) w @vortex_style""" % vv_prec_hi)
 
 if args.plot_vortexes and 'vort' in lists:
@@ -357,21 +361,21 @@ if args.plot_vortexes and 'vort' in lists:
 	gp.write(""" u 1:2:(color($3)) w @dots""")
 
 if args.plot_heat and 'heat' in lists:
-	gp.write("""%s '< h5totxt %s -s " " -d heat'""" % (delim.get(), fin_name))
+	gp.write("""%s '< h5totxt %s -s " " -d heat'""" % (delimiter(), fin_name))
 	gp.write(""" u 1:2:(%f) w @heat_style""" % vv_prec_hi)
 
 if args.plot_ink and 'ink' in lists:
-	gp.write("""%s '< h5totxt %s -s " " -d ink'""" % (delim.get(), fin_name))
+	gp.write("""%s '< h5totxt %s -s " " -d ink'""" % (delimiter(), fin_name))
 	gp.write(""" u 1:2:(%f) w @ink_style""" % vv_prec_hi)
 
 if args.plot_streamlines:
-	# gp.write("""%s '< libvvplot -M %s map_streamfunction.%s' binary format='%%float%%float%%float' w image""" % (delim.get(), fin_name, args.streamlines))
+	# gp.write("""%s '< libvvplot -M %s map_streamfunction.%s' binary format='%%float%%float%%float' w image""" % (delimiter(), fin_name, args.streamlines))
 	vv_isopsi = os.getenv("VV_ISOPSI") or os.popen("seq -s ' ' -10 0.1 10").read()[:-1]
-	gp.write("""%s '< libvvplot -I %s map_streamfunction.%s %s' binary format='%%float%%float' w lines lw 1.5 lc rgb 'black'""" % (delim.get(), fin_name, args.streamlines, vv_isopsi))
+	gp.write("""%s '< libvvplot -I %s map_streamfunction.%s %s' binary format='%%float%%float' w lines lw 1.5 lc rgb 'black'""" % (delimiter(), fin_name, args.streamlines, vv_isopsi))
 
 if args.plot_isotherms:
 	vv_isotherms = os.getenv("VV_ISOTHERMS") or os.popen("seq -s ' ' 0.05 0.05 0.95").read()[:-1]
-	gp.write("""%s "< %s %s.heat %s" w lines lw 2 lc rgb 'black'""" % (delim.get(), isoline_exe, fin_name, vv_isotherms))
+	gp.write("""%s "< %s %s.heat %s" w lines lw 2 lc rgb 'black'""" % (delimiter(), isoline_exe, fin_name, vv_isotherms))
 
 if args.plot_body:
 	for b in bodies:
@@ -383,12 +387,12 @@ if args.plot_body:
 			dp = b['delta_position']
 			p2 = (p1[0]+dp[0], p1[1]+dp[1], p1[2]+dp[2])
 			gp.write("""%s '< echo %f %f %f %f' w vectors nohead lc rgb 'black' lw 1.5"""
-				% (delimiter, p1[0], p1[1], dp[0], dp[1]))
+				% (delimiter(), p1[0], p1[1], dp[0], dp[1]))
 			gp.write("""%s '< printf "%f %f\\n%f %f\\n"' u 1:2:(1.5*%f) w circles lc rgb 'black' fs solid noborder"""
-				% (delimiter, p1[0], p1[1], p2[0], p2[1], vv_prec_hi))
+				% (delimiter(), p1[0], p1[1], p2[0], p2[1], vv_prec_hi))
 
 if args.tree:
-	gp.write("""%s '%s' using 1:2:($3/2):($4/2) with boxxy fill empty lc rgb 'red'""" % (delim.get(), args.tree))
+	gp.write("""%s '%s' using 1:2:($3/2):($4/2) with boxxy fill empty lc rgb 'red'""" % (delimiter(), args.tree))
 
 gp.write("\n")
 gp.flush()
