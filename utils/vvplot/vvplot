@@ -258,9 +258,9 @@ set yrange [%f: %f]
 """ % (xmin, xmax, ymin, ymax))
 
 if args.mode_colorbox:
-	gp.write("set colorbox horizontal user origin .1,.02 size .8,.04")
+	gp.write("""set colorbox horizontal user origin .1,.02 size .8,.04\n""")
 else:
-	gp.write("unset colorbox")
+	gp.write("""unset colorbox\n""")
 
 if args.mode_timelabel:
 	gp.write("""set label "t = %f" at graph 0.05, 0.90 front""" % time)
