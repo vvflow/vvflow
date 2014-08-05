@@ -585,9 +585,9 @@ void convectivefast::fillForceXEquation(TBody* ibody, bool rightColOnly)
 			}
 		} else if (ibody->root_body == *lljbody)
 		{
-			*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = 1;
+			*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = -1;
 			*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = 0;
-			*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = -(ibody->pos.r + ibody->dPos.r - jbody.pos.r - jbody.dPos.r).y;
+			*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = (ibody->pos.r + ibody->dPos.r - jbody.pos.r - jbody.dPos.r).y;
 		} else
 		{
 			*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = 0;
@@ -648,8 +648,8 @@ void convectivefast::fillForceYEquation(TBody* ibody, bool rightColOnly)
 		} else if (ibody->root_body == *lljbody)
 		{
 			*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = 0;
-			*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = 1;
-			*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = (ibody->pos.r + ibody->dPos.r - jbody.pos.r - jbody.dPos.r).x;
+			*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = -1;
+			*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = -(ibody->pos.r + ibody->dPos.r - jbody.pos.r - jbody.dPos.r).x;
 		} else
 		{
 			*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = 0;

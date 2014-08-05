@@ -105,14 +105,18 @@ void TBody::doRotation()
 
 void TBody::doMotion()
 {
+	TVec delta_root = root_body ? 
+	                  S->dt * (root_body->Speed_slae.r + 
+	                  root_body->Speed_slae.o * rotl(pos.r + dPos.r - root_body->pos.r - root_body->dPos.r))
+	                  : TVec(0,0);
 	TVec delta_slae = Speed_slae.r * S->dt;
 	TVec delta_solid = getSpeed().r * S->dt;
 	const_for (List, lobj)
 	{
 		lobj->corner += delta_slae;
 	}
-	pos.r += delta_solid;
-	dPos.r += delta_slae - delta_solid;
+	pos.r += delta_solid + delta_root;
+	dPos.r += delta_slae - delta_solid - delta_root;
 	Speed_slae_prev.r = Speed_slae.r;
 }
 
