@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include <string.h>
+#include <assert.h>
 #include <complex>
 
 #include "mkl.h"
@@ -585,9 +586,15 @@ void convectivefast::fillForceXEquation(TBody* ibody, bool rightColOnly)
 			}
 		} else if (ibody->root_body == *lljbody)
 		{
-			*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = -1;
-			*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = 0;
-			*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = (ibody->pos.r + ibody->dPos.r - jbody.pos.r - jbody.dPos.r).y;
+			if (ibody->k.r.x >= 0 && S->Time>0)
+			{
+				assert(0 && "Not implemented yet");
+			} else
+			{
+				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = -1;
+				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = 0;
+				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = (ibody->pos.r + ibody->dPos.r - jbody.pos.r - jbody.dPos.r).y;
+			}
 		} else
 		{
 			*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = 0;
@@ -647,9 +654,15 @@ void convectivefast::fillForceYEquation(TBody* ibody, bool rightColOnly)
 			}
 		} else if (ibody->root_body == *lljbody)
 		{
-			*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = 0;
-			*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = -1;
-			*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = -(ibody->pos.r + ibody->dPos.r - jbody.pos.r - jbody.dPos.r).x;
+			if (ibody->k.r.y >= 0 && S->Time>0)
+			{
+				assert(0 && "Not implemented yet");
+			} else
+			{
+				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = 0;
+				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = -1;
+				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = -(ibody->pos.r + ibody->dPos.r - jbody.pos.r - jbody.dPos.r).x;
+			}
 		} else
 		{
 			*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = 0;
@@ -703,13 +716,30 @@ void convectivefast::fillMomentEquation(TBody* ibody, bool rightColOnly)
 				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = -r_c_com.x*ibody->getArea()*_1_dt;
 				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = -ibody->getMoi_c()*_1_dt*(ibody->density+2)
 				                                                      -ibody->damping.o;
+				if (ibody->root_body)
+				{
+					*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) *= (ibody->density+1);
+					*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) *= (ibody->density+1);
+				}
 			} else
 			{
 				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = 0;
 				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = 0;
 				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = 1;
 			}
-		} else
+		} /*else if (ibody->root_body == *lljbody)
+		{
+			if (ibody->k.o >= 0 && S->Time>0)
+			{
+				TVec r_c_root = ibody->pos.r + ibody->dPos.r - jbody.pos.r - jbody.dPos.r;
+				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = r_c_com.x*ibody->getArea()*_1_dt;
+				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = - r_c_com.y*ibody->getArea()*_1_dt;
+				*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = r_c_com * rotl(r_c_root)*ibody->getArea()*_1_dt;
+			} else
+			{
+				assert(0 && "Not implemented yet");
+			}
+		} */else
 		{
 			*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = 0;
 			*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = 0;
@@ -723,6 +753,7 @@ void convectivefast::fillMomentEquation(TBody* ibody, bool rightColOnly)
 
 	//right column
 	if ( ibody->k.o >= 0 && S->Time>0)
+	{
 		*matrix->rightColAtIndex(eq_no) = 
 			+ ibody->k.o * ibody->dPos.o +
 			- (ibody->density-1.0) * (rotl(r_c_com)*S->gravitation) * ibody->getArea()
@@ -731,6 +762,12 @@ void convectivefast::fillMomentEquation(TBody* ibody, bool rightColOnly)
 			- rotl(r_c_com)*ibody->Speed_slae_prev.r * ibody->getArea() * _1_dt
 			- ibody->getMoi_c() * ibody->Speed_slae_prev.o * _1_dt * (ibody->density + 2.)
 			- (r_c_com * ibody->Speed_slae_prev.r) * ibody->Speed_slae_prev.o * ibody->getArea();
+		if (ibody->root_body)
+		{
+			*matrix->rightColAtIndex(eq_no) +=
+			 - ibody->density * (rotl(r_c_com)*ibody->Speed_slae_prev.r) * ibody->getArea() * _1_dt;
+		}
+	}
 	else
 		*matrix->rightColAtIndex(eq_no) = ibody->getSpeed().o;
 }

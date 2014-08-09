@@ -91,6 +91,9 @@ void TBody::doRotationAndMotion()
 
 void TBody::doRotation()
 {
+	double angle_root = root_body ?
+	                  S->dt * root_body->Speed_slae.o
+	                  : 0;
 	double angle_slae = Speed_slae.o * S->dt; //in doc \omega_? \Delta t
 	double angle_solid = getSpeed().o * S->dt; //in doc \omega \Delta t
 	const_for (List, lobj)
@@ -98,8 +101,8 @@ void TBody::doRotation()
 		TVec dr = lobj->corner - (pos.r + dPos.r);
 		lobj->corner = pos.r + dPos.r + dr*cos(angle_slae) + rotl(dr)*sin(angle_slae);
 	}
-	pos.o += angle_solid;
-	dPos.o += angle_slae - angle_solid;
+	pos.o += angle_solid + angle_root;
+	dPos.o += angle_slae - angle_solid - angle_root;
 	Speed_slae_prev.o = Speed_slae.o;
 }
 
