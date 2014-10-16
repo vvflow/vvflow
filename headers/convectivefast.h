@@ -50,7 +50,10 @@ class convectivefast
 		void fillInfSteadyEquationForSegment(TAtt* seg, bool rightColOnly);
 		void fillForceXEquation(TBody* ibody, bool rightColOnly);
 		void fillForceYEquation(TBody* ibody, bool rightColOnly);
-		void fillMomentEquation(TBody* ibody, bool rightColOnly);
+		void fillForceOEquation(TBody* ibody, bool rightColOnly);
+		void fillSpeedXEquation(TBody* ibody, bool rightColOnly);
+		void fillSpeedYEquation(TBody* ibody, bool rightColOnly);
+		void fillSpeedOEquation(TBody* ibody, bool rightColOnly);
 };
 
 
