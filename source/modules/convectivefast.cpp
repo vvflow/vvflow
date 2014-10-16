@@ -580,7 +580,7 @@ void convectivefast::fillForceXEquation(TBody* ibody, bool rightColOnly)
 		const_for(jbody.List, lobj)
 			*matrix->objectAtIndex(eq_no, lobj->eq_no) = 0;
 		
-		assert(0 && "Not implemented yet");
+		fprintf(stderr, "fillForceXEquation: root_body not implemented yet\n");
 		#undef jbody
 	}
 
@@ -642,7 +642,7 @@ void convectivefast::fillForceYEquation(TBody* ibody, bool rightColOnly)
 		const_for(jbody.List, lobj)
 			*matrix->objectAtIndex(eq_no, lobj->eq_no) = 0;
 
-		assert(0 && "Not implemented yet");
+		fprintf(stderr, "fillForceYEquation: root_body not implemented yet\n");
 		#undef jbody
 	}
 
@@ -707,6 +707,11 @@ void convectivefast::fillForceOEquation(TBody* ibody, bool rightColOnly)
 	// опорное тело
 	{
 		#define jbody (*ibody->root_body)
+
+		const_for(jbody.List, lobj)
+			*matrix->objectAtIndex(eq_no, lobj->eq_no) = 0;
+		
+		fprintf(stderr, "fillForceOEquation: root_body not implemented yet\n");
 		// TVec r_c_root = ibody->pos.r + ibody->dPos.r - jbody.pos.r - jbody.dPos.r;
 		// *matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = r_c_com.x*ibody->getArea()*_1_dt;
 		// *matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = - r_c_com.y*ibody->getArea()*_1_dt;
@@ -885,7 +890,7 @@ void convectivefast::fillSpeedOEquation(TBody* ibody, bool rightColOnly)
 		const_for(jbody.List, lobj)
 			*matrix->objectAtIndex(eq_no, lobj->eq_no) = 0;
 
-		assert(0 && "Not implemented yet");
+		fprintf(stderr, "fillSpeedOEquation: root_body not implemented yet\n");
 		#undef jbody
 	}
 
