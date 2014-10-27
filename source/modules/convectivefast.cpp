@@ -554,6 +554,78 @@ void convectivefast::fillInfSteadyEquationForSegment(TAtt* seg, bool rightColOnl
 	*matrix->rightColAtIndex(seg_eq_no) = -S->gsum() - S->InfCirculation;
 }
 
+void fillHydroXEquation(TBody* ibody, bool rightColOnly)
+{
+	const double _1_dt = 1/S->dt;
+	const int eq_no = ibody->eq_forces_no;
+
+	if (!rightColOnly)
+	// свое тело
+	{
+		#define jbody (*ibody)
+		const_for(jbody.List, lobj)
+			*matrix->objectAtIndex(eq_no, lobj->eq_no) = _1_dt * (-lobj->corner.y);
+
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = -ibody->getArea()*_1_dt*ibody->density
+		                                                      -ibody->damping.r.x;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = 0;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = 0;
+		#undef jbody
+	}
+
+	if (!rightColOnly && ibody->root_body)
+	// опорное тело
+	{
+		#define jbody (*ibody->root_body)
+		const_for(jbody.List, lobj)
+			*matrix->objectAtIndex(eq_no, lobj->eq_no) = 0;
+		
+		fprintf(stderr, "fillForceXEquation: root_body not implemented yet\n");
+		#undef jbody
+	}
+
+	if (!rightColOnly)
+	const_for(S->BodyList, lljbody) // чужие тела
+	{
+		if (*lljbody == ibody) continue;
+		if (*lljbody == ibody->root_body) continue;
+
+		#define jbody (**lljbody)
+		const_for(jbody.List, lobj)
+			*matrix->objectAtIndex(eq_no, lobj->eq_no) = 0;
+
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = 0;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = 0;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = 0;
+
+		#undef jbody
+	}
+
+	//place solution pointer
+	*matrix->solutionAtIndex(eq_no) = &ibody->Force_born.r.x;
+
+	//right column
+	*matrix->rightColAtIndex(eq_no) = 
+		- (ibody->density-1.0) * S->gravitation.x * ibody->getArea()
+		+ ibody->k.r.x * ibody->dPos.r.x +
+		- ibody->Friction_prev.r.x
+		+ ibody->Force_dead.r.x
+		- ibody->density * ibody->getArea() * ibody->Speed_slae_prev.r.x * _1_dt
+		- (-ibody->Speed_slae_prev.r.y) * ibody->Speed_slae_prev.o * ibody->getArea()
+		+ sqr(ibody->Speed_slae_prev.o) * ibody->getArea() * (ibody->getCom() - ibody->pos.r - ibody->dPos.r).x;
+}
+
+void fillHydroYEquation(TBody* ibody, bool rightColOnly)
+{
+
+}
+
+void fillHydroOEquation(TBody* ibody, bool rightColOnly)
+{
+
+}
+
+
 void convectivefast::fillForceXEquation(TBody* ibody, bool rightColOnly)
 {
 	const double _1_dt = 1/S->dt;
@@ -890,7 +962,9 @@ void convectivefast::fillSpeedOEquation(TBody* ibody, bool rightColOnly)
 		const_for(jbody.List, lobj)
 			*matrix->objectAtIndex(eq_no, lobj->eq_no) = 0;
 
-		fprintf(stderr, "fillSpeedOEquation: root_body not implemented yet\n");
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = 0;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = 0;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = -1;
 		#undef jbody
 	}
 
