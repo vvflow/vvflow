@@ -4,7 +4,7 @@ PREFIX = ~/.local
 all: vvxtract
 
 vvxtract: vvxtract.cpp
-	$(CXX) $^ -o $@ -std=c++0x -lvvhd -lhdf5
+	$(CXX) $^ -o $@ -std=c++0x -lvvhd -lhdf5 -lmatheval
 
 clean:
 	rm -f vvxtract

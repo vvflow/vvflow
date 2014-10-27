@@ -5,7 +5,7 @@ PREFIX = ~/.local
 all: vvflow
 
 vvflow: vvflow.cpp
-	$(CC) $^ -o $@ -std=c++0x -mkl=parallel -lhdf5 -Wl,-Bstatic -lvvhd -Wl,-Bdynamic
+	$(CC) $^ -o $@ -std=c++0x -mkl=parallel -lhdf5 -lmatheval -Wl,-Bstatic -lvvhd -Wl,-Bdynamic
 
 clean:
 	rm -f vvflow

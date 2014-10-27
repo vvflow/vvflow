@@ -3,10 +3,13 @@
 #include <stdlib.h>
 #include "stdio.h"
 #include "float.h"
+#include "matheval.h"
 
+static const char* evaluator_names[] = {(char*)"t"};
 
 ShellScript::ShellScript():
 			script(),
+			evaluator(NULL),
 			cacheTime1(-DBL_MAX),
 			cacheTime2(-DBL_MAX),
 			cacheValue1(),
@@ -17,7 +20,23 @@ ShellScript::ShellScript(const std::string &s):
 			cacheTime1(-DBL_MAX),
 			cacheTime2(-DBL_MAX),
 			cacheValue1(),
-			cacheValue2() {}
+			cacheValue2()
+{
+	evaluator = evaluator_create((char*)script.c_str());
+}
+
+ShellScript::~ShellScript()
+{
+	if (evaluator) evaluator_destroy(evaluator);	
+}
+
+ShellScript& ShellScript::operator=(const std::string &s)
+{
+	script = s;
+	if (evaluator) evaluator_destroy(evaluator);
+	evaluator = evaluator_create((char*)script.c_str());
+	return *this;
+}
 
 double ShellScript::getValue(double t) const
 {
@@ -30,16 +49,7 @@ double ShellScript::getValue(double t) const
 	if (t == cacheTime1)
 		return cacheValue1;
 
-	char *exec = new char[script.size()+64];
-	sprintf(exec, "t=%lf; T=%lf; %s", t, t, script.c_str());
-	double resultValue;
-	FILE *pipe = popen(exec,"r");
-	if (pipe)
-	{
-		if (!fscanf(pipe, "%lf", &resultValue)) resultValue = 0.;
-		pclose(pipe);
-	}
-	delete exec;
+	double resultValue = evaluator_evaluate(evaluator, 1, (char**)evaluator_names, &t);
 
 	#pragma omp master
 	{

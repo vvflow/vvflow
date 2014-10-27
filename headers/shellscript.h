@@ -11,10 +11,12 @@ class ShellScript
 	public:
 		ShellScript();
 		ShellScript(const std::string &s);
+		~ShellScript();
 		double getValue(double t) const;
-		ShellScript& operator=(const std::string &s) { script = s; return *this; }
+		ShellScript& operator=(const std::string &s);
 
 	private:
+		void* evaluator;
 		mutable double cacheTime1;
 		mutable double cacheValue1;
 		mutable double cacheTime2;
