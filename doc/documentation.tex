@@ -605,8 +605,15 @@ $\vec r_* = \vec r_s - \vec R_O$, $\vec c_* = \vec c_s - \vec R_O$ --- коор�
 Влияние присоединенных вихрей на силу (раньше $M_\text{att}$ был другого знака):
 \begin{equation}
 \begin{split}
-\dfrac{\vec F_\att}{\rho_0} =& \dot{\vec{V}}_? S + [\vec e_z \times (3 \vec r_\text{com} - \vec r_c)] \dot{\omega}_? S \\
-\dfrac{M_\att}{\rho_0} =& - [\dot{\vec{V}}_? \times \vec r_{*\text{com}}] S + 2 \dot{\omega}_? J_O \\
+\dfrac{\vec F_\att}{\rho_0} =&
+-[\vec e_z \times \vec V_?]\omega_? S
++ \dot{\vec{V}}_? S
++ [\vec e_z \times (3 \vec r_\text{com} - \vec r_c)] \dot{\omega}_? S \\
+%%%%%%%%%%%%%%%
+\dfrac{M_\att}{\rho_0} =&
+- \vec r_{*\text{com}} \vec V_? \omega_? S
+- [\dot{\vec{V}}_? \times \vec r_{*\text{com}}] S
++ 2 \dot{\omega}_? J_O \\
 \end{split}
 \end{equation}
 
@@ -618,13 +625,18 @@ $\vec r_* = \vec r_s - \vec R_O$, $\vec c_* = \vec c_s - \vec R_O$ --- коор�
 \sum\limits_{s=1}^{N_s} {\frac{[\vec e_z \times \vec c_s]}{\Delta t} \cdot \gamma_s}
 + S \cdot \dot{\vec{V}}_?
 + [\vec e_z \times (3 \vec r_\text{com} - \vec r_c)] S \cdot \dot{\omega}_?
-- \dfrac{\vec F_\text{hydro}}{\rho_0}
-=& r_{*\text{com}} \omega^2 S + \vec F_\text{dead}\\
+- \dfrac{\vec F_\text{hydro}}{\rho_0} =&\\
+= %=============
+-\omega_? S \cdot [\vec e_z \times \vec V_?] + \vec r_{*\text{com}} \omega^2 S
++ \vec F_\text{dead}&\\
+%%%%%%%%%%%%%%%%
 \sum\limits_{s=1}^{N_s} {\frac{\vec c_*^2}{2\Delta t} \cdot \gamma_s}
 - [\vec e_z \times \vec r_{*\text{com}}] S \cdot \dot{\vec{V}}_?
 + 2 J_O \cdot \dot{\omega}_?
-- \dfrac{M_\text{hydro}}{\rho_0}
-=& M_\text{dead}
+- \dfrac{M_\text{hydro}}{\rho_0} =&\\
+= %=============
+- \omega_? S \vec r_{*\text{com}} \cdot \vec V_?
++ M_\text{dead}&
 \end{split}
 \end{equation}
 

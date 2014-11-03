@@ -50,7 +50,7 @@ TBody::TBody(Space *sS):
 	pos = dPos = TVec3D(0., 0., 0.);
 	g_dead = 0;
 	Friction = Friction_prev = TVec3D(0,0,0);
-	Force_born = Force_dead = TVec3D(0,0,0);
+	Force_born = Force_dead = Force_holder = TVec3D(0,0,0);
 	_surface = _area = 0;
 	_com = TVec(0., 0.);
 	_moi_c = _moi_com = 0;
