@@ -818,7 +818,7 @@ void Space::EnumerateBodies()
 		}
 
 		(**llbody).eq_forces_no = eq_no;
-		eq_no+= 3;
+		eq_no+= 9;
 	}
 }
 

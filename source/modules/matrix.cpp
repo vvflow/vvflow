@@ -162,6 +162,13 @@ void Matrix::save(const char* filename)
 	}
 }
 
+void Matrix::fillWithZeros()
+{
+	bodyMatrixIsOk_ = 0;
+	memset(BodyMatrix, 0, sizeof(double)*sqr(size));
+	memset(RightCol, 0, sizeof(double)*size);
+}
+
 bool Matrix::testNan()
 {
 	if (!bodyMatrixIsOk_) { perror("Test Nan: matrix is not filled"); return false; }
