@@ -557,11 +557,14 @@ void convectivefast::fillInfSteadyEquationForSegment(TAtt* seg, bool rightColOnl
 void fillHydroXEquation(TBody* ibody, bool rightColOnly)
 {
 	const double _1_dt = 1/S->dt;
-	const int eq_no = ibody->eq_forces_no+0;
 	const TVec r_c_com = ibody->getCom() - ibody->pos.r - ibody->dPos.r;
 
+	const int eq_no = ibody->eq_forces_no+3;
+	//place solution pointer
+	*matrix->solutionAtIndex(eq_no) = &ibody->Force_hydro.r.x;
+
 	if (!rightColOnly)
-	// свое тело
+	// self
 	{
 		#define jbody (*ibody)
 		const_for(jbody.List, lobj)
@@ -572,7 +575,7 @@ void fillHydroXEquation(TBody* ibody, bool rightColOnly)
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = 0;
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = ibody->getArea()*_1_dt*rotl(2*ibody->getCom()+r_c_com).x;
 
-		// Force_born
+		// Force_hydro
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+3) = -1;
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+4) = 0;
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+5) = 0;
@@ -585,10 +588,9 @@ void fillHydroXEquation(TBody* ibody, bool rightColOnly)
 	}
 
 	if (!rightColOnly)
-	const_for(S->BodyList, lljbody) // чужие тела
+	const_for(S->BodyList, lljbody) // others
 	{
 		if (*lljbody == ibody) continue;
-		if (*lljbody == ibody->root_body) continue;
 
 		#define jbody (**lljbody)
 		const_for(jbody.List, lobj)
@@ -599,7 +601,7 @@ void fillHydroXEquation(TBody* ibody, bool rightColOnly)
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = 0;
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = 0;
 
-		// Force_born
+		// Force_hydro
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+3) = 0;
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+4) = 0;
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+5) = 0;
@@ -611,9 +613,6 @@ void fillHydroXEquation(TBody* ibody, bool rightColOnly)
 
 		#undef jbody
 	}
-
-	//place solution pointer
-	*matrix->solutionAtIndex(eq_no) = &ibody->Force_hydro.r.x;
 
 	//right column
 	*matrix->rightColAtIndex(eq_no) = 
@@ -627,11 +626,13 @@ void fillHydroXEquation(TBody* ibody, bool rightColOnly)
 void fillHydroYEquation(TBody* ibody, bool rightColOnly)
 {
 	const double _1_dt = 1/S->dt;
-	const int eq_no = ibody->eq_forces_no+1;
 	const TVec r_c_com = ibody->getCom() - ibody->pos.r - ibody->dPos.r;
 
-	if (!rightColOnly)
-	// свое тело
+	const int eq_no = ibody->eq_forces_no+4;
+	//place solution pointer
+	*matrix->solutionAtIndex(eq_no) = &ibody->Force_hydro.r.y;
+
+	if (!rightColOnly) // self
 	{
 		#define jbody (*ibody)
 		const_for(jbody.List, lobj)
@@ -642,7 +643,7 @@ void fillHydroYEquation(TBody* ibody, bool rightColOnly)
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = ibody->getArea()*_1_dt;
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = ibody->getArea()*_1_dt*rotl(2*ibody->getCom()+r_c_com).y;
 
-		// Force_born
+		// Force_hydro
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+3) = 0;
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+4) = -1;
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+5) = 0;
@@ -655,10 +656,9 @@ void fillHydroYEquation(TBody* ibody, bool rightColOnly)
 	}
 
 	if (!rightColOnly)
-	const_for(S->BodyList, lljbody) // чужие тела
+	const_for(S->BodyList, lljbody) // others
 	{
 		if (*lljbody == ibody) continue;
-		if (*lljbody == ibody->root_body) continue;
 
 		#define jbody (**lljbody)
 		const_for(jbody.List, lobj)
@@ -669,7 +669,7 @@ void fillHydroYEquation(TBody* ibody, bool rightColOnly)
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = 0;
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = 0;
 
-		// Force_born
+		// Force_hydro
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+3) = 0;
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+4) = 0;
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+5) = 0;
@@ -681,9 +681,6 @@ void fillHydroYEquation(TBody* ibody, bool rightColOnly)
 
 		#undef jbody
 	}
-
-	//place solution pointer
-	*matrix->solutionAtIndex(eq_no) = &ibody->Force_hydro.r.y;
 
 	//right column
 	*matrix->rightColAtIndex(eq_no) =
@@ -698,11 +695,13 @@ void fillHydroOEquation(TBody* ibody, bool rightColOnly)
 {
 	const double _1_dt = 1/S->dt;
 	const double _1_2dt = 0.5/S->dt;
-	const int eq_no = ibody->eq_forces_no+2;
 	const TVec r_c_com = ibody->getCom() - ibody->pos.r - ibody->dPos.r;
+	
+	const int eq_no = ibody->eq_forces_no+2;
+	//place solution pointer
+	*matrix->solutionAtIndex(eq_no) = &ibody->Force_hydro.o;
 
-	if (!rightColOnly)
-	// свое тело
+	if (!rightColOnly) // self
 	{
 		#define jbody (*ibody)
 		const_for(jbody.List, lobj)
@@ -713,7 +712,7 @@ void fillHydroOEquation(TBody* ibody, bool rightColOnly)
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = ibody->getArea()*_1_dt * (r_c_com.x);
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = 2*ibody->getMoi_c()*_1_dt;
 
-		// Force_born
+		// Force_hydro
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+3) = 0;
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+4) = 0;
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+5) = -1;
@@ -726,10 +725,9 @@ void fillHydroOEquation(TBody* ibody, bool rightColOnly)
 	}
 
 	if (!rightColOnly)
-	const_for(S->BodyList, lljbody) // чужие тела
+	const_for(S->BodyList, lljbody) // others
 	{
 		if (*lljbody == ibody) continue;
-		if (*lljbody == ibody->root_body) continue;
 
 		#define jbody (**lljbody)
 		const_for(jbody.List, lobj)
@@ -740,7 +738,7 @@ void fillHydroOEquation(TBody* ibody, bool rightColOnly)
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = 0;
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = 0;
 
-		// Force_born
+		// Force_hydro
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+3) = 0;
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+4) = 0;
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+5) = 0;
@@ -753,9 +751,6 @@ void fillHydroOEquation(TBody* ibody, bool rightColOnly)
 		#undef jbody
 	}
 
-	//place solution pointer
-	*matrix->solutionAtIndex(eq_no) = &ibody->Force_hydro.r.y;
-
 	//right column
 	*matrix->rightColAtIndex(eq_no) =
 		+ ibody->getArea()*_1_dt * r_c_com * ibody->Speed_slae_prev.r
@@ -765,205 +760,286 @@ void fillHydroOEquation(TBody* ibody, bool rightColOnly)
 }
 
 
-void convectivefast::fillForceXEquation(TBody* ibody, bool rightColOnly)
+void convectivefast::fillNewtonXEquation(TBody* ibody, bool rightColOnly)
 {
 	const double _1_dt = 1/S->dt;
-	const int eq_no = ibody->eq_forces_no;
 
-	if (!rightColOnly)
-	// свое тело
+	const int eq_no = ibody->eq_forces_no+6;
+	//place solution pointer
+	*matrix->solutionAtIndex(eq_no) = &ibody->Force_holder.r.x;
+
+	if (!rightColOnly) // self
 	{
 		#define jbody (*ibody)
 		const_for(jbody.List, lobj)
-			*matrix->objectAtIndex(eq_no, lobj->eq_no) = _1_dt * (-lobj->corner.y);
-
-		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = -ibody->getArea()*_1_dt*ibody->density
-		                                                      -ibody->damping.r.x;
-		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = 0;
-		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = 0;
-		#undef jbody
-	}
-
-	if (!rightColOnly && ibody->root_body)
-	// опорное тело
-	{
-		#define jbody (*ibody->root_body)
-		const_for(jbody.List, lobj)
 			*matrix->objectAtIndex(eq_no, lobj->eq_no) = 0;
 		
-		fprintf(stderr, "fillForceXEquation: root_body not implemented yet\n");
+		// Speed_slae
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = -ibody->getArea()*_1_dt*ibody->density;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = 0;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = 0;
+		
+		// Force_hydro
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+3) = 1;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+4) = 0;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+5) = 0;
+		
+		// Force_holder
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+6) = 1;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+7) = 0;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+8) = 0;
 		#undef jbody
 	}
 
 	if (!rightColOnly)
-	const_for(S->BodyList, lljbody) // чужие тела
+	const_for(S->BodyList, lljbody) // children
 	{
-		if (*lljbody == ibody) continue;
-		if (*lljbody == ibody->root_body) continue;
+		#define jbody (**lljbody)
+		if (jbody->root_body != ibody) continue;
+
+		const_for(jbody.List, lobj)
+			*matrix->objectAtIndex(eq_no, lobj->eq_no) = 0;
+
+		// Speed_slae
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = 0;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = 0;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = 0;
+		
+		// Force_hydro
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+3) = 0;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+4) = 0;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+5) = 0;
+		
+		// Force_holder
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+6) = -1;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+7) = 0;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+8) = 0;
+
+		#undef jbody
+	}
+
+	if (!rightColOnly)
+	const_for(S->BodyList, lljbody) // others
+	{
+		if (*lljbody == ibody) continue; // skip self
+		if (jbody->root_body == ibody) continue; //skip children
 
 		#define jbody (**lljbody)
 		const_for(jbody.List, lobj)
 			*matrix->objectAtIndex(eq_no, lobj->eq_no) = 0;
 
+		// Speed_slae
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = 0;
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = 0;
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = 0;
+		
+		// Force_hydro
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+3) = 0;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+4) = 0;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+5) = 0;
+		
+		// Force_holder
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+6) = 0;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+7) = 0;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+8) = 0;
 
 		#undef jbody
 	}
 
-	//place solution pointer
-	*matrix->solutionAtIndex(eq_no) = &ibody->Speed_slae.r.x;
-
 	//right column
-	*matrix->rightColAtIndex(eq_no) = 
+	*matrix->rightColAtIndex(eq_no) =
+		- ibody->getArea()*_1_dt*ibody->density * ibody->Speed_slae_prev.r.x
 		- (ibody->density-1.0) * S->gravitation.x * ibody->getArea()
-		+ ibody->k.r.x * ibody->dPos.r.x +
-		- ibody->Friction_prev.r.x
-		+ ibody->Force_dead.r.x
-		- ibody->density * ibody->getArea() * ibody->Speed_slae_prev.r.x * _1_dt
-		- (-ibody->Speed_slae_prev.r.y) * ibody->Speed_slae_prev.o * ibody->getArea()
-		+ sqr(ibody->Speed_slae_prev.o) * ibody->getArea() * (ibody->getCom() - ibody->pos.r - ibody->dPos.r).x;
+		- ibody->Friction_prev.r.x;
 }
 
-void convectivefast::fillForceYEquation(TBody* ibody, bool rightColOnly)
+void convectivefast::fillNewtonYEquation(TBody* ibody, bool rightColOnly)
 {
 	const double _1_dt = 1/S->dt;
-	const int eq_no = ibody->eq_forces_no+1;
 
-	if (!rightColOnly)
-	// свое тело
+	const int eq_no = ibody->eq_forces_no+7;
+	//place solution pointer
+	*matrix->solutionAtIndex(eq_no) = &ibody->Force_holder.r.y;
+
+	if (!rightColOnly) // self
 	{
 		#define jbody (*ibody)
 		const_for(jbody.List, lobj)
-			*matrix->objectAtIndex(eq_no, lobj->eq_no) = _1_dt * (lobj->corner.x);
-		
-		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = 0;
-		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = -ibody->getArea()*_1_dt*ibody->density
-		                                                      -ibody->damping.r.y;
-		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = 0;
-
-		#undef jbody
-	}
-
-	if (!rightColOnly && ibody->root_body)
-	// опорное тело
-	{
-		#define jbody (*ibody->root_body)
-		const_for(jbody.List, lobj)
 			*matrix->objectAtIndex(eq_no, lobj->eq_no) = 0;
-
-		fprintf(stderr, "fillForceYEquation: root_body not implemented yet\n");
+		
+		// Speed_slae
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = 0;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = -ibody->getArea()*_1_dt*ibody->density;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = 0;
+		
+		// Force_hydro
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+3) = 0;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+4) = 1;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+5) = 0;
+		
+		// Force_holder
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+6) = 0;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+7) = 1;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+8) = 0;
 		#undef jbody
 	}
 
 	if (!rightColOnly)
-	const_for(S->BodyList, lljbody) // чужие тела
+	const_for(S->BodyList, lljbody) // children
 	{
-		if (*lljbody == ibody) continue;
-		if (*lljbody == ibody->root_body) continue;
+		#define jbody (**lljbody)
+		if (jbody->root_body != ibody) continue;
+
+		const_for(jbody.List, lobj)
+			*matrix->objectAtIndex(eq_no, lobj->eq_no) = 0;
+
+		// Speed_slae
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = 0;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = 0;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = 0;
+		
+		// Force_hydro
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+3) = 0;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+4) = 0;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+5) = 0;
+		
+		// Force_holder
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+6) = 0;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+7) = -1;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+8) = 0;
+
+		#undef jbody
+	}
+
+	if (!rightColOnly)
+	const_for(S->BodyList, lljbody) // others
+	{
+		if (*lljbody == ibody) continue; // skip self
+		if (jbody->root_body == ibody) continue; //skip children
 
 		#define jbody (**lljbody)
 		const_for(jbody.List, lobj)
 			*matrix->objectAtIndex(eq_no, lobj->eq_no) = 0;
 
+		// Speed_slae
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = 0;
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = 0;
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = 0;
+		
+		// Force_hydro
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+3) = 0;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+4) = 0;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+5) = 0;
+		
+		// Force_holder
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+6) = 0;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+7) = 0;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+8) = 0;
+
 		#undef jbody
 	}
 
-	//place solution pointer
-	*matrix->solutionAtIndex(eq_no) = &ibody->Speed_slae.r.y;
-
 	//right column
-	*matrix->rightColAtIndex(eq_no) = 
+	*matrix->rightColAtIndex(eq_no) =
+		- ibody->getArea()*_1_dt*ibody->density * ibody->Speed_slae_prev.r.y
 		- (ibody->density-1.0) * S->gravitation.y * ibody->getArea()
-		+ ibody->k.r.y * ibody->dPos.r.y +
-		- ibody->Friction_prev.r.y
-		+ ibody->Force_dead.r.y
-		- ibody->density * ibody->getArea() * ibody->Speed_slae_prev.r.y * _1_dt
-		- (ibody->Speed_slae_prev.r.x) * ibody->Speed_slae_prev.o * ibody->getArea()
-		+ sqr(ibody->Speed_slae_prev.o) * ibody->getArea() * (ibody->getCom() - ibody->pos.r - ibody->dPos.r).y;
+		- ibody->Friction_prev.r.y;
 }
 
-void convectivefast::fillForceOEquation(TBody* ibody, bool rightColOnly)
+void convectivefast::fillNewtonOEquation(TBody* ibody, bool rightColOnly)
 {
 	const double _1_dt = 1/S->dt;
-	const double _1_2dt = 0.5/S->dt;
-	const int eq_no = ibody->eq_forces_no+2;
 	const TVec r_c_com = ibody->getCom() - ibody->pos.r - ibody->dPos.r;
 
-	if (!rightColOnly)
-	// свое тело
+
+	const int eq_no = ibody->eq_forces_no+8;
+	//place solution pointer
+	*matrix->solutionAtIndex(eq_no) = &ibody->Force_holder.o;
+
+	if (!rightColOnly) // self
 	{
 		#define jbody (*ibody)
-		if (ibody->k.o >= 0 && S->Time>0)
-		const_for(jbody.List, lobj)
-			*matrix->objectAtIndex(eq_no, lobj->eq_no) = _1_2dt * (lobj->corner - ibody->pos.r - ibody->dPos.r).abs2();
-
-		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) =  r_c_com.y*ibody->getArea()*_1_dt;
-		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = -r_c_com.x*ibody->getArea()*_1_dt;
-		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = -ibody->getMoi_c()*_1_dt*(ibody->density+2)
-		                                                      -ibody->damping.o;
-		if (ibody->root_body)
-		{
-			*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) *= (ibody->density+1);
-			*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) *= (ibody->density+1);
-		}
-		#undef jbody
-	}
-
-	if (!rightColOnly && ibody->root_body)
-	// опорное тело
-	{
-		#define jbody (*ibody->root_body)
-
 		const_for(jbody.List, lobj)
 			*matrix->objectAtIndex(eq_no, lobj->eq_no) = 0;
 		
-		fprintf(stderr, "fillForceOEquation: root_body not implemented yet\n");
-		// TVec r_c_root = ibody->pos.r + ibody->dPos.r - jbody.pos.r - jbody.dPos.r;
-		// *matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = r_c_com.x*ibody->getArea()*_1_dt;
-		// *matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = - r_c_com.y*ibody->getArea()*_1_dt;
-		// *matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = r_c_com * rotl(r_c_root)*ibody->getArea()*_1_dt;
+		// Speed_slae
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = 0;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = 0;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = -ibody->getMoi_c()*_1_dt*ibody->density;
+		
+		// Force_hydro
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+3) = 0;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+4) = 0;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+5) = 1;
+		
+		// Force_holder
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+6) = 0;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+7) = 0;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+8) = 1;
 		#undef jbody
 	}
 
 	if (!rightColOnly)
-	const_for(S->BodyList, lljbody) //чужие тела
+	const_for(S->BodyList, lljbody) // children
 	{
-		if (*lljbody == ibody) continue;
-		if (*lljbody == ibody->root_body) continue;
 		#define jbody (**lljbody)
+		if (jbody->root_body != ibody) continue;
 
 		const_for(jbody.List, lobj)
 			*matrix->objectAtIndex(eq_no, lobj->eq_no) = 0;
 
+		// Speed_slae
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = 0;
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = 0;
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = 0;
+		
+		// Force_hydro
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+3) = 0;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+4) = 0;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+5) = 0;
+		
+		// Force_holder
+		TVec r_child_c = jbody.pos + jbody.dPos - ibody->pos - ibody->dPos;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+6) = r_child_c.y;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+7) = -r_child_c.x;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+8) = -1;
 
 		#undef jbody
 	}
 
-	//place solution pointer
-	*matrix->solutionAtIndex(eq_no) = &ibody->Speed_slae.o;
+	if (!rightColOnly)
+	const_for(S->BodyList, lljbody) // others
+	{
+		if (*lljbody == ibody) continue; // skip self
+		if (jbody->root_body == ibody) continue; //skip children
+
+		#define jbody (**lljbody)
+		const_for(jbody.List, lobj)
+			*matrix->objectAtIndex(eq_no, lobj->eq_no) = 0;
+
+		// Speed_slae
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = 0;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = 0;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = 0;
+		
+		// Force_hydro
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+3) = 0;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+4) = 0;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+5) = 0;
+		
+		// Force_holder
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+6) = 0;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+7) = 0;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+8) = 0;
+
+		#undef jbody
+	}
 
 	//right column
-	*matrix->rightColAtIndex(eq_no) = 
-		+ ibody->k.o * ibody->dPos.o
-		- (ibody->density-1.0) * (rotl(r_c_com)*S->gravitation) * ibody->getArea()
-		+ ibody->Force_dead.o
-		- ibody->Friction_prev.o
-		- rotl(r_c_com)*ibody->Speed_slae_prev.r * ibody->getArea() * _1_dt
-		- ibody->getMoi_c() * ibody->Speed_slae_prev.o * _1_dt * (ibody->density + 2.)
-		- (r_c_com * ibody->Speed_slae_prev.r) * ibody->Speed_slae_prev.o * ibody->getArea();
-	if (ibody->root_body)
-	{
-		*matrix->rightColAtIndex(eq_no) +=
-		 - ibody->density * (rotl(r_c_com)*ibody->Speed_slae_prev.r) * ibody->getArea() * _1_dt;
-	}
+	*matrix->rightColAtIndex(eq_no) =
+		- ibody->getMoi_c()*_1_dt*ibody->density * ibody->Speed_slae_prev.o
+		- (ibody->density-1.0) * (r_c_com*S->gravitation) * ibody->getArea()
+		- ibody->Friction_prev.o;
 }
 
 void convectivefast::fillSpeedXEquation(TBody* ibody, bool rightColOnly)
@@ -971,8 +1047,7 @@ void convectivefast::fillSpeedXEquation(TBody* ibody, bool rightColOnly)
 	const double _1_dt = 1/S->dt;
 	const int eq_no = ibody->eq_forces_no;
 
-	if (!rightColOnly)
-	// свое тело
+	if (!rightColOnly) // self
 	{
 		#define jbody (*ibody)
 		const_for(jbody.List, lobj)
@@ -998,7 +1073,7 @@ void convectivefast::fillSpeedXEquation(TBody* ibody, bool rightColOnly)
 	}
 
 	if (!rightColOnly)
-	const_for(S->BodyList, lljbody) // чужие тела
+	const_for(S->BodyList, lljbody) // others
 	{
 		if (*lljbody == ibody) continue;
 		if (*lljbody == ibody->root_body) continue;
@@ -1024,8 +1099,7 @@ void convectivefast::fillSpeedYEquation(TBody* ibody, bool rightColOnly)
 	const double _1_dt = 1/S->dt;
 	const int eq_no = ibody->eq_forces_no+1;
 
-	if (!rightColOnly)
-	// свое тело
+	if (!rightColOnly) // self
 	{
 		#define jbody (*ibody)
 		const_for(jbody.List, lobj)
@@ -1052,7 +1126,7 @@ void convectivefast::fillSpeedYEquation(TBody* ibody, bool rightColOnly)
 	}
 
 	if (!rightColOnly)
-	const_for(S->BodyList, lljbody) // чужие тела
+	const_for(S->BodyList, lljbody) // others
 	{
 		if (*lljbody == ibody) continue;
 		if (*lljbody == ibody->root_body) continue;
@@ -1080,8 +1154,7 @@ void convectivefast::fillSpeedOEquation(TBody* ibody, bool rightColOnly)
 	const int eq_no = ibody->eq_forces_no+2;
 	const TVec r_c_com = ibody->getCom() - ibody->pos.r - ibody->dPos.r;
 
-	if (!rightColOnly)
-	// свое тело
+	if (!rightColOnly) // self
 	{
 		#define jbody (*ibody)
 		const_for(jbody.List, lobj)
@@ -1108,7 +1181,7 @@ void convectivefast::fillSpeedOEquation(TBody* ibody, bool rightColOnly)
 	}
 
 	if (!rightColOnly)
-	const_for(S->BodyList, lljbody) // чужие тела
+	const_for(S->BodyList, lljbody) // others
 	{
 		if (*lljbody == ibody) continue;
 		if (*lljbody == ibody->root_body) continue;
