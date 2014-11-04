@@ -619,7 +619,7 @@ void convectivefast::fillHydroYEquation(TBody* ibody, bool rightColOnly)
 
 void convectivefast::fillHydroOEquation(TBody* ibody, bool rightColOnly)
 {
-	const int eq_no = ibody->eq_forces_no+2;
+	const int eq_no = ibody->eq_forces_no+5;
 	const double _1_dt = 1/S->dt;
 	const double _1_2dt = 0.5/S->dt;
 	const TVec r_c_com = ibody->getCom() - ibody->pos.r - ibody->dPos.r;
@@ -1033,16 +1033,7 @@ void convectivefast::FillMatrix(bool rightColOnly)
 
 	if (!rightColOnly)
 		matrix->markBodyMatrixAsFilled();
-/*
-	for (int i=0; i<matrix->size; i++)
-	{
-		for (int j=0; j< matrix->size; j++)
-		{
-			printf("%8.4lf\t", *matrix->objectAtIndex(i, j));
-		}
 
-		printf("\t%8.4lf\n", *matrix->rightColAtIndex(i));
-	}
-	printf("\n\n");*/
+	// matrix->save("matrix");
 }
 
