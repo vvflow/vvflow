@@ -99,7 +99,7 @@ class TBody
 		//double kx, ky, ka;
 		double density; //in doc \frac{\rho_b}{\rho_0}
 
-		TVec3D Friction, Friction_prev, Force_export; //computed by S->CalcForces
+		TVec3D Friction, Friction_prev; //computed by S->CalcForces
 		TVec3D Force_dead; //computed by flowmove->MoveAndClean
 		TVec3D Force_hydro, Force_holder; //computed by convectivefast->CalcCirculationFast
 		double Nusselt; //computed by S->CalcForces

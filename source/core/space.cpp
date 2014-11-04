@@ -165,8 +165,8 @@ void Space::dataset_write_body(const char* name, TBody *body)
 	attribute_write(file_dataset, "spring_const", body->k);
 	attribute_write(file_dataset, "spring_damping", body->damping);
 	attribute_write(file_dataset, "density", body->density);
-	attribute_write(file_dataset, "force_born", body->Force_born);
-	attribute_write(file_dataset, "force_dead", body->Force_dead);
+	attribute_write(file_dataset, "force_hydro", body->Force_hydro);
+	attribute_write(file_dataset, "force_holder", body->Force_holder);
 	attribute_write(file_dataset, "friction_prev", body->Friction_prev);
 	
 	attribute_write(file_dataset, "area", body->getArea());
@@ -307,8 +307,8 @@ herr_t dataset_read_body(hid_t g_id, const char *name, const H5L_info_t *info, v
 	attribute_read(dataset, "spring_const", body->k);
 	attribute_read(dataset, "spring_damping", body->damping);
 	attribute_read(dataset, "density", body->density);
-	attribute_read(dataset, "force_born", body->Force_born);
-	attribute_read(dataset, "force_dead", body->Force_dead);
+	attribute_read(dataset, "force_hydro", body->Force_hydro);
+	attribute_read(dataset, "force_holder", body->Force_holder);
 	attribute_read(dataset, "friction_prev", body->Friction_prev);
 
 	std::string root_body_name;
@@ -521,7 +521,7 @@ void Space::Load_v1_3(const char* fname)
 			fread(&body->k, 24, 1, fin);
 			fread(&body->density, 8, 1, fin);
 
-			fread(&body->Force_born, 24, 1, fin);
+			fread(&body->Force_hydro, 24, 1, fin);
 			fread(&body->Force_dead, 24, 1, fin);
 			fread(&body->Friction_prev, 24, 1, fin);
 		}
@@ -589,8 +589,6 @@ void Space::CalcForces()
 			body.Nusselt += latt->hsum * (Re*Pr);
 		}
 
-		body.Force_export.r = body.Force_born.r - body.Force_dead.r;
-		body.Force_export.o = body.Force_born.o - body.Force_dead.o;
 		body.Nusselt /= dt;
 	}
 
@@ -646,8 +644,8 @@ void Space::ZeroForces()
 			latt->ParticleInHeatLayer = -1;
 		}
 
-		(**llbody).Force_dead = TVec3D();
-		(**llbody).Force_born = TVec3D();
+		(**llbody).Force_hydro = TVec3D();
+		(**llbody).Force_holder = TVec3D();
 		(**llbody).Friction = TVec3D();
 		(**llbody).Nusselt = 0.;
 	}

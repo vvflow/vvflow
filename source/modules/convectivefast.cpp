@@ -493,7 +493,7 @@ void convectivefast::fillZeroEquationForSegment(TAtt* seg, bool rightColOnly)
 void convectivefast::fillSteadyEquationForSegment(TAtt* seg, bool rightColOnly)
 {
 	const int seg_eq_no = seg->eq_no; //equation number for current segment
-	const TBody* lbody = seg->body;
+	TBody* lbody = seg->body;
 
 	//right column
 	*matrix->rightColAtIndex(seg_eq_no) = lbody->g_dead + 2*lbody->getArea()*lbody->Speed_slae_prev.o;
@@ -547,7 +547,7 @@ void convectivefast::fillInfSteadyEquationForSegment(TAtt* seg, bool rightColOnl
 888    888     888     8888888P"  888   T88b  "Y88888P"
 */
 
-void fillHydroXEquation(TBody* ibody, bool rightColOnly)
+void convectivefast::fillHydroXEquation(TBody* ibody, bool rightColOnly)
 {
 	const int eq_no = ibody->eq_forces_no+3;
 	const double _1_dt = 1/S->dt;
@@ -582,7 +582,7 @@ void fillHydroXEquation(TBody* ibody, bool rightColOnly)
 	}
 }
 
-void fillHydroYEquation(TBody* ibody, bool rightColOnly)
+void convectivefast::fillHydroYEquation(TBody* ibody, bool rightColOnly)
 {
 	const int eq_no = ibody->eq_forces_no+4;
 	const double _1_dt = 1/S->dt;
@@ -617,7 +617,7 @@ void fillHydroYEquation(TBody* ibody, bool rightColOnly)
 	}
 }
 
-void fillHydroOEquation(TBody* ibody, bool rightColOnly)
+void convectivefast::fillHydroOEquation(TBody* ibody, bool rightColOnly)
 {
 	const int eq_no = ibody->eq_forces_no+2;
 	const double _1_dt = 1/S->dt;
@@ -695,7 +695,7 @@ void convectivefast::fillNewtonXEquation(TBody* ibody, bool rightColOnly)
 	const_for(S->BodyList, lljbody)
 	{
 		#define jbody (**lljbody)
-		if (jbody->root_body != ibody) continue;
+		if (jbody.root_body != ibody) continue;
 
 		// Force_holder
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+6) = -1;
@@ -735,7 +735,7 @@ void convectivefast::fillNewtonYEquation(TBody* ibody, bool rightColOnly)
 	const_for(S->BodyList, lljbody)
 	{
 		#define jbody (**lljbody)
-		if (jbody->root_body != ibody) continue;
+		if (jbody.root_body != ibody) continue;
 
 		// Force_holder
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+7) = -1;
@@ -776,10 +776,10 @@ void convectivefast::fillNewtonOEquation(TBody* ibody, bool rightColOnly)
 	const_for(S->BodyList, lljbody)
 	{
 		#define jbody (**lljbody)
-		if (jbody->root_body != ibody) continue;
+		if (jbody.root_body != ibody) continue;
 		
 		// Force_holder
-		TVec r_child_c = jbody.pos + jbody.dPos - ibody->pos - ibody->dPos;
+		TVec r_child_c = jbody.pos.r + jbody.dPos.r - ibody->pos.r - ibody->dPos.r;
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+6) = r_child_c.y;
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+7) = -r_child_c.x;
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+8) = -1;

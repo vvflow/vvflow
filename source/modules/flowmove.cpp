@@ -141,7 +141,6 @@ void flowmove::VortexShed()
 	const_for(S->BodyList, llbody)
 	{
 		#define body (**llbody)
-		body.Force_born = TVec3D(0., 0., 0.);
 
 		const_for(body.List, latt)
 		{
@@ -151,15 +150,10 @@ void flowmove::VortexShed()
 			{
 				ObjCopy.r = latt->corner + rotl(latt->dl)*1e-4;
 				ObjCopy.g = latt->g;
-				body.Force_born.r += rotl(latt->corner) * ObjCopy.g;
-				body.Force_born.o += (latt->corner-body.pos.r-body.dPos.r).abs2() * ObjCopy.g;
 				latt->gsum+= ObjCopy.g;
 				vlist->push_back(ObjCopy);
 			}
 		}
-
-		body.Force_born.r /= dt;
-		body.Force_born.o /= 2.*dt;
 		#undef body
 	}
 }
