@@ -160,6 +160,7 @@ void Matrix::save(const char* filename)
 		}
 		fprintf(fout, "\t%lf\n", RightCol[i]);
 	}
+	fclose(fout);
 }
 
 void Matrix::fillWithZeros()

@@ -596,9 +596,9 @@ $\vec r_* = \vec r_s - \vec R_O$, $\vec c_* = \vec c_s - \vec R_O$ --- коор�
 \begin{equation}
 \begin{split}
 \dfrac{1}{2} \sum_{s=1}^{N_s} [\vec e_z \times \Delta \vec l_s] V_s^2
-=& \xcancel{-[\vec e_z \times \vec V_?]\omega_? S} + \vec r_{*\text{com}} \omega_?^2 S \\
+=& -[\vec e_z \times \vec V_?]\omega_? S + \vec r_{*\text{com}} \omega_?^2 S \\
 \frac{1}{2} \sum_{s=1}^{N_s} (\vec r_* \cdot \Delta \vec l_s) \cdot V_s^2
-=& \xcancel{- \vec r_{*\text{com}} \vec V_? \omega_? S} + 0\\
+=& - \vec r_{*\text{com}} \vec V_? \omega_? S\\
 \end{split}
 \end{equation}
 
@@ -612,7 +612,7 @@ $\vec r_* = \vec r_s - \vec R_O$, $\vec c_* = \vec c_s - \vec R_O$ --- коор�
 %%%%%%%%%%%%%%%
 \dfrac{M_\att}{\rho_0} =&
 - \vec r_{*\text{com}} \vec V_? \omega_? S
-- [\dot{\vec{V}}_? \times \vec r_{*\text{com}}] S
++ [\vec r_{*\text{com}} \times \dot{\vec{V}}_?] S
 + 2 \dot{\omega}_? J_O \\
 \end{split}
 \end{equation}
@@ -627,16 +627,17 @@ $\vec r_* = \vec r_s - \vec R_O$, $\vec c_* = \vec c_s - \vec R_O$ --- коор�
 + [\vec e_z \times (3 \vec r_\text{com} - \vec r_c)] S \cdot \dot{\omega}_?
 - \dfrac{\vec F_\text{hydro}}{\rho_0} =&\\
 = %=============
--\omega_? S \cdot [\vec e_z \times \vec V_?] + \vec r_{*\text{com}} \omega^2 S
+%-\omega_? S \cdot [\vec e_z \times \vec V_?]
+\vec r_{*\text{com}} \omega^2 S
 + \vec F_\text{dead}&\\
 %%%%%%%%%%%%%%%%
 \sum\limits_{s=1}^{N_s} {\frac{\vec c_*^2}{2\Delta t} \cdot \gamma_s}
-- [\vec e_z \times \vec r_{*\text{com}}] S \cdot \dot{\vec{V}}_?
++ [\vec e_z \times \vec r_{*\text{com}}] S \cdot \dot{\vec{V}}_?
 + 2 J_O \cdot \dot{\omega}_?
 - \dfrac{M_\text{hydro}}{\rho_0} =&\\
 = %=============
-- \omega_? S \vec r_{*\text{com}} \cdot \vec V_?
-+ M_\text{dead}&
+%- \omega_? S \vec r_{*\text{com}} \cdot \vec V_?
+M_\text{dead}&
 \end{split}
 \end{equation}
 

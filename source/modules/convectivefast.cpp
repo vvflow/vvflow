@@ -557,7 +557,7 @@ void convectivefast::fillHydroXEquation(TBody* ibody, bool rightColOnly)
 	*matrix->rightColAtIndex(eq_no) = 
 		+ ibody->getArea()*_1_dt*ibody->Speed_slae_prev.r.x
 		+ ibody->getArea()*_1_dt*rotl(2*ibody->getCom()+r_c_com).x * ibody->Speed_slae_prev.o
-		- (-ibody->Speed_slae_prev.r.y) * ibody->Speed_slae_prev.o * ibody->getArea()
+		// - (-ibody->Speed_slae_prev.r.y) * ibody->Speed_slae_prev.o * ibody->getArea()
 		+ sqr(ibody->Speed_slae_prev.o) * ibody->getArea() * r_c_com.x
 		+ ibody->Force_dead.r.x;
 	if (rightColOnly) return;
@@ -574,7 +574,7 @@ void convectivefast::fillHydroXEquation(TBody* ibody, bool rightColOnly)
 		// Speed_slae
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = ibody->getArea()*_1_dt;
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = 0;
-		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = ibody->getArea()*_1_dt*rotl(2*ibody->getCom()+r_c_com).x;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = ibody->getArea()*_1_dt * (-2*ibody->getCom().y - r_c_com.y);
 
 		// Force_hydro
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+3) = -1;
@@ -592,7 +592,7 @@ void convectivefast::fillHydroYEquation(TBody* ibody, bool rightColOnly)
 	*matrix->rightColAtIndex(eq_no) =
 		+ ibody->getArea()*_1_dt*ibody->Speed_slae_prev.r.y
 		+ ibody->getArea()*_1_dt*rotl(2*ibody->getCom()+r_c_com).y * ibody->Speed_slae_prev.o
-		- (ibody->Speed_slae_prev.r.x) * ibody->Speed_slae_prev.o * ibody->getArea()
+		// - (ibody->Speed_slae_prev.r.x) * ibody->Speed_slae_prev.o * ibody->getArea()
 		+ sqr(ibody->Speed_slae_prev.o) * ibody->getArea() * r_c_com.y
 		+ ibody->Force_dead.r.y;
 	if (rightColOnly) return;
@@ -609,7 +609,7 @@ void convectivefast::fillHydroYEquation(TBody* ibody, bool rightColOnly)
 		// Speed_slae
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = 0;
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = ibody->getArea()*_1_dt;
-		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = ibody->getArea()*_1_dt*rotl(2*ibody->getCom()+r_c_com).y;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = ibody->getArea()*_1_dt * (2*ibody->getCom().x + r_c_com.x);
 
 		// Force_hydro
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+4) = -1;
@@ -626,9 +626,9 @@ void convectivefast::fillHydroOEquation(TBody* ibody, bool rightColOnly)
 	
 	//right column
 	*matrix->rightColAtIndex(eq_no) =
-		+ ibody->getArea()*_1_dt * r_c_com * ibody->Speed_slae_prev.r
+		+ ibody->getArea()*_1_dt * rotl(r_c_com) * ibody->Speed_slae_prev.r
 		+ 2*ibody->getMoi_c()*_1_dt * ibody->Speed_slae_prev.o
-		- (r_c_com * ibody->Speed_slae_prev.r) * ibody->Speed_slae_prev.o * ibody->getArea()
+		// - (r_c_com * ibody->Speed_slae_prev.r) * ibody->Speed_slae_prev.o * ibody->getArea()
 		+ ibody->Force_dead.o;
 	if (rightColOnly) return;
 	
