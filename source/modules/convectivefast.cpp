@@ -238,6 +238,21 @@ TVec convectivefast::BoundaryConvectiveSlip(const TBody &b, const TVec &p)
 bool convectivefast::canUseInverse()
 {
 	//Algorithm:
+
+	return false;
+	const_for(S->BodyList, llbody1)
+	{
+		TBody *lbody1 = *llbody1;
+
+		if (!lbody1->getSpeed().iszero()) return false;
+		if (lbody1->k.r.x >= 0) return false;
+		if (lbody1->k.r.y >= 0) return false;
+		if (lbody1->k.o >= 0) return false;
+	}
+
+	return true;
+
+	/*
 	// if Nb <= 1 -> use_inverse=TRUE
 	// else check bodies
 	//     if any kx, ky, ka >= 0 -> use_inverse=FALSE
@@ -265,7 +280,7 @@ bool convectivefast::canUseInverse()
 
 			if (lbody1->getSpeed().r != lbody2->getSpeed().r) return false;
 		}
-	}
+	}*/
 
 	return true;
 }
@@ -560,6 +575,7 @@ void convectivefast::fillHydroXEquation(TBody* ibody, bool rightColOnly)
 		// - (-ibody->Speed_slae_prev.r.y) * ibody->Speed_slae_prev.o * ibody->getArea()
 		+ sqr(ibody->Speed_slae_prev.o) * ibody->getArea() * r_c_com.x
 		+ ibody->Force_dead.r.x;
+
 	if (rightColOnly) return;
 
 	//place solution pointer
@@ -687,7 +703,7 @@ void convectivefast::fillNewtonXEquation(TBody* ibody, bool rightColOnly)
 		// Force_hydro
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+3) = 1;
 		// Force_holder
-		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+6) = 1;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+6) = -1;
 		#undef jbody
 	}
 
@@ -698,7 +714,7 @@ void convectivefast::fillNewtonXEquation(TBody* ibody, bool rightColOnly)
 		if (jbody.root_body != ibody) continue;
 
 		// Force_holder
-		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+6) = -1;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+6) = 1;
 		#undef jbody
 	}
 }
@@ -727,7 +743,7 @@ void convectivefast::fillNewtonYEquation(TBody* ibody, bool rightColOnly)
 		// Force_hydro
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+4) = 1;
 		// Force_holder
-		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+7) = 1;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+7) = -1;
 		#undef jbody
 	}
 
@@ -738,7 +754,7 @@ void convectivefast::fillNewtonYEquation(TBody* ibody, bool rightColOnly)
 		if (jbody.root_body != ibody) continue;
 
 		// Force_holder
-		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+7) = -1;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+7) = 1;
 		#undef jbody
 	}
 }
@@ -768,7 +784,7 @@ void convectivefast::fillNewtonOEquation(TBody* ibody, bool rightColOnly)
 		// Force_hydro
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+5) = 1;
 		// Force_holder
-		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+8) = 1;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+8) = -1;
 		#undef jbody
 	}
 
@@ -782,7 +798,7 @@ void convectivefast::fillNewtonOEquation(TBody* ibody, bool rightColOnly)
 		TVec r_child_c = jbody.pos.r + jbody.dPos.r - ibody->pos.r - ibody->dPos.r;
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+6) = r_child_c.y;
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+7) = -r_child_c.x;
-		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+8) = -1;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+8) = 1;
 		#undef jbody
 	}
 }

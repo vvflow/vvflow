@@ -646,6 +646,8 @@ void Space::ZeroForces()
 
 		(**llbody).Force_hydro = TVec3D();
 		(**llbody).Force_holder = TVec3D();
+		(**llbody).Force_dead = TVec3D();
+		(**llbody).Force_born = TVec3D();
 		(**llbody).Friction = TVec3D();
 		(**llbody).Nusselt = 0.;
 	}

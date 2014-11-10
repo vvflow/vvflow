@@ -84,6 +84,7 @@ void Stepdata::create(const char *format)
 	attribute_write("git_info", S->getGitInfo());
 	attribute_write("git_diff", S->getGitDiff());
 
+	born_d_hid = new int[S->BodyList->size_safe()];
 	hydro_d_hid = new int[S->BodyList->size_safe()];
 	holder_d_hid = new int[S->BodyList->size_safe()];
 	friction_d_hid = new int[S->BodyList->size_safe()];
@@ -100,6 +101,7 @@ void Stepdata::create(const char *format)
 		sprintf(body_name, "body%02d", body_n);
 		hid_t body_g_hid = H5Gcreate2(file_hid, body_name, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
+		born_d_hid[body_n] = create_dataset(body_g_hid, "force_born", 3);
 		hydro_d_hid[body_n] = create_dataset(body_g_hid, "force_hydro", 3);
 		holder_d_hid[body_n] = create_dataset(body_g_hid, "force_holder", 3);
 		friction_d_hid[body_n] = create_dataset(body_g_hid, "friction", 3);
@@ -121,6 +123,7 @@ void Stepdata::write()
 	const_for(S->BodyList, llbody)
 	{
 		int body_n = S->BodyList->find(llbody);
+		append(born_d_hid[body_n], (**llbody).Force_born - (**llbody).Force_dead);
 		append(hydro_d_hid[body_n], (**llbody).Force_hydro);
 		append(holder_d_hid[body_n], (**llbody).Force_holder);
 		append(friction_d_hid[body_n], (**llbody).Friction);
@@ -141,6 +144,7 @@ void Stepdata::close()
 	H5Sclose(DATASPACE_SCALAR); DATASPACE_SCALAR = -1;
 	H5Fclose(file_hid); file_hid = -1;
 
+	delete [] born_d_hid;
 	delete [] hydro_d_hid;
 	delete [] holder_d_hid;
 	delete [] friction_d_hid;

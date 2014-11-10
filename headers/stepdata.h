@@ -26,6 +26,7 @@ class Stepdata
 		int time_d_hid;
 		int vorts_d_hid;
 		int heats_d_hid;
+		int *born_d_hid;
 		int *hydro_d_hid;
 		int *holder_d_hid;
 		int *friction_d_hid;
