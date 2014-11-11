@@ -818,7 +818,7 @@ void convectivefast::fillHookeXEquation(TBody* ibody, bool rightColOnly)
 {
 	const int eq_no = ibody->eq_forces_no+0;
 
-	*matrix->rightColAtIndex(eq_no) = -ibody->k.r.x * ibody->dPos.r.x;
+	*matrix->rightColAtIndex(eq_no) = ibody->k.r.x * ibody->dPos.r.x;
 	if (rightColOnly) return;
 
 	//place solution pointer
@@ -840,7 +840,7 @@ void convectivefast::fillHookeYEquation(TBody* ibody, bool rightColOnly)
 {
 	const int eq_no = ibody->eq_forces_no+1;
 
-	*matrix->rightColAtIndex(eq_no) = -ibody->k.r.y * ibody->dPos.r.y;
+	*matrix->rightColAtIndex(eq_no) = ibody->k.r.y * ibody->dPos.r.y;
 	if (rightColOnly) return;
 
 	//place solution pointer
@@ -862,7 +862,7 @@ void convectivefast::fillHookeOEquation(TBody* ibody, bool rightColOnly)
 {
 	const int eq_no = ibody->eq_forces_no+2;
 
-	*matrix->rightColAtIndex(eq_no) = -ibody->k.o * ibody->dPos.o;
+	*matrix->rightColAtIndex(eq_no) = ibody->k.o * ibody->dPos.o;
 	if (rightColOnly) return;
 
 	//place solution pointer

@@ -674,21 +674,30 @@ M_\text{dead}&
 \item неизвестные силы в соединениях с другими телами $\vec F_O$, $M_O$.
 \end{packed_itemize}
 
+Уравнение для силы записывается для центра масс, и надо учитывать, что
+$\dot{\vec V}_\text{com} = \dot{\vec V}_? + [\vec e_z \times \vec r_{*\text{com}}] \cdot\dot\omega - \omega^2 \vec r_{*\text{com}}$
+
+Уравнение для момента записанов инерциальной системе отсчета, поэтому надо не потерять
+$S \rho_b \dot{\vec V} \cdot [\vec e_z \times \vec r_{*\text{com}}]$
+
 Соответствующие функции в коде имеют названия \texttt{fillNewtonXEquation}, \\\texttt{fillNewtonYEquation}, \texttt{fillNewtonOEquation}:
 
 \begin{equation}
 \label{eq_newton}
 \begin{split}
-&- \vec{\dot V}_? \dfrac{\rho_b}{\rho_0}S
+- \dfrac{\rho_b}{\rho_0}S \cdot \vec{\dot V}_?
+- \dfrac{\rho_b}{\rho_0} [\vec e_z \times \vec r_{*\text{com}}]S \cdot \dot\omega
 + \dfrac{\vec F_\text{hydro}}{\rho_0}
-- \vec F_O + \sum_{b_\text{child}} \vec F_{bO}
-=
-- \left( \dfrac{\rho_b}{\rho_0} - 1 \right)S \cdot \vec g\\
-&- \dot \omega_? \dfrac{\rho_b}{\rho_0}J_O
+- \vec F_O & + \sum_{b_\text{child}} \vec F_{bO} = \\
+= \dfrac{\rho_b}{\rho_0}S \vec r_{*\text{com}} \cdot \omega^2
+-& \left( \dfrac{\rho_b}{\rho_0} - 1 \right)S \cdot \vec g\\
+%%%%%%%%%%%%%%%%
+- \dfrac{\rho_b}{\rho_0} [\vec e_z \times \vec r_{*\text{com}}]S \cdot \dot{\vec V}_?
+- \dfrac{\rho_b}{\rho_0}J_O \cdot \dot \omega_?
 + \dfrac{M_\text{hydro}}{\rho_0}
-- M_O + \sum_{b_\text{child}} \bigl( M_{bO} + [\vec R_{bO*} \times \vec F_{bO}] \bigr)
+- M_O& + \sum_{b_\text{child}} \bigl( M_{bO} + [\vec R_{bO*} \times \vec F_{bO}] \bigr) = \\
 =
-- \left( \dfrac{\rho_b}{\rho_0} - 1 \right) [\vec r_{*\text{com}} \times \vec g] S \\
+-& \left( \dfrac{\rho_b}{\rho_0} - 1 \right) [\vec r_{*\text{com}} \times \vec g] S \\
 \end{split}
 \end{equation}
 
@@ -710,12 +719,15 @@ M_\text{dead}&
 \subsubsection{Закон Гука}
 \label{slau_hooke}
 
-Если тело связано с державкой пружиной, то для силы в оси действует закон Гука:
+Если тело связано с державкой пружиной, то для силы в оси действует закон Гука.
+Минус перед левой частью появился из-за того, что переменные $\vec F_O$, $M_O$ обозначают силу, действующую на державку со стороны тела, а нам нужно наоборот.
+
+В коде функции названы \texttt{fillHookeXEquation}, \texttt{fillHookeYEquation}, \\\texttt{fillHookeOEquation}:
 
 \begin{equation}
 \begin{split}
-\vec F_O =& - k_{xy} \Delta \vec R - \delta_{xy} \vec V_?\\
-M_O =& -k_\alpha \Delta \alpha - \delta_\alpha \cdot \omega_? \\
+\vec -F_O =& - k_{xy} \Delta \vec R - \delta_{xy} \vec V_?\\
+-M_O =& -k_\alpha \Delta \alpha - \delta_\alpha \cdot \omega_? \\
 \end{split}
 \end{equation}
 
