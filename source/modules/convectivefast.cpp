@@ -683,10 +683,13 @@ void convectivefast::fillNewtonXEquation(TBody* ibody, bool rightColOnly)
 {
 	const int eq_no = ibody->eq_forces_no+6;
 	const double _1_dt = 1/S->dt;
+	const TVec r_c_com = ibody->getCom() - ibody->pos.r - ibody->dPos.r;
 
 	//right column
 	*matrix->rightColAtIndex(eq_no) =
 		- ibody->getArea()*_1_dt*ibody->density * ibody->Speed_slae_prev.r.x
+		+ ibody->getArea()*_1_dt*ibody->density * r_c_com.y * ibody->Speed_slae_prev.o
+		+ ibody->getArea()*ibody->density * r_c_com.x * sqr(ibody->Speed_slae_prev.o)
 		- (ibody->density-1.0) * S->gravitation.x * ibody->getArea()
 		- ibody->Friction_prev.r.x;
 	if (rightColOnly) return;
@@ -700,6 +703,8 @@ void convectivefast::fillNewtonXEquation(TBody* ibody, bool rightColOnly)
 
 		// Speed_slae
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = -ibody->getArea()*_1_dt*ibody->density;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = 0;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = ibody->getArea()*_1_dt*ibody->density*r_c_com.y;
 		// Force_hydro
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+3) = 1;
 		// Force_holder
@@ -723,10 +728,13 @@ void convectivefast::fillNewtonYEquation(TBody* ibody, bool rightColOnly)
 {
 	const int eq_no = ibody->eq_forces_no+7;
 	const double _1_dt = 1/S->dt;
+	const TVec r_c_com = ibody->getCom() - ibody->pos.r - ibody->dPos.r;
 
 	//right column
 	*matrix->rightColAtIndex(eq_no) =
 		- ibody->getArea()*_1_dt*ibody->density * ibody->Speed_slae_prev.r.y
+		- ibody->getArea()*_1_dt*ibody->density * r_c_com.x * ibody->Speed_slae_prev.o
+		+ ibody->getArea()*ibody->density * r_c_com.y * sqr(ibody->Speed_slae_prev.o)
 		- (ibody->density-1.0) * S->gravitation.y * ibody->getArea()
 		- ibody->Friction_prev.r.y;
 	if (rightColOnly) return;
@@ -739,7 +747,9 @@ void convectivefast::fillNewtonYEquation(TBody* ibody, bool rightColOnly)
 		#define jbody (*ibody)
 
 		// Speed_slae
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = 0;
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = -ibody->getArea()*_1_dt*ibody->density;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = -ibody->getArea()*_1_dt*ibody->density*r_c_com.x;
 		// Force_hydro
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+4) = 1;
 		// Force_holder
@@ -767,6 +777,7 @@ void convectivefast::fillNewtonOEquation(TBody* ibody, bool rightColOnly)
 
 	//right column
 	*matrix->rightColAtIndex(eq_no) =
+		- ibody->getArea()*_1_dt*ibody->density * (r_c_com*ibody->Speed_slae_prev.r)
 		- ibody->getMoi_c()*_1_dt*ibody->density * ibody->Speed_slae_prev.o
 		- (ibody->density-1.0) * (r_c_com*S->gravitation) * ibody->getArea()
 		- ibody->Friction_prev.o;
@@ -780,6 +791,8 @@ void convectivefast::fillNewtonOEquation(TBody* ibody, bool rightColOnly)
 		#define jbody (*ibody)
 	
 		// Speed_slae
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = ibody->getArea()*_1_dt*ibody->density * r_c_com.y;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+1) = -ibody->getArea()*_1_dt*ibody->density * r_c_com.x;
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+2) = -ibody->getMoi_c()*_1_dt*ibody->density;
 		// Force_hydro
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+5) = 1;
@@ -796,8 +809,8 @@ void convectivefast::fillNewtonOEquation(TBody* ibody, bool rightColOnly)
 		
 		// Force_holder
 		TVec r_child_c = jbody.pos.r + jbody.dPos.r - ibody->pos.r - ibody->dPos.r;
-		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+6) = r_child_c.y;
-		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+7) = -r_child_c.x;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+6) = -r_child_c.y;
+		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+7) = r_child_c.x;
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+8) = 1;
 		#undef jbody
 	}
