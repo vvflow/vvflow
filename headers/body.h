@@ -125,6 +125,7 @@ class TBody
 		double getSurface() {return _surface;}
 		double getArea()    {return _area;}
 		TVec   getCom()     {return _com;} // center of mass
+		TVec   getAxis()    {return pos.r + dPos.r;}
 		double getMoi_c()   {return _moi_c;} // moment of inertia about rotation axis
 		int size()       {return List->size_safe();}
 		void overrideMoi_c(double newMoi_c) {_moi_c = newMoi_c;}

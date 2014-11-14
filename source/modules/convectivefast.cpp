@@ -566,7 +566,7 @@ void convectivefast::fillHydroXEquation(TBody* ibody, bool rightColOnly)
 {
 	const int eq_no = ibody->eq_forces_no+3;
 	const double _1_dt = 1/S->dt;
-	const TVec r_c_com = ibody->getCom() - ibody->pos.r - ibody->dPos.r;
+	const TVec r_c_com = ibody->getCom() - ibody->getAxis();
 
 	//right column
 	*matrix->rightColAtIndex(eq_no) = 
@@ -602,7 +602,7 @@ void convectivefast::fillHydroYEquation(TBody* ibody, bool rightColOnly)
 {
 	const int eq_no = ibody->eq_forces_no+4;
 	const double _1_dt = 1/S->dt;
-	const TVec r_c_com = ibody->getCom() - ibody->pos.r - ibody->dPos.r;
+	const TVec r_c_com = ibody->getCom() - ibody->getAxis();
 
 	//right column
 	*matrix->rightColAtIndex(eq_no) =
@@ -638,7 +638,7 @@ void convectivefast::fillHydroOEquation(TBody* ibody, bool rightColOnly)
 	const int eq_no = ibody->eq_forces_no+5;
 	const double _1_dt = 1/S->dt;
 	const double _1_2dt = 0.5/S->dt;
-	const TVec r_c_com = ibody->getCom() - ibody->pos.r - ibody->dPos.r;
+	const TVec r_c_com = ibody->getCom() - ibody->getAxis();
 	
 	//right column
 	*matrix->rightColAtIndex(eq_no) =
@@ -655,7 +655,7 @@ void convectivefast::fillHydroOEquation(TBody* ibody, bool rightColOnly)
 	{
 		#define jbody (*ibody)
 		const_for(jbody.List, lobj)
-			*matrix->objectAtIndex(eq_no, lobj->eq_no) = _1_2dt * (lobj->corner - ibody->pos.r - ibody->dPos.r).abs2();
+			*matrix->objectAtIndex(eq_no, lobj->eq_no) = _1_2dt * (lobj->corner - ibody->getAxis()).abs2();
 
 		// Speed_slae
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+0) = ibody->getArea()*_1_dt * (-r_c_com.y);
@@ -683,7 +683,7 @@ void convectivefast::fillNewtonXEquation(TBody* ibody, bool rightColOnly)
 {
 	const int eq_no = ibody->eq_forces_no+6;
 	const double _1_dt = 1/S->dt;
-	const TVec r_c_com = ibody->getCom() - ibody->pos.r - ibody->dPos.r;
+	const TVec r_c_com = ibody->getCom() - ibody->getAxis();
 
 	//right column
 	*matrix->rightColAtIndex(eq_no) =
@@ -728,7 +728,7 @@ void convectivefast::fillNewtonYEquation(TBody* ibody, bool rightColOnly)
 {
 	const int eq_no = ibody->eq_forces_no+7;
 	const double _1_dt = 1/S->dt;
-	const TVec r_c_com = ibody->getCom() - ibody->pos.r - ibody->dPos.r;
+	const TVec r_c_com = ibody->getCom() - ibody->getAxis();
 
 	//right column
 	*matrix->rightColAtIndex(eq_no) =
@@ -773,13 +773,13 @@ void convectivefast::fillNewtonOEquation(TBody* ibody, bool rightColOnly)
 {
 	const int eq_no = ibody->eq_forces_no+8;
 	const double _1_dt = 1/S->dt;
-	const TVec r_c_com = ibody->getCom() - ibody->pos.r - ibody->dPos.r;
+	const TVec r_c_com = ibody->getCom() - ibody->getAxis();
 
 	//right column
 	*matrix->rightColAtIndex(eq_no) =
-		- ibody->getArea()*_1_dt*ibody->density * (r_c_com*ibody->Speed_slae_prev.r)
+		- ibody->getArea()*_1_dt*ibody->density * (rotl(r_c_com)*ibody->Speed_slae_prev.r)
 		- ibody->getMoi_c()*_1_dt*ibody->density * ibody->Speed_slae_prev.o
-		- (ibody->density-1.0) * (r_c_com*S->gravitation) * ibody->getArea()
+		- (ibody->density-1.0) * (rotl(r_c_com)*S->gravitation) * ibody->getArea()
 		- ibody->Friction_prev.o;
 	if (rightColOnly) return;
 
@@ -808,7 +808,7 @@ void convectivefast::fillNewtonOEquation(TBody* ibody, bool rightColOnly)
 		if (jbody.root_body != ibody) continue;
 		
 		// Force_holder
-		TVec r_child_c = jbody.pos.r + jbody.dPos.r - ibody->pos.r - ibody->dPos.r;
+		TVec r_child_c = jbody.pos.r + jbody.dPos.r - ibody->getAxis();
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+6) = -r_child_c.y;
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+7) = r_child_c.x;
 		*matrix->objectAtIndex(eq_no, jbody.eq_forces_no+8) = 1;

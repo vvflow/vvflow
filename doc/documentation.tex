@@ -29,6 +29,8 @@
 \newcommand{\comment}[1]{}
 \newcommand{\br}[1]{\boldsymbol{\mathrm{#1}}}
 \renewcommand{\vec}[1]{\br{#1}}
+
+\newcommand{\com}{\text{com}}
 \newcommand{\att}{\text{att}}
 \newcommand{\abinom}[2]{\genfrac{}{}{0pt}{0}{#1}{#2}}
 
@@ -206,10 +208,11 @@ sin(\alpha) & \cos(\alpha) \end{array}\right) \cdot \br r_b
 \item $\vec R$ --- смещение державки относительно начала системы координат
 \item $\Delta \alpha$ --- поворот тела отительно державки (поворот пружины)
 \item $\Delta \vec R$ --- смещение тела относительно державки (растяжение пружины)
+\item $\vec R_O = \vec R + \Delta \vec R$ --- ось вращения тела\footnote{Заметьте, осью вращения является не державка, а место крепления пружины к телу.}
 \end{packed_itemize}
 
-Функции getRotation, setRotation, getMotion, setMotion манипуляруют с детерминированной скоростью тела (точнее державки), угловой и поступательной.
-Функции doRotation, doMotion принимают в качестве аргумента величины ($\vec V_{b?} \Delta t$), ($\omega_{b?} \Delta t$). Изменения, которые они вносят, описываются следующими формулами:\\
+Функции \texttt{getRotation}, \texttt{setRotation}, \texttt{getMotion}, setMotion манипуляруют с детерминированной скоростью тела (точнее державки), угловой и поступательной.
+Функции \texttt{doRotation}, \texttt{doMotion} принимают в качестве аргумента величины ($\vec V_{b?} \Delta t$), ($\omega_{b?} \Delta t$). Изменения, которые они вносят, описываются следующими формулами:\\
 $\alpha = \alpha + \omega \cdot \Delta t$\\
 $\vec R = \vec R + \vec V \cdot \Delta t$\\
 $\Delta \alpha = \Delta \alpha + (\omega_{?} - \omega) \cdot \Delta t$\\
@@ -219,12 +222,12 @@ $\Delta \vec R = \Delta \vec R + (\vec V_{?} - \vec V) \cdot \Delta t$\\
 \begin{equation*}
 \begin{split}
 \vec c_s \vert_\text{Rotation}
-& = (\vec R + \Delta \vec R) +
+& = \vec R_O +
 \begin{pmatrix}
 \cos & -\sin \\ \sin & \cos
 \end{pmatrix}
-(\omega_? \Delta t) \cdot \underbrace{(\vec c_s - (\vec R + \Delta \vec R))}_{\vec c_*}\\
-& = (\vec R + \Delta \vec R) + \vec c_* \cos(\omega_? \Delta t) + [\vec e_z \times \vec c_*] \sin(\omega_? \Delta t)
+(\omega_? \Delta t) \cdot \underbrace{(\vec c_s - \vec R_O)}_{\vec c_*}\\
+& = \vec R_O + \vec c_* \cos(\omega_? \Delta t) + [\vec e_z \times \vec c_*] \sin(\omega_? \Delta t)
 \\ \vec c_s \vert_\text{Motion} &= \vec c_s + \vec V_? \Delta t
 \end{split}
 \end{equation*}
@@ -233,9 +236,9 @@ $\Delta \vec R = \Delta \vec R + (\vec V_{?} - \vec V) \cdot \Delta t$\\
 Интенсивность присоединенного источника и циркуляция присоединенного вихря зависят от скорости отрезка, к которому они привязаны.
 \begin{equation}
 \label{eq_SegmentVelocity}
-\vec V_s = \vec V_? + \omega_? \cdot [\vec e_z \times \underbrace{(\vec r_s - (\vec R + \Delta \vec R))}_{r_*}],
+\vec V_s = \vec V_? + \omega_? \cdot [\vec e_z \times \underbrace{(\vec r_s - \vec R_O)}_{\vec r_*}],
 \end{equation}
-где $\lbrace\vec R + \Delta \vec R\rbrace_b$ --- ось вращения данного тела\footnote{Заметьте, осью вращения является не державка, а место крепления пружины к телу.}. Здесь сделано предположение о малости отрезка и об однородности скорости по всей длине. В таком случае формулы для вычисления присоединенной циркуляции и интенсивности будут иметь вид.
+Здесь сделано предположение о малости отрезка и об однородности скорости по всей длине. В таком случае формулы для вычисления присоединенной циркуляции и интенсивности будут иметь вид.
 \begin{equation}
 \label{eq_AttachIntensity}
 \begin{split}
@@ -265,22 +268,21 @@ q_{\att~s} &=
 
 Для вычисления центра масс удобно использовать формулу Грина. Но я спер эту формулу из википедии
 \begin{equation*}
-\vec r_\text{com}
+\vec r_\com
 = \dfrac{1}{S}\int \vec r dS
 = -\dfrac{1}{3S}\sum_s \vec r_s [\vec c_{s} \times \vec c_{s+1}]
 \end{equation*}
 
 Эта формула для момента инерции тоже из вики.
 \begin{equation*}
-J_0 = \int r^2 dS =
--\dfrac{1}{12} \sum 
+\dfrac{J_0}{\rho_b} = \int r^2 dS =
+-\dfrac{1}{12} \sum
 \left(
 	c_i^2 + \vec c_i \vec c_{i+1} + c_{i+1}^2
 \right) \cdot [\vec c_i \times \vec c_{i+1}]
 \end{equation*}
 
-Это не совсем момент инерции, так как в него не входи плотность. Он обезразмерен на плотность жидкости, как и все уравнения, которые мы решаем. Поэтому во всех последующих выкладках для сил перед этим самым моментом будет появляться отношение $\rho_b/\rho_0$.
-Этот момент инерции вычислен относительно центра основной системы координат. Пересчитать его относительно центра масс или оси вращения легко: $J_\text{com} = J_0 - S r_\text{com}^2$, $J_O = J_\text{com} + S (r_c - r_\text{com})^2$
+Этот момент инерции вычислен относительно нуля основной системы координат. Пересчитать его относительно центра масс или оси вращения легко: $J_\com = J_0 - S \rho_b \vec r_\com^2$, $J_O = J_\com + S \rho_b (\vec R_O - \vec r_\com)^2$
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Convective}
@@ -580,7 +582,7 @@ X_b =
 \dfrac{\vec F_\text{hydro}}{\rho_0} =& 
 \underbrace {
 	\frac{1}{\Delta t} \sum\limits_{s=1}^{N_s} {\Delta \gamma_s \cdot [\vec e_z \times \vec c_s]}
-}_{(\vec F_\text{born} + \vec F_\text{att} - \vec F_\text{dead})/\rho_0} -
+}_{(\vec F_\text{born} + \vec F_\att - \vec F_\text{dead})/\rho_0} -
 \underbrace {
 	\frac{1}{2} \sum\limits_{s=1}^{N_s}
 		[\vec e_z \times \Delta \vec l_s] \cdot V_s^2
@@ -589,7 +591,7 @@ X_b =
 \dfrac{M_\text{hydro}}{\rho_0} =&
 \underbrace{
 	\frac{1}{2\Delta t}\sum\limits_{s=1}^{N_s} { \Delta \gamma_s \cdot \vec c_*^2 }
-}_{(M_\text{born} + M_\text{att} - M_\text{dead})/\rho_0} -
+}_{(M_\text{born} + M_\att - M_\text{dead})/\rho_0} -
 \underbrace {
 	\frac{1}{2} \sum\limits_{s=1}^{N_s}
 		(\vec r_* \cdot \Delta \vec l_s) \cdot V_s^2
@@ -606,23 +608,23 @@ $\vec r_* = \vec r_s - \vec R_O$, $\vec c_* = \vec c_s - \vec R_O$ --- коор�
 \begin{equation}
 \begin{split}
 \dfrac{1}{2} \sum_{s=1}^{N_s} [\vec e_z \times \Delta \vec l_s] V_s^2
-=& -[\vec e_z \times \vec V_?]\omega_? S + \vec r_{*\text{com}} \omega_?^2 S \\
+=& -[\vec e_z \times \vec V_?]\omega_? S + \vec r_{*\com} \omega_?^2 S \\
 \frac{1}{2} \sum_{s=1}^{N_s} (\vec r_* \cdot \Delta \vec l_s) \cdot V_s^2
-=& - \vec r_{*\text{com}} \vec V_? \omega_? S\\
+=& - \vec r_{*\com} \vec V_? \omega_? S\\
 \end{split}
 \end{equation}
 
-Влияние присоединенных вихрей на силу (раньше $M_\text{att}$ был другого знака):
+Влияние присоединенных вихрей на силу (раньше $M_\att$ был другого знака):
 \begin{equation}
 \begin{split}
 \dfrac{\vec F_\att}{\rho_0} =&
 -[\vec e_z \times \vec V_?]\omega_? S
 + \dot{\vec{V}}_? S
-+ [\vec e_z \times (3 \vec r_\text{com} - \vec r_c)] \dot{\omega}_? S \\
++ [\vec e_z \times (3 \vec r_\com - \vec R_O)] \dot{\omega}_? S \\
 %%%%%%%%%%%%%%%
 \dfrac{M_\att}{\rho_0} =&
-- \vec r_{*\text{com}} \vec V_? \omega_? S
-+ [\vec r_{*\text{com}} \times \dot{\vec{V}}_?] S
+- \vec r_{*\com} \vec V_? \omega_? S
++ [\vec r_{*\com} \times \dot{\vec{V}}_?] S
 + 2 \dot{\omega}_? J_O \\
 \end{split}
 \end{equation}
@@ -634,19 +636,19 @@ $\vec r_* = \vec r_s - \vec R_O$, $\vec c_* = \vec c_s - \vec R_O$ --- коор�
 % \dfrac{\vec F_\text{hydro}}{\rho_0} = 
 \sum\limits_{s=1}^{N_s} {\frac{[\vec e_z \times \vec c_s]}{\Delta t} \cdot \gamma_s}
 + S \cdot \dot{\vec{V}}_?
-+ [\vec e_z \times (3 \vec r_\text{com} - \vec r_c)] S \cdot \dot{\omega}_?
++ [\vec e_z \times (3 \vec r_\com - \vec R_O)] S \cdot \dot{\omega}_?
 - \dfrac{\vec F_\text{hydro}}{\rho_0} =&\\
 = %=============
 %-\omega_? S \cdot [\vec e_z \times \vec V_?]
-\vec r_{*\text{com}} \omega^2 S
+\vec r_{*\com} \omega^2 S
 + \vec F_\text{dead}&\\
 %%%%%%%%%%%%%%%%
 \sum\limits_{s=1}^{N_s} {\frac{\vec c_*^2}{2\Delta t} \cdot \gamma_s}
-+ [\vec e_z \times \vec r_{*\text{com}}] S \cdot \dot{\vec{V}}_?
++ [\vec e_z \times \vec r_{*\com}] S \cdot \dot{\vec{V}}_?
 + 2 J_O \cdot \dot{\omega}_?
 - \dfrac{M_\text{hydro}}{\rho_0} =&\\
 = %=============
-%- \omega_? S \vec r_{*\text{com}} \cdot \vec V_?
+%- \omega_? S \vec r_{*\com} \cdot \vec V_?
 M_\text{dead}&
 \end{split}
 \end{equation}
@@ -675,10 +677,10 @@ M_\text{dead}&
 \end{packed_itemize}
 
 Уравнение для силы записывается для центра масс, и надо учитывать, что
-$\dot{\vec V}_\text{com} = \dot{\vec V}_? + [\vec e_z \times \vec r_{*\text{com}}] \cdot\dot\omega - \omega^2 \vec r_{*\text{com}}$
+$\dot{\vec V}_\com = \dot{\vec V}_? + [\vec e_z \times \vec r_{*\com}] \cdot\dot\omega - \omega^2 \vec r_{*\com}$
 
-Уравнение для момента записанов инерциальной системе отсчета, поэтому надо не потерять
-$S \rho_b \dot{\vec V} \cdot [\vec e_z \times \vec r_{*\text{com}}]$
+Уравнение для момента записано в инерциальной системе отсчета, поэтому надо не потерять
+$S \rho_b \dot{\vec V} \cdot [\vec e_z \times \vec r_{*\com}]$
 
 Соответствующие функции в коде имеют названия \texttt{fillNewtonXEquation}, \\\texttt{fillNewtonYEquation}, \texttt{fillNewtonOEquation}:
 
@@ -686,18 +688,18 @@ $S \rho_b \dot{\vec V} \cdot [\vec e_z \times \vec r_{*\text{com}}]$
 \label{eq_newton}
 \begin{split}
 - \dfrac{\rho_b}{\rho_0}S \cdot \dot {\vec V}_?
-- \dfrac{\rho_b}{\rho_0} [\vec e_z \times \vec r_{*\text{com}}]S \cdot \dot\omega
+- \dfrac{\rho_b}{\rho_0} [\vec e_z \times \vec r_{*\com}]S \cdot \dot\omega
 + \dfrac{\vec F_\text{hydro}}{\rho_0}
 - \vec F_O & + \sum_{b_\text{child}} \vec F_{bO} = \\
-= \dfrac{\rho_b}{\rho_0}S \vec r_{*\text{com}} \cdot \omega^2
+= \dfrac{\rho_b}{\rho_0}S \vec r_{*\com} \cdot \omega^2
 -& \left( \dfrac{\rho_b}{\rho_0} - 1 \right)S \cdot \vec g\\
 %%%%%%%%%%%%%%%%
-- \dfrac{\rho_b}{\rho_0} [\vec e_z \times \vec r_{*\text{com}}]S \cdot \dot{\vec V}_?
+- \dfrac{\rho_b}{\rho_0} [\vec e_z \times \vec r_{*\com}]S \cdot \dot{\vec V}_?
 - \dfrac{\rho_b}{\rho_0}J_O \cdot \dot \omega_?
 + \dfrac{M_\text{hydro}}{\rho_0}
 - M_O& + \sum_{b_\text{child}} \bigl( M_{bO} + [\vec R_{bO*} \times \vec F_{bO}] \bigr) = \\
 =
--& \left( \dfrac{\rho_b}{\rho_0} - 1 \right) [\vec r_{*\text{com}} \times \vec g] S \\
+-& \left( \dfrac{\rho_b}{\rho_0} - 1 \right) [\vec r_{*\com} \times \vec g] S \\
 \end{split}
 \end{equation}
 
