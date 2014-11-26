@@ -6,9 +6,12 @@
 #include <vector>
 // #include <deque>
 #include <list>
+#include <limits>
 
 //#include "core.h"
 using namespace std;
+
+static const float NaN = numeric_limits<float>::quiet_NaN();
 
 class vec_t
 {
@@ -38,14 +41,21 @@ static list<line_t*> *isolines = NULL;
 void merge_lines(line_t* dst, bool dst_side)
 {
 	vec_t vec = dst_side ? dst->front() : dst->back();
-	auto dst_it = dst_side ? dst->begin() : dst->end();
 
 	for (auto lit = isolines->begin(); lit != isolines->end(); lit++)
 	{
 		line_t *l = *lit;
 		if (l == dst) continue;
-		else if (l->front() == vec) dst->insert(dst_it, l->begin()+1, l->end());
-		else if (l->back() == vec) dst->insert(dst_it, l->rbegin()+1, l->rend());
+		else if (l->front() == vec)
+		{
+			if (dst_side) dst->insert(dst->begin(), l->rbegin(), l->rend());
+			else          dst->insert(dst->end(),   l->begin(), l->end());
+		}
+		else if (l->back() == vec)
+		{
+			if (dst_side) dst->insert(dst->begin(), l->begin(), l->end());
+			else          dst->insert(dst->end(),   l->rbegin(), l->rend());
+		}
 		else continue;
 
 		delete *lit;
@@ -56,7 +66,6 @@ void merge_lines(line_t* dst, bool dst_side)
 
 void commit_segment(vec_t vec1, vec_t vec2)
 {
-	if (!isolines) isolines = new list<line_t*>();
 	for (auto it = isolines->begin(); it!= isolines->end(); it++)
 	{
 		line_t *l = *it;
@@ -73,14 +82,14 @@ void commit_segment(vec_t vec1, vec_t vec2)
 	return;
 }
 
-void process_rect(float x, float y, float spacing, float z[4], float C)
+void process_rect(float x, float y, float z[4], float C)
 {
 	vec_t vecs[4];
 	int N = 0;
-	if (inrange(z[0], z[1], C)) vecs[N++] = vec_t(x,                                y + (C-z[0])*spacing/(z[1]-z[0]));
-	if (inrange(z[1], z[2], C)) vecs[N++] = vec_t(x + (C-z[1])*spacing/(z[2]-z[1]), y + spacing);
-	if (inrange(z[2], z[3], C)) vecs[N++] = vec_t(x + spacing,                      y + (C-z[3])*spacing/(z[2]-z[3]));
-	if (inrange(z[3], z[0], C)) vecs[N++] = vec_t(x + (C-z[0])*spacing/(z[3]-z[0]), y);
+	if (inrange(z[0], z[1], C)) vecs[N++] = vec_t(x,                        y + (C-z[0])/(z[1]-z[0]));
+	if (inrange(z[1], z[2], C)) vecs[N++] = vec_t(x + (C-z[1])/(z[2]-z[1]), y + 1.0);
+	if (inrange(z[2], z[3], C)) vecs[N++] = vec_t(x + 1.0,                  y + (C-z[3])/(z[2]-z[3]));
+	if (inrange(z[3], z[0], C)) vecs[N++] = vec_t(x + (C-z[0])/(z[3]-z[0]), y);
 	
 	if (N>=2) commit_segment(vecs[0], vecs[1]);
 	if (N>=4) commit_segment(vecs[2], vecs[3]);
@@ -88,6 +97,8 @@ void process_rect(float x, float y, float spacing, float z[4], float C)
 
 int map_isoline(hid_t fid, const char *dsetname, float *cvals, int cnum)
 {
+	if (!isolines) isolines = new list<line_t*>();
+
 	H5Eset_auto2(H5E_DEFAULT, NULL, NULL);
 	hid_t dataset = H5Dopen2(fid, dsetname, H5P_DEFAULT);
 	if (dataset < 0)
@@ -137,7 +148,7 @@ int map_isoline(hid_t fid, const char *dsetname, float *cvals, int cnum)
 			float corners[4] = {mem[(i+0)*dims[1]+(j+0)], mem[(i+0)*dims[1]+(j+1)],
 			                    mem[(i+1)*dims[1]+(j+1)], mem[(i+1)*dims[1]+(j+0)]};
 			for (int c=0; c<cnum; c++)
-				process_rect(i, j, 1.0, corners, cvals[c]);
+				process_rect(i, j, corners, cvals[c]);
 		}
 	}
 
@@ -151,22 +162,20 @@ int map_isoline(hid_t fid, const char *dsetname, float *cvals, int cnum)
 		line_t *l = *it;
 		for (auto vec = l->begin(); vec!=l->end(); vec++)
 		{
-			// printf("%g %g\n", xmin+vec->x*spacing, ymin+vec->y*spacing);
-			// printf("%g %g\n", vec->x, vec->y);
 			float xy[2] = { xmin+vec->x*spacing, ymin+vec->y*spacing };
+			// printf("%g %g\n", xy[0], xy[1]);
 			fwrite(xy, sizeof(float), 2, stdout);
-
-			// fwrite("\0\0\0\n", 4, 1, stdout);
 		}
-		float nans[2] = {0./0., 0./0.};
+		float nans[2] = {NaN, NaN};
 		fwrite(nans, sizeof(float), 2, stdout);
-		 // printf("\n");
+		// printf("\n");
 	}
 	fflush(stdout);
 	// assert(c == dims[0]*dims[1]);
 	// fwrite(dims, sizeof(hsize_t), 2, stdout);
 	// fwrite(&xmin, sizeof(double), 1, stdout);
 
+	delete isolines;
 	free(mem);
 	H5Sclose(dataspace);
 	H5Dclose(dataset);
