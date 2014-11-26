@@ -76,8 +76,8 @@ void print_body(TBody *body)
 	attribute_print("spring_const", body->k, -1);
 	attribute_print("spring_damping", body->damping);
 	attribute_print("density", body->density, 1);
-	attribute_print("force_born", body->Force_born);
-	attribute_print("force_dead", body->Force_dead);
+	attribute_print("force_hydro", body->Force_hydro);
+	attribute_print("force_holder", body->Force_holder);
 	attribute_print("friction_prev", body->Friction_prev);
 }
 

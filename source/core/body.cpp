@@ -51,6 +51,7 @@ TBody::TBody(Space *sS):
 	g_dead = 0;
 	Friction = Friction_prev = TVec3D(0,0,0);
 	Force_born = Force_dead = TVec3D(0,0,0);
+	Force_hydro = Force_holder = TVec3D(0,0,0);
 	_surface = _area = 0;
 	_com = TVec(0., 0.);
 	_moi_c = _moi_com = 0;
@@ -201,17 +202,17 @@ TAtt* TBody::isPointInContour(TVec p, vector<T> *list)
 void TBody::doFillProperties()
 {
 	_surface = _area = _moi_c = _moi_com = 0;
-	_com = TVec(0., 0.);
-	double _12moi_0 = 0;
+	TVec _3S_com= TVec(0., 0.);
+	double _12moi_0 = 0.;
 	const_for (List, latt)
 	{
 		_surface+= latt->dl.abs();
 		_area+= latt->r.y*latt->dl.x;
-		_com-= latt->r * (rotl(latt->corner) * (latt+1)->corner);
+		_3S_com-= latt->r * (rotl(latt->corner) * (latt+1)->corner);
 		_12moi_0 -= (latt->corner.abs2() + latt->corner*(latt+1)->corner + (latt+1)->corner.abs2())
 		            *  (rotl(latt->corner) * (latt+1)->corner);
 	}
-	_com = _com/(3*_area);
+	_com = _3S_com/(3*_area);
 	_moi_com = _12moi_0/12. - _area*_com.abs2();
 	_moi_c = _moi_com + _area*(pos.r + dPos.r - _com).abs2();
 }

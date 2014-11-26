@@ -99,10 +99,9 @@ class TBody
 		//double kx, ky, ka;
 		double density; //in doc \frac{\rho_b}{\rho_0}
 
-		TVec3D Friction, Friction_prev, Force_export; //computed by S->CalcForces
-		//TObj Friction, Friction_prev, Force_export; //computed by S->CalcForces
-		TVec3D Force_born, Force_dead; //computed in flowmove
-		//TObj Force_born, Force_dead; //computed in flowmove
+		TVec3D Friction, Friction_prev; //computed by S->CalcForces
+		TVec3D Force_born, Force_dead; //computed by flowmove->MoveAndClean
+		TVec3D Force_hydro, Force_holder; //computed by convectivefast->CalcCirculationFast
 		double Nusselt; //computed by S->CalcForces
 		double g_dead;
 
@@ -126,6 +125,7 @@ class TBody
 		double getSurface() {return _surface;}
 		double getArea()    {return _area;}
 		TVec   getCom()     {return _com;} // center of mass
+		TVec   getAxis()    {return pos.r + dPos.r;}
 		double getMoi_c()   {return _moi_c;} // moment of inertia about rotation axis
 		int size()       {return List->size_safe();}
 		void overrideMoi_c(double newMoi_c) {_moi_c = newMoi_c;}

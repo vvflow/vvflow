@@ -105,6 +105,8 @@ class TVec3D
 			{o = _o;}
 
 		bool iszero() const {return (fabs(r.x)+fabs(r.y)+fabs(o) < 1E-10); }
+		friend const TVec3D operator+ (const TVec3D &p1, const TVec3D &p2) { return TVec3D(p1.r.x+p2.r.x, p1.r.y+p2.r.y, p1.o+p2.o); }
+		friend const TVec3D operator- (const TVec3D &p1, const TVec3D &p2) { return TVec3D(p1.r.x-p2.r.x, p1.r.y-p2.r.y, p1.o-p2.o); }
 		friend istream& operator>> (istream& is, TVec3D& p) { return is >> p.r.x >> p.r.y >> p.o; }
 		friend ostream& operator<< (ostream& os, const TVec3D& p) { return os << p.r.x << " \t" << p.r.y << " \t" << p.o; }
 };

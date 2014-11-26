@@ -160,6 +160,14 @@ void Matrix::save(const char* filename)
 		}
 		fprintf(fout, "\t%lf\n", RightCol[i]);
 	}
+	fclose(fout);
+}
+
+void Matrix::fillWithZeros()
+{
+	bodyMatrixIsOk_ = 0;
+	memset(BodyMatrix, 0, sizeof(double)*sqr(size));
+	memset(RightCol, 0, sizeof(double)*size);
 }
 
 bool Matrix::testNan()

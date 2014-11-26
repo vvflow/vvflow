@@ -32,6 +32,7 @@ class Matrix
 		bool bodyMatrixIsOk() {return bodyMatrixIsOk_;}
 		bool inverseMatrixIsOk() {return inverseMatrixIsOk_;}
 		void save(const char* filename);
+		void fillWithZeros();
 		bool testNan();
 	//Source for saving and loading matrix can be found
 	//in git baecb9308569b6f52a863697908c33ced7ed811b
