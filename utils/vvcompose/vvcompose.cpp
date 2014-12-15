@@ -32,8 +32,105 @@ void transformBody(TBody* body, double x, double y, double a)
 	body->doFillProperties();
 }
 
+void do_load(Space* S, const char *arg, const char *file)
+{
+	     if (!strcmp(arg, "hdf"))  { S->Load(file); }
+	else if (!strcmp(arg, "body")) { S->LoadBody(file); }
+	else if (!strcmp(arg, "vort")) { S->LoadVorticityFromFile(file); }
+	else if (!strcmp(arg, "heat")) { S->LoadHeatFromFile(file); }
+	else if (!strcmp(arg, "ink"))  { S->LoadStreak(file); }
+	else if (!strcmp(arg, "ink_source")) { S->LoadStreakSource(file); }
+	else
+	{
+		fprintf(stderr, "vvcompose: load: bad argument: %s\n", arg);
+		exit(1);
+	}
+}
+
+void do_set(Space* S, const char *arg, const char *value)
+{
+	unsigned body_number;
+	char argv[4][32];
+	int argc = sscanf(arg, "%[^.].%[^.].%[^.].%[^.]", argv[0], argv[1], argv[2], argv[3]);
+
+	#define CHECK(x) if (argc > x) \
+		{ \
+			fprintf(stderr, "vvcompose: set: ambiguous argument: %s", argv[0]); \
+			for (int i=1; i<argc; i++) \
+				fprintf(stderr, ".%s", argv[i]); \
+			fprintf(stderr, "\n"); \
+			exit(3); \
+		}
+	     if (!strcmp(argv[0], "name")            || !strcmp(argv[0], "caption")) { CHECK(1); }
+	else if (!strcmp(argv[0], "t")               || !strcmp(argv[0], "time")) {}
+	else if (!strcmp(argv[0], "dt")              || !strcmp(argv[0], "dt")) {}
+	else if (!strcmp(argv[0], "dts")             || !strcmp(argv[0], "dt_save")) {}
+	else if (!strcmp(argv[0], "dti")             || !strcmp(argv[0], "dt_streak")) {}
+	else if (!strcmp(argv[0], "dtp")             || !strcmp(argv[0], "dt_profile")) {}
+	else if (!strcmp(argv[0], "re")              || !strcmp(argv[0], "re")) {}
+	else if (!strcmp(argv[0], "pr")              || !strcmp(argv[0], "pr")) {}
+	else if (!strcmp(argv[0], "inf_marker")      || !strcmp(argv[0], "inf_marker")) {}
+	else if (!strcmp(argv[0], "inf")             || !strcmp(argv[0], "inf_speed")) {}
+	else if (!strcmp(argv[0], "inf_circulation") || !strcmp(argv[0], "inf_circulation")) {}
+	else if (!strcmp(argv[0], "g")               || !strcmp(argv[0], "gravity")) {}
+	else if (!strcmp(argv[0], "fin")             || !strcmp(argv[0], "time_to_finish")) {}
+	else if (sscanf(arg, "body[%u].", &body_number) == 1 ||
+		     sscanf(arg, "b%u.", &body_number) == 1)
+	{
+
+	}
+	#undef CHECK
+	else
+	{
+		fprintf(stderr, "vvcompose: set: bad argument: %s\n", argv[0]);
+		exit(1);
+	}
+	return;
+
+	// if (sscanf(arg, "blist[%u].", &body_number) == 1)
+	// {
+	// 	// TBody *body = S->BodyList[body_number];
+	// 	if (sscanf(arg, "%*[^.].%31[^.].%1[xyo]", tmp[0], tmp[1]) == 2)
+	// 	{
+	// 		printf("set blist: %d %s %s\n", body_number, tmp[0], tmp[1]);
+	// 	}
+	// }
+	// if (sscanf(arg, "infspeed.%1[xy]", tmp[0]) == 1)
+	// {
+	// 	printf("set infspeed: %s\n", tmp[0]);
+	// }
+	// else
+	// {
+	// 	sscanf(arg, "%31[^.]", tmp[0]);
+	// 	fprintf(stderr, "vvcompose: set: bad argument: %s\n", tmp[0]);
+	// }
+}
+
+void do_del(Space *S, const char *arg)
+{
+
+}
+
 int main(int argc, char *argv[])
 {
+	Space *S = new Space();
+	int i = 1;
+	while (i<argc)
+	{
+		#define CHECK(x) if (i+x>=argc) {fprintf(stderr, "vvcompose: %s: not enought arguments\n", argv[i]); return 2; }
+		     if (!strcmp(argv[i], "load")) { CHECK(2); do_load(S, argv[i+1], argv[i+2]); i+=3; }
+		else if (!strcmp(argv[i], "set"))  { CHECK(2); do_set(S, argv[i+1], argv[i+2]); i+=3; }
+		else if (!strcmp(argv[i], "del"))  { CHECK(1); do_del(S, argv[i+1]); i+=2; }
+		else if (!strcmp(argv[i], "save")) { CHECK(1); S->Save(argv[i+1]); i+=3; }
+		#undef CHECK
+		else
+		{
+			fprintf(stderr, "vvcompose: bad command: %s\n", argv[i]);
+			return 1;
+		}
+	}
+	return 0;
+
 	if (argc < 3)
 	{
 		fprintf(stdout, "vvcompose -i -b235 -bvx -bvy -bvo -bx -by -ba -bdx -bdy -bda -bkx -bky -bka -brho -mx -my -ma -md -v -h -s -ss -ix -iy -ig -gx -gy -t -dt -dt_save -dt_streak -dt_profile -re -pr -finish -name -o -remove\n");
@@ -50,7 +147,7 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "Also you can put number after -b?? option (like -bvx2 'echo 0'). Numbers start with 1.");
 		fprintf(stderr, " It will change corresponding parameter of selected body\n");
 
-		fprintf(stderr, "-v, -h, -s, -ss filename --- files of vortexes, heat particles, streaks, streak sources (need 3 columns)\n");
+		// fprintf(stderr, "-v, -h, -s, -ss filename --- files of vortexes, heat particles, streaks, streak sources (need 3 columns)\n");
 		fprintf(stderr, "-ix, -iy './script.sh $t' --- script for inf speed\n");
 		fprintf(stderr, "-ig float --- constant circulation at infinity\n");
 		fprintf(stderr, "-gx, -gy float --- gravitation\n");
@@ -65,7 +162,7 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
-	Space *S = new Space();
+	// Space *S = new Space();
 	char *output;
 	for (int i=1; i<argc; i+=2)
 	{
