@@ -51,7 +51,7 @@ double parse(const char *arg, const char* fmt, const char* val)
 {
 	double res;
 	int len;
-	if (sscanf(val, fmt, &res, &len) != 2 || val[len] != '\0')
+	if (sscanf(val, fmt, &res, &len) != 1 || val[len] != '\0')
 	{
 		fprintf(stderr, "vvcompose: set: %s: bad value: %s\n", arg, val);
 		exit(3);
@@ -61,15 +61,15 @@ double parse(const char *arg, const char* fmt, const char* val)
 
 void do_set(Space* S, const char *arg, const char *value)
 {
-	int len;
+	int len = 0;
 	unsigned body_no;
 
 	#define comp3d(vec) (*c=='x'?vec.x)
 	#define M(fmt) (sscanf(arg, fmt, &len), arg[len] == '\0')
 	#define ALERT() { fprintf(stderr, "vvcompose: set: ambiguous argument: %s\n", arg); exit(3); }
-	#define strtotime(val) TTime::makeWithSecondsDecimal(parse_double(val))
 	#define parse_double(val) parse(arg, "%lg%n", val)
 	#define parse_int(val)    parse(arg, "%d%n", val)
+	#define strtotime(val) TTime::makeWithSecondsDecimal(parse_double(val))
 
 	     if ( M("name%n") || M("caption%n") )       { S->caption = value; }
 	else if ( M("t%n") || M("time%n") )             { S->Time = strtotime(value); }
