@@ -47,63 +47,84 @@ void do_load(Space* S, const char *arg, const char *file)
 	}
 }
 
+double parse(const char *arg, const char* fmt, const char* val)
+{
+	double res;
+	int len;
+	if (sscanf(val, fmt, &res, &len) != 2 || val[len] != '\0')
+	{
+		fprintf(stderr, "vvcompose: set: %s: bad value: %s\n", arg, val);
+		exit(3);
+	}
+	return res;
+}
+
 void do_set(Space* S, const char *arg, const char *value)
 {
-	unsigned body_number;
-	char argv[4][32];
-	int argc = sscanf(arg, "%[^.].%[^.].%[^.].%[^.]", argv[0], argv[1], argv[2], argv[3]);
+	int len;
+	unsigned body_no;
 
-	#define CHECK(x) if (argc > x) \
-		{ \
-			fprintf(stderr, "vvcompose: set: ambiguous argument: %s", argv[0]); \
-			for (int i=1; i<argc; i++) \
-				fprintf(stderr, ".%s", argv[i]); \
-			fprintf(stderr, "\n"); \
-			exit(3); \
+	#define comp3d(vec) (*c=='x'?vec.x)
+	#define M(fmt) (sscanf(arg, fmt, &len), arg[len] == '\0')
+	#define ALERT() { fprintf(stderr, "vvcompose: set: ambiguous argument: %s\n", arg); exit(3); }
+	#define strtotime(val) TTime::makeWithSecondsDecimal(parse_double(val))
+	#define parse_double(val) parse(arg, "%lg%n", val)
+	#define parse_int(val)    parse(arg, "%d%n", val)
+
+	     if ( M("name%n") || M("caption%n") )       { S->caption = value; }
+	else if ( M("t%n") || M("time%n") )             { S->Time = strtotime(value); }
+	else if ( M("dt%n") )                           { S->dt = strtotime(value); }
+	else if ( M("dts%n") || M("dt_save%n") )        { S->save_dt = strtotime(value); }
+	else if ( M("dti%n") || M("dt_streak%n") )      { S->streak_dt = strtotime(value); }
+	else if ( M("dtp%n") || M("dt_profile%n") )     { S->profile_dt = strtotime(value); }
+	else if ( M("re%n") )                           { S->Re = parse_double(value); }
+	else if ( M("pr%n") )                           { S->Pr = parse_double(value); }
+	else if ( M("fin%n") || M("time_to_finish%n") ) { S->Finish = parse_double(value); }
+	else if ( M("infx%n") || M("inf_speed.x%n") )   { S->InfSpeedX = value; }
+	else if ( M("infy%n") || M("inf_speed.y%n") )   { S->InfSpeedY = value; }
+	else if ( M("gravity.x%n") )                    { S->gravitation.x = parse_double(value); }
+	else if ( M("gravity.y%n") )                    { S->gravitation.y = parse_double(value); }
+	else if ( M("infg%n") || M("inf_circulation%n") ) { S->InfCirculation = parse_double(value); }
+	else if ( sscanf(arg, "body[%u]%n", &body_no, &len) == 2 ||
+	          sscanf(arg, "b%u%n", &body_no, &len) == 2 )
+	{
+		if (arg[len] != '.') ALERT();
+		if (body_no >= S->BodyList->size_safe())
+		{
+			fprintf(stderr, "vvcompose: set: body[%u]: no such body\n", body_no);
+			exit(3);
 		}
-	     if (!strcmp(argv[0], "name")            || !strcmp(argv[0], "caption")) { CHECK(1); }
-	else if (!strcmp(argv[0], "t")               || !strcmp(argv[0], "time")) {}
-	else if (!strcmp(argv[0], "dt")              || !strcmp(argv[0], "dt")) {}
-	else if (!strcmp(argv[0], "dts")             || !strcmp(argv[0], "dt_save")) {}
-	else if (!strcmp(argv[0], "dti")             || !strcmp(argv[0], "dt_streak")) {}
-	else if (!strcmp(argv[0], "dtp")             || !strcmp(argv[0], "dt_profile")) {}
-	else if (!strcmp(argv[0], "re")              || !strcmp(argv[0], "re")) {}
-	else if (!strcmp(argv[0], "pr")              || !strcmp(argv[0], "pr")) {}
-	else if (!strcmp(argv[0], "inf_marker")      || !strcmp(argv[0], "inf_marker")) {}
-	else if (!strcmp(argv[0], "inf")             || !strcmp(argv[0], "inf_speed")) {}
-	else if (!strcmp(argv[0], "inf_circulation") || !strcmp(argv[0], "inf_circulation")) {}
-	else if (!strcmp(argv[0], "g")               || !strcmp(argv[0], "gravity")) {}
-	else if (!strcmp(argv[0], "fin")             || !strcmp(argv[0], "time_to_finish")) {}
-	else if (sscanf(arg, "body[%u].", &body_number) == 1 ||
-		     sscanf(arg, "b%u.", &body_number) == 1)
-	{
+		TBody *body = S->BodyList->at(body_no);
+		arg += len;
 
-	}
-	#undef CHECK
-	else
-	{
-		fprintf(stderr, "vvcompose: set: bad argument: %s\n", argv[0]);
-		exit(1);
-	}
-	return;
+		char c = 0;
+		TVec3D *vec = NULL;
+		     if ( sscanf(arg, "pos.%c%n",      &c, &len) == 2 && arg[len] == '\0') { vec = &body->pos; }
+		else if ( sscanf(arg, "dpos.%c%n",     &c, &len) == 2 && arg[len] == '\0') { vec = &body->dPos; }
+		else if ( sscanf(arg, "spring.%c%n",   &c, &len) == 2 && arg[len] == '\0') { vec = &body->k; }
+		else if ( sscanf(arg, "damping.%c%n",  &c, &len) == 2 && arg[len] == '\0') { vec = &body->damping; }
+		else if ( sscanf(arg, "speed.x%n",         &len) == 1 && arg[len] == '\0') { body->SpeedX = value; }
+		else if ( sscanf(arg, "speed.y%n",         &len) == 1 && arg[len] == '\0') { body->SpeedY = value; }
+		else if ( sscanf(arg, "speed.o%n",         &len) == 1 && arg[len] == '\0') { body->SpeedO = value; }
+		else if ( sscanf(arg, "density%n",         &len) == 1 && arg[len] == '\0')
+			{ body->density = parse_double(value); }
+		else if ( sscanf(arg, "root%n",            &len) == 1 && arg[len] == '\0')
+			{ body->root_body = S->BodyList->at(parse_int(value)); }
+		else ALERT();
 
-	// if (sscanf(arg, "blist[%u].", &body_number) == 1)
-	// {
-	// 	// TBody *body = S->BodyList[body_number];
-	// 	if (sscanf(arg, "%*[^.].%31[^.].%1[xyo]", tmp[0], tmp[1]) == 2)
-	// 	{
-	// 		printf("set blist: %d %s %s\n", body_number, tmp[0], tmp[1]);
-	// 	}
-	// }
-	// if (sscanf(arg, "infspeed.%1[xy]", tmp[0]) == 1)
-	// {
-	// 	printf("set infspeed: %s\n", tmp[0]);
-	// }
-	// else
-	// {
-	// 	sscanf(arg, "%31[^.]", tmp[0]);
-	// 	fprintf(stderr, "vvcompose: set: bad argument: %s\n", tmp[0]);
-	// }
+		if (vec) switch (c)
+		{
+			case 'x': vec->r.x = parse_double(value); break;
+			case 'y': vec->r.y = parse_double(value); break;
+			case 'o': vec->o = parse_double(value); break;
+			case 'd': vec->o = parse_double(value)*C_PI/180.0; break;
+			default: ALERT();
+		}
+	}
+	else ALERT();
+	#undef M, ALERT
+	#undef strtotime
+	#undef parse_double, parse_int
 }
 
 void do_del(Space *S, const char *arg)
