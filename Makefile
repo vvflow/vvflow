@@ -16,8 +16,14 @@
 #                   VARIABLES                    #
 #________________________________________________#
 
-CXX		= icpc -O3 -g -openmp
+CXX		= icpc
 AR		= xiar
+
+ifeq ($(CXX),icpc)
+        CXXFLAGS+= -O3 -vec-report=6 -Wall -openmp -mkl=parallel
+else
+        CXXFLAGS+= -O3 -Wall -fopenmp
+endif
 
 parts 	:= core modules
 core_objects 	:= space body tree shellscript sorted_tree stepdata
@@ -25,7 +31,6 @@ modules_objects := flowmove epsfast diffusivefast convective convectivefast matr
 VPATH := $(addprefix source/, $(parts) ) 
 # VPATH is special make var 
 
-warnings 		:= -Wall
 INCLUDE 		:= headers/
 
 INSTALLDIR 		:= $(HOME)/.local
@@ -56,11 +61,11 @@ uninstall:
 #________________________________________________#
 
 bin/%.o: %.cpp headers/%.h headers/elementary.h | bin/
-	$(CXX) $< -o $@ $(optimization) $(warnings) $(addprefix -I, $(INCLUDE)) -c -std=c++0x -fPIC
+	$(CXX) $(CXXFLAGS) $< -o $@ $(addprefix -I, $(INCLUDE)) -c -std=c++0x -fPIC
 
 bin/space.o: space.cpp headers/space.h headers/elementary.h | bin/
-	$(CXX) $< -o $@ \
-	$(optimization) $(warnings) $(addprefix -I, $(INCLUDE)) -c -std=c++0x -fPIC \
+	$(CXX) $(CXXFLAGS) $< -o $@ \
+	$(addprefix -I, $(INCLUDE)) -c -std=c++0x -fPIC \
 	$(GITINFO) \
 	$(GITDIFF)
 

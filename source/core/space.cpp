@@ -609,9 +609,9 @@ void Space::CalcForces()
 {
 	const double C_NyuDt_Pi = dt/(C_PI*Re);
 	const double C_Nyu_Pi = 1./(C_PI*Re);
-	#define body (**llbody)
 	const_for(BodyList, llbody)
 	{
+		auto& body = **llbody;
 		double tmp_gsum = 0;
 		//TObj tmp_fric(0,0,0);
 		body.Friction_prev = body.Friction;
@@ -695,6 +695,7 @@ void Space::ZeroForces()
 
 /********************************** SAVE/LOAD *********************************/
 
+// FIXME merge in one template
 int Space::LoadVorticityFromFile(const char* filename)
 {
 	if ( !VortexList ) VortexList = new vector<TObj>();
@@ -783,7 +784,7 @@ int Space::LoadStreakSource(const char* filename)
 	return 0;
 }
 
-int Space::LoadBody(const char* filename, int cols)
+int Space::LoadBody(const char* filename)
 {
 	TBody *body = new TBody(this);
 	BodyList->push_back(body);
@@ -791,36 +792,14 @@ int Space::LoadBody(const char* filename, int cols)
 	FILE *fin = fopen(filename, "r");
 	if (!fin) { cerr << "No file called " << filename << endl; return -1; }
 
-	TAtt att; att.body = body;
+	TAtt att;
+	att.body = body;
 	att.heat_const = 0;
-	char bc_char('n'), hc_char('n');
 
-	const char *pattern;
-	switch (cols)
+	//FIXME seek to end of line
+	while (fscanf(fin, "%lf %lf", &att.corner.x, &att.corner.y)==2)
 	{
-		case 2: pattern = "%lf %lf \n"; break;
-		case 3: pattern = "%lf %lf %c \n"; break;
-		case 5: pattern = "%lf %lf %c %c %lf \n"; break;
-		default: fprintf(stderr, "Bad columns number. Only 2 3 or 5 supported\n"); return -1;
-	}
-
-	while ( fscanf(fin, pattern, &att.corner.x, &att.corner.y, &bc_char, &hc_char, &att.heat_const)==cols )
-	{
-		att.bc = bc::bc(bc_char);
-		att.hc = hc::hc(hc_char);
 		body->List->push_back(att);
-	}
-
-	if (!VortexList)
-	const_for(body->List, latt)
-	{
-		if(latt->bc == bc::noslip) { VortexList = new vector<TObj>(); break; }
-	}
-
-	if (!HeatList)
-	const_for(body->List, latt)
-	{
-		if(latt->hc != hc::neglect) { HeatList = new vector<TObj>(); break; }
 	}
 
 	fclose(fin);
@@ -834,27 +813,12 @@ int Space::LoadBody(const char* filename, int cols)
 void Space::EnumerateBodies()
 {
 	int eq_no=0;
-	TBody *bodyWithInfSteadyBC = NULL;
-	//there must be 1 and only 1 body with inf_steady condition
 
 	const_for(BodyList, llbody)
 	{
 		const_for((**llbody).List, latt)
 		{
-			if (latt->bc == bc::inf_steady || latt->bc == bc::steady)
-			{
-				if (bodyWithInfSteadyBC)
-				{
-					latt->bc = bc::steady;
-				}
-				else
-				{
-					latt->bc = bc::inf_steady;
-					bodyWithInfSteadyBC = *llbody;
-				}
-			}
-			latt->eq_no = eq_no;
-			eq_no++;
+			latt->eq_no = eq_no++;
 		}
 
 		(**llbody).eq_forces_no = eq_no;

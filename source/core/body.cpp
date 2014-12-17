@@ -66,8 +66,8 @@ void TBody::doRotation()
 	double angle_root = root_body ?
 	                  S->dt * root_body->Speed_slae.o
 	                  : 0;
-	double angle_slae = Speed_slae.o * S->dt; //in doc \omega_? \Delta t
-	double angle_solid = getSpeed().o * S->dt; //in doc \omega \Delta t
+	const double angle_slae = Speed_slae.o * S->dt; //in doc \omega_? \Delta t
+	const double angle_solid = getSpeed().o * S->dt; //in doc \omega \Delta t
 	const_for (List, lobj)
 	{
 		TVec dr = lobj->corner - (pos.r + dPos.r);

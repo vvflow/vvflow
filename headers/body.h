@@ -50,6 +50,11 @@ class TBody
 	public:
 		TBody(Space *sS);
 		~TBody();
+		TBody() = delete;
+		TBody(const TBody&) = delete;		
+		TBody(TBody&&) = delete;
+		TBody& operator= (const TBody&) = delete;
+		TBody& operator= (TBody&&) = delete;
 		int getIndex(); // index of body in Space list
 
 		vector<TAtt> *List;

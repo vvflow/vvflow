@@ -24,6 +24,7 @@ class Space
 		std::string caption;
 		time_t realtime;
 
+		//FIXME make all lists initialized
 		vector<TBody*> *BodyList;
 		vector<TObj> *VortexList;
 		vector<TObj> *HeatList;
@@ -60,7 +61,7 @@ class Space
 		const char* getGitInfo();
 		const char* getGitDiff();
 
-		int LoadBody(const char* filename, int cols=5);
+		int LoadBody(const char* filename);
 		void EnumerateBodies();
 		void ZeroBodies(); //zero Cp, Fr, Nu variables.
 

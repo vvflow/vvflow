@@ -80,14 +80,14 @@ void convectivefast::CalcConvectiveFast()
 	#pragma omp parallel for schedule(dynamic, 10)
 	const_for (BottomNodes, llbnode)
 	{
-		#define bnode (**llbnode)
+		auto& bnode = **llbnode;
 
 		double Teilor1, Teilor2, Teilor3, Teilor4;
 		Teilor1 = Teilor2 = Teilor3 = Teilor4 = 0;
 
 		const_for (bnode.FarNodes, llfnode)
 		{
-			#define fnode (**llfnode)
+			auto& fnode = **llfnode;
 
 			TVec DistP = TVec(bnode.x, bnode.y) - fnode.CMp.r;
 			TVec DistM = TVec(bnode.x, bnode.y) - fnode.CMm.r;
@@ -98,7 +98,6 @@ void convectivefast::CalcConvectiveFast()
 			double FuncM1 = fnode.CMm.g / DistM.abs2();
 			double FuncP2 = fnode.CMp.g / sqr(DistP.abs2());
 			double FuncM2 = fnode.CMm.g / sqr(DistM.abs2());
-			#undef fnode
 
 			Teilor1 -= (FuncP1*DistP.y + FuncM1*DistM.y);
 			Teilor2 += (FuncP1*DistP.x + FuncM1*DistM.x);
@@ -148,7 +147,7 @@ void convectivefast::CalcBoundaryConvective()
 	{
 		bool calcBC = !(**llbody).Speed_slae.iszero();
 		bool calcBCS = false;
-		const_for((**llbody).List, latt) { if (latt->bc == bc::slip) {calcBCS = true; break;}}
+		const_for((**llbody).List, latt) { if (latt->slip) {calcBCS = true; break;}}
 
 		if (!calcBC && !calcBCS) continue;
 
@@ -225,7 +224,7 @@ TVec convectivefast::BoundaryConvectiveSlip(const TBody &b, const TVec &p)
 
 	const_for(alist, latt)
 	{
-		if (latt->bc == bc::slip)
+		if (latt->slip)
 		{
 			res += BioSavar(*latt, p);
 		}
@@ -1010,29 +1009,27 @@ void convectivefast::FillMatrix(bool rightColOnly)
 {
 	if (!rightColOnly) matrix->fillWithZeros();
 
+	bool special_body = true;
 	const_for(S->BodyList, llibody)
 	{
+		auto& body = **llibody;
+		TAtt *special_segment = &body.List->at(body.special_segment_no);
 		#pragma omp parallel for
 		const_for((**llibody).List, latt)
 		{
-			bc::BoundaryCondition boundaryCondition = latt->bc;
-			switch (boundaryCondition)
+			if (latt != special_segment)
+				fillSlipEquationForSegment(latt, rightColOnly);
+			else
 			{
-				case bc::slip:
-				case bc::noslip:
-					fillSlipEquationForSegment(latt, rightColOnly);
-					break;
-				case bc::zero:
+				if (body.boundary_condition == bc_t::kutta)
 					fillZeroEquationForSegment(latt, rightColOnly);
-					break;
-				case bc::steady:
+				else if (!special_body)
 					fillSteadyEquationForSegment(latt, rightColOnly);
-					break;
-				case bc::inf_steady:
+				else
+				{
 					fillInfSteadyEquationForSegment(latt, rightColOnly);
-					break;
-				default:
-					fprintf(stderr, "Unknown bc: %d\n", boundaryCondition);
+					special_body = false;
+				}
 			}
 		}
 

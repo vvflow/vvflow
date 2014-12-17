@@ -8,7 +8,7 @@
 
 #define sqr(x) x*x
 
-Matrix::Matrix(int size_)
+Matrix::Matrix(unsigned size_)
 {
 	size = size_;
 
@@ -22,19 +22,19 @@ Matrix::Matrix(int size_)
 	inverseMatrixIsOk_ = false;
 }
 
-double* Matrix::objectAtIndex(int i, int j)
+double* Matrix::objectAtIndex(unsigned i, unsigned j)
 {
 	if ( (i>=size) || (j>=size) ) return NULL;
 	return BodyMatrix + i*size + j;
 }
 
-double** Matrix::solutionAtIndex(int i)
+double** Matrix::solutionAtIndex(unsigned i)
 {
 	if ( i>=size ) return NULL;
 	return solution + i;
 }
 
-double* Matrix::rightColAtIndex(int i)
+double* Matrix::rightColAtIndex(unsigned i)
 {
 	if ( i>=size ) return NULL;
 	return RightCol + i;
@@ -51,18 +51,18 @@ void Matrix::solveUsingInverseMatrix(bool useInverseMatrix)
 		}
 
 		#pragma omp parallel for
-		for (size_t i=0; i<size; i++)
+		for (unsigned i=0; i<size; i++)
 		{
 			double *RowI = InverseMatrix + size*i;
 
 			if (!solution[i])
 			{
-				fprintf(stderr, "Warning: solution[%ld] = NULL\n", i);
+				fprintf(stderr, "Warning: solution[%u] = NULL\n", i);
 				continue;
 			}
 
 			*solution[i] = 0;
-			for (size_t j=0; j<size; j++)
+			for (unsigned j=0; j<size; j++)
 			{
 				*solution[i] += RowI[j]*RightCol[j];
 			}
@@ -132,12 +132,12 @@ void Matrix::FillInverseMatrix()
 	bodyMatrixIsOk_ = false;
 }
 
-void Matrix::transpose(double* A, int N)
+void Matrix::transpose(double* A, unsigned N)
 {
 	#pragma omp parallel for
-	for (int i=0; i<size; i++)
+	for (unsigned i=0; i<size; i++)
 	{
-		for (int j=i+1; j<size; j++)
+		for (unsigned j=i+1; j<size; j++)
 		{
 			double tmp = A[i*N+j];
 			A[i*N+j] = A[j*N+i];
@@ -152,9 +152,9 @@ void Matrix::save(const char* filename)
 	FILE *fout = fopen(filename, "w");
 	if (!fout) { perror("Error saving the matrix"); return; }
 
-	for (int i=0; i<size; i++)
+	for (unsigned i=0; i<size; i++)
 	{
-		for (int j=0; j<size; j++)
+		for (unsigned j=0; j<size; j++)
 		{
 			fprintf(fout, "%lf\t", BodyMatrix[i*size+j]);
 		}
@@ -174,9 +174,9 @@ bool Matrix::testNan()
 {
 	if (!bodyMatrixIsOk_) { perror("Test Nan: matrix is not filled"); return false; }
 	bool foundNan = false;
-	for (int i=0; i<size; i++)
+	for (unsigned i=0; i<size; i++)
 	{
-		for (int j=0; j<size; j++)
+		for (unsigned j=0; j<size; j++)
 		{
 			double el = BodyMatrix[i*size+j];
 			if (el != el)

@@ -67,7 +67,9 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
 	if ( hlist )
 	const_for (hlist, lobj)
 	{
-		lobj->r += lobj->v*dt; if(zero_speed) lobj->v = TVec(0., 0.);
+		lobj->r += lobj->v*dt;
+		if(zero_speed)
+			lobj->v = TVec(0., 0.);
 
 		TAtt* invalid_inbody = NULL;
 		const_for(S->BodyList, llbody)
@@ -76,6 +78,7 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
 			if (invalid_inbody) break;
 		}
 
+		//FIXME optimize removal in this loop
 		if ( invalid_inbody )
 		{
 			invalid_inbody->hsum -= lobj->g;
@@ -90,22 +93,19 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
 			if (inlayer) break;
 		}
 
-		if ( inlayer )
-		switch (inlayer->hc)
+		if ( inlayer && inlayer->body->heat_condition == hc_t::const_t)
 		{
-			case hc::const_t:
-				if (inlayer->ParticleInHeatLayer >= 0)
-				{
-					inlayer->hsum -= lobj->g;
-					hlist->erase(lobj);
-					lobj--; continue;
-				} else
-				{
-					inlayer->ParticleInHeatLayer = hlist->find(lobj);
-				}
-				break;
+			if (inlayer->heat_layer_obj_no >= 0)
+			{
+				inlayer->hsum -= lobj->g;
+				hlist->erase(lobj);
+				lobj--; continue;
+			} else
+			{
+				inlayer->heat_layer_obj_no = hlist->find(lobj);
+			}
 		} else
-		if ( fabs(lobj->g) < RemoveEps )
+		if ( !inlayer && fabs(lobj->g) < RemoveEps )
 		{
 			//remove merged particles
 			hlist->erase(lobj);
@@ -117,9 +117,9 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
 	if ( S->StreakList )
 	const_for (S->StreakList, lobj)
 	{
-		lobj->r += lobj->v*dt; lobj->v = TVec(0., 0.);
+		lobj->r += lobj->v*dt;
+		lobj->v = TVec(0., 0.);
 
-		TAtt* invalid_inbody = NULL;
 		const_for(S->BodyList, llbody)
 		{
 			if ((**llbody).isPointInvalid(lobj->r))
@@ -146,13 +146,16 @@ void flowmove::VortexShed()
 		const_for(body.List, latt)
 		{
 			if (fabs(latt->g) < RemoveEps)
-				{ CleanedV_++; body.g_dead+= latt->g; }
-			else if ( (latt->bc == bc::noslip) || ((latt+1)->bc == bc::noslip) )
+			{
+				CleanedV_++;
+				body.g_dead+= latt->g;
+			}
+			else if ( !latt->slip )
 			{
 				ObjCopy.r = latt->corner + rotl(latt->dl)*1e-4;
 				ObjCopy.g = latt->g;
 				body.Force_born.r += rotl(latt->corner) * ObjCopy.g;
-				body.Force_born.o += (latt->corner-body.pos.r-body.dPos.r).abs2() * ObjCopy.g;
+				body.Force_born.o += (latt->corner-body.getAxis()).abs2() * ObjCopy.g;
 				latt->gsum+= ObjCopy.g;
 				vlist->push_back(ObjCopy);
 			}
@@ -172,40 +175,38 @@ void flowmove::HeatShed()
 
 	const_for(S->BodyList, llbody)
 	{
-		#define body (**llbody)
+		auto& body = **llbody;
+		auto hc = body.heat_condition;
+
 		const_for(body.List, latt)
 		{
-			switch (latt->hc)
+			if (hc == hc_t::isolate)
 			{
-				case hc::isolate:
-					if (latt->hsum)
-					{
-						hlist->push_back(TObj(latt->r+rotl(latt->dl)*0.5, -latt->hsum));
-						latt->hsum = 0;
-					}
-					break;
-				case hc::const_t:
+				if (latt->hsum)
 				{
-					double tmp_g(latt->dl.abs2() * latt->heat_const);
-					TObj *tmp_obj = (latt->ParticleInHeatLayer>=0)? hlist->begin()+latt->ParticleInHeatLayer : NULL;
-					if (tmp_obj)
-					{
-						latt->hsum += tmp_g - tmp_obj->g;
-						tmp_obj->g = tmp_g;
-					} else
-					{
-						latt->hsum += tmp_g;
-						hlist->push_back(TObj(latt->r+rotl(latt->dl)*0.5, tmp_g));
-					}
+					hlist->push_back(TObj(latt->r+rotl(latt->dl)*0.5, -latt->hsum));
+					latt->hsum = 0;
 				}
-					break;
-				case hc::const_W:
+			}
+			else if (hc == hc_t::const_t)
+			{
+				double tmp_g(latt->dl.abs2() * latt->heat_const);
+				TObj *tmp_obj = (latt->heat_layer_obj_no>=0)? hlist->begin()+latt->heat_layer_obj_no : NULL;
+				if (tmp_obj)
 				{
-					double tmp_g(latt->dl.abs2() * latt->heat_const);
+					latt->hsum += tmp_g - tmp_obj->g;
+					tmp_obj->g = tmp_g;
+				} else
+				{
 					latt->hsum += tmp_g;
 					hlist->push_back(TObj(latt->r+rotl(latt->dl)*0.5, tmp_g));
 				}
-					break;
+			}
+			else if (hc == hc_t::const_w)
+			{
+				double tmp_g(latt->dl.abs2() * latt->heat_const);
+				latt->hsum += tmp_g;
+				hlist->push_back(TObj(latt->r+rotl(latt->dl)*0.5, tmp_g));
 			}
 		}
 		#undef body

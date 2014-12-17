@@ -1,21 +1,23 @@
 #ifndef matrix_h
 #define matrix_h
 
+#include "stdint.h"
+
 class Matrix
 {
 	public:
-		Matrix(int size);
+		Matrix(unsigned size);
 		size_t size;
 
-		double *objectAtIndex(int eq, int j);
-		double **solutionAtIndex(int i);
-		double *rightColAtIndex(int i);
+		double *objectAtIndex(unsigned eq, unsigned j);
+		double **solutionAtIndex(unsigned i);
+		double *rightColAtIndex(unsigned i);
 		void markBodyMatrixAsFilled() {bodyMatrixIsOk_ = true;}
 		void spoilMatrix() {bodyMatrixIsOk_ = inverseMatrixIsOk_ = false;}
 		void solveUsingInverseMatrix(bool useInverseMatrix);
 
 	private:
-		void transpose(double* A, int N);
+		void transpose(double* A, unsigned N);
 		void FillInverseMatrix();
 
 	private:
