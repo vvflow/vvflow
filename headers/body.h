@@ -7,29 +7,9 @@ class TAtt;
 #include "elementary.h"
 #include "space.h"
 
-namespace bc{
-	enum BoundaryCondition
-	{
-		slip = 'l',
-		noslip = 'n',
-		zero = 'z',
-		steady = 's',
-		inf_steady = 'i',
-	};
-
-	BoundaryCondition bc(int i);
-}
-
-namespace hc{
-	enum HeatCondition {
-		neglect = 'n',
-		isolate = 'i',
-		const_t = 't',
-		const_W = 'w'
-	};
-
-	HeatCondition hc(int i);
-}
+//boundary condition
+enum class bc_t { steady, kutta };
+enum class hc_t { neglect, isolate, const_t, const_w };
 
 class TAtt : public TObj
 {
@@ -40,7 +20,11 @@ class TAtt : public TObj
 		// v variable isnt used
 		//_1_eps always stores 3.0/dl.abs()
 		//double gatt, qatt; //$q_\att, \gamma_\att$ in doc
+		int64_t  heat_layer_obj_no;
+		float    heat_const;
+		uint32_t slip;
 
+		TVec dl; //$\Delta \vec l$ in doc
 		double gsum; //filled by flowmove: MoveAndClean() & VortexShed()
 		double hsum; //filled by flowmove: MoveAndClean() & HeatShed()
 		double fric; //filled by diffusivefast: SegmentInfluence()
@@ -48,27 +32,17 @@ class TAtt : public TObj
 		double Fr; // computed by S->CalcForces;
 		double Nu; // computed by S->CalcForces;
 
-		double heat_const;
-		TVec dl; //$\Delta \vec l$ in doc
-		bc::BoundaryCondition bc;
-		hc::HeatCondition hc;
-		long ParticleInHeatLayer;
-
-		//TODO идея на будущее. Убираем граничное условие из класса Att, добавляем bool slip,
-		// добавляем special_bc каждому телу и int special_bc_segment.
-		// еще надо бы избавиться от inf_steady и автоматом выбирать его у первого из тел.
-		//TODO такая же схема с теплом - константу выносим в TBody, выбор температура/мощность тоже,
-		// оставляем bool isolate
-
-		TAtt()
-			:TObj()
-			{gsum = hsum = fric = Cp = Fr = Nu = 0.; ParticleInHeatLayer = -1;}
+		TAtt():TObj(), heat_layer_obj_no(-1), heat_const(0.0), slip(0)
+		{
+			gsum = hsum = fric = 0.0;
+			Cp = Fr = Nu = 0.0;
+		}
 		//TAtt(TBody *body, int eq_no);
-		//void zero() { r.x = r.y = g = gsum = hsum = /*FIXME fric?*/ Cp = Fr = Nu = 0; ParticleInHeatLayer = -1; }
+		//void zero() { r.x = r.y = g = gsum = hsum = /*FIXME fric?*/ Cp = Fr = Nu = 0; heat_layer_obj_no = -1; }
 
 	public:
-		int eq_no;
 		TBody* body;
+		uint32_t eq_no;
 };
 
 class TBody
@@ -98,6 +72,10 @@ class TBody
 		TVec3D damping;
 		//double kx, ky, ka;
 		double density; //in doc \frac{\rho_b}{\rho_0}
+
+		int64_t special_segment_no;
+		bc_t boundary_condition;
+		hc_t heat_condition;
 
 		TVec3D Friction, Friction_prev; //computed by S->CalcForces
 		TVec3D Force_born, Force_dead; //computed by flowmove->MoveAndClean

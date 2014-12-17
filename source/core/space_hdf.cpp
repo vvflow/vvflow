@@ -15,8 +15,6 @@ static hid_t fraction_t; bool commited_fraction = false;
 static hid_t bool_t;     bool commited_bool = false;
 static hid_t vec_t;      bool commited_vec = false;
 static hid_t vec3d_t;    bool commited_vec3d = false;
-static hid_t bc_t;       bool commited_bc = false;
-static hid_t hc_t;       bool commited_hc = false;
 // static hid_t att_detailed_t;
 
 static const hsize_t numbers[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
@@ -88,7 +86,7 @@ bool attread(hid_t hid, const char *name, void *value, hid_t type_id)
 
 template<typename T> void attribute_read(hid_t, const char*, T& value);
 template<> void attribute_read(hid_t hid, const char *name, uint32_t& val) { if (!attread(hid, name, &val, H5T_NATIVE_UINT32)) val = 0;}
-template<> void attribute_read(hid_t hid, const char *name, int32_t& val)  { if (!attread(hid, name, &val, H5T_NATIVE_UINT32)) val = 0;}
+template<> void attribute_read(hid_t hid, const char *name, int32_t& val)  { if (!attread(hid, name, &val, H5T_NATIVE_INT32)) val = 0;}
 template<> void attribute_read(hid_t hid, const char *name, double& val)   { if (!attread(hid, name, &val, H5T_NATIVE_DOUBLE)) val = 0.0;}
 template<> void attribute_read(hid_t hid, const char *name, TVec& val)     { if (!attread(hid, name, &val, vec_t))             val = TVec();}
 template<> void attribute_read(hid_t hid, const char *name, TVec3D& val)   { if (!attread(hid, name, &val, vec3d_t))           val = TVec3D();}
@@ -101,40 +99,18 @@ template<> void attribute_read(hid_t hid, const char *name, std::string& val)
 	free(c_buf);
 }
 
-void attribute_write(hid_t hid, const char *name, void *value, hid_t type_id)
+void attwrite(hid_t hid, const char *name, void *value, hid_t type_id)
 {
-	if (value == 0) return;
 	hid_t aid = H5Acreate2(hid, name, type_id, DATASPACE_SCALAR(), H5P_DEFAULT, H5P_DEFAULT);
 	assert(aid>=0);
-	assert(H5Awrite(aid, type_id, &value)>=0);
+	assert(H5Awrite(aid, type_id, value)>=0);
 	assert(H5Aclose(aid)>=0);
 }
 
-/******************************************************************************
-***** DOUBLE ******************************************************************
-******************************************************************************/
-
-void attribute_write(hid_t hid, const char *name, double value)
-{
-	if (value == 0) return;
-	hid_t aid = H5Acreate2(hid, name, H5T_NATIVE_DOUBLE, DATASPACE_SCALAR(), H5P_DEFAULT, H5P_DEFAULT);
-	assert(aid>=0);
-	assert(H5Awrite(aid, H5T_NATIVE_DOUBLE, &value)>=0);
-	assert(H5Aclose(aid)>=0);
-}
-
-/******************************************************************************
-***** LONG INT ****************************************************************
-******************************************************************************/
-
-void attribute_write(hid_t hid, const char *name, long int value)
-{
-	if (value == 0) return;
-	hid_t aid = H5Acreate2(hid, name, H5T_NATIVE_LONG, DATASPACE_SCALAR(), H5P_DEFAULT, H5P_DEFAULT);
-	assert(aid>=0);
-	assert(H5Awrite(aid, H5T_NATIVE_LONG, &value)>=0);
-	assert(H5Aclose(aid)>=0);
-}
+template<typename T> void attribute_write(hid_t, const char*, T value);
+template<> void attribute_write(hid_t hid, const char *name, uint32_t val) { if (val) attwrite(hid, name, &val, H5T_NATIVE_UINT32); }
+template<> void attribute_write(hid_t hid, const char *name, int32_t val) { if (val) attwrite(hid, name, &val, H5T_NATIVE_INT32); }
+template<> void attribute_write(hid_t hid, const char *name, double val) { if (val) attwrite(hid, name, &val, H5T_NATIVE_DOUBLE); }
 
 /******************************************************************************
 ***** VEC *********************************************************************
@@ -175,65 +151,6 @@ void attribute_write(hid_t hid, const char *name, TVec3D vec3d)
 }
 
 /******************************************************************************
-***** BOUNDARY CONDITION ******************************************************
-******************************************************************************/
-
-void attribute_write(hid_t hid, const char *name, bc::BoundaryCondition bc)
-{
-	if (!commited_bc)
-	{
-		commited_bc = true;
-		H5Tcommit2(fid, "boundary_condition_t", bc_t, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-	}
-	
-	hid_t aid = H5Acreate2(hid, name, bc_t, DATASPACE_SCALAR(), H5P_DEFAULT, H5P_DEFAULT);
-	assert(aid>=0);
-	assert(H5Awrite(aid, bc_t, &bc)>=0);
-	assert(H5Aclose(aid)>=0);
-}
-
-void attribute_read(hid_t hid, const char *name, bc::BoundaryCondition &bc)
-{
-	assert(H5Aexists(hid, name));
-
-	hid_t aid = H5Aopen(hid, name, H5P_DEFAULT);
-	assert(aid>=0);
-
-	assert(H5Aread(aid, bc_t, &bc)>=0);
-	assert(H5Aclose(aid)>=0);
-}
-
-/******************************************************************************
-***** HEAT CONDITION **********************************************************
-******************************************************************************/
-
-void attribute_write(hid_t hid, const char *name, hc::HeatCondition hc)
-{
-	if (hc == hc::neglect) return;
-	if (!commited_hc)
-	{
-		commited_hc = true;
-		H5Tcommit2(fid, "heat_condition_t", hc_t, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-	}
-
-	hid_t aid = H5Acreate2(hid, name, hc_t, DATASPACE_SCALAR(), H5P_DEFAULT, H5P_DEFAULT);
-	assert(aid>=0);
-	assert(H5Awrite(aid, hc_t, &hc)>=0);
-	assert(H5Aclose(aid)>=0);
-}
-
-void attribute_read(hid_t hid, const char *name, hc::HeatCondition &hc)
-{
-	if(!H5Aexists(hid, name)) { hc = hc::neglect; return; }
-
-	hid_t aid = H5Aopen(hid, name, H5P_DEFAULT);
-	assert(aid>=0);
-
-	assert(H5Aread(aid, hc_t, &hc)>=0);
-	assert(H5Aclose(aid)>=0);
-}
-
-/******************************************************************************
 ***** DATATYPES ***************************************************************
 ******************************************************************************/
 
@@ -244,7 +161,6 @@ void datatypes_create_all()
 	commited_bool = false;
 	commited_vec = false;
 	commited_vec3d = false;
-	commited_bc = false;
 
 	string_t = H5Tcopy(H5T_C_S1);
 	H5Tset_size(string_t, H5T_VARIABLE);
@@ -267,19 +183,6 @@ void datatypes_create_all()
 	H5Tinsert(vec3d_t, "y", 8, H5T_NATIVE_DOUBLE);
 	H5Tinsert(vec3d_t, "o", 16, H5T_NATIVE_DOUBLE);
 	H5Tpack(vec3d_t);
-
-	bc_t = H5Tenum_create(H5T_NATIVE_INT);
-	{int val = bc::slip;       H5Tenum_insert(bc_t, "slip",       &val);}
-	{int val = bc::noslip;     H5Tenum_insert(bc_t, "noslip",     &val);}
-	{int val = bc::zero;       H5Tenum_insert(bc_t, "zero",       &val);}
-	{int val = bc::steady;     H5Tenum_insert(bc_t, "steady",     &val);}
-	{int val = bc::inf_steady; H5Tenum_insert(bc_t, "inf_steady", &val);}
-
-	hc_t = H5Tenum_create(H5T_NATIVE_INT);
-	{int val = hc::neglect;	H5Tenum_insert(hc_t, "neglect", &val);}
-	{int val = hc::isolate;	H5Tenum_insert(hc_t, "isolate", &val);}
-	{int val = hc::const_t;	H5Tenum_insert(hc_t, "const_t", &val);}
-	{int val = hc::const_W;	H5Tenum_insert(hc_t, "const_w", &val);}
 }
 
 void datatypes_close_all()
@@ -289,6 +192,4 @@ void datatypes_close_all()
 	if (bool_t>0) { H5Tclose(bool_t); bool_t = 0; }
 	if (vec_t>0) { H5Tclose(vec_t); vec_t = 0; }
 	if (vec3d_t>0) { H5Tclose(vec3d_t); vec3d_t = 0; }
-	if (bc_t>0) { H5Tclose(bc_t); bc_t = 0; }
-	if (hc_t>0) { H5Tclose(hc_t); hc_t = 0; }
 }

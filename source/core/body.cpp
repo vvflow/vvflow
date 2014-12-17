@@ -5,38 +5,6 @@
 #include <math.h>
 using namespace std;
 
-/*TAtt::TAtt(TBody *body, int eq_no)
-{
-	this->body = body;
-	this->eq_no = eq_no;
-}*/
-namespace bc{
-BoundaryCondition bc(int i)
-{
-	switch (i)
-	{
-		case 'l': return slip;
-		case 'n': return noslip;
-		case 'z': return zero;
-		case 's': return steady;
-		case 'i': return inf_steady;
-	}
-	return slip;
-}}
-
-namespace hc{
-HeatCondition hc(int i)
-{
-	switch (i)
-	{
-		case 'n': return neglect;
-		case 'i': return isolate;
-		case 't': return const_t;
-		case 'w': return const_W;
-	}
-	return neglect;
-}}
-
 TBody::TBody(Space *sS):
 	SpeedX(),
 	SpeedY(),
@@ -58,6 +26,9 @@ TBody::TBody(Space *sS):
 	k = TVec3D(-1., -1., -1.);
 	damping = TVec3D(0,0,0);
 	density = 1.;
+	special_segment_no = 0;
+	boundary_condition = bc_t::steady;
+	heat_condition = hc_t::neglect;
 }
 
 TBody::~TBody()

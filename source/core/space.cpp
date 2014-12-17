@@ -103,12 +103,10 @@ void Space::dataset_write_body(const char* name, TBody *body)
 {
 	assert(body);
 
-	hc::HeatCondition heat_condition = body->List->begin()->hc;
-	double heat_const = body->List->begin()->heat_const;
-	bc::BoundaryCondition general_bc = bc::zero;
-	bc::BoundaryCondition special_bc;
-	long int special_bc_segment = -1;
-
+	float heat_const = body->List->begin()->heat_const;
+	uint32_t general_slip = body->List->begin()->slip;
+	bool can_simplify = true;
+	
 	hsize_t dims[2] = {body->size(), 4};
 	struct ATT *mem = (struct ATT*)malloc(sizeof(struct ATT)*dims[0]);
 	for(hsize_t i=0; i<dims[0]; i++)
@@ -119,20 +117,9 @@ void Space::dataset_write_body(const char* name, TBody *body)
 		mem[i].g = latt.g;
 		mem[i].gsum = latt.gsum;
 
-		if ( (latt.bc != bc::slip) &&
-			(latt.bc != bc::noslip) )
-		{
-			if (special_bc_segment>=0) assert(0);
-			special_bc = (latt.bc == bc::zero) ? bc::zero : bc::steady;
-			special_bc_segment = i;
-		} else
-		{
-			if ( (general_bc != bc::zero) && (latt.bc != general_bc) ) assert(0);
-			general_bc = latt.bc;
-		}
-
-		if (heat_const != latt.heat_const) assert(0);
-		if (heat_condition != latt.hc) assert(0);
+		if (latt.heat_const != heat_const ||
+			latt.slip != general_slip)
+			can_simplify = false;
 	}
 
 	hsize_t chunkdims[2] = {std::min<hsize_t>(512, dims[0]), 4};
@@ -146,7 +133,14 @@ void Space::dataset_write_body(const char* name, TBody *body)
 	hid_t file_dataset = H5Dcreate2(fid, name, H5T_NATIVE_DOUBLE, file_dataspace, H5P_DEFAULT, prop, H5P_DEFAULT);
 	assert(file_dataset>=0);
 
-	attribute_write(file_dataset, "simplified_dataset", 1L);
+	if (!can_simplify)
+	{
+		fprintf(stderr, "Can not save simplified body%02zd\n", BodyList->indexOf(body));
+		exit(1);
+	}
+	attribute_write(file_dataset, "simplified_dataset", uint32_t(2));
+	attribute_write(file_dataset, "general_slip", body->List->begin()->slip);
+	attribute_write(file_dataset, "heat_const", body->List->begin()->heat_const);
 
 	if (body->root_body)
 	{
@@ -173,11 +167,9 @@ void Space::dataset_write_body(const char* name, TBody *body)
 	attribute_write(file_dataset, "com", body->getCom());
 	attribute_write(file_dataset, "moi_c", body->getMoi_c());
 
-	attribute_write(file_dataset, "general_bc", general_bc);
-	attribute_write(file_dataset, "special_bc", special_bc);
-	attribute_write(file_dataset, "special_bc_segment", special_bc_segment);
-	attribute_write(file_dataset, "heat_condition", heat_condition);
-	attribute_write(file_dataset, "heat_const", heat_const);
+	attribute_write(file_dataset, "boundary_condition", body->boundary_condition);
+	attribute_write(file_dataset, "special_segment_no", body->special_segment_no);
+	attribute_write(file_dataset, "heat_condition", body->heat_condition);
 
 	H5Dwrite(file_dataset, H5T_NATIVE_DOUBLE, H5S_ALL, file_dataspace, H5P_DEFAULT, mem);
 	H5Dclose(file_dataset);
@@ -295,9 +287,6 @@ herr_t dataset_read_body(hid_t g_id, const char *name, const H5L_info_t *info, v
 	assert(file_dataspace>=0);
 	hsize_t dims[2]; H5Sget_simple_extent_dims(file_dataspace, dims, dims);
 	
-	int simplified_dataset;
-	attribute_read(dataset, "simplified_dataset", simplified_dataset);
-	assert(simplified_dataset && "feature not supported yet");
 
 	attribute_read(dataset, "holder_position", body->pos);
 	attribute_read(dataset, "delta_position", body->dPos);
@@ -321,16 +310,49 @@ herr_t dataset_read_body(hid_t g_id, const char *name, const H5L_info_t *info, v
 	else
 		body->root_body = NULL;
 
-	hc::HeatCondition heat_condition;
+	uint32_t simplified_dataset;
+	int32_t general_slip;
 	double heat_const;
-	bc::BoundaryCondition general_bc;
-	bc::BoundaryCondition special_bc;
-	uint16_t special_bc_segment;
-	attribute_read(dataset, "general_bc", general_bc);
-	attribute_read(dataset, "special_bc", special_bc);
-	attribute_read(dataset, "special_bc_segment", special_bc_segment);
-	attribute_read(dataset, "heat_condition", heat_condition);
-	attribute_read(dataset, "heat_const", heat_const);
+	attribute_read(dataset, "simplified_dataset", simplified_dataset);
+	
+	if (!simplified_dataset)
+	{
+		fprintf(stderr, "Can not read simplified %s\n", name);
+		exit(1);
+	} else
+	if (simplified_dataset == 1)
+	{
+		attribute_read(dataset, "general_bc", general_slip);
+		attribute_read(dataset, "heat_const", heat_const);
+		general_slip = general_slip == 'l';
+
+		int32_t special_bc, special_bc_segment, heat_condition;
+		attribute_read(dataset, "special_bc", special_bc);
+		attribute_read(dataset, "special_bc_segment", special_bc_segment);
+		attribute_read(dataset, "heat_condition", heat_condition);
+		body->special_segment_no = special_bc_segment;
+		switch (special_bc)
+		{
+			case 's': 
+			case 'i': body->boundary_condition = bc_t::steady; break;
+			case 'z': body->boundary_condition = bc_t::kutta; break;
+		}
+		switch (heat_condition)
+		{
+			case 'n': body->heat_condition = hc_t::neglect; break;
+			case 'i': body->heat_condition = hc_t::isolate; break;
+			case 't': body->heat_condition = hc_t::const_t; break;
+			case 'w': body->heat_condition = hc_t::const_w; break;
+		}
+	} else
+	if (simplified_dataset == 2)
+	{
+		attribute_read(dataset, "general_slip", general_slip);
+		attribute_read(dataset, "heat_const", heat_const);
+		attribute_read(dataset, "boundary_condition", body->boundary_condition);
+		attribute_read(dataset, "special_segment_no", body->special_segment_no);
+		attribute_read(dataset, "heat_condition", body->heat_condition);
+	}
 
 	struct ATT *mem = (struct ATT*)malloc(sizeof(struct ATT)*dims[0]);
 	assert(H5Dread(dataset, H5T_NATIVE_DOUBLE, H5S_ALL, file_dataspace, H5P_DEFAULT, mem)>=0);
@@ -343,8 +365,7 @@ herr_t dataset_read_body(hid_t g_id, const char *name, const H5L_info_t *info, v
 		latt.g = mem[i].g;
 		latt.gsum = mem[i].gsum;
 
-		latt.bc = (i==special_bc_segment)?special_bc:general_bc;
-		latt.hc = heat_condition;
+		latt.slip = general_slip;
 		latt.heat_const = heat_const;
 		body->List->push_back(latt);
 	}
@@ -536,14 +557,31 @@ void Space::Load_v1_3(const char* fname)
 			for (int64_t i=0; i<size; i++)
 			{
 				int64_t bc, hc;
+				double heat_const;
 				fread(&att.corner, 16, 1, fin);
 				fread(&att.g, 8, 1, fin);
 				fread(&bc, 8, 1, fin);
 				fread(&hc, 8, 1, fin);
-				fread(&att.heat_const, 8, 1, fin);
-				att.bc = bc::bc(bc);
-				att.hc = hc::hc(hc);
+				fread(&heat_const, 8, 1, fin);
 				fread(&att.gsum, 8, 1, fin);
+				att.heat_const = heat_const;
+				if (bc == 'l' || bc == 'n')
+					att.slip = bc == 'l';
+				else
+				switch (bc)
+				{
+					case 's': 
+					case 'i': body->boundary_condition = bc_t::steady; break;
+					case 'z': body->boundary_condition = bc_t::kutta; break;
+				}
+				switch (hc)
+				{
+					case 'n': body->heat_condition = hc_t::neglect; break;
+					case 'i': body->heat_condition = hc_t::isolate; break;
+					case 't': body->heat_condition = hc_t::const_t; break;
+					case 'w': body->heat_condition = hc_t::const_w; break;
+				}
+				
 
 				body->List->push_back(att);
 			}
@@ -643,7 +681,7 @@ void Space::ZeroForces()
 			latt->gsum =
 			latt->fric =
 			latt->hsum = 0;
-			latt->ParticleInHeatLayer = -1;
+			latt->heat_layer_obj_no = -1;
 		}
 
 		(**llbody).Force_hydro = TVec3D();
