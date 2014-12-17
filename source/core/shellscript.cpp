@@ -2,21 +2,20 @@
 #include "string.h"
 #include <stdlib.h>
 #include "stdio.h"
-#include "float.h"
-
+#include <limits>
 
 ShellScript::ShellScript():
 			script(),
-			cacheTime1(-DBL_MAX),
-			cacheTime2(-DBL_MAX),
+			cacheTime1(std::numeric_limits<double>::lowest()),
 			cacheValue1(),
+			cacheTime2(std::numeric_limits<double>::lowest()),
 			cacheValue2() {}
 
 ShellScript::ShellScript(const std::string &s):
 			script(s),
-			cacheTime1(-DBL_MAX),
-			cacheTime2(-DBL_MAX),
+			cacheTime1(std::numeric_limits<double>::lowest()),
 			cacheValue1(),
+			cacheTime2(std::numeric_limits<double>::lowest()),
 			cacheValue2() {}
 
 double ShellScript::getValue(double t) const

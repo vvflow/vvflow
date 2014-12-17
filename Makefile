@@ -16,7 +16,7 @@
 #                   VARIABLES                    #
 #________________________________________________#
 
-CC		= icc -O3 -g -openmp
+CXX		= icpc -O3 -g -openmp
 AR		= xiar
 
 parts 	:= core modules
@@ -56,11 +56,10 @@ uninstall:
 #________________________________________________#
 
 bin/%.o: %.cpp headers/%.h headers/elementary.h | bin/
-	$(CC) $< -o $@ \
-	$(optimization) $(warnings) $(addprefix -I, $(INCLUDE)) -c -std=c++0x -fPIC
+	$(CXX) $< -o $@ $(optimization) $(warnings) $(addprefix -I, $(INCLUDE)) -c -std=c++0x -fPIC
 
 bin/space.o: space.cpp headers/space.h headers/elementary.h | bin/
-	$(CC) $< -o $@ \
+	$(CXX) $< -o $@ \
 	$(optimization) $(warnings) $(addprefix -I, $(INCLUDE)) -c -std=c++0x -fPIC \
 	$(GITINFO) \
 	$(GITDIFF)
@@ -70,7 +69,7 @@ bin/libvvhd.a: $(patsubst %, bin/%.o, $(core_objects) $(modules_objects))
 	ranlib $@
 
 bin/libvvhd.so: $(patsubst %, bin/%.o, $(core_objects) $(modules_objects))
-	icc -shared -fPIC -Wl,-soname,libvvhd.so -o $@ $^ -openmp -mkl=parallel
+	$(CXX) -shared -fPIC -Wl,-soname,libvvhd.so -o $@ $^ -mkl=parallel
 
 bin/:
 	mkdir $@ -p

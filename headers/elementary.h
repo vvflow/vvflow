@@ -167,7 +167,7 @@ class TTime
 			while ((x!=1) || (y!=1))
 			{
 				bool kIsPrime = true;
-				for (int d = 2; d<k/2; d++) { if (!k%d) {kIsPrime = false; break;}}
+				for (uint32_t d = 2; d<k/2; d++) { if (!k%d) {kIsPrime = false; break;}}
 				if (!kIsPrime) {k++; continue;}
 				int xk(x%k), yk(y%k);
 				if (!xk || !yk)

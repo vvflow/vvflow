@@ -1,4 +1,5 @@
 #include <assert.h>
+#include "limits"
 #include "hdf5.h"
 
 static hid_t fid;
@@ -50,20 +51,6 @@ void attribute_write(hid_t hid, const char *name, const char *str)
 	assert(H5Aclose(aid)>=0);
 }
 
-void attribute_read(hid_t hid, const char *name, std::string &buf)
-{
-	if (!H5Aexists(hid, name)) { buf = ""; return; }
-
-	hid_t aid = H5Aopen(hid, name, H5P_DEFAULT);
-	assert(aid>=0);
-
-	char *c_buf;
-	assert(H5Aread(aid, string_t, &c_buf)>=0);
-	buf = c_buf;
-	free(c_buf);
-	assert(H5Aclose(aid)>=0);
-}
-
 /******************************************************************************
 ***** FRACTION ****************************************************************
 ******************************************************************************/
@@ -83,45 +70,44 @@ void attribute_write(hid_t hid, const char *name, TTime time)
 	assert(H5Aclose(aid)>=0);
 }
 
-void attribute_read(hid_t hid, const char *name, TTime &time)
-{
-	if (!H5Aexists(hid, name)) { time = TTime(INT32_MAX, 1); return; }
-	
-	hid_t aid = H5Aopen(hid, name, H5P_DEFAULT);
-	assert(aid>=0);
-
-	assert(H5Aread(aid, fraction_t, &time)>=0);
-	assert(H5Aclose(aid)>=0);
-}
-
 /******************************************************************************
-***** BOOL ********************************************************************
+***** NATIVE ******************************************************************
 ******************************************************************************/
 
-void attribute_write(hid_t hid, const char *name, bool value)
+bool attread(hid_t hid, const char *name, void *value, hid_t type_id)
 {
-	if (!commited_bool)
-	{
-		commited_bool = true;
-		H5Tcommit2(fid, "bool_t", bool_t, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-	}
+	if (!H5Aexists(hid, name)) { return false; }
 
-	int v = value;
-	hid_t aid = H5Acreate2(hid, name, bool_t, DATASPACE_SCALAR(), H5P_DEFAULT, H5P_DEFAULT);
-	assert(aid>=0);
-	assert(H5Awrite(aid, bool_t, &v)>=0);
-	assert(H5Aclose(aid)>=0);
+	hid_t aid = H5Aopen(hid, name, H5P_DEFAULT);
+	if (aid<0) return false;
+
+	if (H5Aread(aid, type_id, value)<0) return false;
+	if (H5Aclose(aid)<0) return false;
+	return true;
 }
 
-bool attribute_read_bool(hid_t hid, const char *name)
+template<typename T> void attribute_read(hid_t, const char*, T& value);
+template<> void attribute_read(hid_t hid, const char *name, uint32_t& val) { if (!attread(hid, name, &val, H5T_NATIVE_UINT32)) val = 0;}
+template<> void attribute_read(hid_t hid, const char *name, int32_t& val)  { if (!attread(hid, name, &val, H5T_NATIVE_UINT32)) val = 0;}
+template<> void attribute_read(hid_t hid, const char *name, double& val)   { if (!attread(hid, name, &val, H5T_NATIVE_DOUBLE)) val = 0.0;}
+template<> void attribute_read(hid_t hid, const char *name, TVec& val)     { if (!attread(hid, name, &val, vec_t))             val = TVec();}
+template<> void attribute_read(hid_t hid, const char *name, TVec3D& val)   { if (!attread(hid, name, &val, vec3d_t))           val = TVec3D();}
+template<> void attribute_read(hid_t hid, const char *name, TTime& val)    { if (!attread(hid, name, &val, fraction_t)) val = TTime(std::numeric_limits<int32_t>::max(), 1);}
+template<> void attribute_read(hid_t hid, const char *name, std::string& val)
 {
-	hid_t aid = H5Aopen(hid, name, H5P_DEFAULT);
-	assert(aid>=0);
+	char *c_buf = NULL;
+	if (attread(hid, name, &c_buf, string_t)) val = c_buf;
+	else val = "";
+	free(c_buf);
+}
 
-	bool res;
-	assert(H5Aread(aid, bool_t, &res)>=0);
+void attribute_write(hid_t hid, const char *name, void *value, hid_t type_id)
+{
+	if (value == 0) return;
+	hid_t aid = H5Acreate2(hid, name, type_id, DATASPACE_SCALAR(), H5P_DEFAULT, H5P_DEFAULT);
+	assert(aid>=0);
+	assert(H5Awrite(aid, type_id, &value)>=0);
 	assert(H5Aclose(aid)>=0);
-	return res;
 }
 
 /******************************************************************************
@@ -137,17 +123,6 @@ void attribute_write(hid_t hid, const char *name, double value)
 	assert(H5Aclose(aid)>=0);
 }
 
-void attribute_read(hid_t hid, const char *name, double &value)
-{
-	if (!H5Aexists(hid, name)) { value = 0; return; }
-
-	hid_t aid = H5Aopen(hid, name, H5P_DEFAULT);
-	assert(aid>=0);
-
-	assert(H5Aread(aid, H5T_NATIVE_DOUBLE, &value)>=0);
-	assert(H5Aclose(aid)>=0);
-}
-
 /******************************************************************************
 ***** LONG INT ****************************************************************
 ******************************************************************************/
@@ -158,17 +133,6 @@ void attribute_write(hid_t hid, const char *name, long int value)
 	hid_t aid = H5Acreate2(hid, name, H5T_NATIVE_LONG, DATASPACE_SCALAR(), H5P_DEFAULT, H5P_DEFAULT);
 	assert(aid>=0);
 	assert(H5Awrite(aid, H5T_NATIVE_LONG, &value)>=0);
-	assert(H5Aclose(aid)>=0);
-}
-
-void attribute_read(hid_t hid, const char *name, long int &value)
-{
-	if (!H5Aexists(hid, name)) { value = 0; return; }
-
-	hid_t aid = H5Aopen(hid, name, H5P_DEFAULT);
-	assert(aid>=0);
-
-	assert(H5Aread(aid, H5T_NATIVE_LONG, &value)>=0);
 	assert(H5Aclose(aid)>=0);
 }
 
@@ -191,17 +155,6 @@ void attribute_write(hid_t hid, const char *name, TVec vec)
 	assert(H5Aclose(aid)>=0);
 }
 
-void attribute_read(hid_t hid, const char *name, TVec &vec)
-{
-	if (!H5Aexists(hid, name)) { vec = TVec(0, 0); return; }
-
-	hid_t aid = H5Aopen(hid, name, H5P_DEFAULT);
-	assert(aid>=0);
-
-	assert(H5Aread(aid, vec_t, &vec)>=0);
-	assert(H5Aclose(aid)>=0);
-}
-
 /******************************************************************************
 ***** VEC3D *******************************************************************
 ******************************************************************************/
@@ -218,17 +171,6 @@ void attribute_write(hid_t hid, const char *name, TVec3D vec3d)
 	hid_t aid = H5Acreate2(hid, name, vec3d_t, DATASPACE_SCALAR(), H5P_DEFAULT, H5P_DEFAULT);
 	assert(aid>=0);
 	assert(H5Awrite(aid, vec3d_t, &vec3d)>=0);
-	assert(H5Aclose(aid)>=0);
-}
-
-void attribute_read(hid_t hid, const char *name, TVec3D &vec3d)
-{
-	if (!H5Aexists(hid, name)) { vec3d = TVec3D(0, 0, 0); return; }
-
-	hid_t aid = H5Aopen(hid, name, H5P_DEFAULT);
-	assert(aid>=0);
-
-	assert(H5Aread(aid, vec3d_t, &vec3d)>=0);
 	assert(H5Aclose(aid)>=0);
 }
 

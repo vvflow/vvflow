@@ -7,7 +7,7 @@
 #include <fstream>
 #include <time.h>
 #include <assert.h>
-using namespace std;
+
 
 #include "space.h"
 #include "space_hdf.cpp"
@@ -83,7 +83,7 @@ void Space::dataset_write_list(const char *name, vector<TObj> *list)
 	hsize_t dims[2] = {list->size_safe(), 3};
 	if (dims[0] == 0) return;
 	hsize_t dims2[2] = {dims[0]*2, dims[1]};
-	hsize_t chunkdims[2] = {min(512, dims[0]), 3};
+	hsize_t chunkdims[2] = {std::min<hsize_t>(512, dims[0]), 3};
 	hid_t prop = H5Pcreate(H5P_DATASET_CREATE);
 	H5Pset_chunk(prop, 2, chunkdims);
 	H5Pset_deflate(prop, 9);
@@ -135,7 +135,7 @@ void Space::dataset_write_body(const char* name, TBody *body)
 		if (heat_condition != latt.hc) assert(0);
 	}
 
-	hsize_t chunkdims[2] = {min(512, dims[0]), 4};
+	hsize_t chunkdims[2] = {std::min<hsize_t>(512, dims[0]), 4};
 	hid_t prop = H5Pcreate(H5P_DATASET_CREATE);
 	H5Pset_chunk(prop, 2, chunkdims);
 	H5Pset_deflate(prop, 9);
@@ -146,7 +146,7 @@ void Space::dataset_write_body(const char* name, TBody *body)
 	hid_t file_dataset = H5Dcreate2(fid, name, H5T_NATIVE_DOUBLE, file_dataspace, H5P_DEFAULT, prop, H5P_DEFAULT);
 	assert(file_dataset>=0);
 
-	attribute_write(file_dataset, "simplified_dataset", true);
+	attribute_write(file_dataset, "simplified_dataset", 1L);
 
 	if (body->root_body)
 	{
@@ -295,7 +295,9 @@ herr_t dataset_read_body(hid_t g_id, const char *name, const H5L_info_t *info, v
 	assert(file_dataspace>=0);
 	hsize_t dims[2]; H5Sget_simple_extent_dims(file_dataspace, dims, dims);
 	
-	assert(attribute_read_bool(dataset, "simplified_dataset") && "feature not supported yet");
+	int simplified_dataset;
+	attribute_read(dataset, "simplified_dataset", simplified_dataset);
+	assert(simplified_dataset && "feature not supported yet");
 
 	attribute_read(dataset, "holder_position", body->pos);
 	attribute_read(dataset, "delta_position", body->dPos);
@@ -323,7 +325,7 @@ herr_t dataset_read_body(hid_t g_id, const char *name, const H5L_info_t *info, v
 	double heat_const;
 	bc::BoundaryCondition general_bc;
 	bc::BoundaryCondition special_bc;
-	long int special_bc_segment;
+	uint16_t special_bc_segment;
 	attribute_read(dataset, "general_bc", general_bc);
 	attribute_read(dataset, "special_bc", special_bc);
 	attribute_read(dataset, "special_bc_segment", special_bc_segment);
@@ -681,7 +683,7 @@ int Space::LoadVorticity_bin(const char* filename)
 	if (!fin) { cerr << "No file called \'" << filename << "\'\n"; return -1; }
 
 	fin.seekg (0, ios::end);
-	size_t N = (size_t(fin.tellg())-1024)/(sizeof(double)*3);
+	// size_t N = (size_t(fin.tellg())-1024)/(sizeof(double)*3);
 	fin.seekp(1024, ios::beg);
 
 	TObj obj(0, 0, 0);
@@ -755,7 +757,7 @@ int Space::LoadBody(const char* filename, int cols)
 	att.heat_const = 0;
 	char bc_char('n'), hc_char('n');
 
-	char *pattern;
+	const char *pattern;
 	switch (cols)
 	{
 		case 2: pattern = "%lf %lf \n"; break;
