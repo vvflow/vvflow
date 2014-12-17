@@ -65,7 +65,7 @@ void do_set(Space* S, const char *arg, const char *value)
 	unsigned body_no;
 
 	#define comp3d(vec) (*c=='x'?vec.x)
-	#define M(fmt) (sscanf(arg, fmt, &len), arg[len] == '\0')
+	#define M(fmt) (len=0, sscanf(arg, fmt, &len), arg[len] == '\0')
 	#define ALERT() { fprintf(stderr, "vvcompose: set: ambiguous argument: %s\n", arg); exit(3); }
 	#define parse_double(val) parse(arg, "%lg%n", val)
 	#define parse_int(val)    parse(arg, "%d%n", val)
@@ -85,8 +85,8 @@ void do_set(Space* S, const char *arg, const char *value)
 	else if ( M("gravity.x%n") )                    { S->gravitation.x = parse_double(value); }
 	else if ( M("gravity.y%n") )                    { S->gravitation.y = parse_double(value); }
 	else if ( M("infg%n") || M("inf_circulation%n") ) { S->InfCirculation = parse_double(value); }
-	else if ( sscanf(arg, "body[%u]%n", &body_no, &len) == 2 ||
-	          sscanf(arg, "b%u%n", &body_no, &len) == 2 )
+	else if ( sscanf(arg, "body[%u]%n", &body_no, &len) ||
+	          sscanf(arg, "b%u%n", &body_no, &len) )
 	{
 		if (arg[len] != '.') ALERT();
 		if (body_no >= S->BodyList->size_safe())
@@ -99,15 +99,14 @@ void do_set(Space* S, const char *arg, const char *value)
 
 		char c = 0;
 		TVec3D *vec = NULL;
-		     if ( sscanf(arg, "pos.%c%n",      &c, &len) == 2 && arg[len] == '\0') { vec = &body->pos; }
-		else if ( sscanf(arg, "dpos.%c%n",     &c, &len) == 2 && arg[len] == '\0') { vec = &body->dPos; }
-		else if ( sscanf(arg, "spring.%c%n",   &c, &len) == 2 && arg[len] == '\0') { vec = &body->k; }
-		else if ( sscanf(arg, "damping.%c%n",  &c, &len) == 2 && arg[len] == '\0') { vec = &body->damping; }
-		else if ( sscanf(arg, "speed.x%n",         &len) == 1 && arg[len] == '\0') { body->SpeedX = value; }
-		else if ( sscanf(arg, "speed.y%n",         &len) == 1 && arg[len] == '\0') { body->SpeedY = value; }
-		else if ( sscanf(arg, "speed.o%n",         &len) == 1 && arg[len] == '\0') { body->SpeedO = value; }
-		else if ( sscanf(arg, "density%n",         &len) == 1 && arg[len] == '\0')
-			{ body->density = parse_double(value); }
+		     if ( len=0, sscanf(arg, "pos.%c%n",      &c, &len), !arg[len]) ) { vec = &body->pos; }
+		else if ( len=0, sscanf(arg, "dpos.%c%n",     &c, &len), !arg[len]) ) { vec = &body->dPos; }
+		else if ( len=0, sscanf(arg, "spring.%c%n",   &c, &len), !arg[len]) ) { vec = &body->k; }
+		else if ( len=0, sscanf(arg, "damping.%c%n",  &c, &len), !arg[len]) ) { vec = &body->damping; }
+		else if ( len=0, sscanf(arg, "speed.x%n",         &len), !arg[len]) ) { body->SpeedX = value; }
+		else if ( len=0, sscanf(arg, "speed.y%n",         &len), !arg[len]) ) { body->SpeedY = value; }
+		else if ( len=0, sscanf(arg, "speed.o%n",         &len), !arg[len]) ) { body->SpeedO = value; }
+		else if ( len=0, sscanf(arg, "density%n",         &len), !arg[len]) ) { body->density = parse_double(value); }
 		else if ( sscanf(arg, "root%n",            &len) == 1 && arg[len] == '\0')
 			{ body->root_body = S->BodyList->at(parse_int(value)); }
 		else ALERT();
