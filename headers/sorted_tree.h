@@ -7,6 +7,9 @@ class stree; typedef stree TSortedTree;
 #include "core.h"
 #include <stdio.h>
 #include <float.h>
+#include <vector>
+
+using std::vector;
 
 class range
 {
@@ -31,6 +34,8 @@ class snode
 
 		typedef vector<TObj*> blList;
 		blList *BodyLList;
+		// FIXME коряво. Надо попробовать темплейты
+
 		range vRange;
 		range hRange;
 		range sRange;

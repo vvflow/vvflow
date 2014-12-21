@@ -1,11 +1,16 @@
 #ifndef BODY_H_
 #define BODY_H_
 
+class Space;
 class TBody;
 class TAtt;
 
 #include "elementary.h"
-#include "space.h"
+#include <vector>
+#include <memory>
+
+using std::vector;
+using std::weak_ptr;
 
 //boundary condition
 enum class bc_t { steady, kutta };
@@ -48,17 +53,18 @@ class TAtt : public TObj
 class TBody
 {
 	public:
-		TBody(Space *sS);
+		TBody(Space *space);
 		~TBody();
 		TBody() = delete;
-		TBody(const TBody&) = delete;		
+		TBody(const TBody&) = delete;
 		TBody(TBody&&) = delete;
 		TBody& operator= (const TBody&) = delete;
 		TBody& operator= (TBody&&) = delete;
-		int getIndex(); // index of body in Space list
+		int get_index() const; // index of body in Space list
 
-		vector<TAtt> *List;
-		TBody *root_body;
+		// FIXME rename to lower case
+		std::vector<TAtt> List;
+		weak_ptr<TBody> root_body;
 
 		TVec3D pos; //in doc = $R_bx$, $R_by$, $\alpha_b$
 		TVec3D dPos; // same with delta
@@ -105,12 +111,12 @@ class TBody
 		bool isInsideValid() {return _area<=0;}
 
 		void doFillProperties();
-		double getSurface() {return _surface;}
-		double getArea()    {return _area;}
-		TVec   getCom()     {return _com;} // center of mass
-		TVec   getAxis()    {return pos.r + dPos.r;}
-		double getMoi_c()   {return _moi_c;} // moment of inertia about rotation axis
-		int size()       {return List->size_safe();}
+		double getSurface() const {return _surface;}
+		double getArea() const {return _area;}
+		TVec   getCom() const {return _com;} // center of mass
+		TVec   getAxis() const {return pos.r + dPos.r;}
+		double getMoi_c() const {return _moi_c;} // moment of inertia about rotation axis
+		int size() const    {return List.size();}
 		void overrideMoi_c(double newMoi_c) {_moi_c = newMoi_c;}
 
 		int eq_forces_no; // starting number of forces equations
@@ -120,7 +126,7 @@ class TBody
 		//int *ObjectIsInHeatLayer(TObj &obj); //link to element of HeatLayer array
 
 	private:
-		Space *S;
+		Space* _space;
 
 		double _surface;
 		double _area;

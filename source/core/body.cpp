@@ -37,9 +37,13 @@ TBody::~TBody()
 	delete HeatLayerList;
 }
 
-int TBody::getIndex()
+int TBody::get_index()
 {
-	return S->BodyList->indexOf(this);
+	if (auto S = _space.lock())
+	{
+		return find(S->BodyList.begin(), S->BodyList.end(), this);
+	} else
+		return -1;
 }
 
 TVec3D TBody::getSpeed() const

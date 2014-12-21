@@ -16,11 +16,9 @@
 #                   VARIABLES                    #
 #________________________________________________#
 
-CXX		= icpc
-AR		= xiar
-
 ifeq ($(CXX),icpc)
-        CXXFLAGS+= -O3 -vec-report=6 -Wall -openmp -mkl=parallel
+        CXXFLAGS+= -O3 -Wall -openmp -mkl=parallel
+        AR = xiar
 else
         CXXFLAGS+= -O3 -Wall -fopenmp
 endif

@@ -6,10 +6,10 @@
 #include <cstring>
 #include <fstream>
 #include <time.h>
-#include <assert.h>
-
+// #include <assert.h>
 
 #include "space.h"
+#include "body.h"
 #include "space_hdf.cpp"
 
 #ifndef DEF_GITINFO
@@ -23,21 +23,22 @@ static const char* gitDiff = DEF_GITDIFF;
 const char* Space::getGitInfo() {return gitInfo;}
 const char* Space::getGitDiff() {return gitDiff;}
 
+using std::cout;
+using std::cerr;
+using std::endl;
+using std::fstream;
+using std::ios;
+
+// FIXME убрать везде using namespace std
+
 Space::Space():
 	caption(),
 	InfSpeedX(),
 	InfSpeedY()
 {
-	VortexList = NULL; //new vector<TObj>();
-	HeatList = NULL; //new vector<TObj>();
-	BodyList = new vector<TBody*>();
-
-	StreakSourceList = new vector<TObj>();
-	StreakList = new vector<TObj>();
-
 	InfCirculation = 0.;
 	gravitation = TVec(0., 0.);
-	Finish = DBL_MAX;
+	Finish = std::numeric_limits<double>::max();
 	Time = dt = TTime(0, 0);
 	save_dt = streak_dt = profile_dt = TTime(INT32_MAX, 1);
 	Re = Pr = 0.;
@@ -47,10 +48,9 @@ Space::Space():
 inline
 void Space::FinishStep()
 {
-	const_for(BodyList, llbody)
+	for(auto& lbody: BodyList)
 	{
-		TBody &body = **llbody;
-		body.doRotationAndMotion();
+		lbody->doRotationAndMotion();
 	}
 	Time= TTime::add(Time, dt);
 }
@@ -77,11 +77,11 @@ Y88b  d88P  d8888888888    Y888P    888
  "Y8888P"  d88P     888     Y8P     8888888888
 */
 
-void Space::dataset_write_list(const char *name, vector<TObj> *list)
-{	
+void Space::dataset_write_list(const char *name, const vector<TObj>& list)
+{
+	if (list.empty()) return;
 	// 1D dataspace
-	hsize_t dims[2] = {list->size_safe(), 3};
-	if (dims[0] == 0) return;
+	hsize_t dims[2] = {list.size(), 3};
 	hsize_t dims2[2] = {dims[0]*2, dims[1]};
 	hsize_t chunkdims[2] = {std::min<hsize_t>(512, dims[0]), 3};
 	hid_t prop = H5Pcreate(H5P_DATASET_CREATE);
@@ -95,23 +95,21 @@ void Space::dataset_write_list(const char *name, vector<TObj> *list)
 	hsize_t stride[2] = {2, 1};
 	H5Sselect_hyperslab(mem_dataspace, H5S_SELECT_SET, start, stride, dims, NULL);
 	hid_t file_dataset = H5Dcreate2(fid, name, H5T_NATIVE_DOUBLE, file_dataspace, H5P_DEFAULT, prop, H5P_DEFAULT);
-	H5Dwrite(file_dataset, H5T_NATIVE_DOUBLE, mem_dataspace, file_dataspace, H5P_DEFAULT, list->begin());
+	H5Dwrite(file_dataset, H5T_NATIVE_DOUBLE, mem_dataspace, file_dataspace, H5P_DEFAULT, list.data());
 	H5Dclose(file_dataset);
 }
 
-void Space::dataset_write_body(const char* name, TBody *body)
+void Space::dataset_write_body(const char* name, const TBody& body)
 {
-	assert(body);
-
-	float heat_const = body->List->begin()->heat_const;
-	uint32_t general_slip = body->List->begin()->slip;
+	float heat_const = body.List.front().heat_const;
+	uint32_t general_slip = body.List.front().slip;
 	bool can_simplify = true;
 	
-	hsize_t dims[2] = {body->size(), 4};
+	hsize_t dims[2] = {body.size(), 4};
 	struct ATT *mem = (struct ATT*)malloc(sizeof(struct ATT)*dims[0]);
 	for(hsize_t i=0; i<dims[0]; i++)
 	{
-		TAtt latt = body->List->at(i);
+		TAtt latt = body.List[i];
 		mem[i].x = latt.corner.x;
 		mem[i].y = latt.corner.y;
 		mem[i].g = latt.g;
@@ -135,41 +133,42 @@ void Space::dataset_write_body(const char* name, TBody *body)
 
 	if (!can_simplify)
 	{
-		fprintf(stderr, "Can not save simplified body%02zd\n", BodyList->indexOf(body));
+		fprintf(stderr, "Can not save simplified body%02d\n", body.get_index());
 		exit(1);
 	}
 	attribute_write(file_dataset, "simplified_dataset", uint32_t(2));
-	attribute_write(file_dataset, "general_slip", body->List->begin()->slip);
-	attribute_write(file_dataset, "heat_const", body->List->begin()->heat_const);
+	attribute_write(file_dataset, "general_slip", general_slip);
+	attribute_write(file_dataset, "heat_const", heat_const);
 
-	if (body->root_body)
+	if (!body.root_body.expired())
 	{
+		auto root_body = body.root_body.lock();
 		char root_body_name[16];
-		sprintf(root_body_name, "body%02zd", BodyList->indexOf(body->root_body));
+		sprintf(root_body_name, "body%02d", root_body->get_index());
 		attribute_write(file_dataset, "root_body", root_body_name);
 	}
 	
-	attribute_write(file_dataset, "holder_position", body->pos);
-	attribute_write(file_dataset, "delta_position", body->dPos);
-	attribute_write(file_dataset, "speed_x", body->SpeedX.script.c_str());
-	attribute_write(file_dataset, "speed_y", body->SpeedY.script.c_str());
-	attribute_write(file_dataset, "speed_o", body->SpeedO.script.c_str());
-	attribute_write(file_dataset, "speed_slae", body->Speed_slae);
-	attribute_write(file_dataset, "speed_slae_prev", body->Speed_slae_prev);
-	attribute_write(file_dataset, "spring_const", body->k);
-	attribute_write(file_dataset, "spring_damping", body->damping);
-	attribute_write(file_dataset, "density", body->density);
-	attribute_write(file_dataset, "force_hydro", body->Force_hydro);
-	attribute_write(file_dataset, "force_holder", body->Force_holder);
-	attribute_write(file_dataset, "friction_prev", body->Friction_prev);
+	attribute_write(file_dataset, "holder_position", body.pos);
+	attribute_write(file_dataset, "delta_position", body.dPos);
+	attribute_write(file_dataset, "speed_x", body.SpeedX.script.c_str());
+	attribute_write(file_dataset, "speed_y", body.SpeedY.script.c_str());
+	attribute_write(file_dataset, "speed_o", body.SpeedO.script.c_str());
+	attribute_write(file_dataset, "speed_slae", body.Speed_slae);
+	attribute_write(file_dataset, "speed_slae_prev", body.Speed_slae_prev);
+	attribute_write(file_dataset, "spring_const", body.k);
+	attribute_write(file_dataset, "spring_damping", body.damping);
+	attribute_write(file_dataset, "density", body.density);
+	attribute_write(file_dataset, "force_hydro", body.Force_hydro);
+	attribute_write(file_dataset, "force_holder", body.Force_holder);
+	attribute_write(file_dataset, "friction_prev", body.Friction_prev);
 	
-	attribute_write(file_dataset, "area", body->getArea());
-	attribute_write(file_dataset, "com", body->getCom());
-	attribute_write(file_dataset, "moi_c", body->getMoi_c());
+	attribute_write(file_dataset, "area", body.getArea());
+	attribute_write(file_dataset, "com", body.getCom());
+	attribute_write(file_dataset, "moi_c", body.getMoi_c());
 
-	attribute_write(file_dataset, "boundary_condition", body->boundary_condition);
-	attribute_write(file_dataset, "special_segment_no", body->special_segment_no);
-	attribute_write(file_dataset, "heat_condition", body->heat_condition);
+	attribute_write(file_dataset, "boundary_condition", body.boundary_condition);
+	attribute_write(file_dataset, "special_segment_no", body.special_segment_no);
+	attribute_write(file_dataset, "heat_condition", body.heat_condition);
 
 	H5Dwrite(file_dataset, H5T_NATIVE_DOUBLE, H5S_ALL, file_dataspace, H5P_DEFAULT, mem);
 	H5Dclose(file_dataset);
@@ -209,11 +208,11 @@ void Space::Save(const char* format)
 	dataset_write_list("ink", StreakList);
 	dataset_write_list("ink_source", StreakSourceList);
 
-	const_for(BodyList, llbody)
+	for (auto& lbody: BodyList)
 	{
 		char body_name[16];
-		sprintf(body_name, "body%02zd", BodyList->find(llbody));
-		dataset_write_body(body_name, *llbody);
+		sprintf(body_name, "body%02d", lbody->get_index());
+		dataset_write_body(body_name, *lbody);
 	}
 
 	datatypes_close_all();
@@ -231,10 +230,9 @@ void Space::Save(const char* format)
 88888888  "Y88888P"  d88P     888 8888888P"
 */
 
-void dataset_read_list(hid_t fid, const char *name, vector<TObj> *&list)
+herr_t Space::dataset_read_list(hid_t fid, const char *name, vector<TObj>& list)
 {
-	if (!H5Lexists(fid, name, H5P_DEFAULT)) return;
-	if (!list) list = new vector<TObj>;
+	if (!H5Lexists(fid, name, H5P_DEFAULT)) return 0;
 
 	hid_t dataset = H5Dopen2(fid, name, H5P_DEFAULT);
 	if (dataset < 0)
@@ -242,7 +240,7 @@ void dataset_read_list(hid_t fid, const char *name, vector<TObj> *&list)
 		H5Epop(H5E_DEFAULT, H5Eget_num(H5E_DEFAULT)-1);
 		H5Eprint2(H5E_DEFAULT, stderr);
 		fprintf(stderr, "error: dataset_read_list: can't open dataset '%s'\n", name);
-		return;
+		return -1;
 	}
 
 	hid_t file_dataspace = H5Dget_space(dataset);
@@ -251,29 +249,29 @@ void dataset_read_list(hid_t fid, const char *name, vector<TObj> *&list)
 	hsize_t dims2[2] = {dims[0]*2, dims[1]};
 	hid_t mem_dataspace = H5Screate_simple(2, dims2, dims2);
 	assert(mem_dataspace>=0);
-	list->resize(dims[0], TObj());
+	list.resize(dims[0], TObj());
 	hsize_t offset[2] = {0, 0};
 	hsize_t stride[2] = {2, 1};
 	assert(H5Sselect_hyperslab(mem_dataspace, H5S_SELECT_SET, offset, stride, dims, NULL)>=0);
 
-	herr_t err = H5Dread(dataset, H5T_NATIVE_DOUBLE, mem_dataspace, file_dataspace, H5P_DEFAULT, list->begin());
+	herr_t err = H5Dread(dataset, H5T_NATIVE_DOUBLE, mem_dataspace, file_dataspace, H5P_DEFAULT, list.data());
 	if (err < 0)
 	{
 		H5Epop(H5E_DEFAULT, H5Eget_num(H5E_DEFAULT)-1);
 		H5Eprint2(H5E_DEFAULT, stderr);
 		fprintf(stderr, "error: dataset_read_list: can't read dataset '%s'\n", name);
-		return;
+		return -1;
 	}
 	H5Dclose(dataset);
 }
 
-herr_t dataset_read_body(hid_t g_id, const char *name, const H5L_info_t *info, void *op_data)
+herr_t dataset_read_body(hid_t g_id, const char* name, const H5L_info_t *info, void *op_data)
 {
-	if (strncmp(name, "body", 4) != 0) return 0;
+	if (strncmp(name, "body", 4) != 0)
+		return 0;
 
 	Space *S = (Space*)op_data;
-	TBody *body = new TBody(S);
-	S->BodyList->push_back(body);
+	std::shared_ptr<TBody> body(new TBody(S));
 
 	hid_t dataset = H5Dopen2(g_id, name, H5P_DEFAULT);
 	if (dataset < 0)
@@ -284,6 +282,7 @@ herr_t dataset_read_body(hid_t g_id, const char *name, const H5L_info_t *info, v
 		return -1;
 	}
 	hid_t file_dataspace = H5Dget_space(dataset);
+	// FIXME delete all asserts
 	assert(file_dataspace>=0);
 	hsize_t dims[2]; H5Sget_simple_extent_dims(file_dataspace, dims, dims);
 	
@@ -306,9 +305,9 @@ herr_t dataset_read_body(hid_t g_id, const char *name, const H5L_info_t *info, v
 	int root_body_idx;
 	attribute_read(dataset, "root_body", root_body_name);
 	if (sscanf(root_body_name.c_str(), "body%d", &root_body_idx) == 1)
-		body->root_body = S->BodyList->at(root_body_idx);
+		body->root_body = S->BodyList[root_body_idx];
 	else
-		body->root_body = NULL;
+		body->root_body.reset();
 
 	uint32_t simplified_dataset;
 	int32_t general_slip;
@@ -359,7 +358,7 @@ herr_t dataset_read_body(hid_t g_id, const char *name, const H5L_info_t *info, v
 
 	for(hsize_t i=0; i<dims[0]; i++)
 	{
-		TAtt latt; latt.body = body;
+		TAtt latt; // latt.body = body;
 		latt.corner.x = mem[i].x;
 		latt.corner.y = mem[i].y;
 		latt.g = mem[i].g;
@@ -367,7 +366,7 @@ herr_t dataset_read_body(hid_t g_id, const char *name, const H5L_info_t *info, v
 
 		latt.slip = general_slip;
 		latt.heat_const = heat_const;
-		body->List->push_back(latt);
+		body->List.push_back(latt);
 	}
 
 	body->doUpdateSegments();
@@ -375,6 +374,7 @@ herr_t dataset_read_body(hid_t g_id, const char *name, const H5L_info_t *info, v
 
 	H5Dclose(dataset);
 	free(mem);
+	S->BodyList.push_back(body);
 	return 0;
 }
 
@@ -457,15 +457,14 @@ int eq(const char *str1, const char *str2)
 	return 9;
 }
 
-void LoadList(vector<TObj> *&list, FILE* fin)
+void LoadList(vector<TObj> &list, FILE* fin)
 {
 	int64_t size; fread(&size, 8, 1, fin);
 	TObj obj;
-	if (!list) list = new vector<TObj>;
 	for (int64_t i=0; i<size; i++)
 	{
 		fread(&obj, 24, 1, fin);
-		list->push_back(obj);
+		list.push_back(obj);
 	}
 }
 
@@ -530,8 +529,7 @@ void Space::Load_v1_3(const char* fname)
 		else if (eq(comment, "Streak  ")>8) LoadList(StreakList, fin);
 		else if (eq(comment, "BData   ")>8)
 		{
-			TBody *body = new TBody(this);
-			BodyList->push_back(body);
+			std::shared_ptr<TBody> body(new TBody(this));
 
 			fread(&body->pos, 24, 1, fin);
 			fread(&body->dPos, 24, 1, fin);
@@ -547,12 +545,14 @@ void Space::Load_v1_3(const char* fname)
 			fread(&body->Force_hydro, 24, 1, fin);
 			fread(&body->Force_dead, 24, 1, fin);
 			fread(&body->Friction_prev, 24, 1, fin);
+
+			BodyList.push_back(body);
 		}
 		else if (eq(comment, "Body    ")>8)
 		{
-			TBody *body = *(BodyList->end()-1);
+			auto body = BodyList.back();
 
-			TAtt att; att.body = body;
+			TAtt att; // att.body = body; // FIXME
 			int64_t size; fread(&size, 8, 1, fin);
 			for (int64_t i=0; i<size; i++)
 			{
@@ -582,8 +582,7 @@ void Space::Load_v1_3(const char* fname)
 					case 'w': body->heat_condition = hc_t::const_w; break;
 				}
 				
-
-				body->List->push_back(att);
+				body->List.push_back(att);
 			}
 			body->doUpdateSegments();
 			body->doFillProperties();
@@ -609,41 +608,44 @@ void Space::CalcForces()
 {
 	const double C_NyuDt_Pi = dt/(C_PI*Re);
 	const double C_Nyu_Pi = 1./(C_PI*Re);
-	const_for(BodyList, llbody)
+	for (auto& lbody: BodyList)
 	{
-		auto& body = **llbody;
 		double tmp_gsum = 0;
 		//TObj tmp_fric(0,0,0);
-		body.Friction_prev = body.Friction;
-		body.Friction = TVec3D();
+		lbody->Friction_prev = lbody->Friction;
+		lbody->Friction = TVec3D();
 
-		const_for(body.List, latt)
+		for (auto& latt: lbody->List)
 		{
-			tmp_gsum+= latt->gsum;
-			latt->Cp += tmp_gsum;
-			latt->Fr += latt->fric * C_NyuDt_Pi;
-			latt->Nu += latt->hsum * (Re*Pr / latt->dl.abs());
+			static_assert(std::is_same<decltype(latt), TAtt&>::value, "latt is not a reference");
+			tmp_gsum+= latt.gsum;
+			latt.Cp += tmp_gsum;
+			latt.Fr += latt.fric * C_NyuDt_Pi;
+			latt.Nu += latt.hsum * (Re*Pr / latt.dl.abs());
 
-			body.Friction.r -= latt->dl * (latt->fric * C_Nyu_Pi / latt->dl.abs());
-			body.Friction.o -= (rotl(latt->r)* latt->dl) * (latt->fric  * C_Nyu_Pi / latt->dl.abs());
-			body.Nusselt += latt->hsum * (Re*Pr);
+			lbody->Friction.r -= latt.dl * (latt.fric * C_Nyu_Pi / latt.dl.abs());
+			lbody->Friction.o -= (rotl(latt.r)* latt.dl) * (latt.fric  * C_Nyu_Pi / latt.dl.abs());
+			lbody->Nusselt += latt.hsum * (Re*Pr);
 		}
 
-		body.Nusselt /= dt;
+		lbody->Nusselt /= dt;
 	}
 
 	//FIXME calculate total pressure
-	#undef body
 }
 
 void Space::SaveProfile(const char* fname, TValues vals)
 {
 	if (!Time.divisibleBy(profile_dt)) return;
 	int32_t vals_32=vals, N=0;
-	const_for(BodyList, llbody) { N+= (**llbody).size(); }
+	for (auto& lbody: BodyList) { N+= lbody->size(); }
 	if (!N) return;
-	if (!VortexList) vals_32 &= ~(val::Cp | val::Fr);
-	if (!HeatList) vals_32 &= ~val::Nu;
+	// FIXME раньше я проверял поинтер на vlist, и узнавал,
+	// что даже если сейчас список пустой, то в будущем он может 
+	// наполниться. Вся проблема в том, что список сохраняемых
+	// величин нельзя изменить после открытия файла
+	if (!VortexList.size()) vals_32 &= ~(val::Cp | val::Fr);
+	if (!HeatList.size()) vals_32 &= ~val::Nu;
 
 	FILE *fout = fopen(fname, "ab");
 	if (!fout) { perror("Error saving the body profile"); return; }
@@ -651,22 +653,22 @@ void Space::SaveProfile(const char* fname, TValues vals)
 	float time_tmp = Time; fwrite(&time_tmp, 4, 1, fout);
 	float buf[5];
 
-	const_for(BodyList, llbody)
+	for (auto& lbody: BodyList)
 	{
-		const_for((**llbody).List, latt)
+		for (auto& latt: lbody->List)
 		{
-			buf[0] = latt->corner.x;
-			buf[1] = latt->corner.y;
-			buf[2] = latt->Cp/save_dt;
-			buf[3] = latt->Fr/save_dt;
-			buf[4] = latt->Nu/save_dt;
+			buf[0] = latt.corner.x;
+			buf[1] = latt.corner.y;
+			buf[2] = latt.Cp/save_dt;
+			buf[3] = latt.Fr/save_dt;
+			buf[4] = latt.Nu/save_dt;
 
 			fwrite(buf, 4, 2, fout);
 			if (vals_32 & val::Cp) fwrite(buf+2, 4, 1, fout);
 			if (vals_32 & val::Fr) fwrite(buf+3, 4, 1, fout);
 			if (vals_32 & val::Nu) fwrite(buf+4, 4, 1, fout);
 
-			latt->Cp = latt->Fr = latt->Nu = 0;
+			latt.Cp = latt.Fr = latt.Nu = 0;
 		}
 	}
 	fclose(fout);
@@ -674,22 +676,22 @@ void Space::SaveProfile(const char* fname, TValues vals)
 
 void Space::ZeroForces()
 {
-	const_for(BodyList, llbody)
+	for (auto& lbody: BodyList)
 	{
-		const_for((**llbody).List, latt)
+		for (auto& latt: lbody->List)
 		{
-			latt->gsum =
-			latt->fric =
-			latt->hsum = 0;
-			latt->heat_layer_obj_no = -1;
+			latt.gsum =
+			latt.fric =
+			latt.hsum = 0;
+			latt.heat_layer_obj_no = -1;
 		}
 
-		(**llbody).Force_hydro = TVec3D();
-		(**llbody).Force_holder = TVec3D();
-		(**llbody).Force_dead = TVec3D();
-		(**llbody).Force_born = TVec3D();
-		(**llbody).Friction = TVec3D();
-		(**llbody).Nusselt = 0.;
+		lbody->Force_hydro = TVec3D();
+		lbody->Force_holder = TVec3D();
+		lbody->Force_dead = TVec3D();
+		lbody->Force_born = TVec3D();
+		lbody->Friction = TVec3D();
+		lbody->Nusselt = 0.;
 	}
 }
 
@@ -698,15 +700,13 @@ void Space::ZeroForces()
 // FIXME merge in one template
 int Space::LoadVorticityFromFile(const char* filename)
 {
-	if ( !VortexList ) VortexList = new vector<TObj>();
-
 	FILE *fin = fopen(filename, "r");
 	if (!fin) { cerr << "No file called \'" << filename << "\'\n"; return -1; }
 
 	TObj obj(0, 0, 0);
 	while ( fscanf(fin, "%lf %lf %lf", &obj.r.x, &obj.r.y, &obj.g)==3 )
 	{
-		VortexList->push_back(obj);
+		VortexList.push_back(obj);
 	}
 
 	fclose(fin);
@@ -715,8 +715,6 @@ int Space::LoadVorticityFromFile(const char* filename)
 
 int Space::LoadVorticity_bin(const char* filename)
 {
-	if ( !VortexList ) VortexList = new vector<TObj>();
-
 	fstream fin;
 	fin.open(filename, ios::in | ios::binary);
 	if (!fin) { cerr << "No file called \'" << filename << "\'\n"; return -1; }
@@ -730,7 +728,7 @@ int Space::LoadVorticity_bin(const char* filename)
 	while ( fin.good() )
 	{
 		fin.read(pchar(&obj), 3*sizeof(double));
-		VortexList->push_back(obj);
+		VortexList.push_back(obj);
 	}
 
 	fin.close();
@@ -739,15 +737,13 @@ int Space::LoadVorticity_bin(const char* filename)
 
 int Space::LoadHeatFromFile(const char* filename)
 {
-	if ( !HeatList ) HeatList = new vector<TObj>();
-
 	FILE *fin = fopen(filename, "r");
 	if (!fin) { cerr << "No file called " << filename << endl; return -1; }
 
 	TObj obj(0, 0, 0);
 	while ( fscanf(fin, "%lf %lf %lf", &obj.r.x, &obj.r.y, &obj.g)==3 )
 	{
-		HeatList->push_back(obj);
+		HeatList.push_back(obj);
 	}
 
 	fclose(fin);
@@ -762,7 +758,7 @@ int Space::LoadStreak(const char* filename)
 	TObj obj(0, 0, 0);
 	while ( fscanf(fin, "%lf %lf %lf", &obj.r.x, &obj.r.y, &obj.g)==3 )
 	{
-		StreakList->push_back(obj);
+		StreakList.push_back(obj);
 	}
 
 	fclose(fin);
@@ -777,7 +773,7 @@ int Space::LoadStreakSource(const char* filename)
 	TObj obj(0, 0, 0);
 	while ( fscanf(fin, "%lf %lf %lf", &obj.r.x, &obj.r.y, &obj.g)==3 )
 	{
-		StreakSourceList->push_back(obj);
+		StreakSourceList.push_back(obj);
 	}
 
 	fclose(fin);
@@ -786,23 +782,24 @@ int Space::LoadStreakSource(const char* filename)
 
 int Space::LoadBody(const char* filename)
 {
-	TBody *body = new TBody(this);
-	BodyList->push_back(body);
+	std::shared_ptr<TBody> body(new TBody(this));
 
 	FILE *fin = fopen(filename, "r");
 	if (!fin) { cerr << "No file called " << filename << endl; return -1; }
 
 	TAtt att;
-	att.body = body;
+	// FIXME
+	// att.body = body;
 	att.heat_const = 0;
 
 	//FIXME seek to end of line
 	while (fscanf(fin, "%lf %lf", &att.corner.x, &att.corner.y)==2)
 	{
-		body->List->push_back(att);
+		body->List.push_back(att);
 	}
 
 	fclose(fin);
+	BodyList.push_back(body);
 	body->doUpdateSegments();
 	body->doFillProperties();
 	EnumerateBodies();
@@ -814,14 +811,14 @@ void Space::EnumerateBodies()
 {
 	int eq_no=0;
 
-	const_for(BodyList, llbody)
+	for(auto &lbody: BodyList)
 	{
-		const_for((**llbody).List, latt)
+		for (auto& latt: lbody->List)
 		{
-			latt->eq_no = eq_no++;
+			latt.eq_no = eq_no++;
 		}
 
-		(**llbody).eq_forces_no = eq_no;
+		lbody->eq_forces_no = eq_no;
 		eq_no+= 9;
 	}
 }
@@ -830,74 +827,44 @@ void Space::EnumerateBodies()
 
 void Space::ZeroSpeed()
 {
-	const_for (VortexList, lobj)
-	{
-		lobj->v = TVec();
-	}
-
-	const_for (HeatList, lobj)
-	{
-		lobj->v = TVec();
-	}
+	for (auto& lobj: VortexList) lobj.v = TVec();
+	for (auto& lobj: HeatList) lobj.v = TVec();
 }
 
 double Space::integral()
 {
-	if (!VortexList) return 0;
 	double sum = 0;
-
-	const_for (VortexList, obj)
-	{
-		sum += obj->g * obj->r.abs2();
-	}
-
+	for (const auto& obj: VortexList) sum += obj.g * obj.r.abs2();
 	return sum;
 }
 
 double Space::gsum()
 {
-	if (!VortexList) return 0;
 	double sum = 0;
-
-	const_for (VortexList, obj)
-	{
-		sum += obj->g;
-	}
-
+	for (const auto& obj: VortexList) sum += obj.g;
 	return sum;
 }
 
 double Space::gmax()
 {
-	if (!VortexList) return 0;
 	double max = 0;
-
-	const_for (VortexList, obj)
-	{
-		max = ( fabs(obj->g) > fabs(max) ) ? obj->g : max;
-	}
-
+	for (const auto& obj: VortexList) max = ( fabs(obj.g) > fabs(max) ) ? obj.g : max;
 	return max;
 }
 
 TVec Space::HydroDynamicMomentum()
 {
 	TVec res(0., 0.);
-	if (!VortexList) return res;
-
-	const_for (VortexList, obj)
-	{
-		res += obj->g * obj->r;
-	}
+	for (const auto& obj: VortexList) res += obj.g * obj.r;
 	return res;
 }
 
 double Space::AverageSegmentLength()
 {
-	if (!BodyList->size_safe()) return DBL_MIN;
+	if (!BodyList.size()) return DBL_MIN;
 
-	double SurfaceLength = BodyList->at(0)->getSurface();
-	int N = BodyList->at(0)->size() - 1;
+	double SurfaceLength = BodyList.front()->getSurface();
+	int N = BodyList.front()->size() - 1;
 
 	if (!N) return DBL_MIN;
 	return SurfaceLength / N;
@@ -905,9 +872,9 @@ double Space::AverageSegmentLength()
 
 bool Space::PointIsInBody(TVec p)
 {
-	const_for(BodyList, llbody)
+	for (const auto& lbody: BodyList)
 	{
-		if ((**llbody).isPointInvalid(p)) return true;
+		if (lbody->isPointInvalid(p)) return true;
 	}
 	return false;
 }

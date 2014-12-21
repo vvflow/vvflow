@@ -3,10 +3,8 @@
 
 #include <math.h>
 #include <iostream>
-#include "list.h"
 #include "shellscript.h"
 #include "stdint.h"
-using namespace std;
 
 #define bugfix volatile
 
@@ -47,8 +45,8 @@ class TVec
 		bool iszero() const {return (fabs(x)+fabs(y) < 1E-10); }
 		void set(double rx, double ry) {x=rx; y=ry;}
 
-		friend istream& operator>> (istream& is, TVec& p) 		{ return is >> p.x >> p.y; }
-		friend ostream& operator<< (ostream& os, const TVec& p) 	{ return os << p.x << " \t" << p.y; }
+		friend std::istream& operator>> (std::istream& is, TVec& p) 		{ return is >> p.x >> p.y; }
+		friend std::ostream& operator<< (std::ostream& os, const TVec& p) 	{ return os << p.x << " \t" << p.y; }
 
 		friend const TVec operator* (const double c, const TVec &p) { return TVec(p.x*c, p.y*c); }
 		friend const TVec operator* (const TVec &p, const double c) { return TVec(p.x*c, p.y*c); }
@@ -87,8 +85,8 @@ class TObj
 		int sign() { return ::sign(g); }
 
 		//TObj& operator= (const TVec& p) { rx=p.rx; ry=p.ry; return *this; }
-		friend istream& operator>> (istream& is, TObj& p) { return is >> p.r.x >> p.r.y >> p.g; }
-		friend ostream& operator<< (ostream& os, const TObj& p) { return os << p.r.x << " \t" << p.r.y << " \t" << p.g; }
+		friend std::istream& operator>> (std::istream& is, TObj& p) { return is >> p.r.x >> p.r.y >> p.g; }
+		friend std::ostream& operator<< (std::ostream& os, const TObj& p) { return os << p.r.x << " \t" << p.r.y << " \t" << p.g; }
 		friend short sign(const TObj& p) { return ::sign(p.g); }
 };
 
@@ -107,8 +105,8 @@ class TVec3D
 		bool iszero() const {return (fabs(r.x)+fabs(r.y)+fabs(o) < 1E-10); }
 		friend const TVec3D operator+ (const TVec3D &p1, const TVec3D &p2) { return TVec3D(p1.r.x+p2.r.x, p1.r.y+p2.r.y, p1.o+p2.o); }
 		friend const TVec3D operator- (const TVec3D &p1, const TVec3D &p2) { return TVec3D(p1.r.x-p2.r.x, p1.r.y-p2.r.y, p1.o-p2.o); }
-		friend istream& operator>> (istream& is, TVec3D& p) { return is >> p.r.x >> p.r.y >> p.o; }
-		friend ostream& operator<< (ostream& os, const TVec3D& p) { return os << p.r.x << " \t" << p.r.y << " \t" << p.o; }
+		friend std::istream& operator>> (std::istream& is, TVec3D& p) { return is >> p.r.x >> p.r.y >> p.o; }
+		friend std::ostream& operator<< (std::ostream& os, const TVec3D& p) { return os << p.r.x << " \t" << p.r.y << " \t" << p.o; }
 };
 
 class TTime

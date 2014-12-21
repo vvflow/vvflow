@@ -2,12 +2,17 @@
 #define SPACE_H_
 
 class Space;
+class TBody;
 
-#include "body.h"
-#include "sorted_tree.h"
 #include "elementary.h"
+#include "sorted_tree.h"
+#include "hdf5.h"
 
 #include <iostream>
+#include <memory>
+
+using std::vector;
+using std::shared_ptr;
 
 typedef const char TValues;
 namespace val
@@ -25,11 +30,11 @@ class Space
 		time_t realtime;
 
 		//FIXME make all lists initialized
-		vector<TBody*> *BodyList;
-		vector<TObj> *VortexList;
-		vector<TObj> *HeatList;
-		vector<TObj> *StreakSourceList;
-		vector<TObj> *StreakList;
+		vector<shared_ptr<TBody>> BodyList; // FIXME rename to blist, vlist, hlist, ilist, slist
+		vector<TObj> VortexList;
+		vector<TObj> HeatList;
+		vector<TObj> StreakSourceList;
+		vector<TObj> StreakList;
 		TSortedTree *Tree;
 
 		inline void FinishStep(); //update time and coord variables
@@ -75,8 +80,9 @@ class Space
 
 	private:
 		void Load_v1_3(const char* filename);
-		void dataset_write_list(const char *name, vector<TObj> *list);
-		void dataset_write_body(const char* name, TBody *body);
+		herr_t dataset_read_list(hid_t fid, const char *name, vector<TObj>& list);
+		void dataset_write_list(const char* name, const vector<TObj>& list);
+		void dataset_write_body(const char* name, const TBody& body);
 };
 
 #endif /*SPACE_H_*/
