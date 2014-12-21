@@ -6,7 +6,7 @@
 #include <cstring>
 #include <fstream>
 #include <time.h>
-// #include <assert.h>
+#include <type_traits>
 
 #include "space.h"
 #include "body.h"
@@ -36,6 +36,9 @@ Space::Space():
 	InfSpeedX(),
 	InfSpeedY()
 {
+	// static_assert(std::is_pod<TVec>::value, "TVec is not POD");
+	// static_assert(std::is_pod<TObj>::value, "TObj is not POD");
+	// static_assert(std::is_pod<TAtt>::value, "TAtt is not POD");
 	InfCirculation = 0.;
 	gravitation = TVec(0., 0.);
 	Finish = std::numeric_limits<double>::max();
@@ -101,22 +104,22 @@ void Space::dataset_write_list(const char *name, const vector<TObj>& list)
 
 void Space::dataset_write_body(const char* name, const TBody& body)
 {
-	float heat_const = body.List.front().heat_const;
-	uint32_t general_slip = body.List.front().slip;
+	float heat_const = body.alist.front().heat_const;
+	uint32_t general_slip = body.alist.front().slip;
 	bool can_simplify = true;
 	
 	hsize_t dims[2] = {body.size(), 4};
 	struct ATT *mem = (struct ATT*)malloc(sizeof(struct ATT)*dims[0]);
 	for(hsize_t i=0; i<dims[0]; i++)
 	{
-		TAtt latt = body.List[i];
-		mem[i].x = latt.corner.x;
-		mem[i].y = latt.corner.y;
-		mem[i].g = latt.g;
-		mem[i].gsum = latt.gsum;
+		TAtt att = body.alist[i];
+		mem[i].x = att.corner.x;
+		mem[i].y = att.corner.y;
+		mem[i].g = att.g;
+		mem[i].gsum = att.gsum;
 
-		if (latt.heat_const != heat_const ||
-			latt.slip != general_slip)
+		if (att.heat_const != heat_const ||
+			att.slip != general_slip)
 			can_simplify = false;
 	}
 
@@ -148,23 +151,23 @@ void Space::dataset_write_body(const char* name, const TBody& body)
 		attribute_write(file_dataset, "root_body", root_body_name);
 	}
 	
-	attribute_write(file_dataset, "holder_position", body.pos);
-	attribute_write(file_dataset, "delta_position", body.dPos);
-	attribute_write(file_dataset, "speed_x", body.SpeedX.script.c_str());
-	attribute_write(file_dataset, "speed_y", body.SpeedY.script.c_str());
-	attribute_write(file_dataset, "speed_o", body.SpeedO.script.c_str());
-	attribute_write(file_dataset, "speed_slae", body.Speed_slae);
-	attribute_write(file_dataset, "speed_slae_prev", body.Speed_slae_prev);
-	attribute_write(file_dataset, "spring_const", body.k);
+	attribute_write(file_dataset, "holder_position", body.holder);
+	attribute_write(file_dataset, "delta_position", body.dpos);
+	attribute_write(file_dataset, "speed_x", body.speed_x.script.c_str());
+	attribute_write(file_dataset, "speed_y", body.speed_y.script.c_str());
+	attribute_write(file_dataset, "speed_o", body.speed_o.script.c_str());
+	attribute_write(file_dataset, "speed_slae", body.speed_slae);
+	attribute_write(file_dataset, "speed_slae_prev", body.speed_slae_prev);
+	attribute_write(file_dataset, "spring_const", body.kspring);
 	attribute_write(file_dataset, "spring_damping", body.damping);
 	attribute_write(file_dataset, "density", body.density);
-	attribute_write(file_dataset, "force_hydro", body.Force_hydro);
-	attribute_write(file_dataset, "force_holder", body.Force_holder);
-	attribute_write(file_dataset, "friction_prev", body.Friction_prev);
+	attribute_write(file_dataset, "force_hydro", body.force_hydro);
+	attribute_write(file_dataset, "force_holder", body.force_holder);
+	attribute_write(file_dataset, "friction_prev", body.friction_prev);
 	
-	attribute_write(file_dataset, "area", body.getArea());
-	attribute_write(file_dataset, "com", body.getCom());
-	attribute_write(file_dataset, "moi_c", body.getMoi_c());
+	attribute_write(file_dataset, "area", body.get_area());
+	attribute_write(file_dataset, "com", body.get_com());
+	attribute_write(file_dataset, "moi_c", body.get_moi_c());
 
 	attribute_write(file_dataset, "boundary_condition", body.boundary_condition);
 	attribute_write(file_dataset, "special_segment_no", body.special_segment_no);
@@ -287,19 +290,19 @@ herr_t dataset_read_body(hid_t g_id, const char* name, const H5L_info_t *info, v
 	hsize_t dims[2]; H5Sget_simple_extent_dims(file_dataspace, dims, dims);
 	
 
-	attribute_read(dataset, "holder_position", body->pos);
-	attribute_read(dataset, "delta_position", body->dPos);
-	attribute_read(dataset, "speed_x", body->SpeedX.script);
-	attribute_read(dataset, "speed_y", body->SpeedY.script);
-	attribute_read(dataset, "speed_o", body->SpeedO.script);
-	attribute_read(dataset, "speed_slae", body->Speed_slae);
-	attribute_read(dataset, "speed_slae_prev", body->Speed_slae_prev);
-	attribute_read(dataset, "spring_const", body->k);
+	attribute_read(dataset, "holder_position", body->holder);
+	attribute_read(dataset, "delta_position", body->dpos);
+	attribute_read(dataset, "speed_x", body->speed_x.script);
+	attribute_read(dataset, "speed_y", body->speed_y.script);
+	attribute_read(dataset, "speed_o", body->speed_o.script);
+	attribute_read(dataset, "speed_slae", body->speed_slae);
+	attribute_read(dataset, "speed_slae_prev", body->speed_slae_prev);
+	attribute_read(dataset, "spring_const", body->kspring);
 	attribute_read(dataset, "spring_damping", body->damping);
 	attribute_read(dataset, "density", body->density);
-	attribute_read(dataset, "force_hydro", body->Force_hydro);
-	attribute_read(dataset, "force_holder", body->Force_holder);
-	attribute_read(dataset, "friction_prev", body->Friction_prev);
+	attribute_read(dataset, "force_hydro", body->force_hydro);
+	attribute_read(dataset, "force_holder", body->force_holder);
+	attribute_read(dataset, "friction_prev", body->friction_prev);
 
 	std::string root_body_name;
 	int root_body_idx;
@@ -366,7 +369,7 @@ herr_t dataset_read_body(hid_t g_id, const char* name, const H5L_info_t *info, v
 
 		latt.slip = general_slip;
 		latt.heat_const = heat_const;
-		body->List.push_back(latt);
+		body->alist.push_back(latt);
 	}
 
 	body->doUpdateSegments();
@@ -531,20 +534,20 @@ void Space::Load_v1_3(const char* fname)
 		{
 			std::shared_ptr<TBody> body(new TBody(this));
 
-			fread(&body->pos, 24, 1, fin);
-			fread(&body->dPos, 24, 1, fin);
-			read_shell_script(fin, body->SpeedX);
-			read_shell_script(fin, body->SpeedY);
-			read_shell_script(fin, body->SpeedO);
-			fread(&body->Speed_slae, 24, 1, fin);
-			fread(&body->Speed_slae_prev, 24, 1, fin);
+			fread(&body->holder, 24, 1, fin);
+			fread(&body->dpos, 24, 1, fin);
+			read_shell_script(fin, body->speed_x);
+			read_shell_script(fin, body->speed_y);
+			read_shell_script(fin, body->speed_o);
+			fread(&body->speed_slae, 24, 1, fin);
+			fread(&body->speed_slae_prev, 24, 1, fin);
 
-			fread(&body->k, 24, 1, fin);
+			fread(&body->kspring, 24, 1, fin);
 			fread(&body->density, 8, 1, fin);
 
-			fread(&body->Force_hydro, 24, 1, fin);
-			fread(&body->Force_dead, 24, 1, fin);
-			fread(&body->Friction_prev, 24, 1, fin);
+			fread(&body->force_hydro, 24, 1, fin);
+			fread(&body->force_dead, 24, 1, fin);
+			fread(&body->friction_prev, 24, 1, fin);
 
 			BodyList.push_back(body);
 		}
@@ -582,7 +585,7 @@ void Space::Load_v1_3(const char* fname)
 					case 'w': body->heat_condition = hc_t::const_w; break;
 				}
 				
-				body->List.push_back(att);
+				body->alist.push_back(att);
 			}
 			body->doUpdateSegments();
 			body->doFillProperties();
@@ -612,10 +615,10 @@ void Space::CalcForces()
 	{
 		double tmp_gsum = 0;
 		//TObj tmp_fric(0,0,0);
-		lbody->Friction_prev = lbody->Friction;
-		lbody->Friction = TVec3D();
+		lbody->friction_prev = lbody->friction;
+		lbody->friction = TVec3D();
 
-		for (auto& latt: lbody->List)
+		for (auto& latt: lbody->alist)
 		{
 			static_assert(std::is_same<decltype(latt), TAtt&>::value, "latt is not a reference");
 			tmp_gsum+= latt.gsum;
@@ -623,12 +626,12 @@ void Space::CalcForces()
 			latt.Fr += latt.fric * C_NyuDt_Pi;
 			latt.Nu += latt.hsum * (Re*Pr / latt.dl.abs());
 
-			lbody->Friction.r -= latt.dl * (latt.fric * C_Nyu_Pi / latt.dl.abs());
-			lbody->Friction.o -= (rotl(latt.r)* latt.dl) * (latt.fric  * C_Nyu_Pi / latt.dl.abs());
-			lbody->Nusselt += latt.hsum * (Re*Pr);
+			lbody->friction.r -= latt.dl * (latt.fric * C_Nyu_Pi / latt.dl.abs());
+			lbody->friction.o -= (rotl(latt.r)* latt.dl) * (latt.fric  * C_Nyu_Pi / latt.dl.abs());
+			lbody->nusselt += latt.hsum * (Re*Pr);
 		}
 
-		lbody->Nusselt /= dt;
+		lbody->nusselt /= dt;
 	}
 
 	//FIXME calculate total pressure
@@ -655,7 +658,7 @@ void Space::SaveProfile(const char* fname, TValues vals)
 
 	for (auto& lbody: BodyList)
 	{
-		for (auto& latt: lbody->List)
+		for (auto& latt: lbody->alist)
 		{
 			buf[0] = latt.corner.x;
 			buf[1] = latt.corner.y;
@@ -678,7 +681,7 @@ void Space::ZeroForces()
 {
 	for (auto& lbody: BodyList)
 	{
-		for (auto& latt: lbody->List)
+		for (auto& latt: lbody->alist)
 		{
 			latt.gsum =
 			latt.fric =
@@ -686,12 +689,12 @@ void Space::ZeroForces()
 			latt.heat_layer_obj_no = -1;
 		}
 
-		lbody->Force_hydro = TVec3D();
-		lbody->Force_holder = TVec3D();
-		lbody->Force_dead = TVec3D();
-		lbody->Force_born = TVec3D();
-		lbody->Friction = TVec3D();
-		lbody->Nusselt = 0.;
+		lbody->force_hydro = TVec3D();
+		lbody->force_holder = TVec3D();
+		lbody->force_dead = TVec3D();
+		lbody->force_born = TVec3D();
+		lbody->friction = TVec3D();
+		lbody->nusselt = 0.;
 	}
 }
 
@@ -795,7 +798,7 @@ int Space::LoadBody(const char* filename)
 	//FIXME seek to end of line
 	while (fscanf(fin, "%lf %lf", &att.corner.x, &att.corner.y)==2)
 	{
-		body->List.push_back(att);
+		body->alist.push_back(att);
 	}
 
 	fclose(fin);
@@ -813,7 +816,7 @@ void Space::EnumerateBodies()
 
 	for(auto &lbody: BodyList)
 	{
-		for (auto& latt: lbody->List)
+		for (auto& latt: lbody->alist)
 		{
 			latt.eq_no = eq_no++;
 		}
@@ -863,7 +866,7 @@ double Space::AverageSegmentLength()
 {
 	if (!BodyList.size()) return DBL_MIN;
 
-	double SurfaceLength = BodyList.front()->getSurface();
+	double SurfaceLength = BodyList.front()->get_surface();
 	int N = BodyList.front()->size() - 1;
 
 	if (!N) return DBL_MIN;

@@ -54,33 +54,26 @@ class TBody
 {
 	public:
 		TBody(Space *space);
-		~TBody();
+		~TBody() = default;
 		TBody() = delete;
 		TBody(const TBody&) = delete;
 		TBody(TBody&&) = delete;
 		TBody& operator= (const TBody&) = delete;
 		TBody& operator= (TBody&&) = delete;
 		int get_index() const; // index of body in Space list
+		std::string get_name() const;
 
 		// FIXME rename to lower case
-		std::vector<TAtt> List;
+		std::vector<TAtt> alist;
 		weak_ptr<TBody> root_body;
 
-		TVec3D pos; //in doc = $R_bx$, $R_by$, $\alpha_b$
-		TVec3D dPos; // same with delta
-		//double Angle; // in documentation = $\alpha$
-		//TVec   Position; // = $\vec R$
-		//double deltaAngle; // in doc $\Delta \alpha$
-		//TVec   deltaPosition; //in doc $\Delta \vec R$
-		TVec3D Speed_slae;
-		TVec3D Speed_slae_prev;
-		//double RotationSpeed_slae; //in doc \omega_?
-		//TVec   MotionSpeed_slae; // in doc \vec V_?
-		//double RotationSpeed_slae_prev; //\omega_? from previous step
-		//TVec   MotionSpeed_slae_prev; //\vec V_? from previous step
-
-		TVec3D k; //kx, ky, ka;
-		TVec3D damping;
+		TVec3D holder; //in doc = $R_bx$, $R_by$, $\alpha_b$
+		TVec3D dpos; // same with delta
+		TVec3D kspring; // spring const: kx, ky, ka;
+		TVec3D damping; // spring damping: tau_x, tau_y, tau_a;
+		TVec3D speed_slae;
+		TVec3D speed_slae_prev;
+		
 		//double kx, ky, ka;
 		double density; //in doc \frac{\rho_b}{\rho_0}
 
@@ -88,18 +81,18 @@ class TBody
 		bc_t boundary_condition;
 		hc_t heat_condition;
 
-		TVec3D Friction, Friction_prev; //computed by S->CalcForces
-		TVec3D Force_born, Force_dead; //computed by flowmove->MoveAndClean
-		TVec3D Force_hydro, Force_holder; //computed by convectivefast->CalcCirculationFast
-		double Nusselt; //computed by S->CalcForces
+		TVec3D friction, friction_prev; //computed by S->CalcForces
+		TVec3D force_born, force_dead; //computed by flowmove->MoveAndClean
+		TVec3D force_hydro, force_holder; //computed by convectivefast->CalcCirculationFast
+		double nusselt; //computed by S->CalcForces
 		double g_dead;
 
 	public:
 		//functions \vec V(t), \omega(t)
-		ShellScript SpeedX;
-		ShellScript SpeedY;
-		ShellScript SpeedO;
-		TVec3D getSpeed() const;
+		ShellScript speed_x;
+		ShellScript speed_y;
+		ShellScript speed_o;
+		TVec3D get_speed() const;
 
 		//see \vec c_s \vert_Rotation
 		void doRotationAndMotion();
@@ -111,13 +104,13 @@ class TBody
 		bool isInsideValid() {return _area<=0;}
 
 		void doFillProperties();
-		double getSurface() const {return _surface;}
-		double getArea() const {return _area;}
-		TVec   getCom() const {return _com;} // center of mass
-		TVec   getAxis() const {return pos.r + dPos.r;}
-		double getMoi_c() const {return _moi_c;} // moment of inertia about rotation axis
-		int size() const    {return List.size();}
-		void overrideMoi_c(double newMoi_c) {_moi_c = newMoi_c;}
+		double get_surface() const {return _surface;}
+		double get_area() const {return _area;}
+		TVec   get_com() const {return _com;} // center of mass
+		TVec   get_axis() const {return holder.r + dpos.r;}
+		double get_moi_c() const {return _moi_c;} // moment of inertia about rotation axis
+		void override_moi_c(double newMoi_c) {_moi_c = newMoi_c;}
+		int size() const    {return alist.size();}
 
 		int eq_forces_no; // starting number of forces equations
 
@@ -126,7 +119,7 @@ class TBody
 		//int *ObjectIsInHeatLayer(TObj &obj); //link to element of HeatLayer array
 
 	private:
-		Space* _space;
+		Space* S;
 
 		double _surface;
 		double _area;
@@ -134,7 +127,7 @@ class TBody
 		double _moi_com; //moment of inertia about com;
 		double _moi_c; //moi about rotation axis
 
-		vector<TVec> *HeatLayerList;
+		vector<TVec> heat_layer;
 		template <class T>
 		TAtt* isPointInContour(TVec p, vector<T> *list);
 

@@ -1,3 +1,4 @@
+#include "space.h"
 #include "body.h"
 #include <stdio.h>
 #include <iostream>
@@ -5,46 +6,48 @@
 #include <math.h>
 using namespace std;
 
-TBody::TBody(Space *sS):
-	SpeedX(),
-	SpeedY(),
-	SpeedO()
+TBody::TBody(Space *space):
+	speed_x(),
+	speed_y(),
+	speed_o(),
+	alist()
 {
-	S = sS;
-	List = new vector<TAtt>();
-	HeatLayerList = new vector<TVec>();
-	root_body = NULL;
+	S = space;
 
-	pos = dPos = TVec3D(0., 0., 0.);
+	holder = dpos = TVec3D(0., 0., 0.);
 	g_dead = 0;
-	Friction = Friction_prev = TVec3D(0,0,0);
-	Force_born = Force_dead = TVec3D(0,0,0);
-	Force_hydro = Force_holder = TVec3D(0,0,0);
+	friction = friction_prev = TVec3D(0,0,0);
+	force_born = force_dead = TVec3D(0,0,0);
+	force_hydro = force_holder = TVec3D(0,0,0);
 	_surface = _area = 0;
 	_com = TVec(0., 0.);
 	_moi_c = _moi_com = 0;
-	k = TVec3D(-1., -1., -1.);
-	damping = TVec3D(0,0,0);
+	kspring = TVec3D(-1., -1., -1.);
+	damping = TVec3D(0., 0., 0.);
 	density = 1.;
 	special_segment_no = 0;
 	boundary_condition = bc_t::steady;
 	heat_condition = hc_t::neglect;
 }
 
-TBody::~TBody()
+int TBody::get_index() const
 {
-	delete List;
-	delete HeatLayerList;
+	int i = 0;
+	for (auto lbody: S->BodyList)
+	{
+		if (lbody.get() == this) return i;
+		i++;
+	}
+	return -1;
 }
 
-int TBody::get_index()
+std::string TBody::get_name() const
 {
-	if (auto S = _space.lock())
-	{
-		return find(S->BodyList.begin(), S->BodyList.end(), this);
-	} else
-		return -1;
+	char name[8];
+	sprintf(name, "body%02d", get_index());
+	return std::string(name);
 }
+
 
 TVec3D TBody::getSpeed() const
 {
@@ -57,8 +60,6 @@ TVec3D TBody::getSpeed() const
 
 void TBody::doRotationAndMotion()
 {
-	if (!this) return;
-
 	doRotation();
 	doMotion();
 	doUpdateSegments();
@@ -67,36 +68,38 @@ void TBody::doRotationAndMotion()
 
 void TBody::doRotation()
 {
+	auto root_body = this->root_body.lock();
 	double angle_root = root_body ?
 	                  S->dt * root_body->Speed_slae.o
 	                  : 0;
 	const double angle_slae = Speed_slae.o * S->dt; //in doc \omega_? \Delta t
 	const double angle_solid = getSpeed().o * S->dt; //in doc \omega \Delta t
-	const_for (List, lobj)
+	for (auto& att: List)
 	{
-		TVec dr = lobj->corner - (pos.r + dPos.r);
-		lobj->corner = pos.r + dPos.r + dr*cos(angle_slae) + rotl(dr)*sin(angle_slae);
+		TVec dr = att.corner - get_axis();
+		att.corner = get_axis() + dr*cos(angle_slae) + rotl(dr)*sin(angle_slae);
 	}
-	pos.o += angle_solid + angle_root;
-	dPos.o += angle_slae - angle_solid - angle_root;
-	Speed_slae_prev.o = Speed_slae.o;
+	holder.o += angle_solid + angle_root;
+	dpos.o += angle_slae - angle_solid - angle_root;
+	speed_slae_prev.o = speed_slae.o;
 }
 
 void TBody::doMotion()
 {
+	auto root_body = this->root_body.lock();
 	TVec delta_root = root_body ? 
-	                  S->dt * (root_body->Speed_slae.r + 
-	                  root_body->Speed_slae.o * rotl(pos.r + dPos.r - root_body->pos.r - root_body->dPos.r))
+	                  S->dt * (root_body->speed_slae.r +
+	                  root_body->speed_slae.o * rotl(get_axis() - root_body->get_axis()))
 	                  : TVec(0,0);
-	TVec delta_slae = Speed_slae.r * S->dt;
+	TVec delta_slae = speed_slae.r * S->dt;
 	TVec delta_solid = getSpeed().r * S->dt;
-	const_for (List, lobj)
+	for (auto& obj: List)
 	{
-		lobj->corner += delta_slae;
+		obj.corner += delta_slae;
 	}
-	pos.r += delta_solid + delta_root;
-	dPos.r += delta_slae - delta_solid - delta_root;
-	Speed_slae_prev.r = Speed_slae.r;
+	holder.r += delta_solid + delta_root;
+	dpos.r += delta_slae - delta_solid - delta_root;
+	speed_slae_prev.r = speed_slae.r;
 }
 
 void TBody::doUpdateSegments()
