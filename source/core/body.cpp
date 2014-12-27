@@ -7,10 +7,10 @@
 using namespace std;
 
 TBody::TBody(Space *space):
+	alist(),
 	speed_x(),
 	speed_y(),
-	speed_o(),
-	alist()
+	speed_o()
 {
 	S = space;
 
@@ -49,12 +49,12 @@ std::string TBody::get_name() const
 }
 
 
-TVec3D TBody::getSpeed() const
+TVec3D TBody::get_speed() const
 {
 	return TVec3D(
-	              SpeedX.getValue(S->Time),
-	              SpeedY.getValue(S->Time),
-	              SpeedO.getValue(S->Time)
+	              speed_x.getValue(S->Time),
+	              speed_y.getValue(S->Time),
+	              speed_o.getValue(S->Time)
 	             );
 }
 
@@ -70,11 +70,11 @@ void TBody::doRotation()
 {
 	auto root_body = this->root_body.lock();
 	double angle_root = root_body ?
-	                  S->dt * root_body->Speed_slae.o
+	                  S->dt * root_body->speed_slae.o
 	                  : 0;
-	const double angle_slae = Speed_slae.o * S->dt; //in doc \omega_? \Delta t
-	const double angle_solid = getSpeed().o * S->dt; //in doc \omega \Delta t
-	for (auto& att: List)
+	const double angle_slae = speed_slae.o * S->dt; //in doc \omega_? \Delta t
+	const double angle_solid = get_speed().o * S->dt; //in doc \omega \Delta t
+	for (auto& att: alist)
 	{
 		TVec dr = att.corner - get_axis();
 		att.corner = get_axis() + dr*cos(angle_slae) + rotl(dr)*sin(angle_slae);
@@ -92,8 +92,8 @@ void TBody::doMotion()
 	                  root_body->speed_slae.o * rotl(get_axis() - root_body->get_axis()))
 	                  : TVec(0,0);
 	TVec delta_slae = speed_slae.r * S->dt;
-	TVec delta_solid = getSpeed().r * S->dt;
-	for (auto& obj: List)
+	TVec delta_solid = get_speed().r * S->dt;
+	for (auto& obj: alist)
 	{
 		obj.corner += delta_slae;
 	}
@@ -106,54 +106,50 @@ void TBody::doUpdateSegments()
 {
 	if (!this) return;
 
-	List->push_back(List->at(0));
-	List->erase(List->end()-1);
+	alist.push_back(alist.at(0));
 
-	const_for (List, lobj)
+	for (auto lobj=alist.begin(); lobj<alist.end(); lobj++)
 	{
 		lobj->dl = (lobj+1)->corner - lobj->corner;
 		lobj->_1_eps = 3.0/lobj->dl.abs();
 		lobj->r = 0.5*((lobj+1)->corner + lobj->corner);
 	}
+	alist.pop_back();
 }
 
 TAtt* TBody::isPointInvalid(TVec p)
 {
-	if (!this) return NULL;
-	return isPointInContour(p, List);
+	return isPointInContour(p, alist);
 }
 
 TAtt* TBody::isPointInHeatLayer(TVec p)
 {
-	if (!this) return NULL;
-	if (!HeatLayerList->size())
+	if (!heat_layer.size())
 	{
-		TVec tmp(0, 0);
-		const_for(List, lobj)
+		for (auto& lobj: alist)
 		{
-			tmp = lobj->r + rotl(lobj->dl);
-			HeatLayerList->push_back(tmp);
+			heat_layer.push_back(lobj.r + rotl(lobj.dl));
 		}
 	}
 
-	return isPointInContour(p, HeatLayerList);
+	return isPointInContour(p, heat_layer);
 }
 
-template <class T> TVec corner(T *lobj) {return *lobj;}
-template <> TVec corner<TAtt>(TAtt *lobj) {return lobj->corner;}
+template <class T> TVec& corner(T lobj);
+template <> TVec& corner(TVec& lobj) {return lobj;}
+template <> TVec& corner(TAtt& lobj) {return lobj.corner;}
+
 template <class T>
-TAtt* TBody::isPointInContour(TVec p, vector<T> *list)
+TAtt* TBody::isPointInContour(TVec p, vector<T> &list)
 {
-	if (!this) return NULL;
-
-	bool res = isInsideValid();
+	bool inContour = isInsideValid();
 	TAtt *nearest = NULL;
-	double nearest_dr2 = 1E10;
+	double nearest_dr2 = std::numeric_limits<double>::max();
 
-	for (auto i = list->begin(), j = list->end()-1; i<list->end(); j=i++)
+	for (auto i = list.begin(), j = list.end()-1; i<list.end(); j=i++)
 	{
-		TVec vi = corner<T>(i);
-		TVec vj = corner<T>(j);
+		TVec vi = corner<T>(*i);
+		TVec vj = corner<T>(*j);
 
 		if ((
 			(vi.y < vj.y) && (vi.y < p.y) && (p.y <= vj.y) &&
@@ -161,16 +157,19 @@ TAtt* TBody::isPointInContour(TVec p, vector<T> *list)
 			) || (
 			(vi.y > vj.y) && (vi.y > p.y) && (p.y >= vj.y) &&
 			((vj.y - vi.y) * (p.x - vi.x) < (vj.x - vi.x) * (p.y - vi.y))
-		)) res = !res;
+		)) inContour = !inContour;
 	}
 
-	if (res)
-	const_for(List, latt)
+	if (!inContour) return NULL;
+
+	// FIXME почитать алгоритмы, поискать оптимизированный поиск минимума
+	for (auto& latt: alist)
 	{
-		if ((latt->r - p).abs2()<nearest_dr2)
+		double dr2 = (latt.r - p).abs2();
+		if ( dr2 < nearest_dr2 )
 		{
-			nearest = latt;
-			nearest_dr2 = (latt->r - p).abs2();
+			nearest = &latt;
+			nearest_dr2 = dr2;
 		}
 	}
 
@@ -182,7 +181,7 @@ void TBody::doFillProperties()
 	_surface = _area = _moi_c = _moi_com = 0;
 	TVec _3S_com= TVec(0., 0.);
 	double _12moi_0 = 0.;
-	const_for (List, latt)
+	for (auto latt=alist.begin(); latt<alist.end(); latt++)
 	{
 		_surface+= latt->dl.abs();
 		_area+= latt->r.y*latt->dl.x;
@@ -192,7 +191,7 @@ void TBody::doFillProperties()
 	}
 	_com = _3S_com/(3*_area);
 	_moi_com = _12moi_0/12. - _area*_com.abs2();
-	_moi_c = _moi_com + _area*(pos.r + dPos.r - _com).abs2();
+	_moi_c = _moi_com + _area*(get_axis() - _com).abs2();
 }
 
 inline double atan2(const TVec &p)

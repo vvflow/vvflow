@@ -127,9 +127,9 @@ class TBody
 		double _moi_com; //moment of inertia about com;
 		double _moi_c; //moi about rotation axis
 
-		vector<TVec> heat_layer;
+		std::vector<TVec> heat_layer;
 		template <class T>
-		TAtt* isPointInContour(TVec p, vector<T> *list);
+		TAtt* isPointInContour(TVec p, vector<T> &list);
 
 		void doRotation();
 		void doMotion();
