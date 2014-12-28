@@ -1,5 +1,6 @@
 #include "core.h"
 #include "sorted_tree.h"
+#include "body.h"
 #include "math.h"
 #include "iostream"
 using namespace std;
@@ -12,11 +13,6 @@ snode::snode(stree *sParent)
 {
 	parent = sParent;
 
-	BodyLList = NULL;
-	vRange.set(NULL, NULL);
-	hRange.set(NULL, NULL);
-	sRange.set(NULL, NULL);
-
 	NearNodes = FarNodes = NULL;
 	ch1 = ch2 = NULL;
 	CMp = CMm = TObj(0., 0., 0.);
@@ -24,7 +20,6 @@ snode::snode(stree *sParent)
 
 snode::~snode()
 {
-	if ( BodyLList ) delete BodyLList;
 	if ( NearNodes ) delete NearNodes;
 	if ( FarNodes ) delete FarNodes;
 	if ( ch1 ) delete ch1;
@@ -36,12 +31,12 @@ void TSortedNode::DivideNode()
 	if ( max(h,w) < parent->maxNodeSize )
 	if ( min(h,w) < parent->minNodeSize )
 	{
-		parent->bottomNodes->push_back(this);
+		parent->bottomNodes.push_back(this);
 		return;
 	}
 
 	long MaxListSize = max(
-	                   BodyLList->size_safe(),
+	                   bllist.size(),
 	                   vRange.size(),
 	                   hRange.size(),
 	                   sRange.size());
@@ -49,7 +44,7 @@ void TSortedNode::DivideNode()
 	if ( max(h,w) < parent->maxNodeSize )
 	if ( MaxListSize < Tree_MaxListSize ) //look for define
 	{
-		parent->bottomNodes->push_back(this);
+		parent->bottomNodes.push_back(this);
 		return;
 	}
 
@@ -61,12 +56,11 @@ void TSortedNode::DivideNode()
 	ch1->i = ch2->i = i+1; //DEBUG
 	ch1->j = j*2; ch2->j = j*2+1; //DEBUG
 
-	definePointerRangesAndSort(parent->S->VortexList);
-	definePointerRangesAndSort(parent->S->HeatList);
-	definePointerRangesAndSort(parent->S->StreakList);
-
-	DistributeContent(BodyLList, &ch1->BodyLList, &ch2->BodyLList);
-	delete BodyLList; BodyLList = NULL;
+	DistributeContent(vRange, &ch1->vRange, &ch2->vRange);
+	DistributeContent(hRange, &ch1->hRange, &ch2->hRange);
+	DistributeContent(sRange, &ch1->sRange, &ch2->sRange);
+	DistributeContent(bllist, &ch1->bllist, &ch2->bllist);
+	bllist.clear();
 
 	ch1->Stretch();
 	ch2->Stretch();
@@ -76,30 +70,19 @@ void TSortedNode::DivideNode()
 	return;
 }
 
-void TSortedNode::definePointerRangesAndSort(vector<TObj> *list)
+void TSortedNode::DistributeContent(range& parent, range *ch1, range *ch2)
 {
-	if (!list) {return;}
-	TObj *first, *last;
-	if (list == parent->S->VortexList)      { first = vRange.first; last = vRange.last; }
-	else if (list == parent->S->HeatList)   { first = hRange.first; last = hRange.last; }
-	else if (list == parent->S->StreakList) { first = sRange.first; last = sRange.last; }
-
-	TObj *p1 = first, *p2 = last-1;
+	TObj *p1 = parent.first;
+	TObj *p2 = parent.last-1;
 	while (p1 <= p2)
 	{
-		while ( (p1<last) && ((h<w) ? (p1->r.x<x) : (p1->r.y<y)) ) p1++;
-		while ( (p2>=first) && ((h<w) ? (p2->r.x>=x) : (p2->r.y>=y)) ) p2--;
-		if (p1 < p2)
-		{
-			TObj tmp = *p1;
-			*p1 = *p2;
-			*p2 = tmp;
-		}
+		while ( ((h<w) ? (p1->r.x<x)  : (p1->r.y<y))  && p1<parent.last )   p1++;
+		while ( ((h<w) ? (p2->r.x>=x) : (p2->r.y>=y)) && p2>=parent.first ) p2--;
+		if (p1 < p2) std::swap(*p1, *p2);
 	}
 
-	if (list == parent->S->VortexList)      { ch1->vRange.set(first, p1); ch2->vRange.set(p1, last); }
-	else if (list == parent->S->HeatList)   { ch1->hRange.set(first, p1); ch2->hRange.set(p1, last); }
-	else if (list == parent->S->StreakList) { ch1->sRange.set(first, p1); ch2->sRange.set(p1, last); }
+	ch1->set(parent.first, p1);
+	ch2->set(p1, parent.last);
 
 	return;
 }
@@ -108,13 +91,12 @@ void TSortedNode::Stretch()
 {
 	TVec tr(-DBL_MAX, -DBL_MAX), bl(DBL_MAX, DBL_MAX);
 
-	if (BodyLList)
-	const_for(BodyLList, llobj)
+	for (auto& llobj: bllist)
 	{
-		tr.x = max(tr.x, (**llobj).r.x);
-		tr.y = max(tr.y, (**llobj).r.y);
-		bl.x = min(bl.x, (**llobj).r.x);
-		bl.y = min(bl.y, (**llobj).r.y);
+		tr.x = max(tr.x, llobj->r.x);
+		tr.y = max(tr.y, llobj->r.y);
+		bl.x = min(bl.x, llobj->r.x);
+		bl.y = min(bl.y, llobj->r.y);
 	}
 
 	//fprintf(stderr, "%d %d stretch body: l=%g, r=%g, b=%g, t=%g\n", i, j, bl.rx, tr.rx, bl.ry, tr.ry);
@@ -142,21 +124,15 @@ void TSortedNode::Stretch(range &oRange, TVec &tr, TVec &bl)
 	}
 }
 
-void TSortedNode::DistributeContent(blList *parent, blList **ch1, blList **ch2)
+void TSortedNode::DistributeContent(LList &parent, LList *ch1, LList *ch2)
 {
-	if (!parent) return;
-	if (!*ch1) *ch1 = new blList();
-	if (!*ch2) *ch2 = new blList();
-
-	const_for (parent, llobj)
+	for (auto llobj: parent)
 	{
-		if ( (h<w) ? ((**llobj).r.x<x) : ((**llobj).r.y<y) ) 
-			(**ch1).push_back(*llobj);
+		if ( (h<w) ? (llobj->r.x<x) : (llobj->r.y<y) ) 
+			ch1->push_back(llobj);
 		else
-			(**ch2).push_back(*llobj);
+			ch2->push_back(llobj);
 	}
-	if ( !(**ch1).size() ) { delete *ch1; *ch1=NULL; }
-	if ( !(**ch2).size() ) { delete *ch2; *ch2=NULL; }
 }
 
 void TSortedNode::CalculateCMass()
@@ -237,7 +213,6 @@ stree::stree(Space *sS, int sFarCriteria, double sMinNodeSize, double sMaxNodeSi
 	minNodeSize = sMinNodeSize;
 	maxNodeSize = sMaxNodeSize;
 	rootNode = NULL;
-	bottomNodes = new vector<TSortedNode*>();
 }
 
 void stree::build(bool includeV, bool includeB, bool includeH)
@@ -246,47 +221,45 @@ void stree::build(bool includeV, bool includeB, bool includeH)
 	rootNode = new TSortedNode(this);
 	rootNode->i = rootNode->j = 0; //DEBUG
 
-	rootNode->BodyLList = new snode::blList();
 	if (includeB)
 	{
-		const_for(S->BodyList, llbody)
+		for (auto& lbody: S->BodyList)
 		{
-			const_for ((**llbody).List, lobj)
+			for (auto& lobj: lbody->alist)
 			{
-				rootNode->BodyLList->push_back(lobj);
+				rootNode->bllist.push_back(&lobj);
 			}
 		}
 	}
 
-	if (includeV && S->VortexList) rootNode->vRange.set(S->VortexList->begin(), S->VortexList->end()); else rootNode->vRange.set(NULL, NULL);
-	if (includeH && S->HeatList)   rootNode->hRange.set(S->HeatList->begin(), S->HeatList->end()); else rootNode->hRange.set(NULL, NULL);
-	if (S->StreakList)             rootNode->sRange.set(S->StreakList->begin(), S->StreakList->end());
+	if (includeV && S->VortexList.size()) rootNode->vRange.set(&*S->VortexList.begin(), &*S->VortexList.end());
+	if (includeH && S->HeatList.size())   rootNode->hRange.set(&*S->HeatList.begin(), &*S->HeatList.end());
+	if (S->StreakList.size())             rootNode->sRange.set(&*S->StreakList.begin(), &*S->StreakList.end());
 
-	bottomNodes->clear();
+	bottomNodes.clear();
 
 	rootNode->Stretch();
 	rootNode->DivideNode(); //recursive
 
 	rootNode->CalculateCMass();
-	const_for (bottomNodes, llbnode)
+	for (auto& lbnode: bottomNodes)
 	{
-		TSortedNode &bnode = **llbnode;
-		bnode.NearNodes = new vector<TSortedNode*>();
-		bnode.FarNodes = new vector<TSortedNode*>();
-		bnode.FindNearNodes(rootNode);
+		lbnode->NearNodes = new vector<TSortedNode*>();
+		lbnode->FarNodes = new vector<TSortedNode*>();
+		lbnode->FindNearNodes(rootNode);
 	}
 }
 
 void stree::destroy()
 {
 	if ( rootNode ) delete rootNode; rootNode = 0;
-	bottomNodes->clear();
+	bottomNodes.clear();
 }
 
 vector<TSortedNode*>* stree::getBottomNodes()
 {
-	if (!bottomNodes) {fprintf(stderr, "PANIC in stree::getBottomNodes()! Tree isn't built\n");}
-	return bottomNodes;
+	if (bottomNodes.empty()) {fprintf(stderr, "PANIC in stree::getBottomNodes()! Tree isn't built\n");}
+	return &bottomNodes;
 }
 
 TSortedNode* stree::findNode(TVec p)
@@ -309,13 +282,12 @@ TSortedNode* stree::findNode(TVec p)
 
 void stree::printBottomNodes(FILE* f, bool PrintDepth)
 {
-	if ( !bottomNodes ) return;
-	const_for (bottomNodes, llBN)
+	for (auto& lbn: bottomNodes)
 	{
-		fprintf(f, "%g\t%g\t%g\t%g\t", (**llBN).x, (**llBN).y, (**llBN).w, (**llBN).h);
-//		fprintf(f, "%g\t%g\t%g\t", (**llBN).CMp.rx, (**llBN).CMp.ry, (**llBN).CMp.g);
-//		fprintf(f, "%g\t%g\t%g"  , (**llBN).CMm.rx, (**llBN).CMm.ry, (**llBN).CMm.g);
-		if(PrintDepth) fprintf(f, "\t%d", (**llBN).i);
+		fprintf(f, "%g\t%g\t%g\t%g\t", lbn->x, lbn->y, lbn->w, lbn->h);
+//		fprintf(f, "%g\t%g\t%g\t", lbn->CMp.rx, lbn->CMp.ry, lbn->CMp.g);
+//		fprintf(f, "%g\t%g\t%g"  , lbn->CMm.rx, lbn->CMm.ry, lbn->CMm.g);
+		if(PrintDepth) fprintf(f, "\t%d", lbn->i);
 		fprintf(f, "\n");
 	}
 }

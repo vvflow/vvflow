@@ -16,7 +16,7 @@ class range
 	public:
 		TObj *first, *last;
 	public:
-		range() { first = last = NULL; }
+		range() { first = last = NULL;}
 		range(TObj *f, TObj *l) { first = f; last = l; }
 		void set(TObj *f, TObj *l) { first = f; last = l; }
 		int size() { return last-first; }
@@ -32,10 +32,8 @@ class snode
 		int i, j; //debug
 		TObj CMp, CMm;
 
-		typedef vector<TObj*> blList;
-		blList *BodyLList;
-		// FIXME коряво. Надо попробовать темплейты
-
+		typedef vector<TObj*> LList;
+		LList bllist;
 		range vRange;
 		range hRange;
 		range sRange;
@@ -48,8 +46,8 @@ class snode
 	public:
 		stree *parent;
 		void DivideNode();
-		void definePointerRangesAndSort(vector<TObj> *list);
-		void DistributeContent(blList *parent, blList **ch1, blList **ch2);
+		void DistributeContent(range& parent, range *ch1, range *ch2);
+		void DistributeContent(LList& parent, LList *ch1, LList *ch2);
 		void Stretch();
 		void Stretch(range &oRange, TVec &tr, TVec &bl);
 		void Destroy();
@@ -79,7 +77,7 @@ class stree
 		double maxNodeSize;
 
 		TSortedNode *rootNode;
-		vector<TSortedNode*> *bottomNodes;
+		vector<TSortedNode*> bottomNodes;
 
 		friend class snode;
 };
