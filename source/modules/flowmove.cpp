@@ -1,6 +1,8 @@
+#include "body.h"
 #include "flowmove.h"
 #include "math.h"
 #include <cstdlib>
+#include <algorithm>
 #include <time.h>
 
 flowmove::flowmove(Space *sS, double sRemoveEps)
@@ -14,221 +16,195 @@ flowmove::flowmove(Space *sS, double sRemoveEps)
 void flowmove::MoveAndClean(bool remove, bool zero_speed)
 {
 	CleanedV_ = 0;
-	auto vlist = S->VortexList;
-	auto hlist = S->HeatList;
-
-	//Move bodies
-	const_for (S->BodyList, llbody)
-	{
-		(**llbody).doRotationAndMotion();
-	}
-
 	S->InfMarker+= S->InfSpeed()*S->dt;
 
-	//MOVING VORTEXES
-	if ( vlist )
-	const_for (vlist, lobj)
-	{
-		lobj->r += lobj->v*dt; if(zero_speed) lobj->v = TVec(0., 0.);
 
-		TAtt* invalid_inbody = NULL;
-		const_for(S->BodyList, llbody)
+
+	// Move bodies
+	for (auto& lbody: S->BodyList) lbody->doRotationAndMotion();
+	// Move vortexes, heat, ink
+	for (auto& lobj: S->VortexList) lobj.r += lobj.v * dt;
+	for (auto& lobj: S->HeatList)   lobj.r += lobj.v * dt;
+	for (auto& lobj: S->StreakList) lobj.r += lobj.v * dt;
+
+	// Remove small vortexes, small heat
+	// FIXME попробовать переписать с std::remoe_if() и лямбдой
+	for (auto lobj = S->VortexList.begin(); lobj < S->VortexList.end(); )
+	{
+		if ( fabs(lobj->g) < RemoveEps ) S->VortexList.erase(lobj);
+		else lobj++;
+	}
+	for (auto lobj = S->HeatList.begin(); lobj < S->HeatList.end(); )
+	{
+		if ( fabs(lobj->g) < RemoveEps ) S->HeatList.erase(lobj);
+		else lobj++;
+	}
+
+
+
+
+	if (remove)
+	for (auto lobj = S->VortexList.begin(); lobj < S->VortexList.end(); )
+	{
+		TAtt* bad_segment = NULL;
+		TBody* bad_body = NULL;
+		for (auto& lbody: S->BodyList)
 		{
-			if (!invalid_inbody)
-			invalid_inbody = (**llbody).isPointInvalid(lobj->r);
+			bad_segment = lbody->isPointInvalid(lobj->r);
+			if (bad_segment) { bad_body = lbody.get(); break; }
+		}
+		if (!bad_body) { lobj++; continue; }
+
+		bad_body->force_dead.r += rotl(lobj->r) * lobj->g;
+		bad_body->force_dead.o += (lobj->r - bad_body->get_axis()).abs2() * lobj->g;
+		bad_segment->gsum -= lobj->g;
+		bad_body->g_dead += lobj->g;
+		CleanedV_++;
+		S->VortexList.erase(lobj);
+	}
+
+	for (auto lobj = S->HeatList.begin(); lobj < S->HeatList.end(); )
+	{
+		TAtt* bad_segment = NULL;
+		TBody* bad_body = NULL;
+		// check if particle is in body
+		for (auto& lbody: S->BodyList)
+		{
+			bad_segment = lbody->isPointInvalid(lobj->r);
+			if (bad_segment) { bad_body = lbody.get(); break; }
 		}
 
-		if ( remove && invalid_inbody )
+		if (bad_body)
 		{
-			TBody *badbody = invalid_inbody->body;
-			badbody->Force_dead.r += rotl(lobj->r) * lobj->g;
-			badbody->Force_dead.o +=  (lobj->r - badbody->pos.r - badbody->dPos.r).abs2() * lobj->g;
-			invalid_inbody->gsum -= lobj->g;
-			badbody->g_dead += lobj->g;
-			CleanedV_++;
-			vlist->erase(lobj);
-			lobj--;
+			bad_segment->hsum -= lobj->g;
+			S->HeatList.erase(lobj);
+			continue;
+		}
+
+		// check if particle is in heat layer
+		bad_segment = NULL;
+		bad_body = NULL;
+		for (auto& lbody: S->BodyList)
+		{
+			bad_segment = lbody->isPointInHeatLayer(lobj->r);
+			if (bad_segment) { bad_body = lbody.get(); break; }
+		}
+
+		if ( !bad_body || bad_body->heat_condition != hc_t::const_t) { lobj++; continue; }
+
+		if (bad_segment->heat_layer_obj_no >= 0)
+		{
+			bad_segment->hsum -= lobj->g;
+			S->HeatList.erase(lobj);
+			continue;
 		} else
-		if ( fabs(lobj->g) < RemoveEps )
 		{
-			//remove merged vortexes
-			vlist->erase(lobj);
-			lobj--;
+			bad_segment->heat_layer_obj_no = lobj - S->HeatList.begin();
+			lobj++;
+			continue;
 		}
 	}
 
-	const_for(S->BodyList, llbody)
+	for (auto lobj = S->StreakList.begin(); lobj < S->StreakList.end(); )
 	{
-		(**llbody).Force_dead.r /= dt;
-		(**llbody).Force_dead.o /= 2.*dt;
+		if ( S->PointIsInBody(lobj->r) ) S->StreakList.erase(lobj);
+		else lobj++;
 	}
 
-	//MOVING HEAT PARTICLES
-	if ( hlist )
-	const_for (hlist, lobj)
+	if (zero_speed)
 	{
-		lobj->r += lobj->v*dt;
-		if(zero_speed)
-			lobj->v = TVec(0., 0.);
-
-		TAtt* invalid_inbody = NULL;
-		const_for(S->BodyList, llbody)
-		{
-			invalid_inbody = (**llbody).isPointInvalid(lobj->r);
-			if (invalid_inbody) break;
-		}
-
-		//FIXME optimize removal in this loop
-		if ( invalid_inbody )
-		{
-			invalid_inbody->hsum -= lobj->g;
-			hlist->erase(lobj);
-			lobj--; continue;
-		}
-
-		TAtt* inlayer = NULL;
-		const_for(S->BodyList, llbody)
-		{
-			inlayer = (**llbody).isPointInHeatLayer(lobj->r);
-			if (inlayer) break;
-		}
-
-		if ( inlayer && inlayer->body->heat_condition == hc_t::const_t)
-		{
-			if (inlayer->heat_layer_obj_no >= 0)
-			{
-				inlayer->hsum -= lobj->g;
-				hlist->erase(lobj);
-				lobj--; continue;
-			} else
-			{
-				inlayer->heat_layer_obj_no = hlist->find(lobj);
-			}
-		} else
-		if ( !inlayer && fabs(lobj->g) < RemoveEps )
-		{
-			//remove merged particles
-			hlist->erase(lobj);
-			lobj--;
-		}
+		for (auto& lobj: S->VortexList) lobj.v = TVec(0., 0.);
+		for (auto& lobj: S->HeatList)   lobj.v = TVec(0., 0.);
+		for (auto& lobj: S->StreakList) lobj.v = TVec(0., 0.);
 	}
 
-	//MOVING Streak PARTICLES
-	if ( S->StreakList )
-	const_for (S->StreakList, lobj)
+	for (auto& lbody: S->BodyList)
 	{
-		lobj->r += lobj->v*dt;
-		lobj->v = TVec(0., 0.);
-
-		const_for(S->BodyList, llbody)
-		{
-			if ((**llbody).isPointInvalid(lobj->r))
-			{
-				S->StreakList->erase(lobj);
-				lobj--;
-				break;
-			}
-		}
+		lbody->force_dead.r /= dt;
+		lbody->force_dead.o /= 2.*dt;
 	}
 }
 
 void flowmove::VortexShed()
 {
-	if (!S->VortexList) S->VortexList = new vector<TObj>();
-	auto vlist = S->VortexList;
-	TObj ObjCopy(0, 0, 0);
-
-	const_for(S->BodyList, llbody)
+	for (auto& lbody: S->BodyList)
 	{
-		#define body (**llbody)
-		body.Force_born = TVec3D(0., 0., 0.);
+		lbody->force_born = TVec3D(0., 0., 0.);
 
-		const_for(body.List, latt)
+		for (auto& latt: lbody->alist)
 		{
-			if (fabs(latt->g) < RemoveEps)
+			if (fabs(latt.g) < RemoveEps)
 			{
 				CleanedV_++;
-				body.g_dead+= latt->g;
+				lbody->g_dead+= latt.g;
 			}
-			else if ( !latt->slip )
+			else if ( !latt.slip )
 			{
-				ObjCopy.r = latt->corner + rotl(latt->dl)*1e-4;
-				ObjCopy.g = latt->g;
-				body.Force_born.r += rotl(latt->corner) * ObjCopy.g;
-				body.Force_born.o += (latt->corner-body.getAxis()).abs2() * ObjCopy.g;
-				latt->gsum+= ObjCopy.g;
-				vlist->push_back(ObjCopy);
+				S->VortexList.push_back(TObj(latt.corner + rotl(latt.dl)*1e-4, latt.g));
+				lbody->force_born.r += rotl(latt.corner) * latt.g;
+				lbody->force_born.o += (latt.corner - lbody->get_axis()).abs2() * latt.g;
+				latt.gsum+= latt.g;
 			}
 		}
 
-		body.Force_born.r /= dt;
-		body.Force_born.o /= 2.*dt;
-		#undef body
+		lbody->force_born.r /= dt;
+		lbody->force_born.o /= 2.*dt;
 	}
 }
 
 void flowmove::HeatShed()
 {
-	if (!S->HeatList) S->HeatList = new vector<TObj>();
-	auto hlist = S->HeatList;
-	TObj ObjCopy(0, 0, 0);
-
-	const_for(S->BodyList, llbody)
+	for (auto& lbody: S->BodyList)
 	{
-		auto& body = **llbody;
-		auto hc = body.heat_condition;
-
-		const_for(body.List, latt)
+		if (lbody->heat_condition == hc_t::isolate)
+		for (auto& latt: lbody->alist)
 		{
-			if (hc == hc_t::isolate)
+			if (!latt.hsum) continue;
+			S->HeatList.push_back(TObj(latt.r+rotl(latt.dl)*0.5, -latt.hsum));
+			latt.hsum = 0;
+		}
+
+		else if (lbody->heat_condition == hc_t::const_t)
+		for (auto& latt: lbody->alist)
+		{
+			double tmp_g = latt.dl.abs2() * latt.heat_const;
+			TObj *tmp_obj = (latt.heat_layer_obj_no>=0)? S->HeatList.data()+latt.heat_layer_obj_no : NULL;
+			if (tmp_obj)
 			{
-				if (latt->hsum)
-				{
-					hlist->push_back(TObj(latt->r+rotl(latt->dl)*0.5, -latt->hsum));
-					latt->hsum = 0;
-				}
-			}
-			else if (hc == hc_t::const_t)
+				latt.hsum += tmp_g - tmp_obj->g;
+				tmp_obj->g = tmp_g;
+			} else
 			{
-				double tmp_g(latt->dl.abs2() * latt->heat_const);
-				TObj *tmp_obj = (latt->heat_layer_obj_no>=0)? hlist->begin()+latt->heat_layer_obj_no : NULL;
-				if (tmp_obj)
-				{
-					latt->hsum += tmp_g - tmp_obj->g;
-					tmp_obj->g = tmp_g;
-				} else
-				{
-					latt->hsum += tmp_g;
-					hlist->push_back(TObj(latt->r+rotl(latt->dl)*0.5, tmp_g));
-				}
-			}
-			else if (hc == hc_t::const_w)
-			{
-				double tmp_g(latt->dl.abs2() * latt->heat_const);
-				latt->hsum += tmp_g;
-				hlist->push_back(TObj(latt->r+rotl(latt->dl)*0.5, tmp_g));
+				latt.hsum += tmp_g;
+				S->HeatList.push_back(TObj(latt.r+rotl(latt.dl)*0.5, tmp_g));
 			}
 		}
-		#undef body
+
+		else if (lbody->heat_condition == hc_t::const_w)
+		for (auto& latt: lbody->alist)
+		{
+			double tmp_g = latt.dl.abs2() * latt.heat_const;
+			latt.hsum += tmp_g;
+			S->HeatList.push_back(TObj(latt.r+rotl(latt.dl)*0.5, tmp_g));
+		}
 	}
 }
 
 void flowmove::CropHeat(double scale)
 {
-	if (!S->HeatList) return;
-	const_for(S->HeatList, lobj)
+	for (auto lobj = S->HeatList.begin(); lobj < S->HeatList.end(); )
 	{
-		if (lobj->r.x > scale)
-			S->HeatList->erase(lobj);
+		if (lobj->r.x > scale) S->HeatList.erase(lobj);
+		else lobj++;
 	}
 }
 
 void flowmove::StreakShed()
 {
 	if (!S->Time.divisibleBy(S->streak_dt)) return;
-	const_for(S->StreakSourceList, lobj)
+	for (auto& lobj: S->StreakSourceList)
 	{
-		S->StreakList->push_back(*lobj);
+		S->StreakList.push_back(lobj);
 	}
 }
 

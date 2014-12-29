@@ -36,8 +36,8 @@ Space::Space():
 	InfSpeedX(),
 	InfSpeedY()
 {
-	// static_assert(std::is_pod<TVec>::value, "TVec is not POD");
-	// static_assert(std::is_pod<TObj>::value, "TObj is not POD");
+		// static_assert(std::is_pod<TVec>::value, "TVec is not POD");
+		// static_assert(std::is_pod<TObj>::value, "TObj is not POD");
 	// static_assert(std::is_pod<TAtt>::value, "TAtt is not POD");
 	InfCirculation = 0.;
 	gravitation = TVec(0., 0.);

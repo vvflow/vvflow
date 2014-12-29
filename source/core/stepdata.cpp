@@ -1,6 +1,7 @@
 #include "stepdata.h"
 #include "assert.h"
 #include "hdf5.h"
+#include "body.h"
 
 Stepdata::Stepdata(Space* s_)
 {
@@ -84,22 +85,21 @@ void Stepdata::create(const char *format)
 	attribute_write("git_info", S->getGitInfo());
 	attribute_write("git_diff", S->getGitDiff());
 
-	born_d_hid = new int[S->BodyList->size_safe()];
-	hydro_d_hid = new int[S->BodyList->size_safe()];
-	holder_d_hid = new int[S->BodyList->size_safe()];
-	friction_d_hid = new int[S->BodyList->size_safe()];
-	nusselt_d_hid = new int[S->BodyList->size_safe()];
-	position_d_hid = new int[S->BodyList->size_safe()];
-	spring_d_hid = new int[S->BodyList->size_safe()];
-	speed_d_hid = new int[S->BodyList->size_safe()];
+	int blsize = S->BodyList.size();
+	born_d_hid = new int[blsize];
+	hydro_d_hid = new int[blsize];
+	holder_d_hid = new int[blsize];
+	friction_d_hid = new int[blsize];
+	nusselt_d_hid = new int[blsize];
+	position_d_hid = new int[blsize];
+	spring_d_hid = new int[blsize];
+	speed_d_hid = new int[blsize];
 
 	time_d_hid = create_dataset(file_hid, "time", 1);
-	const_for(S->BodyList, llbody)
+	for (auto& lbody: S->BodyList)
 	{
-		int body_n = S->BodyList->find(llbody);
-		char body_name[16];
-		sprintf(body_name, "body%02d", body_n);
-		hid_t body_g_hid = H5Gcreate2(file_hid, body_name, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		int body_n = lbody->get_index();
+		hid_t body_g_hid = H5Gcreate2(file_hid, lbody->get_name().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
 		born_d_hid[body_n] = create_dataset(body_g_hid, "force_born", 3);
 		hydro_d_hid[body_n] = create_dataset(body_g_hid, "force_hydro", 3);
@@ -120,17 +120,17 @@ void Stepdata::write()
 {
 	append(time_d_hid, S->Time);
 
-	const_for(S->BodyList, llbody)
+	for (auto& lbody: S->BodyList)
 	{
-		int body_n = S->BodyList->find(llbody);
-		append(born_d_hid[body_n], (**llbody).Force_born - (**llbody).Force_dead);
-		append(hydro_d_hid[body_n], (**llbody).Force_hydro);
-		append(holder_d_hid[body_n], (**llbody).Force_holder);
-		append(friction_d_hid[body_n], (**llbody).Friction);
-		append(nusselt_d_hid[body_n], (**llbody).Nusselt);
-		append(position_d_hid[body_n], (**llbody).pos);
-		append(spring_d_hid[body_n], (**llbody).dPos);
-		append(speed_d_hid[body_n], (**llbody).Speed_slae);
+		int body_n = lbody->get_index();
+		append(born_d_hid[body_n], lbody->force_born - lbody->force_dead);
+		append(hydro_d_hid[body_n], lbody->force_hydro);
+		append(holder_d_hid[body_n], lbody->force_holder);
+		append(friction_d_hid[body_n], lbody->friction);
+		append(nusselt_d_hid[body_n], lbody->nusselt);
+		append(position_d_hid[body_n], lbody->holder);
+		append(spring_d_hid[body_n], lbody->dpos);
+		append(speed_d_hid[body_n], lbody->speed_slae);
 	}
 
 	H5Fflush(file_hid, H5F_SCOPE_GLOBAL);
