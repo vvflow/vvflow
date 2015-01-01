@@ -1,6 +1,7 @@
 #ifndef EPSFAST_H
 #define EPSFAST_H
 #include "core.h"
+#include "body.h"
 
 class epsfast
 {

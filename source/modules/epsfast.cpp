@@ -1,18 +1,13 @@
 #include "epsfast.h"
 #include <math.h>
-#include <float.h>
+#include <limits>
 #include <iostream>
 
 using namespace std;
 
-static vector<TObj> *vList;
-static vector<TObj> *hList;
-
 epsfast::epsfast(Space *sS)
 {
 	S = sS;
-	vList = S->VortexList;
-	hList = S->HeatList;
 	merged_ = 0;
 }
 
@@ -21,31 +16,30 @@ void epsfast::CalcEpsilonFast(bool merge)
 {
 	merged_ = 0;
 
-	auto bnodes = S->Tree->getBottomNodes();
-	const_for(bnodes, llbnode)
+	vector<TSortedNode*>& bottom_nodes = S->Tree->getBottomNodes();
+	for (auto lbnode: bottom_nodes)
 	{
-		#define bnode (**llbnode)
-		TAtt *nearestAtt = nearestBodySegment(bnode, TVec(bnode.x, bnode.y));
+		TVec bnode_center = TVec(lbnode->x, lbnode->y);
+		TAtt *nearestAtt = nearestBodySegment(*lbnode, bnode_center);
 
 		double merge_criteria_sq = (merge && nearestAtt) ? 
-		                             0.16 * nearestAtt->dl.abs2() * (1. + (TVec(bnode.x, bnode.y) - nearestAtt->r).abs2())
+		                             0.16 * nearestAtt->dl.abs2() * (1. + (bnode_center - nearestAtt->r).abs2())
 		                             : 0;
-		double _1_eps_restriction = 3.0/nearestAtt->dl.abs();
+		double eps_restriction = nearestAtt->dl.abs()*(1.0/3.0);
 
-		for (TObj *lobj = bnode.vRange.first; lobj < bnode.vRange.last; lobj++)
+		for (TObj *lobj = lbnode->vRange.first; lobj < lbnode->vRange.last; lobj++)
 		{
 			if (!lobj->g) continue;
-			lobj->_1_eps = min(1./epsv(bnode, lobj, merge_criteria_sq), _1_eps_restriction);
+			lobj->_1_eps = 1.0/std::max(epsv(*lbnode, lobj, merge_criteria_sq), eps_restriction);
 			//eps is bounded below (cant be less than restriction)
 		}
 
-		for (TObj *lobj = bnode.hRange.first; lobj < bnode.hRange.last; lobj++)
+		for (TObj *lobj = lbnode->hRange.first; lobj < lbnode->hRange.last; lobj++)
 		{
 			if (!lobj->g) continue;
-			lobj->_1_eps = min(1./epsh(bnode, lobj, merge_criteria_sq), _1_eps_restriction);
+			lobj->_1_eps = 1.0/std::max(epsh(*lbnode, lobj, merge_criteria_sq), eps_restriction);
 			//eps is bounded below (cant be less than restriction)
 		}
-		#undef bnode
 	}
 }
 
@@ -71,15 +65,14 @@ void epsfast::MergeVortexes(TObj *lv1, TObj *lv2)
 double epsfast::epsv(const TSortedNode &Node, TObj *lv, double merge_criteria_sq)
 {
 	double res1, res2;
-	res2 = res1 = DBL_MAX;
+	res2 = res1 = std::numeric_limits<double>::max();
 
 	TObj *lv1, *lv2;
 	lv1 = lv2 = NULL;
 
-	const_for(Node.NearNodes, llnnode)
+	for (auto lnnode: *Node.NearNodes)
 	{
-		#define nnode (**llnnode)
-		for (TObj *lobj = nnode.vRange.first; lobj < nnode.vRange.last; lobj++)
+		for (TObj *lobj = lnnode->vRange.first; lobj < lnnode->vRange.last; lobj++)
 		{
 			if (!lobj->g || (lv == lobj)) { continue; }
 			double drabs2 = (lv->r - lobj->r).abs2();
@@ -94,16 +87,15 @@ double epsfast::epsv(const TSortedNode &Node, TObj *lv, double merge_criteria_sq
 				res2 = drabs2; lv2 = lobj;
 			}
 		}
-		#undef nnode
 	}
 
-	if ( !lv1 ) return DBL_MIN;
+	if ( !lv1 ) return std::numeric_limits<double>::min();
 	if ( !lv2 ) return sqrt(res1);
 
-	if ( 
+	if (
 		(res1 < merge_criteria_sq)
 		||
-		( (lv1->sign() == lv2->sign()) && (lv1->sign() != lv->sign()) ) 
+		( (lv1->sign() == lv2->sign()) && (lv1->sign() != lv->sign()) )
 	   )
 	{
 		MergeVortexes(lv, lv1);
@@ -116,14 +108,13 @@ double epsfast::epsv(const TSortedNode &Node, TObj *lv, double merge_criteria_sq
 double epsfast::epsh(const TSortedNode &Node, TObj *lv, double merge_criteria_sq)
 {
 	double res1, res2;
-	res2 = res1 = DBL_MAX;
+	res2 = res1 = std::numeric_limits<double>::max();
 
 	TObj *lv1 = NULL;
 
-	const_for(Node.NearNodes, llnnode)
+	for (auto lnnode: *Node.NearNodes)
 	{
-		#define nnode (**llnnode)
-		for (TObj *lobj = nnode.hRange.first; lobj < nnode.hRange.last; lobj++)
+		for (TObj *lobj = lnnode->hRange.first; lobj < lnnode->hRange.last; lobj++)
 		{
 			if (!lobj->g || (lv == lobj)) { continue; }
 			double drabs2 = (lv->r - lobj->r).abs2();
@@ -139,11 +130,10 @@ double epsfast::epsh(const TSortedNode &Node, TObj *lv, double merge_criteria_sq
 				res2 = drabs2;
 			}
 		}
-		#undef nnode
 	}
 
-	if ( res1 == DBL_MAX ) return DBL_MIN;
-	if ( res2 == DBL_MAX ) return sqrt(res1);
+	if ( res1 == std::numeric_limits<double>::max() ) return std::numeric_limits<double>::min();
+	if ( res2 == std::numeric_limits<double>::max() ) return sqrt(res1);
 
 	if (res1 < merge_criteria_sq)
 	{
@@ -156,39 +146,35 @@ double epsfast::epsh(const TSortedNode &Node, TObj *lv, double merge_criteria_sq
 
 TAtt* epsfast::nearestBodySegment(TSortedNode &Node, TVec p)
 {
-	TAtt *latt = NULL;
-	double res = DBL_MAX;
+	TObj *att = NULL;
+	double res = std::numeric_limits<double>::max();
 
-	if (!S->BodyList) return NULL;
-
-	const_for (Node.NearNodes, llnnode)
+	for (TSortedNode* lnnode: *Node.NearNodes)
 	{
-		#define nnode (**llnnode)
-		if ( nnode.BodyLList )
-		const_for(nnode.BodyLList, llatt)
+		// FIXME использовать algorithm
+		for (TObj* latt: lnnode->bllist)
 		{
-			if (!*llatt) { fprintf(stderr, "epsfast.cpp:169 llatt = NULL. Is it possible?\n"); continue; }
+			if (!latt) { fprintf(stderr, "epsfast.cpp:%d llatt = NULL. Is it possible?\n", __LINE__ ); continue; }
 
-			double drabs2 = (p - (*llatt)->r).abs2();
+			double drabs2 = (p - latt->r).abs2();
 			if ( drabs2 < res )
 			{
 				res = drabs2;
-				latt = (TAtt*)*llatt;
+				att = latt;
 			}
 		}
-		#undef nnode
 	}
 
-	if (latt) return latt;
+	if (att) return static_cast<TAtt*>(att);
 
-	const_for(S->BodyList, llbody)
-	const_for((**llbody).List, lobj)
+	for (auto& lbody: S->BodyList)
+	for (auto lobj = lbody->alist.begin(); lobj < lbody->alist.end(); lobj++)
 	{
 		double drabs2 = (p - lobj->r).abs2();
 		if ( drabs2 < res )
 		{
 			res = drabs2;
-			latt = lobj;
+			att = &*lobj;
 		}
 		else
 		{
@@ -196,6 +182,6 @@ TAtt* epsfast::nearestBodySegment(TSortedNode &Node, TVec p)
 		}
 	}
 
-	return latt;
+	return static_cast<TAtt*>(att);
 }
 

@@ -50,6 +50,7 @@ void TSortedNode::DivideNode()
 
 	//fprintf(stderr, "%d %d will split: h=%g, w=%g, x=%g, y=%g, size=%d\n", i, j, h, w, x, y, MaxListSize);
 
+	// FIXME нужен свой менеджер памяти, что бы не выделять ее каждый раз заново
 	ch1 = new TSortedNode(parent);
 	ch2 = new TSortedNode(parent);
 
@@ -256,10 +257,10 @@ void stree::destroy()
 	bottomNodes.clear();
 }
 
-vector<TSortedNode*>* stree::getBottomNodes()
+vector<TSortedNode*>& stree::getBottomNodes()
 {
 	if (bottomNodes.empty()) {fprintf(stderr, "PANIC in stree::getBottomNodes()! Tree isn't built\n");}
-	return &bottomNodes;
+	return bottomNodes;
 }
 
 TSortedNode* stree::findNode(TVec p)
