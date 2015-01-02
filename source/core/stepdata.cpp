@@ -1,7 +1,6 @@
 #include "stepdata.h"
 #include "assert.h"
 #include "hdf5.h"
-#include "body.h"
 
 Stepdata::Stepdata(Space* s_)
 {

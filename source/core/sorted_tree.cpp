@@ -1,6 +1,5 @@
 #include "core.h"
 #include "sorted_tree.h"
-#include "body.h"
 #include "math.h"
 #include "iostream"
 using namespace std;

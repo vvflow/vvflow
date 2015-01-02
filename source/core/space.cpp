@@ -266,6 +266,7 @@ herr_t Space::dataset_read_list(hid_t fid, const char *name, vector<TObj>& list)
 		return -1;
 	}
 	H5Dclose(dataset);
+	return 0;
 }
 
 herr_t dataset_read_body(hid_t g_id, const char* name, const H5L_info_t *info, void *op_data)

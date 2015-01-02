@@ -2,7 +2,6 @@
 #define __CONVECTIVEFAST_H__
 #include <math.h>
 #include "core.h"
-#include "body.h"
 #include "matrix.h"
 
 class convectivefast
