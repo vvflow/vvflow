@@ -1,7 +1,6 @@
 CC = icc -O3 -openmp -g -debug all
 PREFIX = ~/.local
 
-.PHONY: vvcompose
 all: vvcompose
 
 vvcompose: vvcompose.cpp
