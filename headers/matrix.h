@@ -6,8 +6,15 @@
 class Matrix
 {
 	public:
-		Matrix(unsigned size);
-		size_t size;
+		Matrix();
+		~Matrix();
+		Matrix(const Matrix&) = delete;
+		Matrix(Matrix&&) = delete;
+		Matrix& operator= (const Matrix&) = delete;
+		Matrix& operator= (Matrix&&) = delete;
+
+		void resize(unsigned size);
+		unsigned size() { return N; }
 
 		double *objectAtIndex(unsigned eq, unsigned j);
 		double **solutionAtIndex(unsigned i);
@@ -21,6 +28,7 @@ class Matrix
 		void FillInverseMatrix();
 
 	private:
+		size_t N; //size
 		double* BodyMatrix;
 		double* InverseMatrix;
 		double* RightCol;

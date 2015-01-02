@@ -76,6 +76,7 @@ class Space
 		double gmax();
 		TVec HydroDynamicMomentum();
 		double AverageSegmentLength();
+		int TotalSegmentsCount();
 		bool PointIsInBody(TVec p);
 
 	private:

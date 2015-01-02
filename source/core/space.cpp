@@ -836,23 +836,23 @@ void Space::ZeroSpeed()
 
 double Space::integral()
 {
-	double sum = 0;
-	for (const auto& obj: VortexList) sum += obj.g * obj.r.abs2();
-	return sum;
+	double res = 0;
+	for (const auto& obj: VortexList) res += obj.g * obj.r.abs2();
+	return res;
 }
 
 double Space::gsum()
 {
-	double sum = 0;
-	for (const auto& obj: VortexList) sum += obj.g;
-	return sum;
+	double res = 0;
+	for (const auto& obj: VortexList) res += obj.g;
+	return res;
 }
 
 double Space::gmax()
 {
-	double max = 0;
-	for (const auto& obj: VortexList) max = ( fabs(obj.g) > fabs(max) ) ? obj.g : max;
-	return max;
+	double res = 0;
+	for (const auto& obj: VortexList) res = ( fabs(obj.g) > fabs(res) ) ? obj.g : res;
+	return res;
 }
 
 TVec Space::HydroDynamicMomentum()
@@ -871,6 +871,17 @@ double Space::AverageSegmentLength()
 
 	if (!N) return DBL_MIN;
 	return SurfaceLength / N;
+}
+
+int Space::TotalSegmentsCount()
+{
+	int res = 0;
+	for (const auto& lbody: BodyList)
+	{
+		res += lbody->alist.size();
+	}
+
+	return res;
 }
 
 bool Space::PointIsInBody(TVec p)

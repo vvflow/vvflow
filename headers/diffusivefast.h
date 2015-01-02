@@ -1,6 +1,7 @@
 #ifndef _DIFFUSIVEFAST_H_
 #define _DIFFUSIVEFAST_H_
 #include "core.h"
+#include "body.h"
 
 class diffusivefast
 {

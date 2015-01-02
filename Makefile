@@ -25,7 +25,7 @@ endif
 
 parts 	:= core modules
 core_objects 	:= space body shellscript sorted_tree stepdata
-modules_objects := flowmove epsfast diffusivefast convective convectivefast matrix
+modules_objects := flowmove epsfast diffusivefast convective matrix convectivefast
 VPATH := $(addprefix source/, $(parts) ) 
 # VPATH is special make var 
 

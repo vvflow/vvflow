@@ -6,17 +6,29 @@
 #define NDEBUG
 #include "assert.h"
 
-#define sqr(x) x*x
+#define sqr(x) (x*x)
 
-Matrix::Matrix(unsigned size_)
+Matrix::Matrix()
 {
-	size = size_;
+	N = 0;
 
-	BodyMatrix = new double[sqr(size)]; //(double*)malloc(N*N*sizeof(double));
-	InverseMatrix = new double[sqr(size)]; //(double*)malloc(N*N*sizeof(double));
-	RightCol = new double[size]; //(double*)malloc(N*sizeof(double));
-	solution = new double*[size]; //(double*)malloc(N*sizeof(double));
-	ipvt = new int[size+1]; //(int*)malloc((N+1)*sizeof(int));
+	BodyMatrix = InverseMatrix = RightCol = NULL;
+	solution = NULL;
+	ipvt = NULL;
+	bodyMatrixIsOk_ = false;
+	inverseMatrixIsOk_ = false;
+}
+
+void Matrix::resize(unsigned newsize)
+{
+	if (newsize == N) return;
+	N = newsize;
+
+	BodyMatrix =    (double*)realloc(BodyMatrix,    sqr(N)*sizeof(double));
+	InverseMatrix = (double*)realloc(InverseMatrix, sqr(N)*sizeof(double));
+	RightCol =      (double*)realloc(RightCol,      N*sizeof(double));
+	solution =     (double**)realloc(solution,      N*sizeof(double));
+	ipvt =             (int*)realloc(ipvt,          (N+1)*sizeof(int));
 
 	bodyMatrixIsOk_ = false;
 	inverseMatrixIsOk_ = false;
@@ -24,19 +36,19 @@ Matrix::Matrix(unsigned size_)
 
 double* Matrix::objectAtIndex(unsigned i, unsigned j)
 {
-	if ( (i>=size) || (j>=size) ) return NULL;
-	return BodyMatrix + i*size + j;
+	if ( (i>=N) || (j>=N) ) return NULL;
+	return BodyMatrix + i*N + j;
 }
 
 double** Matrix::solutionAtIndex(unsigned i)
 {
-	if ( i>=size ) return NULL;
+	if ( i>=N ) return NULL;
 	return solution + i;
 }
 
 double* Matrix::rightColAtIndex(unsigned i)
 {
-	if ( i>=size ) return NULL;
+	if ( i>=N ) return NULL;
 	return RightCol + i;
 }
 
@@ -51,9 +63,9 @@ void Matrix::solveUsingInverseMatrix(bool useInverseMatrix)
 		}
 
 		#pragma omp parallel for
-		for (unsigned i=0; i<size; i++)
+		for (unsigned i=0; i<N; i++)
 		{
-			double *RowI = InverseMatrix + size*i;
+			double *RowI = InverseMatrix + N*i;
 
 			if (!solution[i])
 			{
@@ -62,7 +74,7 @@ void Matrix::solveUsingInverseMatrix(bool useInverseMatrix)
 			}
 
 			*solution[i] = 0;
-			for (unsigned j=0; j<size; j++)
+			for (unsigned j=0; j<N; j++)
 			{
 				*solution[i] += RowI[j]*RightCol[j];
 			}
@@ -75,8 +87,8 @@ void Matrix::solveUsingInverseMatrix(bool useInverseMatrix)
 			exit(-2);
 		}
 
-		int info, one=1, N_int=size;
-		transpose(BodyMatrix, size);
+		int info, one=1, N_int=N;
+		transpose(BodyMatrix, N);
 		dgesv_(&N_int,&one,BodyMatrix,&N_int,ipvt,RightCol,&N_int,&info);
 
 		if (info)
@@ -85,7 +97,7 @@ void Matrix::solveUsingInverseMatrix(bool useInverseMatrix)
 			exit(-2);
 		}
 
-		for (size_t i=0; i<size; i++)
+		for (size_t i=0; i<N; i++)
 		{
 			if (!solution[i])
 			{
@@ -108,10 +120,10 @@ void Matrix::FillInverseMatrix()
 		exit(-2);
 	}
 
-	memcpy(InverseMatrix, BodyMatrix, sqr(size)*sizeof(double));
+	memcpy(InverseMatrix, BodyMatrix, sqr(N)*sizeof(double));
 
-	int size_int = size;
-	int LWORK = sqr(size);
+	int size_int = N;
+	int LWORK = sqr(N);
 	int info;
 
 	dgetrf_(&size_int,&size_int,InverseMatrix,&size_int,ipvt,&info);
@@ -135,9 +147,9 @@ void Matrix::FillInverseMatrix()
 void Matrix::transpose(double* A, unsigned N)
 {
 	#pragma omp parallel for
-	for (unsigned i=0; i<size; i++)
+	for (unsigned i=0; i<N; i++)
 	{
-		for (unsigned j=i+1; j<size; j++)
+		for (unsigned j=i+1; j<N; j++)
 		{
 			double tmp = A[i*N+j];
 			A[i*N+j] = A[j*N+i];
@@ -152,11 +164,11 @@ void Matrix::save(const char* filename)
 	FILE *fout = fopen(filename, "w");
 	if (!fout) { perror("Error saving the matrix"); return; }
 
-	for (unsigned i=0; i<size; i++)
+	for (unsigned i=0; i<N; i++)
 	{
-		for (unsigned j=0; j<size; j++)
+		for (unsigned j=0; j<N; j++)
 		{
-			fprintf(fout, "%lf\t", BodyMatrix[i*size+j]);
+			fprintf(fout, "%lf\t", BodyMatrix[i*N+j]);
 		}
 		fprintf(fout, "\t%lf\n", RightCol[i]);
 	}
@@ -166,19 +178,19 @@ void Matrix::save(const char* filename)
 void Matrix::fillWithZeros()
 {
 	bodyMatrixIsOk_ = 0;
-	memset(BodyMatrix, 0, sizeof(double)*sqr(size));
-	memset(RightCol, 0, sizeof(double)*size);
+	memset(BodyMatrix, 0, sizeof(double)*sqr(N));
+	memset(RightCol, 0, sizeof(double)*N);
 }
 
 bool Matrix::testNan()
 {
 	if (!bodyMatrixIsOk_) { perror("Test Nan: matrix is not filled"); return false; }
 	bool foundNan = false;
-	for (unsigned i=0; i<size; i++)
+	for (unsigned i=0; i<N; i++)
 	{
-		for (unsigned j=0; j<size; j++)
+		for (unsigned j=0; j<N; j++)
 		{
-			double el = BodyMatrix[i*size+j];
+			double el = BodyMatrix[i*N+j];
 			if (el != el)
 			{
 				fprintf(stderr, "Nan element in matrix: row %d, col %d\n", i, j);

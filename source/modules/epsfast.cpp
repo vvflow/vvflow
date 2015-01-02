@@ -16,7 +16,9 @@ void epsfast::CalcEpsilonFast(bool merge)
 {
 	merged_ = 0;
 
-	vector<TSortedNode*>& bottom_nodes = S->Tree->getBottomNodes();
+	auto& bottom_nodes = S->Tree->getBottomNodes();
+	static_assert(std::is_same<decltype(bottom_nodes), vector<TSortedNode*>&>::value, "bottom_nodes must be reference");
+	
 	for (auto lbnode: bottom_nodes)
 	{
 		TVec bnode_center = TVec(lbnode->x, lbnode->y);

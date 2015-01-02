@@ -65,8 +65,8 @@ class stree
 		void build(bool IncludeVortexes = true, bool IncludeBody = true, bool IncludeHeat = true);
 		void destroy();
 
-		vector<TSortedNode*>& getBottomNodes();
-		TSortedNode* findNode(TVec p);
+		vector<snode*>& getBottomNodes();
+		snode* findNode(TVec p);
 
 		void printBottomNodes(FILE* f, bool PrintDepth = false); // prints lines such "x y w h [i]"
 
@@ -76,8 +76,8 @@ class stree
 		double minNodeSize;
 		double maxNodeSize;
 
-		TSortedNode *rootNode;
-		vector<TSortedNode*> bottomNodes;
+		snode *rootNode;
+		vector<snode*> bottomNodes;
 
 		friend class snode;
 };
