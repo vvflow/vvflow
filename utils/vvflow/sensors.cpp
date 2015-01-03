@@ -7,6 +7,7 @@ class sensors
 {
 	public:
 		sensors(Space* sS, convectivefast *sconv, const char* sensors_file, const char* output);
+		~sensors();
 		void loadFile(const char* file);
 		void output();
 
@@ -14,7 +15,7 @@ class sensors
 		Space *S;
 		convectivefast *conv;
 		FILE *fout;
-		vector <TVec> *slist;
+		vector <TVec> slist;
 };
 
 sensors::sensors(Space* sS, convectivefast *sconv, const char* sensors_file, const char* output)
@@ -22,10 +23,15 @@ sensors::sensors(Space* sS, convectivefast *sconv, const char* sensors_file, con
 	S = sS;
 	conv = sconv;
 	fout = NULL;
-	slist = NULL;
 
 	loadFile(sensors_file);
-	if (slist->size_safe()) fout = fopen(output, "a");
+	if (slist.size()) fout = fopen(output, "a");
+}
+
+sensors::~sensors()
+{
+	if (fout) fclose(fout);
+	fout = NULL;
 }
 
 void sensors::loadFile(const char* file)
@@ -33,13 +39,12 @@ void sensors::loadFile(const char* file)
 	if (!file) return;
 
 	FILE *fin = fopen(file, "r");
-	if (!fin) { cerr << "No file called \'" << file << "\'\n"; return; }
+	if (!fin) { std::cerr << "No file called \'" << file << "\'" << std::endl; return; }
 
-	slist = new vector<TVec>();
 	TVec vec(0, 0);
 	while ( fscanf(fin, "%lf %lf", &vec.x, &vec.y)==2 )
 	{
-		slist->push_back(vec);
+		slist.push_back(vec);
 	}
 
 	fclose(fin);
@@ -50,9 +55,9 @@ void sensors::output()
 	if (!fout) return;
 
 	fprintf(fout, "%lg", double(S->Time));
-	const_for(slist, lvec)
+	for (TVec vec: slist)
 	{
-		TVec tmp = conv->SpeedSumFast(*lvec);
+		TVec tmp = conv->SpeedSumFast(vec);
 		fprintf(fout, " \t%lg \t%lg", tmp.x, tmp.y);
 	}
 	fprintf(fout, "\n");

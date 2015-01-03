@@ -1,11 +1,16 @@
-CC = icc -O3 -openmp -g -debug all
 PREFIX = ~/.local
 
-.PHONY: vvflow
+ifeq ($(CXX),icpc)
+        CXXFLAGS+= -O3 -Wall -openmp -mkl=parallel
+        AR = xiar
+else
+        CXXFLAGS+= -O3 -Wall -fopenmp
+endif
+
 all: vvflow
 
 vvflow: vvflow.cpp
-	$(CC) $^ -o $@ -std=c++0x -mkl=parallel -lhdf5 -Wl,-Bstatic -lvvhd -Wl,-Bdynamic
+	$(CXX) $(CXXFLAGS) $^ -o $@ -std=c++0x -lhdf5 -Wl,-Bstatic -lvvhd -Wl,-Bdynamic
 
 clean:
 	rm -f vvflow

@@ -135,9 +135,9 @@ TAtt* TBody::isPointInHeatLayer(TVec p)
 	return isPointInContour(p, heat_layer);
 }
 
-template <class T> TVec& corner(T lobj);
-template <> TVec& corner(TVec& lobj) {return lobj;}
-template <> TVec& corner(TAtt& lobj) {return lobj.corner;}
+template <class T> TVec corner(T lobj);
+template <> TVec corner(TVec lobj) {return lobj;}
+template <> TVec corner(TAtt lobj) {return lobj.corner;}
 
 template <class T>
 TAtt* TBody::isPointInContour(TVec p, vector<T> &list)

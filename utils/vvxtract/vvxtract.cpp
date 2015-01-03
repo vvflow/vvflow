@@ -66,19 +66,19 @@ void print_info(Space *S)
 
 void print_body(TBody *body)
 {
-	attribute_print("holder_position", body->pos, INT32_MAX);
-	attribute_print("delta_position", body->dPos);
-	attribute_print("speed_x", body->SpeedX.script.c_str());
-	attribute_print("speed_y", body->SpeedY.script.c_str());
-	attribute_print("speed_o", body->SpeedO.script.c_str());
-	attribute_print("speed_slae", body->Speed_slae);
-	attribute_print("speed_slae_prev", body->Speed_slae_prev);
-	attribute_print("spring_const", body->k, -1);
+	attribute_print("holder_position", body->holder, INT32_MAX);
+	attribute_print("delta_position", body->dpos);
+	attribute_print("speed_x", body->speed_x.script.c_str());
+	attribute_print("speed_y", body->speed_y.script.c_str());
+	attribute_print("speed_o", body->speed_o.script.c_str());
+	attribute_print("speed_slae", body->speed_slae);
+	attribute_print("speed_slae_prev", body->speed_slae_prev);
+	attribute_print("spring_const", body->kspring, -1);
 	attribute_print("spring_damping", body->damping);
 	attribute_print("density", body->density, 1);
-	attribute_print("force_hydro", body->Force_hydro);
-	attribute_print("force_holder", body->Force_holder);
-	attribute_print("friction_prev", body->Friction_prev);
+	attribute_print("force_hydro", body->force_hydro);
+	attribute_print("force_holder", body->force_holder);
+	attribute_print("friction_prev", body->friction_prev);
 }
 
 int main(int argc, char **argv)
@@ -95,17 +95,16 @@ int main(int argc, char **argv)
 
 	printf("General:\n");
 	print_info(S);
-	attribute_print("VortexList:", long(S->VortexList->size_safe()));
-	attribute_print("BodyList:", long(S->BodyList->size_safe()));
-	attribute_print("HeatList:", long(S->HeatList->size_safe()));
-	attribute_print("InkList:", long(S->StreakList->size_safe()));
-	attribute_print("InkSourceList:", long(S->StreakSourceList->size_safe()));
+	attribute_print("VortexList:", long(S->VortexList.size()));
+	attribute_print("BodyList:", long(S->BodyList.size()));
+	attribute_print("HeatList:", long(S->HeatList.size()));
+	attribute_print("InkList:", long(S->StreakList.size()));
+	attribute_print("InkSourceList:", long(S->StreakSourceList.size()));
 	
-	int b=0;
-	const_for(S->BodyList, body)
+	for (auto& lbody: S->BodyList)
 	{
-		printf("\nBody%02d:\n", b++);
-		print_body(*body);
+		printf("\n%s:\n", lbody->get_name().c_str());
+		print_body(lbody.get());
 	}
 
 	printf("\nNotes:\n");

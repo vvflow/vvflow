@@ -77,7 +77,7 @@ class TBody
 		//double kx, ky, ka;
 		double density; //in doc \frac{\rho_b}{\rho_0}
 
-		int64_t special_segment_no;
+		int32_t special_segment_no;
 		bc_t boundary_condition;
 		hc_t heat_condition;
 

@@ -30,43 +30,6 @@ struct ATT {
 	double heat_const;
 };*/
 
-/******************************************************************************
-***** STRING ******************************************************************
-******************************************************************************/
-
-void attribute_write(hid_t hid, const char *name, const char *str)
-{
-	if (!strlen(str)) return;
-	if (!commited_string)
-	{
-		H5Tcommit2(fid, "string_t", string_t, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-		commited_string = true;
-	}
-
-	hid_t aid = H5Acreate2(hid, name, string_t, DATASPACE_SCALAR(), H5P_DEFAULT, H5P_DEFAULT);
-	assert(aid>=0);
-	assert(H5Awrite(aid, string_t, &str)>=0);
-	assert(H5Aclose(aid)>=0);
-}
-
-/******************************************************************************
-***** FRACTION ****************************************************************
-******************************************************************************/
-
-void attribute_write(hid_t hid, const char *name, TTime time)
-{
-	if (time.value == INT32_MAX) return;
-	if (!commited_fraction)
-	{
-		commited_fraction = true;
-		H5Tcommit2(fid, "fraction_t", fraction_t, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-	}
-
-	hid_t aid = H5Acreate2(hid, name, fraction_t, DATASPACE_SCALAR(), H5P_DEFAULT, H5P_DEFAULT);
-	assert(aid>=0);
-	assert(H5Awrite(aid, fraction_t, &time)>=0);
-	assert(H5Aclose(aid)>=0);
-}
 
 /******************************************************************************
 ***** NATIVE ******************************************************************
@@ -98,6 +61,38 @@ template<> void attribute_read(hid_t hid, const char *name, std::string& val)
 	else val = "";
 	free(c_buf);
 }
+template<> void attribute_read(hid_t hid, const char *name, bc_t& bc)
+{
+	uint32_t bc_raw = 0;
+	attread(hid, name, &bc_raw, H5T_NATIVE_UINT32);
+	switch (bc_raw)
+	{
+		case 0: bc = bc_t::steady; break;
+		case 1: bc = bc_t::kutta; break;
+		default:
+			fprintf(stderr, "Warning: bad boundary condition (%d), using bc::steady\n", bc_raw);
+			bc = bc_t::steady;
+	}
+}
+template<> void attribute_read(hid_t hid, const char *name, hc_t& hc)
+{
+	uint32_t hc_raw = 0;
+	attread(hid, name, &hc_raw, H5T_NATIVE_UINT32);
+	switch (hc_raw)
+	{
+		case 0: hc = hc_t::neglect; break;
+		case 1: hc = hc_t::isolate; break;
+		case 2: hc = hc_t::const_t; break;
+		case 3: hc = hc_t::const_w; break;
+		default:
+			fprintf(stderr, "Warning: bad heat condition (%d), using hc::neglect\n", hc_raw);
+			hc = hc_t::neglect;
+	}
+}
+
+/******************************************************************************
+***** NATIVE ******************************************************************
+******************************************************************************/
 
 void attwrite(hid_t hid, const char *name, void *value, hid_t type_id)
 {
@@ -111,12 +106,73 @@ template<typename T> void attribute_write(hid_t, const char*, T value);
 template<> void attribute_write(hid_t hid, const char *name, uint32_t val) { if (val) attwrite(hid, name, &val, H5T_NATIVE_UINT32); }
 template<> void attribute_write(hid_t hid, const char *name, int32_t val) { if (val) attwrite(hid, name, &val, H5T_NATIVE_INT32); }
 template<> void attribute_write(hid_t hid, const char *name, double val) { if (val) attwrite(hid, name, &val, H5T_NATIVE_DOUBLE); }
+template<> void attribute_write(hid_t hid, const char *name, bc_t bc)
+{
+	uint32_t bc_raw = 0;
+	switch (bc)
+	{
+		case bc_t::steady: bc_raw = 0; break;
+		case bc_t::kutta: bc_raw = 1; break;
+	}
+	attwrite(hid, name, &bc_raw, H5T_NATIVE_UINT32);
+}
+template<> void attribute_write(hid_t hid, const char *name, hc_t hc)
+{
+	uint32_t hc_raw = 0;
+	switch (hc)
+	{
+		case hc_t::neglect: hc_raw = 0; break;
+		case hc_t::isolate: hc_raw = 1; break;
+		case hc_t::const_t: hc_raw = 2; break;
+		case hc_t::const_w: hc_raw = 3; break;
+	}
+	attwrite(hid, name, &hc_raw, H5T_NATIVE_UINT32);
+}
+
+/******************************************************************************
+***** STRING ******************************************************************
+******************************************************************************/
+
+template<> void attribute_write(hid_t hid, const char *name, std::string str)
+{
+	if (str.empty()) return;
+	if (!commited_string)
+	{
+		H5Tcommit2(fid, "string_t", string_t, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		commited_string = true;
+	}
+
+	hid_t aid = H5Acreate2(hid, name, string_t, DATASPACE_SCALAR(), H5P_DEFAULT, H5P_DEFAULT);
+	assert(aid>=0);
+	const char* c_str = str.c_str();
+	assert(H5Awrite(aid, string_t, &c_str)>=0);
+	assert(H5Aclose(aid)>=0);
+}
+
+/******************************************************************************
+***** FRACTION ****************************************************************
+******************************************************************************/
+
+template<> void attribute_write(hid_t hid, const char *name, TTime time)
+{
+	if (time.value == INT32_MAX) return;
+	if (!commited_fraction)
+	{
+		commited_fraction = true;
+		H5Tcommit2(fid, "fraction_t", fraction_t, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	}
+
+	hid_t aid = H5Acreate2(hid, name, fraction_t, DATASPACE_SCALAR(), H5P_DEFAULT, H5P_DEFAULT);
+	assert(aid>=0);
+	assert(H5Awrite(aid, fraction_t, &time)>=0);
+	assert(H5Aclose(aid)>=0);
+}
 
 /******************************************************************************
 ***** VEC *********************************************************************
 ******************************************************************************/
 
-void attribute_write(hid_t hid, const char *name, TVec vec)
+template<> void attribute_write(hid_t hid, const char *name, TVec vec)
 {
 	if (vec.iszero()) return;
 	if (!commited_vec)
@@ -135,7 +191,7 @@ void attribute_write(hid_t hid, const char *name, TVec vec)
 ***** VEC3D *******************************************************************
 ******************************************************************************/
 
-void attribute_write(hid_t hid, const char *name, TVec3D vec3d)
+template<> void attribute_write(hid_t hid, const char *name, TVec3D vec3d)
 {
 	if (vec3d.iszero()) return;
 	if (!commited_vec3d)

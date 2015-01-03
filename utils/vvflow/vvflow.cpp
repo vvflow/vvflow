@@ -135,7 +135,7 @@ int main(int argc, char** argv)
 		dbg(fm.CropHeat());
 		S->Time = TTime::add(S->Time, S->dt);
 
-		fprintf(stderr, "\r%-10g \t%-10d \t%-10d", double(S->Time), S->VortexList->size_safe(), S->HeatList->size_safe());
+		fprintf(stderr, "\r%-10g \t%-10d \t%-10d", double(S->Time), S->VortexList.size(), S->HeatList.size());
 	}
 
 	fprintf(stderr, "\n");

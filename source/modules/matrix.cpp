@@ -19,6 +19,15 @@ Matrix::Matrix()
 	inverseMatrixIsOk_ = false;
 }
 
+Matrix::~Matrix()
+{
+	free(BodyMatrix);
+	free(InverseMatrix);
+	free(RightCol);
+	free(solution);
+	free(ipvt);
+}
+
 void Matrix::resize(unsigned newsize)
 {
 	if (newsize == N) return;

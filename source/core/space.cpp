@@ -136,26 +136,24 @@ void Space::dataset_write_body(const char* name, const TBody& body)
 
 	if (!can_simplify)
 	{
-		fprintf(stderr, "Can not save simplified body%02d\n", body.get_index());
+		fprintf(stderr, "Can not save simplified %s\n", body.get_name().c_str());
 		exit(1);
 	}
 	attribute_write(file_dataset, "simplified_dataset", uint32_t(2));
 	attribute_write(file_dataset, "general_slip", general_slip);
-	attribute_write(file_dataset, "heat_const", heat_const);
+	attribute_write(file_dataset, "heat_const", double(heat_const));
 
 	if (!body.root_body.expired())
 	{
 		auto root_body = body.root_body.lock();
-		char root_body_name[16];
-		sprintf(root_body_name, "body%02d", root_body->get_index());
-		attribute_write(file_dataset, "root_body", root_body_name);
+		attribute_write(file_dataset, "root_body", root_body->get_name());
 	}
 	
 	attribute_write(file_dataset, "holder_position", body.holder);
 	attribute_write(file_dataset, "delta_position", body.dpos);
-	attribute_write(file_dataset, "speed_x", body.speed_x.script.c_str());
-	attribute_write(file_dataset, "speed_y", body.speed_y.script.c_str());
-	attribute_write(file_dataset, "speed_o", body.speed_o.script.c_str());
+	attribute_write(file_dataset, "speed_x", body.speed_x.script);
+	attribute_write(file_dataset, "speed_y", body.speed_y.script);
+	attribute_write(file_dataset, "speed_o", body.speed_o.script);
 	attribute_write(file_dataset, "speed_slae", body.speed_slae);
 	attribute_write(file_dataset, "speed_slae_prev", body.speed_slae_prev);
 	attribute_write(file_dataset, "spring_const", body.kspring);
@@ -185,7 +183,7 @@ void Space::Save(const char* format)
 	assert(fid>=0);
 	datatypes_create_all();
 	
-	attribute_write(fid, "caption", caption.c_str());
+	attribute_write(fid, "caption", caption);
 	attribute_write(fid, "time", Time);
 	attribute_write(fid, "dt", dt);
 	attribute_write(fid, "dt_save", save_dt);
@@ -194,17 +192,17 @@ void Space::Save(const char* format)
 	attribute_write(fid, "re", Re);
 	attribute_write(fid, "pr", Pr);
 	attribute_write(fid, "inf_marker", InfMarker);
-	attribute_write(fid, "inf_speed_x", InfSpeedX.script.c_str());
-	attribute_write(fid, "inf_speed_y", InfSpeedY.script.c_str());
+	attribute_write(fid, "inf_speed_x", InfSpeedX.script);
+	attribute_write(fid, "inf_speed_y", InfSpeedY.script);
 	attribute_write(fid, "inf_circulation", InfCirculation);
 	attribute_write(fid, "gravity", gravitation);
 	attribute_write(fid, "time_to_finish", Finish);
-	attribute_write(fid, "git_info", gitInfo);
-	attribute_write(fid, "git_diff", gitDiff);
+	attribute_write(fid, "git_info", std::string(gitInfo));
+	attribute_write(fid, "git_diff", std::string(gitDiff));
 
 	time_t rt; time(&rt);
 	char *timestr = ctime(&rt); timestr[strlen(timestr)-1] = 0;
-	attribute_write(fid, "time_local", timestr);
+	attribute_write(fid, "time_local", std::string(timestr));
 
 	dataset_write_list("vort", VortexList);
 	dataset_write_list("heat", HeatList);
@@ -213,9 +211,7 @@ void Space::Save(const char* format)
 
 	for (auto& lbody: BodyList)
 	{
-		char body_name[16];
-		sprintf(body_name, "body%02d", lbody->get_index());
-		dataset_write_body(body_name, *lbody);
+		dataset_write_body(lbody->get_name().c_str(), *lbody);
 	}
 
 	datatypes_close_all();
@@ -320,7 +316,7 @@ herr_t dataset_read_body(hid_t g_id, const char* name, const H5L_info_t *info, v
 	
 	if (!simplified_dataset)
 	{
-		fprintf(stderr, "Can not read simplified %s\n", name);
+		fprintf(stderr, "Can not read %s: it is not simplified\n", name);
 		exit(1);
 	} else
 	if (simplified_dataset == 1)

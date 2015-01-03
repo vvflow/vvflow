@@ -1,10 +1,16 @@
 PREFIX = ~/.local
 
-.PHONY: vvxtract
+ifeq ($(CXX),icpc)
+        CXXFLAGS+= -O3 -Wall -openmp -mkl=parallel
+        AR = xiar
+else
+        CXXFLAGS+= -O3 -Wall -fopenmp
+endif
+
 all: vvxtract
 
 vvxtract: vvxtract.cpp
-	$(CXX) $^ -o $@ -std=c++0x -lvvhd -lhdf5
+	$(CXX) $(CXXFLAGS) $^ -o $@ -std=c++0x -lhdf5 -Wl,-Bstatic -lvvhd -Wl,-Bdynamic
 
 clean:
 	rm -f vvxtract

@@ -73,28 +73,28 @@ void do_set(Space* S, const char *arg, const char *value)
 	          sscanf(arg, "b%u%n", &body_no, &len) )
 	{
 		if (arg[len] != '.') ALERT();
-		if (body_no >= S->BodyList->size_safe())
+		if (body_no >= S->BodyList.size())
 		{
 			fprintf(stderr, "vvcompose: set: body[%u]: no such body\n", body_no);
 			exit(3);
 		}
-		TBody *body = S->BodyList->at(body_no);
+		TBody *body = S->BodyList[body_no].get();
 		arg += len;
 
 		char c = 0;
 		TVec3D *vec = NULL;
 		TVec3D move_vec = TVec3D();
-		     if ( (len=0, sscanf(arg, "pos.%c%n",      &c, &len), !arg[len]) ) { vec = &body->pos; }
-		else if ( (len=0, sscanf(arg, "dpos.%c%n",     &c, &len), !arg[len]) ) { vec = &body->dPos; }
+		     if ( (len=0, sscanf(arg, "pos.%c%n",      &c, &len), !arg[len]) ) { vec = &body->holder; }
+		else if ( (len=0, sscanf(arg, "dpos.%c%n",     &c, &len), !arg[len]) ) { vec = &body->dpos; }
 		else if ( (len=0, sscanf(arg, "move.%c%n",     &c, &len), !arg[len]) ) { vec = &move_vec; }
-		else if ( (len=0, sscanf(arg, "spring.%c%n",   &c, &len), !arg[len]) ) { vec = &body->k; }
+		else if ( (len=0, sscanf(arg, "spring.%c%n",   &c, &len), !arg[len]) ) { vec = &body->kspring; }
 		else if ( (len=0, sscanf(arg, "damping.%c%n",  &c, &len), !arg[len]) ) { vec = &body->damping; }
-		else if ( (len=0, sscanf(arg, "speed.x%n",         &len), !arg[len]) ) { body->SpeedX = value; }
-		else if ( (len=0, sscanf(arg, "speed.y%n",         &len), !arg[len]) ) { body->SpeedY = value; }
-		else if ( (len=0, sscanf(arg, "speed.o%n",         &len), !arg[len]) ) { body->SpeedO = value; }
+		else if ( (len=0, sscanf(arg, "speed.x%n",         &len), !arg[len]) ) { body->speed_x = value; }
+		else if ( (len=0, sscanf(arg, "speed.y%n",         &len), !arg[len]) ) { body->speed_y = value; }
+		else if ( (len=0, sscanf(arg, "speed.o%n",         &len), !arg[len]) ) { body->speed_o = value; }
 		else if ( (len=0, sscanf(arg, "density%n",         &len), !arg[len]) ) { body->density = parse<double>(value); }
 		else if (  len=0, sscanf(arg, "root%n",            &len), !arg[len])
-			{ body->root_body = S->BodyList->at(parse<int>(value)); }
+			{ body->root_body = S->BodyList[parse<int>(value)]; }
 		else ALERT();
 
 		if (vec) switch (c)
@@ -107,10 +107,10 @@ void do_set(Space* S, const char *arg, const char *value)
 		}
 		if (vec == &move_vec)
 		{
-			const_for (body->List, lobj)
+			for (auto& latt: body->alist)
 			{
-				TVec dr = lobj->corner - (body->pos.r + body->dPos.r);
-				lobj->corner = move_vec.r + body->pos.r + body->dPos.r + dr*cos(move_vec.o) + rotl(dr)*sin(move_vec.o);
+				TVec dr = latt.corner - body->get_axis();
+				latt.corner = move_vec.r + body->get_axis() + dr*cos(move_vec.o) + rotl(dr)*sin(move_vec.o);
 			}
 			body->doUpdateSegments();
 			body->doFillProperties();
@@ -132,10 +132,10 @@ void do_del(Space *S, const char *arg)
 	// 	// do deletion
 	// }
 
-	     if (!strcmp(arg, "vort")) { S->VortexList->clear(); }
-	else if (!strcmp(arg, "heat")) { S->HeatList->clear(); }
-	else if (!strcmp(arg, "ink"))  { S->StreakList->clear(); }
-	else if (!strcmp(arg, "ink_source")) { S->StreakSourceList->clear(); }
+	     if (!strcmp(arg, "vort")) { S->VortexList.clear(); }
+	else if (!strcmp(arg, "heat")) { S->HeatList.clear(); }
+	else if (!strcmp(arg, "ink"))  { S->StreakList.clear(); }
+	else if (!strcmp(arg, "ink_source")) { S->StreakSourceList.clear(); }
 	// else if ((sscanf(arg, "body[%u]%n", &body_no, &len) ||
 	//           sscanf(arg, "b%u%n", &body_no, &len)) && !arg[len])
 	// {

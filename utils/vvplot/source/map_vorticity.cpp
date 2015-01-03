@@ -9,7 +9,6 @@
 #include <assert.h>
 #include "hdf5.h"
 
-
 #include "libvvplot_api.h"
 #include "flowmove.h"
 #include "epsfast.h"
@@ -25,14 +24,13 @@ double eps2h(const TSortedNode &Node, TVec p)
 	double res1, res2;
 	res2 = res1 = DBL_MAX;
 
-	const_for(Node.NearNodes, llnnode)
+	for (TSortedNode* lnnode: *Node.NearNodes)
 	{
-		#define nnode (**llnnode)
-		for (TObj *lobj = nnode.vRange.first; lobj < nnode.vRange.last; lobj++)
+		for (TObj *lobj = lnnode->vRange.first; lobj < lnnode->vRange.last; lobj++)
 		{
 			dr = p - lobj->r;
 			double drabs2 = dr.abs2();
-			if ( drabs2 ) {
+			if ( !drabs2 ) continue;
 			if ( res1 > drabs2 )
 			{
 				res2 = res1;
@@ -41,9 +39,8 @@ double eps2h(const TSortedNode &Node, TVec p)
 			else if ( res2 > drabs2 )
 			{
 				res2 = drabs2;
-			}}
+			}
 		}
-		#undef nnode
 	}
 
 	if ( res1 == DBL_MAX ) return DBL_MIN;
@@ -58,10 +55,9 @@ TObj* Nearest(TSortedNode &Node, TVec p)
 	double resr = DBL_MAX;
 	TObj *res = NULL;
 
-	const_for(Node.NearNodes, llnnode)
+	for (TSortedNode* lnnode: *Node.NearNodes)
 	{
-		#define nnode (**llnnode)
-		for (TObj *lobj = nnode.vRange.first; lobj < nnode.vRange.last; lobj++)
+		for (TObj *lobj = lnnode->vRange.first; lobj < lnnode->vRange.last; lobj++)
 		{
 			dr = p - lobj->r;
 			double drabs2 = dr.abs2();
@@ -72,7 +68,6 @@ TObj* Nearest(TSortedNode &Node, TVec p)
 				resr = drabs2;
 			}
 		}
-		#undef nnode
 	}
 
 	return res;
@@ -82,16 +77,14 @@ double h2(TSortedNode &Node, TVec p)
 {
 	double resh2 = DBL_MAX;
 
-	const_for(Node.NearNodes, llnnode)
+	for (TSortedNode* lnnode: *Node.NearNodes)
 	{
-		#define nnode (**llnnode)
 		auto blist = nnode.BodyLList;
 		if ( !blist ) { continue; }
 		const_for (blist, llobj)
 		{
 			resh2 = min(resh2, (p-(**llobj).r).abs2());
 		}
-		#undef nnode
 	}
 
 	return resh2;
