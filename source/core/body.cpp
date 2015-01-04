@@ -178,6 +178,7 @@ TAtt* TBody::isPointInContour(TVec p, vector<T> &list)
 
 void TBody::doFillProperties()
 {
+	// FIXME mistake: moi_c after load and save changes
 	_surface = _area = _moi_c = _moi_com = 0;
 	TVec _3S_com= TVec(0., 0.);
 	double _12moi_0 = 0.;

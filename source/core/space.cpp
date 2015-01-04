@@ -314,12 +314,11 @@ herr_t dataset_read_body(hid_t g_id, const char* name, const H5L_info_t *info, v
 	double heat_const;
 	attribute_read(dataset, "simplified_dataset", simplified_dataset);
 	
-	if (!simplified_dataset)
-	{
-		fprintf(stderr, "Can not read %s: it is not simplified\n", name);
-		exit(1);
-	} else
-	if (simplified_dataset == 1)
+	// Предыдущая версия с HDF форматом использовала H5T_ENUM, который сейчас не читается
+	// Но т.к. simplified dataset == 0 я никогда не считал, то отныне 0 будет означать
+	// старую версию. Новая идет с номером 2.
+	// А нормальный неупрощенный датасет я тк и не сделал (пока)
+	if (simplified_dataset == 0)
 	{
 		attribute_read(dataset, "general_bc", general_slip);
 		attribute_read(dataset, "heat_const", heat_const);

@@ -19,7 +19,7 @@ void diffusivefast::CalcVortexDiffusiveFast()
 {
 	auto& bnodes = S->Tree->getBottomNodes();
 
-	#pragma omp parallel for schedule(dynamic, 10)
+	// #pragma omp parallel for schedule(dynamic, 10)
 	for (auto llbnode = bnodes.begin(); llbnode < bnodes.end(); llbnode++)
 	{
 		TSortedNode *lbnode = *llbnode;
@@ -40,7 +40,7 @@ void diffusivefast::CalcVortexDiffusiveFast()
 
 				for (TObj* ljatt: lnnode->bllist)
 				{
-					if (!ljatt) { fprintf(stderr, "diffusivefast.cpp:%d ljatt = NULL. Is it possible?\n", __LINE__ ); continue; }
+					if (!ljatt) { fprintf(stderr, "diffusivefast.cpp:%d ljatt = NULL. Is it possible?\n", 43 ); continue; }
 					SegmentInfluence(*lobj, static_cast<TAtt*>(ljatt), &S3, &S0, true);
 				}
 			}
@@ -58,7 +58,7 @@ void diffusivefast::CalcHeatDiffusiveFast()
 {
 	auto& bnodes = S->Tree->getBottomNodes();
 
-	#pragma omp parallel for schedule(dynamic, 10)
+	// #pragma omp parallel for schedule(dynamic, 10)
 	for (auto llbnode = bnodes.begin(); llbnode < bnodes.end(); llbnode++)
 	{
 		TSortedNode *lbnode = *llbnode;
@@ -79,7 +79,7 @@ void diffusivefast::CalcHeatDiffusiveFast()
 
 				for (TObj* ljatt: lnnode->bllist)
 				{
-					if (!ljatt) { fprintf(stderr, "diffusivefast.cpp:%d ljatt = NULL. Is it possible?\n", __LINE__ ); continue; }
+					if (!ljatt) { fprintf(stderr, "diffusivefast.cpp:%d ljatt = NULL. Is it possible?\n", 82 ); continue; }
 					SegmentInfluence(*lobj, static_cast<TAtt*>(ljatt), &S3, &S0, false);
 				}
 			}
@@ -90,7 +90,6 @@ void diffusivefast::CalcHeatDiffusiveFast()
 //			obj.v += obj._1_eps/(Re*S1) * S2;
 //			obj.v += (sqr(obj._1_eps)/(Re*(C_2PI-S0))) * S3;
 		}
-		#undef bnode
 	}
 }
 

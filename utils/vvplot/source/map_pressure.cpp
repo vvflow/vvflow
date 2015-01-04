@@ -31,32 +31,30 @@ double Pressure(Space* S, convectivefast *conv, TVec p, char RefFrame, double pr
 {
 	double _2PI_Cp=0;
 
-	const_for(S->BodyList, llbody)
+	for (auto& lbody: S->BodyList)
 	{
-		#define b (**llbody)
 		//first addend
-		const_for(b.List, latt)
+		for (auto& latt: lbody->alist)
 		{
-			TVec Vs = b.Speed_slae.r + b.Speed_slae.o * rotl(latt->r - (b.pos.r + b.dPos.r));
-			double g = -Vs * latt->dl;
-			double q = -rotl(Vs) * latt->dl;
-			_2PI_Cp += (rotl(K(latt->r, p))*g + K(latt->r, p)*q) * Vs;
+			TVec Vs = lbody->speed_slae.r + lbody->speed_slae.o * rotl(latt.r - lbody->get_axis());
+			double g = -Vs * latt.dl;
+			double q = -rotl(Vs) * latt.dl;
+			_2PI_Cp += (rotl(K(latt.r, p))*g + K(latt.r, p)*q) * Vs;
 		}
 
 		//second addend
 		double gtmp = 0;
-		const_for(b.List, latt)
+		for (auto& latt: lbody->alist)
 		{
-			TVec Vs = b.Speed_slae.r + b.Speed_slae.o * rotl(latt->r - (b.pos.r + b.dPos.r));
-			gtmp+= latt->gsum;
-			_2PI_Cp -= (latt->dl/S->dt * rotl(K(latt->r, p))) * gtmp;
+			TVec Vs = lbody->speed_slae.r + lbody->speed_slae.o * rotl(latt.r - lbody->get_axis());
+			gtmp+= latt.gsum;
+			_2PI_Cp -= (latt.dl/S->dt * rotl(K(latt.r, p))) * gtmp;
 		}
-		#undef b
 	}
 
-	const_for(S->VortexList, lobj)
+	for (auto& lobj: S->VortexList)
 	{
-		_2PI_Cp+= (lobj->v * rotl(K(lobj->r, p))) * lobj->g;
+		_2PI_Cp+= (lobj.v * rotl(K(lobj.r, p))) * lobj.g;
 	}
 
 	TVec LocalSpeed = conv->SpeedSumFast(p);

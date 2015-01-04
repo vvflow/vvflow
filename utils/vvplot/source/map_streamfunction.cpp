@@ -14,48 +14,41 @@ inline static double atan(TVec p) {return atan(p.y/p.x);}
 
 double Psi(Space* S, TVec p)
 {
-	double psi1(0), psi2(0), psi3(0), psi4(0);
+	double psi1=0.0, psi2=0.0, psi3=0.0, psi4=0.0;
 
-	const_for(S->BodyList, llbody)
+	for (auto& lbody: S->BodyList)
 	{
-		#define b (**llbody)
-
 		double psi_g_tmp=0, psi_q_tmp=0;
 
-		//fprintf(stderr, "body %lf\n", b.RotationSpeed_slae);
-		if (!b.Speed_slae.iszero())
-		const_for(b.List, latt)
+		if (!lbody->speed_slae.iszero())
+		for (TAtt& latt: lbody->alist)
 		{
-			TVec Vs = b.Speed_slae.r + b.Speed_slae.o * rotl(latt->r - (b.pos.r + b.dPos.r));
-			double g = -Vs * latt->dl;
-			double q = -rotl(Vs) * latt->dl;
-			psi_g_tmp+= log((p-latt->r).abs2() + Rd2) * g;
-			psi_q_tmp+= atan(p-latt->r) * q;
-			//fprintf(stderr, "attach %lf\n", b.RotationSpeed_slae);
-		}
-		//psi1-= (psi_g_tmp*0.5 + psi_q_tmp) * C_1_2PI;
-
-		const_for(b.List, latt)
-		{
-			psi2 += log((p-latt->r).abs2() + Rd2) * latt->g;
+			TVec Vs = lbody->speed_slae.r + lbody->speed_slae.o * rotl(latt.r - lbody->get_axis());
+			double g = -Vs * latt.dl;
+			double q = -rotl(Vs) * latt.dl;
+			psi_g_tmp+= log((p-latt.r).abs2() + Rd2) * g;
+			psi_q_tmp+= atan(p-latt.r) * q;
 		}
 
-		#undef b
+		for (auto& latt: lbody->alist)
+		{
+			psi2 += log((p-latt.r).abs2() + Rd2) * latt.g;
+		}
 	}
 	psi2*= -0.5*C_1_2PI;
 
 	TSortedNode* Node = S->Tree->findNode(p);
 	if (!Node) return 0;
-	const_for (Node->FarNodes, llfnode)
+	for (TSortedNode* lfnode: *Node->FarNodes)
 	{
-		TObj obj = (**llfnode).CMp;
+		TObj obj = lfnode->CMp;
 		psi3+= log((p-obj.r).abs2() + Rd2)*obj.g;
-		obj = (**llfnode).CMm;
+		obj = lfnode->CMm;
 		psi3+= log((p-obj.r).abs2() + Rd2)*obj.g;
 	}
-	const_for (Node->NearNodes, llnnode)
+	for (TSortedNode* lnnode: *Node->NearNodes)
 	{
-		for (TObj *lobj = (**llnnode).vRange.first; lobj < (**llnnode).vRange.last; lobj++)
+		for (TObj *lobj = lnnode->vRange.first; lobj < lnnode->vRange.last; lobj++)
 		{
 			psi3+= log((p-lobj->r).abs2() + Rd2) * lobj->g;
 		}
@@ -79,7 +72,7 @@ int map_streamfunction(hid_t fid, char RefFrame, double xmin, double xmax, doubl
 	{
 		case 'o': RefFrame_Speed = TVec(0, 0); break;
 		case 'f': RefFrame_Speed = S->InfSpeed(); break;
-		case 'b': RefFrame_Speed = S->BodyList->at(0)->Speed_slae.r; break;
+		case 'b': RefFrame_Speed = S->BodyList[0]->speed_slae.r; break;
 		default:
 		fprintf(stderr, "Bad reference frame\n");
 		fprintf(stderr, "Available options are:\n");

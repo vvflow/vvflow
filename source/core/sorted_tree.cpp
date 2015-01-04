@@ -73,11 +73,11 @@ void TSortedNode::DivideNode()
 void TSortedNode::DistributeContent(range& parent, range *ch1, range *ch2)
 {
 	TObj *p1 = parent.first;
-	TObj *p2 = parent.last-1;
-	while (p1 <= p2)
+	TObj *p2 = parent.last;
+	while (p1 < p2)
 	{
 		while ( ((h<w) ? (p1->r.x<x)  : (p1->r.y<y))  && p1<parent.last )   p1++;
-		while ( ((h<w) ? (p2->r.x>=x) : (p2->r.y>=y)) && p2>=parent.first ) p2--;
+		do p2--; while ( ((h<w) ? (p2->r.x>=x) : (p2->r.y>=y)) && p2>=parent.first );
 		if (p1 < p2) std::swap(*p1, *p2);
 	}
 

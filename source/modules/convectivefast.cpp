@@ -69,7 +69,7 @@ void convectivefast::CalcConvectiveFast()
 {
 	auto& bnodes = S->Tree->getBottomNodes();
 
-	#pragma omp parallel for schedule(dynamic, 10)
+	// #pragma omp parallel for schedule(dynamic, 10)
 	for (auto llbnode = bnodes.begin(); llbnode < bnodes.end(); llbnode++)
 	{
 		TSortedNode *lbnode = *llbnode;
@@ -140,21 +140,21 @@ void convectivefast::CalcBoundaryConvective()
 
 		if (!calcBC && !calcBCS) continue;
 
-		#pragma omp parallel for
+		// #pragma omp parallel for
 		for (auto lobj = S->VortexList.begin(); lobj < S->VortexList.end(); lobj++)
 		{
 			if (calcBC) lobj->v += BoundaryConvective(*lbody, lobj->r)*C_1_2PI;
 			if (calcBCS) lobj->v += BoundaryConvectiveSlip(*lbody, lobj->r)*C_1_2PI;
 		}
 
-		#pragma omp parallel for
+		// #pragma omp parallel for
 		for (auto lobj = S->HeatList.begin(); lobj < S->HeatList.end(); lobj++)
 		{
 			if (calcBC) lobj->v += BoundaryConvective(*lbody, lobj->r)*C_1_2PI;
 			if (calcBCS) lobj->v += BoundaryConvectiveSlip(*lbody, lobj->r)*C_1_2PI;
 		}
 
-		#pragma omp parallel for
+		// #pragma omp parallel for
 		for (auto lobj = S->StreakList.begin(); lobj < S->StreakList.end(); lobj++)
 		{
 			if (calcBC) lobj->v += BoundaryConvective(*lbody, lobj->r)*C_1_2PI;
@@ -475,6 +475,7 @@ void convectivefast::fillSteadyEquationForSegment(TAtt* seg, bool rightColOnly)
 {
 	const int seg_eq_no = seg->eq_no; //equation number for current segment
 	TBody* lbody = seg->body;
+	if (!lbody) {fprintf(stderr, "Error: seg->body == NULL\n"); exit(1);}
 
 	//right column
 	*matrix.rightColAtIndex(seg_eq_no) = lbody->g_dead + 2*lbody->get_area()*lbody->speed_slae_prev.o;
@@ -932,9 +933,10 @@ void convectivefast::FillMatrix(bool rightColOnly)
 	for (auto& libody: S->BodyList)
 	{
 		TAtt *special_segment = &libody->alist[libody->special_segment_no];
-		#pragma omp parallel for
+		// #pragma omp parallel for
 		for (auto latt = libody->alist.begin(); latt < libody->alist.end(); latt++)
 		{
+			if (!latt->body) {fprintf(stderr, "AAA\n");}
 			if (&*latt != special_segment)
 				fillSlipEquationForSegment(&*latt, rightColOnly);
 			else

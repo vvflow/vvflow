@@ -109,23 +109,33 @@ template<> void attribute_write(hid_t hid, const char *name, double val) { if (v
 template<> void attribute_write(hid_t hid, const char *name, bc_t bc)
 {
 	uint32_t bc_raw = 0;
-	switch (bc)
-	{
-		case bc_t::steady: bc_raw = 0; break;
-		case bc_t::kutta: bc_raw = 1; break;
-	}
+	// FIXME this switch does not work with ICC 13.0 so I use if-then statement
+	// switch (bc)
+	// {
+	// 	case bc_t::steady: bc_raw = 0; break;
+	// 	case bc_t::kutta: bc_raw = 1; break;
+	// }
+	if (0);
+	else if (bc == bc_t::steady) bc_raw = 0;
+	else if (bc == bc_t::kutta) bc_raw = 1;
 	attwrite(hid, name, &bc_raw, H5T_NATIVE_UINT32);
 }
 template<> void attribute_write(hid_t hid, const char *name, hc_t hc)
 {
 	uint32_t hc_raw = 0;
-	switch (hc)
-	{
-		case hc_t::neglect: hc_raw = 0; break;
-		case hc_t::isolate: hc_raw = 1; break;
-		case hc_t::const_t: hc_raw = 2; break;
-		case hc_t::const_w: hc_raw = 3; break;
-	}
+	// FIXME this switch does not work with ICC 13.0 so I use if-then statement
+	// switch (hc)
+	// {
+	// 	case hc_t::neglect: hc_raw = 0; break;
+	// 	case hc_t::isolate: hc_raw = 1; break;
+	// 	case hc_t::const_t: hc_raw = 2; break;
+	// 	case hc_t::const_w: hc_raw = 3; break;
+	// }
+	if (0);
+	else if(hc == hc_t::neglect) hc_raw = 0;
+	else if(hc == hc_t::isolate) hc_raw = 1;
+	else if(hc == hc_t::const_t) hc_raw = 2;
+	else if(hc == hc_t::const_w) hc_raw = 3;
 	attwrite(hid, name, &hc_raw, H5T_NATIVE_UINT32);
 }
 

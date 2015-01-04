@@ -79,11 +79,9 @@ double h2(TSortedNode &Node, TVec p)
 
 	for (TSortedNode* lnnode: *Node.NearNodes)
 	{
-		auto blist = nnode.BodyLList;
-		if ( !blist ) { continue; }
-		const_for (blist, llobj)
+		for (TObj* latt: lnnode->bllist)
 		{
-			resh2 = min(resh2, (p-(**llobj).r).abs2());
+			resh2 = min(resh2, (p-latt->r).abs2());
 		}
 	}
 
@@ -93,7 +91,6 @@ double h2(TSortedNode &Node, TVec p)
 double Vorticity(Space* S, TVec p)
 {
 	double T=0;
-	auto *hlist = S->VortexList;
 	TSortedNode* bnode = S->Tree->findNode(p);
 
 	//return  bnode->NearNodes->size_safe();
@@ -101,15 +98,13 @@ double Vorticity(Space* S, TVec p)
 
 	//return nrst - S->HeatList->begin();
 
-	const_for(bnode->NearNodes, llnnode)
+	for (TSortedNode* lnnode: *bnode->NearNodes)
 	{
-		#define nnode (**llnnode)
-		for (TObj *lobj = nnode.vRange.first; lobj < nnode.vRange.last; lobj++)
+		for (TObj *lobj = lnnode->vRange.first; lobj < lnnode->vRange.last; lobj++)
 		{
 			double exparg = -(p-lobj->r).abs2() * lobj->v.x; // v.rx stores eps^(-2)
 			T+= (exparg>-10) ? lobj->v.y * exp(exparg) : 0; // v.ry stores g*eps(-2)
 		}
-		#undef nnode
 	}
 
 	T*= C_1_PI;
@@ -134,18 +129,21 @@ int map_vorticity(hid_t fid, double xmin, double xmax, double ymin, double ymax,
 	S->Load(fid);
 	flowmove fm(S);
 	fm.VortexShed();
-	S->HeatList = NULL;
+	S->HeatList.clear();
+	S->StreakList.clear();
 
 	dl = S->AverageSegmentLength();
 	S->Tree = new TSortedTree(S, 8, dl*20, DBL_MAX);
 	S->Tree->build();
 
+	auto& bnodes = S->Tree->getBottomNodes();
 	#pragma omp parallel for
-	const_for(S->Tree->getBottomNodes(), llbnode)
+	for (auto llbnode = bnodes.begin(); llbnode < bnodes.end(); llbnode++)
 	{
-		for (TObj *lobj = (**llbnode).vRange.first; lobj < (**llbnode).vRange.last; lobj++)
+		TSortedNode* lbnode = *llbnode;
+		for (TObj *lobj = lbnode->vRange.first; lobj < lbnode->vRange.last; lobj++)
 		{
-			lobj->v.x = 1./(sqr(EPS_MULT)*max(eps2h(**llbnode, lobj->r), sqr(0.6*dl)));
+			lobj->v.x = 1./(sqr(EPS_MULT)*max(eps2h(*lbnode, lobj->r), sqr(0.6*dl)));
 			lobj->v.y = lobj->v.x * lobj->g;
 		}
 	}

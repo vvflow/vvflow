@@ -1,7 +1,7 @@
 PREFIX = ~/.local
 
 ifeq ($(CXX),icpc)
-        CXXFLAGS+= -O3 -Wall -openmp -mkl=parallel
+        CXXFLAGS+= -debug all  -O3 -Wall -openmp -mkl=parallel
         AR = xiar
 else
         CXXFLAGS+= -O3 -Wall -fopenmp

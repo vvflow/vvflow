@@ -50,10 +50,11 @@ void do_set(Space* S, const char *arg, const char *value)
 {
 	int len = 0;
 	unsigned body_no;
+	const char* arg_original = arg;
 
 	#define comp3d(vec) (*c=='x'?vec.x)
 	#define M(fmt) (len=0, sscanf(arg, fmt, &len), arg[len] == '\0')
-	#define ALERT() { fprintf(stderr, "vvcompose: set: ambiguous argument: %s\n", arg); exit(3); }
+	#define ALERT() { fprintf(stderr, "vvcompose: set: ambiguous argument: %s\n", arg_original); exit(3); }
 
 	     if ( M("name%n") || M("caption%n") )       { S->caption = value; }
 	else if ( M("t%n") || M("time%n") )             { S->Time = parse<TTime>(value); }
@@ -79,7 +80,7 @@ void do_set(Space* S, const char *arg, const char *value)
 			exit(3);
 		}
 		TBody *body = S->BodyList[body_no].get();
-		arg += len;
+		arg += len+1;
 
 		char c = 0;
 		TVec3D *vec = NULL;
@@ -163,7 +164,7 @@ int main(int argc, char *argv[])
 		     if (!strcmp(argv[i], "load")) { CHECK(2); do_load(S, argv[i+1], argv[i+2]); i+=3; }
 		else if (!strcmp(argv[i], "set"))  { CHECK(2); do_set(S, argv[i+1], argv[i+2]); i+=3; }
 		else if (!strcmp(argv[i], "del"))  { CHECK(1); do_del(S, argv[i+1]); i+=2; }
-		else if (!strcmp(argv[i], "save")) { CHECK(1); S->Save(argv[i+1]); i+=3; }
+		else if (!strcmp(argv[i], "save")) { CHECK(1); S->Save(argv[i+1]); i+=2; }
 		#undef CHECK
 		else
 		{
