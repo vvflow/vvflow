@@ -46,7 +46,7 @@ class TAtt : public TObj
 		//void zero() { r.x = r.y = g = gsum = hsum = /*FIXME fric?*/ Cp = Fr = Nu = 0; heat_layer_obj_no = -1; }
 
 	public:
-		TBody* body;
+		// TBody* body;
 		uint32_t eq_no;
 };
 

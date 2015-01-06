@@ -341,10 +341,10 @@ double convectivefast::_2PI_Xi_q(const TVec &p, const TAtt &seg, double rd) // i
 	}
 }
 
-void convectivefast::_2PI_A123(const TAtt &seg, const TBody &b, double *_2PI_A1, double *_2PI_A2, double *_2PI_A3)
+void convectivefast::_2PI_A123(const TAtt &seg, const TBody* ibody, const TBody &b, double *_2PI_A1, double *_2PI_A2, double *_2PI_A3)
 {
-	*_2PI_A1 = (seg.body == &b)?  C_2PI * seg.dl.y : 0;
-	*_2PI_A2 = (seg.body == &b)? -C_2PI * seg.dl.x : 0;
+	*_2PI_A1 = (ibody == &b)?  C_2PI * seg.dl.y : 0;
+	*_2PI_A2 = (ibody == &b)? -C_2PI * seg.dl.x : 0;
 	*_2PI_A3 = 0;
 	if ((b.kspring.o<0) && (!b.get_speed().o)) 
 	{
@@ -424,7 +424,7 @@ TVec convectivefast::SegmentInfluence_linear_source(TVec p, const TAtt &seg, dou
 	return TVec(zV.real(), zV.imag());
 }
 
-void convectivefast::fillSlipEquationForSegment(TAtt* seg, bool rightColOnly)
+void convectivefast::fillSlipEquationForSegment(TAtt* seg, TBody* ibody, bool rightColOnly)
 {
 	const int seg_eq_no = seg->eq_no; //equation number for current segment
 
@@ -447,7 +447,7 @@ void convectivefast::fillSlipEquationForSegment(TAtt* seg, bool rightColOnly)
 		}
 
 		double _2PI_A1, _2PI_A2, _2PI_A3;
-		_2PI_A123(*seg, *ljbody, &_2PI_A1, &_2PI_A2, &_2PI_A3);
+		_2PI_A123(*seg, ibody, *ljbody, &_2PI_A1, &_2PI_A2, &_2PI_A3);
 		*matrix.objectAtIndex(seg_eq_no, ljbody->eq_forces_no+0) = _2PI_A1*C_1_2PI;
 		*matrix.objectAtIndex(seg_eq_no, ljbody->eq_forces_no+1) = _2PI_A2*C_1_2PI;
 		*matrix.objectAtIndex(seg_eq_no, ljbody->eq_forces_no+2) = _2PI_A3*C_1_2PI;
@@ -456,7 +456,7 @@ void convectivefast::fillSlipEquationForSegment(TAtt* seg, bool rightColOnly)
 	}
 }
 
-void convectivefast::fillZeroEquationForSegment(TAtt* seg, bool rightColOnly)
+void convectivefast::fillZeroEquationForSegment(TAtt* seg, TBody* ibody, bool rightColOnly)
 {
 	const int seg_eq_no = seg->eq_no; //equation number for current segment
 
@@ -471,15 +471,13 @@ void convectivefast::fillZeroEquationForSegment(TAtt* seg, bool rightColOnly)
 	*matrix.objectAtIndex(seg_eq_no, seg_eq_no) = 1;
 }
 
-void convectivefast::fillSteadyEquationForSegment(TAtt* seg, bool rightColOnly)
+void convectivefast::fillSteadyEquationForSegment(TAtt* seg, TBody* ibody, bool rightColOnly)
 {
 	const int seg_eq_no = seg->eq_no; //equation number for current segment
-	TBody* lbody = seg->body;
-	if (!lbody) {fprintf(stderr, "Error: seg->body == NULL\n"); exit(1);}
 
 	//right column
-	*matrix.rightColAtIndex(seg_eq_no) = lbody->g_dead + 2*lbody->get_area()*lbody->speed_slae_prev.o;
-	lbody->g_dead = 0;
+	*matrix.rightColAtIndex(seg_eq_no) = ibody->g_dead + 2*ibody->get_area()*ibody->speed_slae_prev.o;
+	ibody->g_dead = 0;
 	if (rightColOnly) return;
 
 	//place solution pointer
@@ -487,13 +485,13 @@ void convectivefast::fillSteadyEquationForSegment(TAtt* seg, bool rightColOnly)
 
 	// self
 	{
-		for (auto& latt: lbody->alist)
+		for (auto& latt: ibody->alist)
 			*matrix.objectAtIndex(seg_eq_no, latt.eq_no) = 1;
-		*matrix.objectAtIndex(seg_eq_no, lbody->eq_forces_no+2) = 2*lbody->get_area();
+		*matrix.objectAtIndex(seg_eq_no, ibody->eq_forces_no+2) = 2*ibody->get_area();
 	}
 }
 
-void convectivefast::fillInfSteadyEquationForSegment(TAtt* seg, bool rightColOnly)
+void convectivefast::fillInfSteadyEquationForSegment(TAtt* seg, TBody* ibody, bool rightColOnly)
 {
 	const int seg_eq_no = seg->eq_no; //equation number for current segment
 
@@ -936,18 +934,17 @@ void convectivefast::FillMatrix(bool rightColOnly)
 		// #pragma omp parallel for
 		for (auto latt = libody->alist.begin(); latt < libody->alist.end(); latt++)
 		{
-			if (!latt->body) {fprintf(stderr, "AAA\n");}
 			if (&*latt != special_segment)
-				fillSlipEquationForSegment(&*latt, rightColOnly);
+				fillSlipEquationForSegment(&*latt, libody.get(), rightColOnly);
 			else
 			{
 				if (libody->boundary_condition == bc_t::kutta)
-					fillZeroEquationForSegment(&*latt, rightColOnly);
+					fillZeroEquationForSegment(&*latt, libody.get(), rightColOnly);
 				else if (!special_body)
-					fillSteadyEquationForSegment(&*latt, rightColOnly);
+					fillSteadyEquationForSegment(&*latt, libody.get(), rightColOnly);
 				else
 				{
-					fillInfSteadyEquationForSegment(&*latt, rightColOnly);
+					fillInfSteadyEquationForSegment(&*latt, libody.get(), rightColOnly);
 					special_body = false;
 				}
 			}

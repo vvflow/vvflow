@@ -106,9 +106,9 @@ void TBody::doUpdateSegments()
 {
 	if (!this) return;
 
-	alist.push_back(alist.at(0));
+	alist.push_back(alist.front());
 
-	for (auto lobj=alist.begin(); lobj<alist.end(); lobj++)
+	for (auto lobj=alist.begin(); lobj<alist.end()-1; lobj++)
 	{
 		lobj->dl = (lobj+1)->corner - lobj->corner;
 		lobj->_1_eps = 3.0/lobj->dl.abs();
@@ -182,14 +182,18 @@ void TBody::doFillProperties()
 	_surface = _area = _moi_c = _moi_com = 0;
 	TVec _3S_com= TVec(0., 0.);
 	double _12moi_0 = 0.;
-	for (auto latt=alist.begin(); latt<alist.end(); latt++)
+
+	alist.push_back(alist.front());
+	for (auto latt=alist.begin(); latt<alist.end()-1; latt++)
 	{
 		_surface+= latt->dl.abs();
 		_area+= latt->r.y*latt->dl.x;
 		_3S_com-= latt->r * (rotl(latt->corner) * (latt+1)->corner);
 		_12moi_0 -= (latt->corner.abs2() + latt->corner*(latt+1)->corner + (latt+1)->corner.abs2())
 		            *  (rotl(latt->corner) * (latt+1)->corner);
+	
 	}
+	alist.pop_back();
 	_com = _3S_com/(3*_area);
 	_moi_com = _12moi_0/12. - _area*_com.abs2();
 	_moi_c = _moi_com + _area*(get_axis() - _com).abs2();
