@@ -19,6 +19,7 @@ void diffusivefast::CalcVortexDiffusiveFast()
 {
 	auto& bnodes = S->Tree->getBottomNodes();
 
+	// FIXME omp here
 	// #pragma omp parallel for schedule(dynamic, 10)
 	for (auto llbnode = bnodes.begin(); llbnode < bnodes.end(); llbnode++)
 	{

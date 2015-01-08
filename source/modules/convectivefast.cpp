@@ -69,15 +69,16 @@ void convectivefast::CalcConvectiveFast()
 {
 	auto& bnodes = S->Tree->getBottomNodes();
 
+	//FIXME omp here
 	// #pragma omp parallel for schedule(dynamic, 10)
 	for (auto llbnode = bnodes.begin(); llbnode < bnodes.end(); llbnode++)
 	{
-		TSortedNode *lbnode = *llbnode;
+		const TSortedNode *lbnode = *llbnode;
 
 		double Teilor1, Teilor2, Teilor3, Teilor4;
 		Teilor1 = Teilor2 = Teilor3 = Teilor4 = 0;
 
-		for (TSortedNode* lfnode: *lbnode->FarNodes)
+		for (const TSortedNode* lfnode: *lbnode->FarNodes)
 		{
 			TVec DistP = TVec(lbnode->x, lbnode->y) - lfnode->CMp.r;
 			TVec DistM = TVec(lbnode->x, lbnode->y) - lfnode->CMm.r;
@@ -140,21 +141,21 @@ void convectivefast::CalcBoundaryConvective()
 
 		if (!calcBC && !calcBCS) continue;
 
-		// #pragma omp parallel for
+		#pragma omp parallel for
 		for (auto lobj = S->VortexList.begin(); lobj < S->VortexList.end(); lobj++)
 		{
 			if (calcBC) lobj->v += BoundaryConvective(*lbody, lobj->r)*C_1_2PI;
 			if (calcBCS) lobj->v += BoundaryConvectiveSlip(*lbody, lobj->r)*C_1_2PI;
 		}
 
-		// #pragma omp parallel for
+		#pragma omp parallel for
 		for (auto lobj = S->HeatList.begin(); lobj < S->HeatList.end(); lobj++)
 		{
 			if (calcBC) lobj->v += BoundaryConvective(*lbody, lobj->r)*C_1_2PI;
 			if (calcBCS) lobj->v += BoundaryConvectiveSlip(*lbody, lobj->r)*C_1_2PI;
 		}
 
-		// #pragma omp parallel for
+		#pragma omp parallel for
 		for (auto lobj = S->StreakList.begin(); lobj < S->StreakList.end(); lobj++)
 		{
 			if (calcBC) lobj->v += BoundaryConvective(*lbody, lobj->r)*C_1_2PI;
@@ -931,7 +932,7 @@ void convectivefast::FillMatrix(bool rightColOnly)
 	for (auto& libody: S->BodyList)
 	{
 		TAtt *special_segment = &libody->alist[libody->special_segment_no];
-		// #pragma omp parallel for
+		#pragma omp parallel for
 		for (auto latt = libody->alist.begin(); latt < libody->alist.end(); latt++)
 		{
 			if (&*latt != special_segment)

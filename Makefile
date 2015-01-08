@@ -17,7 +17,7 @@
 #________________________________________________#
 
 ifeq ($(CXX),icpc)
-        CXXFLAGS+= -debug all -O3 -Wall -openmp -mkl=parallel
+        CXXFLAGS+= -g -debug all -O3 -xSSE4.2 -Wall -openmp -mkl
         AR = xiar
 else
         CXXFLAGS+= -O3 -Wall -fopenmp
