@@ -6,15 +6,24 @@
 
 class ShellScript
 {
-	public:
+	private:
 		std::string script;
 	public:
 		ShellScript();
 		ShellScript(const std::string &s);
+		~ShellScript();
 		double getValue(double t) const;
-		ShellScript& operator=(const std::string &s) { script = s; return *this; }
+		ShellScript& operator=(const std::string &s);
+
+		operator const std::string() const { return script; }
+
+		ShellScript(const ShellScript&) = delete;
+		ShellScript(ShellScript&&) = delete;
+		ShellScript& operator= (const ShellScript&) = delete;
+		ShellScript& operator= (ShellScript&&) = delete;
 
 	private:
+		void* evaluator;
 		mutable double cacheTime1;
 		mutable double cacheValue1;
 		mutable double cacheTime2;

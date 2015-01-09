@@ -151,9 +151,9 @@ void Space::dataset_write_body(const char* name, const TBody& body)
 	
 	attribute_write(file_dataset, "holder_position", body.holder);
 	attribute_write(file_dataset, "delta_position", body.dpos);
-	attribute_write(file_dataset, "speed_x", body.speed_x.script);
-	attribute_write(file_dataset, "speed_y", body.speed_y.script);
-	attribute_write(file_dataset, "speed_o", body.speed_o.script);
+	attribute_write<std::string>(file_dataset, "speed_x", body.speed_x);
+	attribute_write<std::string>(file_dataset, "speed_y", body.speed_y);
+	attribute_write<std::string>(file_dataset, "speed_o", body.speed_o);
 	attribute_write(file_dataset, "speed_slae", body.speed_slae);
 	attribute_write(file_dataset, "speed_slae_prev", body.speed_slae_prev);
 	attribute_write(file_dataset, "spring_const", body.kspring);
@@ -192,8 +192,8 @@ void Space::Save(const char* format)
 	attribute_write(fid, "re", Re);
 	attribute_write(fid, "pr", Pr);
 	attribute_write(fid, "inf_marker", InfMarker);
-	attribute_write(fid, "inf_speed_x", InfSpeedX.script);
-	attribute_write(fid, "inf_speed_y", InfSpeedY.script);
+	attribute_write<std::string>(fid, "inf_speed_x", InfSpeedX);
+	attribute_write<std::string>(fid, "inf_speed_y", InfSpeedY);
 	attribute_write(fid, "inf_circulation", InfCirculation);
 	attribute_write(fid, "gravity", gravitation);
 	attribute_write(fid, "time_to_finish", Finish);
@@ -289,9 +289,9 @@ herr_t dataset_read_body(hid_t g_id, const char* name, const H5L_info_t *info, v
 
 	attribute_read(dataset, "holder_position", body->holder);
 	attribute_read(dataset, "delta_position", body->dpos);
-	attribute_read(dataset, "speed_x", body->speed_x.script);
-	attribute_read(dataset, "speed_y", body->speed_y.script);
-	attribute_read(dataset, "speed_o", body->speed_o.script);
+	attribute_read(dataset, "speed_x", body->speed_x);
+	attribute_read(dataset, "speed_y", body->speed_y);
+	attribute_read(dataset, "speed_o", body->speed_o);
 	attribute_read(dataset, "speed_slae", body->speed_slae);
 	attribute_read(dataset, "speed_slae_prev", body->speed_slae_prev);
 	attribute_read(dataset, "spring_const", body->kspring);
@@ -412,8 +412,8 @@ void Space::Load(hid_t fid, std::string *info)
 	attribute_read(fid, "re", Re);
 	attribute_read(fid, "pr", Pr);
 	attribute_read(fid, "inf_marker", InfMarker);
-	attribute_read(fid, "inf_speed_x", InfSpeedX.script);
-	attribute_read(fid, "inf_speed_y", InfSpeedY.script);
+	attribute_read(fid, "inf_speed_x", InfSpeedX);
+	attribute_read(fid, "inf_speed_y", InfSpeedY);
 	attribute_read(fid, "inf_circulation", InfCirculation);
 	attribute_read(fid, "gravity", gravitation);
 	attribute_read(fid, "time_to_finish", Finish);

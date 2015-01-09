@@ -65,8 +65,8 @@ void do_set(Space* S, const char *arg, const char *value)
 	else if ( M("re%n") )                           { S->Re = parse<double>(value); }
 	else if ( M("pr%n") )                           { S->Pr = parse<double>(value); }
 	else if ( M("fin%n") || M("time_to_finish%n") ) { S->Finish = parse<double>(value); }
-	else if ( M("infx%n") || M("inf_speed.x%n") )   { S->InfSpeedX = value; }
-	else if ( M("infy%n") || M("inf_speed.y%n") )   { S->InfSpeedY = value; }
+	else if ( M("infx%n") || M("inf_speed.x%n") )   { S->InfSpeedX = std::string(value); }
+	else if ( M("infy%n") || M("inf_speed.y%n") )   { S->InfSpeedY = std::string(value); }
 	else if ( M("gravity.x%n") )                    { S->gravitation.x = parse<double>(value); }
 	else if ( M("gravity.y%n") )                    { S->gravitation.y = parse<double>(value); }
 	else if ( M("infg%n") || M("inf_circulation%n") ) { S->InfCirculation = parse<double>(value); }
@@ -90,9 +90,9 @@ void do_set(Space* S, const char *arg, const char *value)
 		else if ( (len=0, sscanf(arg, "move.%c%n",     &c, &len), !arg[len]) ) { vec = &move_vec; }
 		else if ( (len=0, sscanf(arg, "spring.%c%n",   &c, &len), !arg[len]) ) { vec = &body->kspring; }
 		else if ( (len=0, sscanf(arg, "damping.%c%n",  &c, &len), !arg[len]) ) { vec = &body->damping; }
-		else if ( (len=0, sscanf(arg, "speed.x%n",         &len), !arg[len]) ) { body->speed_x = value; }
-		else if ( (len=0, sscanf(arg, "speed.y%n",         &len), !arg[len]) ) { body->speed_y = value; }
-		else if ( (len=0, sscanf(arg, "speed.o%n",         &len), !arg[len]) ) { body->speed_o = value; }
+		else if ( (len=0, sscanf(arg, "speed.x%n",         &len), !arg[len]) ) { body->speed_x = std::string(value); }
+		else if ( (len=0, sscanf(arg, "speed.y%n",         &len), !arg[len]) ) { body->speed_y = std::string(value); }
+		else if ( (len=0, sscanf(arg, "speed.o%n",         &len), !arg[len]) ) { body->speed_o = std::string(value); }
 		else if ( (len=0, sscanf(arg, "density%n",         &len), !arg[len]) ) { body->density = parse<double>(value); }
 		else if (  len=0, sscanf(arg, "root%n",            &len), !arg[len])
 			{ body->root_body = S->BodyList[parse<int>(value)]; }

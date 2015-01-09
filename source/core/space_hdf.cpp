@@ -61,6 +61,12 @@ template<> void attribute_read(hid_t hid, const char *name, std::string& val)
 	else val = "";
 	free(c_buf);
 }
+template<> void attribute_read(hid_t hid, const char *name, ShellScript& val)
+{
+	std::string buf;
+	attribute_read<std::string>(hid, name, buf);
+	val = buf;
+}
 template<> void attribute_read(hid_t hid, const char *name, bc_t& bc)
 {
 	uint32_t bc_raw = 0;

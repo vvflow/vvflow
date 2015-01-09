@@ -3,9 +3,13 @@
 #include <stdlib.h>
 #include "stdio.h"
 #include <limits>
+#include "matheval.h"
+
+static const char* evaluator_names[] = {(char*)"t"};
 
 ShellScript::ShellScript():
 			script(),
+			evaluator(NULL),
 			cacheTime1(std::numeric_limits<double>::lowest()),
 			cacheValue1(),
 			cacheTime2(std::numeric_limits<double>::lowest()),
@@ -16,36 +20,61 @@ ShellScript::ShellScript(const std::string &s):
 			cacheTime1(std::numeric_limits<double>::lowest()),
 			cacheValue1(),
 			cacheTime2(std::numeric_limits<double>::lowest()),
-			cacheValue2() {}
+			cacheValue2()
+{
+	if (script.empty()) return;
+	evaluator = evaluator_create((char*)script.c_str());
+	if (!evaluator)
+	{
+		fprintf(stderr, "Can not create evaluator for %s\n", script.c_str());
+		exit(1);
+	}
+}
+
+ShellScript::~ShellScript()
+{
+	if (evaluator) evaluator_destroy(evaluator);
+	evaluator = NULL;
+}
+
+ShellScript& ShellScript::operator=(const std::string &s)
+{
+	script = s;
+	if (evaluator)
+	{
+		evaluator_destroy(evaluator);
+		evaluator = NULL;
+	}
+
+	if (script.empty()) return *this;
+	evaluator = evaluator_create((char*)script.c_str());
+	if (!evaluator)
+	{
+		fprintf(stderr, "Can not create evaluator for %s\n", script.c_str());
+		exit(2);
+	}
+	return *this;
+}
 
 double ShellScript::getValue(double t) const
 {
-	if (!script.size())
+	if (!evaluator)
 		return 0;
 
-	if (t == cacheTime2)
-		return cacheValue2;
-
-	if (t == cacheTime1)
-		return cacheValue1;
-
-	char *exec = new char[script.size()+64];
-	sprintf(exec, "t=%lf; T=%lf; %s", t, t, script.c_str());
-	double resultValue;
-	FILE *pipe = popen(exec,"r");
-	if (pipe)
+	double resultValue = 0;
+	#pragma omp critical
 	{
-		if (!fscanf(pipe, "%lf", &resultValue)) resultValue = 0.;
-		pclose(pipe);
-	}
-	delete exec;
+		/**/ if (t == cacheTime2) resultValue = cacheValue2;
+		else if (t == cacheTime1) resultValue = cacheValue1;
+		else
+		{
+			resultValue = evaluator_evaluate(evaluator, 1, (char**)evaluator_names, &t);
 
-	#pragma omp master
-	{
-		cacheTime2 = cacheTime1;
-		cacheValue2 = cacheValue1;
-		cacheTime1 = t;
-		cacheValue1 = resultValue;
+			cacheTime2 = cacheTime1;
+			cacheValue2 = cacheValue1;
+			cacheTime1 = t;
+			cacheValue1 = resultValue;
+		}
 	}
 
 	return resultValue;

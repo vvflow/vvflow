@@ -16,10 +16,10 @@ all: $(exes) libvvplot.so libvvplot
 	$(CXX) $(CXXFLAGS) $^ -o $@ -std=c++0x -lhdf5 -Wl,-Bstatic -lvvhd -Wl,-Bdynamic
 
 libvvplot.so: $(patsubst %,source/%.cpp, map_extract map_vorticity map_pressure map_streamfunction isoline)
-	$(CXX) $(CXXFLAGS) $^ -o $@ -shared -fPIC -std=c++0x -lhdf5 -Wl,-soname,libvvplot.so -Wl,-Bstatic -lvvhd -Wl,-Bdynamic
+	$(CXX) $(CXXFLAGS) $^ -o $@ -shared -fPIC -std=c++0x -lhdf5 -lmatheval -Wl,-soname,libvvplot.so -Wl,-Bstatic -lvvhd -Wl,-Bdynamic
 
 libvvplot: source/libvvplot_main.cpp
-	$(CXX) $(CXXFLAGS) $^ -o $@ -std=c++0x -lhdf5 -L. -Wl,-rpath,\$$ORIGIN -lvvplot -Wl,-Bstatic -lvvhd -Wl,-Bdynamic
+	$(CXX) $(CXXFLAGS) $^ -o $@ -std=c++0x -lhdf5 -lmatheval -L. -Wl,-rpath,\$$ORIGIN -lvvplot -Wl,-Bstatic -lvvhd -Wl,-Bdynamic
 
 clean:
 	rm -f $(exes)

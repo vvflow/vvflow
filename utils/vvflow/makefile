@@ -10,7 +10,7 @@ endif
 all: vvflow
 
 vvflow: vvflow.cpp
-	$(CXX) $(CXXFLAGS) $^ -o $@ -std=c++0x -lhdf5 -Wl,-Bstatic -lvvhd -Wl,-Bdynamic
+	$(CXX) $(CXXFLAGS) $^ -o $@ -std=c++0x -lhdf5 -lmatheval -Wl,-Bstatic -lvvhd -Wl,-Bdynamic
 
 clean:
 	rm -f vvflow

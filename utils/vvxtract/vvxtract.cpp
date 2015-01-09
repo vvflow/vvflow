@@ -3,10 +3,16 @@
 #include "string.h"
 #include "stdlib.h"
 
-void attribute_print(const char *name, const char *str)
+// void attribute_print(const char *name, const char *str)
+// {
+// 	if (!strlen(str)) return;
+// 	printf("%-15s \"%s\"\n", name, str);
+// }
+
+void attribute_print(const char *name, std::string str)
 {
-	if (!strlen(str)) return;
-	printf("%-15s \"%s\"\n", name, str);
+	if (str.empty()) return;
+	printf("%-15s \"%s\"\n", name, str.c_str());
 }
 
 void attribute_print(const char *name, TTime time)
@@ -48,7 +54,7 @@ void attribute_print(const char *name, TVec3D vec3d, double ignored)
 
 void print_info(Space *S)
 {
-	attribute_print("Caption:", S->caption.c_str());
+	attribute_print("Caption:", S->caption);
 	attribute_print("Time:", S->Time);
 	attribute_print("dt:", S->dt);
 	attribute_print("Save dt:", S->save_dt);
@@ -57,8 +63,8 @@ void print_info(Space *S)
 	attribute_print("1/nyu:", S->Re);
 	attribute_print("Pr:", S->Pr);
 	attribute_print("Inf marker:", S->InfMarker);
-	attribute_print("Inf speed_x:", S->InfSpeedX.script.c_str());
-	attribute_print("Inf speed_y:", S->InfSpeedY.script.c_str());
+	attribute_print("Inf speed_x:", S->InfSpeedX);
+	attribute_print("Inf speed_y:", S->InfSpeedY);
 	attribute_print("Inf gamma:", S->InfCirculation);
 	attribute_print("Gravity:", S->gravitation);
 	attribute_print("Finish:", S->Finish);
@@ -68,9 +74,9 @@ void print_body(TBody *body)
 {
 	attribute_print("holder_position", body->holder, INT32_MAX);
 	attribute_print("delta_position", body->dpos);
-	attribute_print("speed_x", body->speed_x.script.c_str());
-	attribute_print("speed_y", body->speed_y.script.c_str());
-	attribute_print("speed_o", body->speed_o.script.c_str());
+	attribute_print("speed_x", body->speed_x);
+	attribute_print("speed_y", body->speed_y);
+	attribute_print("speed_o", body->speed_o);
 	attribute_print("speed_slae", body->speed_slae);
 	attribute_print("speed_slae_prev", body->speed_slae_prev);
 	attribute_print("spring_const", body->kspring, -1);
