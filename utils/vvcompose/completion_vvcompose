@@ -1,0 +1,42 @@
+#!/bin/bash
+
+_vvcompose(){
+	COMPREPLY=()
+	cur="${COMP_WORDS[COMP_CWORD]}"
+
+	case "$3" in
+		"load") COMPREPLY=($(compgen -W 'hdf body vort heat ink ink_source' -- ${cur}));;
+		"set") COMPREPLY=($(compgen -W 'name re pr
+			time dt dts dt_streak dt_profile fin
+			infx infy infg
+			gravity.x gravity.y
+			b0.pos.x b0.pos.y b0.pos.o b0.pos.d
+			b0.dpos.x b0.dpos.y b0.dpos.o b0.dpos.d
+			b0.move.x b0.move.y b0.move.o b0.move.d
+			b0.spring.x b0.spring.y b0.spring.o
+			b0.damping.x b0.damping.y b0.damping.o
+			b0.speed.x b0.speed.y b0.speed.o
+			b0.density b0.root' -- ${cur}));;
+		"del") COMPREPLY=($(compgen -W 'vort heat ink ink_source body00' -- ${cur}));;
+		"save") COMPREPLY=($(compgen -f -X '!*.h5' -o plusdirs  -- ${cur}));;
+		"hdf") COMPREPLY=($(compgen -f -X '!*.h5' -o plusdirs  -- ${cur}));;
+		*) COMPREPLY=($(compgen -W 'load set del save' -- ${cur}));;
+	esac
+
+	return 0
+}
+
+bash_completion='for i in $(ls ~/.bash_completion.d/); do . ~/.bash_completion.d/$i; done'
+
+_install_vvcompose_completion(){
+	[[ ! -e ~/.bash_completion ]] && echo "$bash_completion" > ~/.bash_completion
+	[[ ! -e ~/.bash_completion.d/ ]] && mkdir ~/.bash_completion.d/
+	cp completion_vvcompose ~/.bash_completion.d/vvcompose
+}
+
+_uninstall_vvcompose_completion(){
+	rm -f ~/.bash_completion.d/vvcompose
+}
+
+complete -F _vvcompose -o filenames vvcompose
+
