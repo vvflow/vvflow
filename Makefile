@@ -1,10 +1,10 @@
-#‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾#
+#------------------------------------------------#
 #                 VVHD makefile                  #
 #       to understand what's written here        #
 #  read http://www.opennet.ru/docs/RUS/gnumake/  #
 #                                                #
 #  (c) Rosik                                     #
-#________________________________________________#
+#------------------------------------------------#
 
 #
 # Usage:
@@ -12,9 +12,9 @@
 # make [INSTALLDIR="~/.libVVHDinstall"] install
 #
 
-#‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾#
+#------------------------------------------------#
 #                   VARIABLES                    #
-#________________________________________________#
+#------------------------------------------------#
 
 ifeq ($(CXX),icpc)
         CXXFLAGS+= -g -debug all -O3 -xSSE4.2 -Wall -openmp -mkl
@@ -25,7 +25,7 @@ endif
 
 parts 	:= core modules
 core_objects 	:= space body shellscript sorted_tree stepdata
-modules_objects := flowmove epsfast diffusivefast convective matrix convectivefast
+modules_objects := flowmove epsfast diffusivefast matrix convectivefast
 VPATH := $(addprefix source/, $(parts) ) 
 # VPATH is special make var 
 
@@ -35,9 +35,9 @@ INSTALLDIR 		:= $(HOME)/.local
 GITINFO         := -DDEF_GITINFO="\"$(shell git log -1 | head -n1 | cut -d" " -f2)\""
 GITDIFF 		:= -DDEF_GITDIFF="\"$(shell git diff --name-only)\""
 
-#‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾#
+#------------------------------------------------#
 #                    TARGETS                     #
-#________________________________________________#
+#------------------------------------------------#
 
 
 all: bin/libvvhd.a bin/libvvhd.so
@@ -54,9 +54,9 @@ uninstall:
 	rm -f $(patsubst headers/%, $(INSTALLDIR)/include/%, $(wildcard headers/*.h))
 	rmdir $(INSTALLDIR)/lib/ $(INSTALLDIR)/include/ $(INSTALLDIR)/ --ignore-fail-on-non-empty
 
-#‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾#
+#------------------------------------------------#
 #                     RULES                      #
-#________________________________________________#
+#------------------------------------------------#
 
 bin/%.o: %.cpp headers/%.h headers/elementary.h | bin/
 	$(CXX) $(CXXFLAGS) $< -o $@ $(addprefix -I, $(INCLUDE)) -c -std=c++0x -fPIC
