@@ -67,7 +67,7 @@ static std::string info[3];
 void print_general(Space* S)
 {
 	printf("General:\n");
-	attribute_print("Caption:", S->caption.c_str());
+	attribute_print("Caption:", S->caption);
 	attribute_print("Time:", S->Time);
 	attribute_print("dt:", S->dt);
 	attribute_print("Save dt:", S->save_dt);
@@ -94,9 +94,9 @@ void print_general(Space* S)
 	}
 
 	printf("\nNotes:\n");
-	attribute_print("Local time:", info[2].c_str());
-	attribute_print("Git info:", info[0].c_str());
-	attribute_print("Git diff:", info[1].c_str());
+	attribute_print("Local time:", info[2]);
+	attribute_print("Git info:", info[0]);
+	attribute_print("Git diff:", info[1]);
 }
 
 template <typename T> void print_list(vector<T> &list);

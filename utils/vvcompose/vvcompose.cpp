@@ -52,31 +52,27 @@ void do_set(Space* S, const char *arg, const char *value)
 	unsigned body_no;
 	const char* arg_original = arg;
 
-	#define comp3d(vec) (*c=='x'?vec.x)
-	#define M(fmt) (len=0, sscanf(arg, fmt, &len), arg[len] == '\0')
 	#define ALERT() { fprintf(stderr, "vvcompose: set: ambiguous argument: %s\n", arg_original); exit(3); }
 
-	     if ( M("name%n") || M("caption%n") )       { S->caption = value; }
-	else if ( M("t%n") || M("time%n") )             { S->Time = parse<TTime>(value); }
-	else if ( M("dt%n") )                           { S->dt = parse<TTime>(value); }
-	else if ( M("dts%n") || M("dt_save%n") )        { S->save_dt = parse<TTime>(value); }
-	else if ( M("dti%n") || M("dt_streak%n") )      { S->streak_dt = parse<TTime>(value); }
-	else if ( M("dtp%n") || M("dt_profile%n") )     { S->profile_dt = parse<TTime>(value); }
-	else if ( M("re%n") )                           { S->Re = parse<double>(value); }
-	else if ( M("pr%n") )                           { S->Pr = parse<double>(value); }
-	else if ( M("fin%n") || M("time_to_finish%n") ) { S->Finish = parse<double>(value); }
-	else if ( M("infx%n") || M("inf_speed.x%n") )   { S->InfSpeedX = std::string(value); }
-	else if ( M("infy%n") || M("inf_speed.y%n") )   { S->InfSpeedY = std::string(value); }
-	else if ( M("gravity.x%n") )                    { S->gravitation.x = parse<double>(value); }
-	else if ( M("gravity.y%n") )                    { S->gravitation.y = parse<double>(value); }
-	else if ( M("infg%n") || M("inf_circulation%n") ) { S->InfCirculation = parse<double>(value); }
-	else if ( sscanf(arg, "body[%u]%n", &body_no, &len) ||
-	          sscanf(arg, "b%u%n", &body_no, &len) )
+	     if ( (len=0, sscanf(arg, "caption%n",         &len), !arg[len]) ) { S->caption = value; }
+	else if ( (len=0, sscanf(arg, "time%n",            &len), !arg[len]) ) { S->Time = parse<TTime>(value); }
+	else if ( (len=0, sscanf(arg, "dt%n",              &len), !arg[len]) ) { S->dt = parse<TTime>(value); }
+	else if ( (len=0, sscanf(arg, "dt_save%n",         &len), !arg[len]) ) { S->save_dt = parse<TTime>(value); }
+	else if ( (len=0, sscanf(arg, "dt_streak%n",       &len), !arg[len]) ) { S->streak_dt = parse<TTime>(value); }
+	else if ( (len=0, sscanf(arg, "dt_profile%n",      &len), !arg[len]) ) { S->profile_dt = parse<TTime>(value); }
+	else if ( (len=0, sscanf(arg, "re%n",              &len), !arg[len]) ) { S->Re = parse<double>(value); }
+	else if ( (len=0, sscanf(arg, "pr%n",              &len), !arg[len]) ) { S->Pr = parse<double>(value); }
+	else if ( (len=0, sscanf(arg, "inf_speed.x%n",     &len), !arg[len]) ) { S->InfSpeedX = std::string(value); }
+	else if ( (len=0, sscanf(arg, "inf_speed.y%n",     &len), !arg[len]) ) { S->InfSpeedY = std::string(value); }
+	else if ( (len=0, sscanf(arg, "inf_circulation%n", &len), !arg[len]) ) { S->InfCirculation = parse<double>(value); }
+	else if ( (len=0, sscanf(arg, "gravity.x%n",       &len), !arg[len]) ) { S->gravitation.x = parse<double>(value); }
+	else if ( (len=0, sscanf(arg, "gravity.y%n",       &len), !arg[len]) ) { S->gravitation.y = parse<double>(value); }
+	else if ( (len=0, sscanf(arg, "time_to_finish%n",  &len), !arg[len]) ) { S->Finish = parse<double>(value); }
+	else if ( (len=0, sscanf(arg, "body%02u%n", &body_no, &len)==1 && arg[len]=='.') )
 	{
-		if (arg[len] != '.') ALERT();
 		if (body_no >= S->BodyList.size())
 		{
-			fprintf(stderr, "vvcompose: set: body[%u]: no such body\n", body_no);
+			fprintf(stderr, "vvcompose: set: body%02u: no such body\n", body_no);
 			exit(3);
 		}
 		TBody *body = S->BodyList[body_no].get();
@@ -85,16 +81,49 @@ void do_set(Space* S, const char *arg, const char *value)
 		char c = 0;
 		TVec3D *vec = NULL;
 		TVec3D move_vec = TVec3D();
-		     if ( (len=0, sscanf(arg, "pos.%c%n",      &c, &len), !arg[len]) ) { vec = &body->holder; }
-		else if ( (len=0, sscanf(arg, "dpos.%c%n",     &c, &len), !arg[len]) ) { vec = &body->dpos; }
-		else if ( (len=0, sscanf(arg, "move.%c%n",     &c, &len), !arg[len]) ) { vec = &move_vec; }
-		else if ( (len=0, sscanf(arg, "spring.%c%n",   &c, &len), !arg[len]) ) { vec = &body->kspring; }
-		else if ( (len=0, sscanf(arg, "damping.%c%n",  &c, &len), !arg[len]) ) { vec = &body->damping; }
-		else if ( (len=0, sscanf(arg, "speed.x%n",         &len), !arg[len]) ) { body->speed_x = std::string(value); }
-		else if ( (len=0, sscanf(arg, "speed.y%n",         &len), !arg[len]) ) { body->speed_y = std::string(value); }
-		else if ( (len=0, sscanf(arg, "speed.o%n",         &len), !arg[len]) ) { body->speed_o = std::string(value); }
-		else if ( (len=0, sscanf(arg, "density%n",         &len), !arg[len]) ) { body->density = parse<double>(value); }
-		else if (  len=0, sscanf(arg, "root%n",            &len), !arg[len])
+		/**/ if ( (len=0, sscanf(arg, "holder_position.%c%n", &c, &len), !arg[len]) ) { vec = &body->holder; }
+		else if ( (len=0, sscanf(arg, "delta_position.%c%n",  &c, &len), !arg[len]) ) { vec = &body->dpos; }
+		else if ( (len=0, sscanf(arg, "move.%c%n",            &c, &len), !arg[len]) ) { vec = &move_vec; }
+		else if ( (len=0, sscanf(arg, "spring_const.%c%n",    &c, &len), !arg[len]) ) { vec = &body->kspring; }
+		else if ( (len=0, sscanf(arg, "spring_damping.%c%n",  &c, &len), !arg[len]) ) { vec = &body->damping; }
+		else if ( (len=0, sscanf(arg, "speed.x%n",                &len), !arg[len]) ) { body->speed_x = std::string(value); }
+		else if ( (len=0, sscanf(arg, "speed.y%n",                &len), !arg[len]) ) { body->speed_y = std::string(value); }
+		else if ( (len=0, sscanf(arg, "speed.o%n",                &len), !arg[len]) ) { body->speed_o = std::string(value); }
+		else if ( (len=0, sscanf(arg, "density%n",                &len), !arg[len]) ) { body->density = parse<double>(value); }
+		else if ( (len=0, sscanf(arg, "special_segment_no%n",     &len), !arg[len]) ) { body->special_segment_no = parse<int>(value); }
+		else if ( (len=0, sscanf(arg, "boundary_condition%n",     &len), !arg[len]) )
+		{
+			/**/ if (!strcmp(value, "steady")) body->boundary_condition = bc_t::steady;
+			else if (!strcmp(value, "kutta")) body->boundary_condition = bc_t::kutta;
+			else
+			{
+				fprintf(stderr, "vvcompose: set: bad BC value: %s (valid: steady|kutta)\n", value);
+				exit(3);
+			}
+		}
+		else if ( (len=0, sscanf(arg, "heat_condition%n",         &len), !arg[len]) )
+		{
+			/**/ if (!strcmp(value, "neglect")) body->heat_condition = hc_t::neglect;
+			else if (!strcmp(value, "isolate")) body->heat_condition = hc_t::isolate;
+			else if (!strcmp(value, "const_t")) body->heat_condition = hc_t::const_t;
+			else if (!strcmp(value, "const_w")) body->heat_condition = hc_t::const_w;
+			else
+			{
+				fprintf(stderr, "vvcompose: set: bad HC value: %s (valid: neglect|isolate|const_t|const_w)\n", value);
+				exit(3);
+			}
+		}
+		else if ( (len=0, sscanf(arg, "general_slip%n",           &len), !arg[len]) )
+		{
+			int32_t general_slip = parse<int>(value);
+			for (auto& latt: body->alist) latt.slip = general_slip;
+		}
+		else if ( (len=0, sscanf(arg, "heat_const%n",             &len), !arg[len]) )
+		{
+			double heat_const = parse<double>(value);
+			for (auto& latt: body->alist) latt.heat_const = heat_const;
+		}
+		else if (  len=0, sscanf(arg, "root_body%n",              &len), !arg[len])
 			{ body->root_body = S->BodyList[parse<int>(value)]; }
 		else ALERT();
 
@@ -118,7 +147,7 @@ void do_set(Space* S, const char *arg, const char *value)
 		}
 	}
 	else ALERT();
-	#undef M, ALERT
+	#undef ALERT
 }
 
 // when called with arg == "body[N]" the body is marked for deletion
@@ -137,16 +166,15 @@ void do_del(Space *S, const char *arg)
 	else if (!strcmp(arg, "heat")) { S->HeatList.clear(); }
 	else if (!strcmp(arg, "ink"))  { S->StreakList.clear(); }
 	else if (!strcmp(arg, "ink_source")) { S->StreakSourceList.clear(); }
-	// else if ((sscanf(arg, "body[%u]%n", &body_no, &len) ||
-	//           sscanf(arg, "b%u%n", &body_no, &len)) && !arg[len])
-	// {
-	// 	if (body_no >= S->BodyList->size_safe())
-	// 	{
-	// 		fprintf(stderr, "vvcompose: del: body[%u]: no such body\n", body_no);
-	// 		exit(3);
-	// 	}
-	// 	deletion_list->push_back(S->BodyList->at(body_no));
-	// }
+	else if ( (len=0, sscanf(arg, "body%02u%n", &body_no, &len)==1 && !arg[len]) )
+	{
+		if (body_no >= S->BodyList.size())
+		{
+			fprintf(stderr, "vvcompose: del: no such body \"body%02u\"\n", body_no);
+			exit(3);
+		}
+		S->BodyList.erase(S->BodyList.begin()+body_no);
+	}
 	else
 	{
 		fprintf(stderr, "vvcompose: del: bad argument: %s\n", arg);
@@ -158,6 +186,44 @@ int main(int argc, char *argv[])
 {
 	Space *S = new Space();
 	int i = 1;
+	if (argc < 2)
+	{
+		printf("usage: vvcompose COMMAND ARGS [...]\n");
+		printf("\n");
+		printf("COMMAND:\n");
+		printf("load {hdf|body|vort|heat|ink|ink_source} FILE: load stuff from file \n");
+		printf("save FILE: save space in hdf5 format\n");
+		printf("del {bodyXX|vort|heat|ink|ink_source}: remove specific list from space\n");
+		printf("set VARIABLE VALUE: set given parameter in space\n");
+		printf("\n");
+		printf("VARIABLE                         VALUE\n");
+		printf("caption                          STR\n");
+		printf("time                             DOUBLE\n");
+		printf("dt                               DOUBLE\n");
+		printf("dt_save                          DOUBLE\n");
+		printf("dt_streak                        DOUBLE\n");
+		printf("dt_profile                       DOUBLE\n");
+		printf("re                               DOUBLE\n");
+		printf("pr                               DOUBLE\n");
+		printf("gravity.{x|y}                    DOUBLE\n");
+		printf("inf_speed.{x|y}                  STR (math expression)\n");
+		printf("inf_circulation                  DOUBLE\n");
+		printf("time_to_finish                   DOUBLE\n");
+		printf("bodyXX.speed.{x|y|o}             STR (math expression)\n");
+		printf("bodyXX.root_body                 STR (in form: bodyXX)\n");
+		printf("bodyXX.move.{x|y|o|d}            DOUBLE\n");
+		printf("bodyXX.density                   DOUBLE\n");
+		printf("bodyXX.holder_position.{x|y|o|d} DOUBLE\n");
+		printf("bodyXX.delta_position.{x|y|o|d}  DOUBLE\n");
+		printf("bodyXX.spring_const.{x|y|o}      DOUBLE\n");
+		printf("bodyXX.spring_damping.{x|y|o}    DOUBLE\n");
+		printf("bodyXX.general_slip              0|1\n");
+		printf("bodyXX.special_segment_no        INT\n");
+		printf("bodyXX.boundary_condition        steady|kutta\n");
+		printf("bodyXX.heat_condition            neglect|isolate|const_t|const_w\n");
+		printf("bodyXX.heat_const                DOUBLE\n");
+		return 0;
+	}
 	while (i<argc)
 	{
 		#define CHECK(x) if (i+x>=argc) {fprintf(stderr, "vvcompose: %s: not enought arguments\n", argv[i]); return 2; }

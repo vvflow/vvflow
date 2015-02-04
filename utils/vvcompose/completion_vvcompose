@@ -6,17 +6,23 @@ _vvcompose(){
 
 	case "$3" in
 		"load") COMPREPLY=($(compgen -W 'hdf body vort heat ink ink_source' -- ${cur}));;
-		"set") COMPREPLY=($(compgen -W 'name re pr
-			time dt dts dt_streak dt_profile fin
-			infx infy infg
-			gravity.x gravity.y
-			b0.pos.x b0.pos.y b0.pos.o b0.pos.d
-			b0.dpos.x b0.dpos.y b0.dpos.o b0.dpos.d
-			b0.move.x b0.move.y b0.move.o b0.move.d
-			b0.spring.x b0.spring.y b0.spring.o
-			b0.damping.x b0.damping.y b0.damping.o
-			b0.speed.x b0.speed.y b0.speed.o
-			b0.density b0.root' -- ${cur}));;
+		"set") COMPREPLY=($(compgen -W '
+			caption time dt dt_save dt_streak dt_profile
+			re pr inf_speed.x inf_speed.y inf_circulation
+			time_to_finish gravity.x gravity.y
+			bodyXX.speed.x bodyXX.speed.y bodyXX.speed.o
+			bodyXX.root_body bodyXX.density
+			bodyXX.move.x bodyXX.move.y bodyXX.move.o bodyXX.move.d
+			bodyXX.holder_position.x bodyXX.holder_position.y
+			bodyXX.holder_position.o bodyXX.holder_position.d
+			bodyXX.delta_position.x bodyXX.delta_position.y
+			bodyXX.delta_position.o bodyXX.delta_position.d
+			bodyXX.spring_const.x bodyXX.spring_const.y
+			bodyXX.spring_const.o bodyXX.spring_damping.x
+			bodyXX.spring_damping.y bodyXX.spring_damping.o
+			bodyXX.general_slip bodyXX.special_segment_no
+			bodyXX.boundary_condition bodyXX.heat_condition
+			bodyXX.heat_const' -- ${cur}));;
 		"del") COMPREPLY=($(compgen -W 'vort heat ink ink_source body00' -- ${cur}));;
 		"save") COMPREPLY=($(compgen -f -X '!*.h5' -o plusdirs  -- ${cur}));;
 		"hdf") COMPREPLY=($(compgen -f -X '!*.h5' -o plusdirs  -- ${cur}));;
