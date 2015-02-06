@@ -795,6 +795,7 @@ int Space::LoadBody(const char* filename)
 	while (fscanf(fin, "%lf %lf", &att.corner.x, &att.corner.y)==2)
 	{
 		body->alist.push_back(att);
+		while ( fgetc(fin)!='\n' && !feof(fin) ) {}
 	}
 
 	fclose(fin);
