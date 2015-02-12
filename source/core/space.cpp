@@ -180,7 +180,13 @@ void Space::Save(const char* format)
 {
 	char fname[64]; sprintf(fname, format, int(Time/dt+0.5));
 	fid = H5Fcreate(fname, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-	assert(fid>=0);
+	if (fid < 0)
+	{
+		H5Epop(H5E_DEFAULT, H5Eget_num(H5E_DEFAULT)-1);
+		H5Eprint2(H5E_DEFAULT, stderr);
+		fprintf(stderr, "error: Space::Save: can't open file '%s'\n", fname);
+		return;
+	}
 	datatypes_create_all();
 	
 	attribute_write(fid, "caption", caption);

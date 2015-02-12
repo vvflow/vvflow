@@ -27,7 +27,7 @@ ShellScript::ShellScript(const std::string &s):
 	if (!evaluator)
 	{
 		fprintf(stderr, "Can not create evaluator for %s\n", script.c_str());
-		exit(1);
+		script = "";
 	}
 }
 
@@ -50,8 +50,8 @@ ShellScript& ShellScript::operator=(const std::string &s)
 	evaluator = evaluator_create((char*)script.c_str());
 	if (!evaluator)
 	{
-		fprintf(stderr, "Can not create evaluator for %s\n", script.c_str());
-		exit(2);
+		fprintf(stderr, "Can not assign evaluator for %s\n", script.c_str());
+		script = "";
 	}
 	return *this;
 }

@@ -216,3 +216,55 @@ int list_extract(hid_t fid, const char *dsetname)
 
 	return 0;
 }}
+
+extern "C" {
+int dset_print(hid_t fid, const char *dsetname)
+{
+	H5Eset_auto2(H5E_DEFAULT, NULL, NULL);
+	hid_t dataset = H5Dopen2(fid, dsetname, H5P_DEFAULT);
+	if (dataset < 0)
+	{
+		H5Epop(H5E_DEFAULT, H5Eget_num(H5E_DEFAULT)-1);
+		H5Eprint2(H5E_DEFAULT, stderr);
+		fprintf(stderr, "error: argument dataset: can't open dataset '%s'\n", dsetname);
+		return 3;
+	}
+
+	hid_t dataspace = H5Dget_space(dataset);
+	if (dataspace < 0)
+	{
+		H5Epop(H5E_DEFAULT, H5Eget_num(H5E_DEFAULT)-1);
+		H5Eprint2(H5E_DEFAULT, stderr);
+		return 5;
+	}
+	hsize_t dims[2];
+	H5Sget_simple_extent_dims(dataspace, dims, dims);
+	double *mem = (double*)malloc(sizeof(double)*dims[0]*dims[1]);
+	herr_t err = H5Dread(dataset, H5T_NATIVE_DOUBLE, H5S_ALL, dataspace, H5P_DEFAULT, mem);
+	if (err < 0)
+	{
+		H5Epop(H5E_DEFAULT, H5Eget_num(H5E_DEFAULT)-1);
+		H5Eprint2(H5E_DEFAULT, stderr);
+		return 5;
+	}
+
+	for (int i=0; i<dims[0]; i++)
+	{
+		for (int j=0; j<dims[1]; j++)
+		{
+			printf("%le \t", *(mem+i*dims[1]+j));
+		}
+		printf("\n");
+	}
+
+	fflush(stdout);
+	// assert(c == dims[0]*dims[1]);
+	// fwrite(dims, sizeof(hsize_t), 2, stdout);
+	// fwrite(&xmin, sizeof(double), 1, stdout);
+
+	free(mem);
+	H5Sclose(dataspace);
+	H5Dclose(dataset);
+
+	return 0;
+}}

@@ -155,7 +155,7 @@ lists = [str(l) for l in datasets if str(l) in ["vort", "heat", "ink", "ink_sour
 if args.referenceframe == 'o':
 	x_shift = y_shift = 0.;
 elif args.referenceframe == 'b':
-	raise Esception("Body reference frame is not implemented yet")
+	raise Exception("Body reference frame is not implemented yet")
 elif args.referenceframe == 'f':
 	x_shift = -marker_x;
 	y_shift = -marker_y;
@@ -194,11 +194,11 @@ pids = list()
 home = os.getenv("HOME")
 heatplot_exe = os.path.join(home, ".local/bin/heatplot_exe")
 isoline_exe = os.path.join(home, ".local/bin/isoline_exe")
-c_boundaries = (ctypes.c_double(xmin - vv_prec_lo),
-		ctypes.c_double(xmax + vv_prec_lo),
-		ctypes.c_double(ymin - vv_prec_lo),
-		ctypes.c_double(ymax + vv_prec_lo),
-		ctypes.c_double(vv_prec_hi))
+c_boundaries = (ctypes.c_double(xmin-x_shift - vv_prec_lo),
+                ctypes.c_double(xmax-x_shift + vv_prec_lo),
+                ctypes.c_double(ymin-y_shift - vv_prec_lo),
+                ctypes.c_double(ymax-y_shift + vv_prec_lo),
+                ctypes.c_double(vv_prec_hi))
 try:
 	libvvplot = ctypes.cdll.LoadLibrary("%s/libvvplot.so" % os.path.abspath(os.path.dirname(sys.argv[0])))
 except OSError as e:
@@ -255,7 +255,7 @@ unset xtics
 unset ytics
 set xrange [%f: %f]
 set yrange [%f: %f]
-""" % (xmin, xmax, ymin, ymax))
+""" % (xmin-x_shift, xmax-x_shift, ymin-y_shift, ymax-y_shift))
 
 if args.mode_colorbox:
 	gp.write("""set colorbox horizontal user origin .1,.02 size .8,.04\n""")
@@ -349,7 +349,8 @@ if args.plot_temperature:
 	gp.write("""%s '%s.heat' w image""" % (delimiter(), fin_name))
 
 if args.plot_vorticity:
-	gp.write("""%s '< libvvplot -M %s map_vorticity' binary format='%%3float' w image""" % (delimiter(), fin_name))
+	gp.write("""{plot} '< libvvplot -M {fin_name} map_vorticity'""".format(plot=delimiter(), fin_name=fin_name))
+	gp.write(""" binary format='%3float' w image""")
 
 if args.plot_vortexes_bold and 'vort' in lists:
 	gp.write("""%s '< h5totxt %s -s " " -d vort'""" % (delimiter(), fin_name))

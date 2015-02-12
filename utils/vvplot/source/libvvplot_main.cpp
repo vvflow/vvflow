@@ -14,12 +14,13 @@ void print_version()
 
 void print_help()
 {
-	fprintf(stderr, "Usage: libvvplot.so {-h,-v,-M,-I,-L} FILE DATASET [ARGS]\n");
+	fprintf(stderr, "Usage: libvvplot {-h,-v,-p,-M,-I,-L} FILE DATASET [ARGS]\n");
 	fprintf(stderr, "Options:\n");
 	fprintf(stderr, " -h : show this message\n");
 	fprintf(stderr, " -v : show version info\n");
+	fprintf(stderr, " -p : print dataset from hdf file in plain text\n");
 	fprintf(stderr, " -M : extract a binary dataset from hdf file\n");
-	fprintf(stderr, " -L : extract a vist of domains from hdf file\n");
+	fprintf(stderr, " -L : extract a list of domains from hdf file\n");
 	fprintf(stderr, " -I : plot isolines on a dataset with constants in args\n");
 	fflush(stderr);
 }
@@ -32,7 +33,8 @@ int main(int argc, char **argv)
 	else if (!strcmp(argv[1], "-h")) { print_help(); _exit(0); }
 	else if (!strcmp(argv[1], "-v")) { print_version(); _exit(0); }
 	else if (argc < 4) { print_help(); _exit(1); }
-	else if (!strcmp(argv[1], "-I") || !strcmp(argv[1], "-M") || !strcmp(argv[1], "-L")) {;}
+	else if (!strcmp(argv[1], "-I") || !strcmp(argv[1], "-p") ||
+	         !strcmp(argv[1], "-M") || !strcmp(argv[1], "-L")) {;}
 	else {fprintf(stderr, "Bad option '%s'. See '-h' for help.\n", argv[1]); _exit(-1); }
 
 	H5Eset_auto2(H5E_DEFAULT, NULL, NULL);
@@ -45,7 +47,11 @@ int main(int argc, char **argv)
 		return 2;
 	}
 
-	if (!strcmp(argv[1], "-M"))
+	if (!strcmp(argv[1], "-p"))
+	{
+		dset_print(fid, argv[3]);
+	}
+	else if (!strcmp(argv[1], "-M"))
 	{
 		map_extract(fid, argv[3]);
 	}
