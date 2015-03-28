@@ -125,8 +125,14 @@ h5_fid = h5_file.fid.id
 # print 'caption = '+h5_file.attrs['caption']
 # print 'Re = '+str(h5_file.attrs['re']);
 
-realtime = h5_file.attrs['time_local']
-time = (lambda frac: float(frac[0])/float(frac[1]))(h5_file.attrs['time'])
+try:
+	realtime = h5_file.attrs['time_local']
+except:
+	realtime = 0
+try:
+	time = (lambda frac: float(frac[0])/float(frac[1]))(h5_file.attrs['time'])
+except:
+	time = 0.0
 try:
 	marker_x, marker_y = h5_file.attrs['inf_marker']
 except:
@@ -238,10 +244,15 @@ if args.mode_dry: exit()
 ############################## CALL GNUPLOT ####################################
 
 gp = os.popen("gnuplot", "w")
-gp.write("""
-set terminal pngcairo enhanced %s size %d, %d font "FreeSerif, 26"
-set output '%s'
-""" % ("mono" if args.mode_bw else "color", pic_w, pic_h, fout_name))
+def gpw(str, **kwargs):
+	"""Format string and send it to gnuplot"""
+	gp.write(str.format(
+		plot=delimiter(),
+		fin_name=fin_name,
+		**kwargs))
+
+gpw("""set terminal pngcairo enhanced {} size {}, {} font "FreeSerif, 26" \n""", "mono" if args.mode_bw else "color", pic_w, pic_h)
+gpw("""set output '{}' \n""", fout_name)
 
 gp.write("""
 set lmargin 0
@@ -340,28 +351,38 @@ if args.plot_temperature:
 
 # parameters = {",": delimiter()}
 if args.plot_pressure or args.plot_isopressure:
-	gp.write("""%s '< libvvplot -M %s map_pressure.%s' binary format='%%float%%float%%float' w image""" % (delimiter(), fin_name, args.pressure))
+	gp.write("""{plot} '< libvvplot -M {fin_name} map_pressure.{mode}'""".format(
+		plot=delimiter(), fin_name=fin_name, mode=args.pressure))
+	gp.write(""" binary format='%3float' w image""")
 	if args.plot_isopressure:
 		vv_isopres = os.popen("seq -s ' ' -1.5 0.075757576 1").read()[:-1]
-		gp.write("""%s '< libvvplot -I %s map_pressure.%s %s' binary format='%%float%%float' w lines lw 1 lc rgb '#9999cc'""" % (delimiter(), fin_name, args.pressure, vv_isopres))
+		gp.write("""{plot} '< libvvplot -I {fin_name} map_pressure.{mode} {vv_isopres}'""".format(
+			plot=delimiter(), fin_name=fin_name, mode=args.pressure, vv_isopres=vv_isopres))
+		gp.write(""" binary format='%2float' w lines lw 1 lc rgb '#9999cc'""")
 
 if args.plot_temperature:
-	gp.write("""%s '%s.heat' w image""" % (delimiter(), fin_name))
+	gp.write("""{plot} '< libvvplot -M {fin_name} map_temperature'""".format(plot=delimiter(), fin_name=fin_name)
+	gp.write(""" binary format='%3float' w image""")
 
 if args.plot_vorticity:
 	gp.write("""{plot} '< libvvplot -M {fin_name} map_vorticity'""".format(plot=delimiter(), fin_name=fin_name))
 	gp.write(""" binary format='%3float' w image""")
-
-if args.plot_vortexes_bold and 'vort' in lists:
-	gp.write("""%s '< h5totxt %s -s " " -d vort'""" % (delimiter(), fin_name))
-	gp.write(""" u 1:2:(%f):(color($3)) w @vortex_style""" % vv_prec_hi)
 
 if args.plot_vortexes and 'vort' in lists:
 	gp.write("""{plot} '< libvvplot -L {fin_name} vort'""".format(plot=delimiter(), fin_name=fin_name))
 	gp.write(""" binary format='%3double'""")
 	gp.write(""" u 1:2:(color($3)) w @dots""")
 
+if args.plot_vortexes_bold and 'vort' in lists:
+	gp.write("""{plot} '< libvvplot -L {fin_name} vort'""".format(plot=delimiter(), fin_name=fin_name))
+	gp.write(""" binary format='%3double'""")
+	gp.write(""" u 1:2:({vv_prec_hi}):(color($3)) w @vortex_style""".format(vv_prec_hi=vv_prec_hi))
+
 if args.plot_heat and 'heat' in lists:
+	gp.write("""{plot} '< libvvplot -L {fin_name} heat'""".format(plot=delimiter(), fin_name=fin_name))
+	gp.write(""" binary format='%3double'""")
+	gp.write(""" u 1:2:({vv_prec_hi}):(color($3)) w @heat_style""".format(vv_prec_hi=vv_prec_hi))
+	
 	gp.write("""%s '< h5totxt %s -s " " -d heat'""" % (delimiter(), fin_name))
 	gp.write(""" u 1:2:(%f) w @heat_style""" % vv_prec_hi)
 
@@ -372,7 +393,9 @@ if args.plot_ink and 'ink' in lists:
 if args.plot_streamlines:
 	# gp.write("""%s '< libvvplot -M %s map_streamfunction.%s' binary format='%%float%%float%%float' w image""" % (delimiter(), fin_name, args.streamlines))
 	vv_isopsi = os.getenv("VV_ISOPSI") or os.popen("seq -s ' ' -10 0.1 10").read()[:-1]
-	gp.write("""%s '< libvvplot -I %s map_streamfunction.%s %s' binary format='%%float%%float' w lines lw 1.5 lc rgb 'black'""" % (delimiter(), fin_name, args.streamlines, vv_isopsi))
+	gp.write("""{plot} '< libvvplot -I {fin_name} map_streamfunction.{mode} {vv_isopsi}'""".format(
+		plot=delimiter(), fin_name=fin_name, mode=args.streamlines, vv_isopsi=vv_isopsi))
+	gp.write(""" binary format='%2float' w lines lw 1.5 lc rgb 'black'""")
 
 if args.plot_isotherms:
 	vv_isotherms = os.getenv("VV_ISOTHERMS") or os.popen("seq -s ' ' 0.05 0.05 0.95").read()[:-1]
@@ -380,9 +403,11 @@ if args.plot_isotherms:
 
 if args.plot_body:
 	for b in bodies:
-		gp.write("""{plot} '< h5totxt {file} -s " " -d {body}' u 1:2 w @{style}""".format(
-			plot=delimiter(), file=fin_name, body=b['name'],
-			style="body_clear" if args.blankbody-1==bodies.index(b) else "body_style"))
+		gp.write("""{plot} '< libvvplot -L {fin_name} {body}' u 1:2 w @{style}""".format(
+			plot=delimiter(), fin_name=fin_name, body=b['name'],
+		gp.write(""" binary format='%2float%*2float' w @{{style}}""".format(
+			style="body_clear" if args.blankbody-1==bodies.index(b) else "body_style")
+			))
 		if args.plot_spring:
 			p1 = b['holder_position']
 			dp = b['delta_position']
