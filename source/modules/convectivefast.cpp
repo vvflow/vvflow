@@ -5,7 +5,6 @@
 #include <assert.h>
 #include <complex>
 
-#include "mkl.h"
 using namespace std;
 
 #include "convectivefast.h"

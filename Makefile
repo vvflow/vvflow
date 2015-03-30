@@ -18,6 +18,7 @@
 
 ifeq ($(CXX),icpc)
         CXXFLAGS+= -g -debug all -O3 -Wall -openmp -mkl
+        LDFLAGS+= -mkl=parallel
         AR = xiar
 else
         CXXFLAGS+= -O3 -Wall -fopenmp
@@ -72,7 +73,7 @@ bin/libvvhd.a: $(patsubst %, bin/%.o, $(core_objects) $(modules_objects))
 	ranlib $@
 
 bin/libvvhd.so: $(patsubst %, bin/%.o, $(core_objects) $(modules_objects))
-	$(CXX) -shared -fPIC -Wl,-soname,libvvhd.so -o $@ $^ -mkl=parallel
+	$(CXX) $(LDFLAGS) -shared -fPIC -Wl,-soname,libvvhd.so -o $@ $^
 
 bin/:
 	mkdir $@ -p

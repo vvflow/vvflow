@@ -110,7 +110,7 @@ class TBody
 		TVec   get_axis() const {return holder.r + dpos.r;}
 		double get_moi_c() const {return _moi_c;} // moment of inertia about rotation axis
 		void override_moi_c(double newMoi_c) {_moi_c = newMoi_c;}
-		int size() const    {return alist.size();}
+		size_t size() const    {return alist.size();}
 
 		int eq_forces_no; // starting number of forces equations
 

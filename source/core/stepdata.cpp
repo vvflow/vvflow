@@ -53,7 +53,7 @@ void Stepdata::append(int dataspace_hid, TVec3D value)
 	append(dataspace_hid, arr);
 }
 
-int Stepdata::create_dataset(int loc_id, const char *name, int cols)
+int Stepdata::create_dataset(int loc_id, const char *name, unsigned cols)
 {
 	hid_t prop = H5Pcreate(H5P_DATASET_CREATE);
 	hsize_t chunkdims[2] = {100, cols};

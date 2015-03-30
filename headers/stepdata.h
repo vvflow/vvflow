@@ -14,7 +14,7 @@ class Stepdata
 
 	private:
 		void attribute_write(const char *name, const char *str);
-		int create_dataset(int loc_id, const char *name, int cols);
+		int create_dataset(int loc_id, const char *name, unsigned cols);
 		void append(int dataspace_hid, const void* buf);
 		void append(int dataspace_hid, double value);
 		void append(int dataspace_hid, TVec3D value);

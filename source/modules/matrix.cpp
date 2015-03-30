@@ -1,7 +1,18 @@
-#include "mkl.h"
 #include "stdio.h"
 #include "string.h"
+#include "malloc.h"
+#include "stdlib.h"
 #include "matrix.h"
+
+#ifdef HAVE_MKL
+#include "mkl.h"
+#else
+extern "C" {
+	void dgesv_(int* n, const int* nrhs, double* a, int* lda, int* ipiv, double *x, int *incx, int *info);
+	void dgetrf_(int* M, int *N, double* A, int* lda, int* IPIV, int* INFO);
+	void dgetri_(int* N, double* A, int* lda, int* IPIV, double* WORK, int* lwork, int* INFO);
+}
+#endif
 
 #define NDEBUG
 #include "assert.h"
