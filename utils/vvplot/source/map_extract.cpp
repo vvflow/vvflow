@@ -151,8 +151,8 @@ int map_extract(hid_t fid, const char *dsetname)
 	
 	// fprintf(stdout, "%lf %lf %lf %lf %lf\n", xmin, xmax, ymin, ymax, spacing);
 	// fwrite(args, sizeof(double), 5, stdout);
-	for (int i=0; i<dims[0]; i++)
-	for (int j=0; j<dims[1]; j++)
+	for (size_t i=0; i<dims[0]; i++)
+	for (size_t j=0; j<dims[1]; j++)
 	{
 		float x = args[0] + i*args[4];
 		float y = args[2] + j*args[4];
@@ -248,9 +248,9 @@ int dset_print(hid_t fid, const char *dsetname)
 		return 5;
 	}
 
-	for (int i=0; i<dims[0]; i++)
+	for (size_t i=0; i<dims[0]; i++)
 	{
-		for (int j=0; j<dims[1]; j++)
+		for (size_t j=0; j<dims[1]; j++)
 		{
 			printf("%le \t", *(mem+i*dims[1]+j));
 		}

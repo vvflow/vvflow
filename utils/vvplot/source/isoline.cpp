@@ -31,8 +31,6 @@ class vec_t
 		seg_t(vec_t _v1, vec_t _v2, float _c): v1(_v1), v2(_v2), c(_c) {}
 };*/
 
-static float max(float a1, float a2) {return (a1>a2)?a1:a2;}
-static float min(float a1, float a2) {return (a1<a2)?a1:a2;}
 static bool inrange(float z1, float z2, float c) { return (z1 <= c && c < z2) || (z1 >= c && c > z2); }
 
 typedef vector<vec_t> line_t;
@@ -136,12 +134,12 @@ int map_isoline(hid_t fid, const char *dsetname, float *cvals, int cnum)
 	
 	// fprintf(stdout, "%lf %lf %lf %lf %lf\n", xmin, xmax, ymin, ymax, spacing);
 	// fwrite(args, sizeof(double), 5, stdout);
-	for (int i=0; i<dims[0]-1; i++)
+	for (size_t i=0; i<dims[0]-1; i++)
 	{
-		float x = xmin + i*spacing;
-		for (int j=0; j<dims[1]-1; j++)
+		// float x = xmin + i*spacing;
+		for (size_t j=0; j<dims[1]-1; j++)
 		{
-			float y = ymin + j*spacing;
+			// float y = ymin + j*spacing;
 
 			// 1 2
 			// 0 3
@@ -152,17 +150,12 @@ int map_isoline(hid_t fid, const char *dsetname, float *cvals, int cnum)
 		}
 	}
 
-	// if (vec_t(17.333, 15.00004) == vec_t(17.333, 15.00004))
-	// 	{printf("ok\n");}
-	// else
-	// 	{printf("boo\n");}
-
 	for (auto it = isolines->begin(); it!= isolines->end(); it++)
 	{
 		line_t *l = *it;
 		for (auto vec = l->begin(); vec!=l->end(); vec++)
 		{
-			float xy[2] = { xmin+vec->x*spacing, ymin+vec->y*spacing };
+			float xy[2] = { static_cast<float>(xmin+vec->x*spacing), static_cast<float>(ymin+vec->y*spacing) };
 			// printf("%g %g\n", xy[0], xy[1]);
 			fwrite(xy, sizeof(float), 2, stdout);
 		}

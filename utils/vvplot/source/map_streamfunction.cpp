@@ -14,7 +14,7 @@ inline static double atan(TVec p) {return atan(p.y/p.x);}
 
 double Psi(Space* S, TVec p)
 {
-	double psi1=0.0, psi2=0.0, psi3=0.0, psi4=0.0;
+	double psi1=0.0, psi2=0.0, psi3=0.0;
 
 	for (auto& lbody: S->BodyList)
 	{
@@ -83,14 +83,17 @@ int map_streamfunction(hid_t fid, char RefFrame, double xmin, double xmax, doubl
 
 
 	S->Tree->build();
-	hsize_t dims[2] = {(xmax-xmin)/spacing + 1, (ymax-ymin)/spacing + 1};
+	hsize_t dims[2] = {
+		static_cast<size_t>((xmax-xmin)/spacing) + 1,
+		static_cast<size_t>((ymax-ymin)/spacing) + 1
+	};
 	float *mem = (float*)malloc(sizeof(float)*dims[0]*dims[1]);
 
-	for (int xi=0; xi<dims[0]; xi++)
+	for (size_t xi=0; xi<dims[0]; xi++)
 	{
 		double x = xmin + double(xi)*spacing;
 		#pragma omp parallel for ordered schedule(dynamic, 10)
-		for (int yj=0; yj<dims[1]; yj++)
+		for (size_t yj=0; yj<dims[1]; yj++)
 		{
 			double y = ymin + double(yj)*spacing;
 			mem[xi*dims[1]+yj] = Psi(S, TVec(x, y));

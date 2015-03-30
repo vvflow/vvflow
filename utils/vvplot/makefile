@@ -3,7 +3,7 @@ PREFIX=$(HOME)/.local
 ifeq ($(CXX),icpc)
         CXXFLAGS+= -O3 -Wall -openmp -mkl=parallel -debug all
 else
-        CXXFLAGS+= -O3 -Wall -fopenmp -g
+        CXXFLAGS+= -O3 -Wall -fopenmp -g -llapack
 endif
 
 names:= vvdistrib

@@ -94,7 +94,7 @@ double Vorticity(Space* S, TVec p)
 	TSortedNode* bnode = S->Tree->findNode(p);
 
 	//return  bnode->NearNodes->size_safe();
-	TObj* nrst = Nearest(*bnode, p);
+	// TObj* nrst = Nearest(*bnode, p);
 
 	//return nrst - S->HeatList->begin();
 
@@ -149,14 +149,17 @@ int map_vorticity(hid_t fid, double xmin, double xmax, double ymin, double ymax,
 	}
 
 	// Calculate field ********************************************************
-	hsize_t dims[2] = {(xmax-xmin)/spacing + 1, (ymax-ymin)/spacing + 1};
+	hsize_t dims[2] = {
+		static_cast<size_t>((xmax-xmin)/spacing) + 1,
+		static_cast<size_t>((ymax-ymin)/spacing) + 1
+	};
 	float *mem = (float*)malloc(sizeof(float)*dims[0]*dims[1]);
 
-	for (int xi=0; xi<dims[0]; xi++)
+	for (size_t xi=0; xi<dims[0]; xi++)
 	{
 		double x = xmin + double(xi)*spacing;
 		#pragma omp parallel for ordered schedule(dynamic, 100)
-		for( int yj=0; yj<dims[1]; yj++)
+		for (size_t yj=0; yj<dims[1]; yj++)
 		{
 			double y = ymin + double(yj)*spacing;
 			TVec xy(x,y);

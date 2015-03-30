@@ -4,7 +4,7 @@ ifeq ($(CXX),icpc)
         CXXFLAGS+= -debug all  -O3 -Wall -openmp -mkl=parallel
         AR = xiar
 else
-        CXXFLAGS+= -O3 -Wall -fopenmp
+        CXXFLAGS+= -O3 -Wall -fopenmp -llapack
 endif
 
 all: vvflow

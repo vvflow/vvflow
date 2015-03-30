@@ -1,5 +1,6 @@
 #include "core.h"
 #include "string.h"
+#include "stdlib.h"
 #include "libvvplot_api.h"
 
 void print_version()
@@ -28,14 +29,13 @@ void print_help()
 
 int main(int argc, char **argv)
 {
-	char mode;
-	     if (argc<2) { print_help(); _exit(1); }
-	else if (!strcmp(argv[1], "-h")) { print_help(); _exit(0); }
-	else if (!strcmp(argv[1], "-v")) { print_version(); _exit(0); }
-	else if (argc < 4) { print_help(); _exit(1); }
+	/**/ if (argc<2) { print_help(); exit(1); }
+	else if (!strcmp(argv[1], "-h")) { print_help(); exit(0); }
+	else if (!strcmp(argv[1], "-v")) { print_version(); exit(0); }
+	else if (argc < 4) { print_help(); exit(1); }
 	else if (!strcmp(argv[1], "-I") || !strcmp(argv[1], "-p") ||
 	         !strcmp(argv[1], "-M") || !strcmp(argv[1], "-L")) {;}
-	else {fprintf(stderr, "Bad option '%s'. See '-h' for help.\n", argv[1]); _exit(-1); }
+	else {fprintf(stderr, "Bad option '%s'. See '-h' for help.\n", argv[1]); exit(-1); }
 
 	H5Eset_auto2(H5E_DEFAULT, NULL, NULL);
 	hid_t fid = H5Fopen(argv[2], H5F_ACC_RDONLY, H5P_DEFAULT);
@@ -67,5 +67,5 @@ int main(int argc, char **argv)
 	}
 	H5Fclose(fid);
 
-	_exit(0);
+	exit(0);
 }

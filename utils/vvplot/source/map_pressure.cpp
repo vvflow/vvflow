@@ -46,7 +46,7 @@ double Pressure(Space* S, convectivefast *conv, TVec p, char RefFrame, double pr
 		double gtmp = 0;
 		for (auto& latt: lbody->alist)
 		{
-			TVec Vs = lbody->speed_slae.r + lbody->speed_slae.o * rotl(latt.r - lbody->get_axis());
+			// TVec Vs = lbody->speed_slae.r + lbody->speed_slae.o * rotl(latt.r - lbody->get_axis());
 			gtmp+= latt.gsum;
 			_2PI_Cp -= (latt.dl/S->dt * rotl(K(latt.r, p))) * gtmp;
 		}
@@ -107,14 +107,17 @@ int map_pressure(hid_t fid, char RefFrame, double xmin, double xmax, double ymin
 	conv.CalcConvectiveFast();
 	diff.CalcVortexDiffusiveFast();
 
-	hsize_t dims[2] = {(xmax-xmin)/spacing + 1, (ymax-ymin)/spacing + 1};
+	hsize_t dims[2] = {
+		static_cast<size_t>((xmax-xmin)/spacing) + 1, 
+		static_cast<size_t>((ymax-ymin)/spacing) + 1
+	};
 	float *mem = (float*)malloc(sizeof(float)*dims[0]*dims[1]);
 
-	for (int xi=0; xi<dims[0]; xi++)
+	for (size_t xi=0; xi<dims[0]; xi++)
 	{
 		double x = xmin + double(xi)*spacing;
 		#pragma omp parallel for ordered schedule(dynamic, 20)
-		for (int yj=0; yj<dims[1]; yj++)
+		for (size_t yj=0; yj<dims[1]; yj++)
 		{
 			double y = ymin + double(yj)*spacing;
 			mem[xi*dims[1]+yj] = S->PointIsInBody(TVec(x, y)) ? 
