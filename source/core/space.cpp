@@ -13,10 +13,10 @@
 #include "space_hdf.cpp"
 
 #ifndef DEF_GITINFO
-	#define DEF_GITINFO "not available"
+#define DEF_GITINFO "not available"
 #endif
 #ifndef DEF_GITDIFF
-	#define DEF_GITDIFF "not available"
+#define DEF_GITDIFF "not available"
 #endif
 static const char* gitInfo = DEF_GITINFO;
 static const char* gitDiff = DEF_GITDIFF;
@@ -32,672 +32,672 @@ using std::ios;
 // FIXME убрать везде using namespace std
 
 Space::Space():
-	caption(),
-	InfSpeedX(),
-	InfSpeedY()
+    caption(),
+    InfSpeedX(),
+    InfSpeedY()
 {
-		// static_assert(std::is_pod<TVec>::value, "TVec is not POD");
-		// static_assert(std::is_pod<TObj>::value, "TObj is not POD");
-	// static_assert(std::is_pod<TAtt>::value, "TAtt is not POD");
-	InfCirculation = 0.;
-	gravitation = TVec(0., 0.);
-	Finish = std::numeric_limits<double>::max();
-	Time = dt = TTime(0, 0);
-	save_dt = streak_dt = profile_dt = TTime(INT32_MAX, 1);
-	Re = Pr = 0.;
-	InfMarker = TVec(0., 0.);
+    // static_assert(std::is_pod<TVec>::value, "TVec is not POD");
+    // static_assert(std::is_pod<TObj>::value, "TObj is not POD");
+    // static_assert(std::is_pod<TAtt>::value, "TAtt is not POD");
+    InfCirculation = 0.;
+    gravitation = TVec(0., 0.);
+    Finish = std::numeric_limits<double>::max();
+    Time = dt = TTime(0, 0);
+    save_dt = streak_dt = profile_dt = TTime(INT32_MAX, 1);
+    Re = Pr = 0.;
+    InfMarker = TVec(0., 0.);
 }
 
-inline
+    inline
 void Space::FinishStep()
 {
-	for(auto& lbody: BodyList)
-	{
-		lbody->doRotationAndMotion();
-	}
-	Time= TTime::add(Time, dt);
+    for(auto& lbody: BodyList)
+    {
+        lbody->doRotationAndMotion();
+    }
+    Time= TTime::add(Time, dt);
 }
 
 /*
-888    888 8888888b.  8888888888 888888888
-888    888 888  "Y88b 888        888
-888    888 888    888 888        888
-8888888888 888    888 8888888    8888888b.
-888    888 888    888 888             "Y88b
-888    888 888    888 888               888
-888    888 888  .d88P 888        Y88b  d88P
-888    888 8888888P"  888         "Y8888P"
-*/
+   888    888 8888888b.  8888888888 888888888
+   888    888 888  "Y88b 888        888
+   888    888 888    888 888        888
+   8888888888 888    888 8888888    8888888b.
+   888    888 888    888 888             "Y88b
+   888    888 888    888 888               888
+   888    888 888  .d88P 888        Y88b  d88P
+   888    888 8888888P"  888         "Y8888P"
+   */
 
 /*
- .d8888b.         d8888 888     888 8888888888
-d88P  Y88b       d88888 888     888 888
-Y88b.           d88P888 888     888 888
- "Y888b.       d88P 888 Y88b   d88P 8888888
-    "Y88b.    d88P  888  Y88b d88P  888
-      "888   d88P   888   Y88o88P   888
-Y88b  d88P  d8888888888    Y888P    888
- "Y8888P"  d88P     888     Y8P     8888888888
+      .d8888b.         d8888 888     888 8888888888
+     d88P  Y88b       d88888 888     888 888
+     Y88b.           d88P888 888     888 888
+      "Y888b.       d88P 888 Y88b   d88P 8888888
+         "Y88b.    d88P  888  Y88b d88P  888
+           "888   d88P   888   Y88o88P   888
+     Y88b  d88P  d8888888888    Y888P    888
+      "Y8888P"  d88P     888     Y8P     8888888888
 */
 
 void Space::dataset_write_list(const char *name, const vector<TObj>& list)
 {
-	if (list.empty()) return;
-	// 1D dataspace
-	hsize_t dims[2] = {list.size(), 3};
-	hsize_t dims2[2] = {dims[0]*2, dims[1]};
-	hsize_t chunkdims[2] = {std::min<hsize_t>(512, dims[0]), 3};
-	hid_t prop = H5Pcreate(H5P_DATASET_CREATE);
-	H5Pset_chunk(prop, 2, chunkdims);
-	H5Pset_deflate(prop, 9);
+    if (list.empty()) return;
+    // 1D dataspace
+    hsize_t dims[2] = {list.size(), 3};
+    hsize_t dims2[2] = {dims[0]*2, dims[1]};
+    hsize_t chunkdims[2] = {std::min<hsize_t>(512, dims[0]), 3};
+    hid_t prop = H5Pcreate(H5P_DATASET_CREATE);
+    H5Pset_chunk(prop, 2, chunkdims);
+    H5Pset_deflate(prop, 9);
 
-	hid_t file_dataspace = H5Screate_simple(2, dims, dims);
-	assert(file_dataspace>=0);
-	hid_t mem_dataspace = H5Screate_simple(2, dims2, dims2);
-	hsize_t start[2] = {0, 0};
-	hsize_t stride[2] = {2, 1};
-	H5Sselect_hyperslab(mem_dataspace, H5S_SELECT_SET, start, stride, dims, NULL);
-	hid_t file_dataset = H5Dcreate2(fid, name, H5T_NATIVE_DOUBLE, file_dataspace, H5P_DEFAULT, prop, H5P_DEFAULT);
-	H5Dwrite(file_dataset, H5T_NATIVE_DOUBLE, mem_dataspace, file_dataspace, H5P_DEFAULT, list.data());
-	H5Dclose(file_dataset);
+    hid_t file_dataspace = H5Screate_simple(2, dims, dims);
+    assert(file_dataspace>=0);
+    hid_t mem_dataspace = H5Screate_simple(2, dims2, dims2);
+    hsize_t start[2] = {0, 0};
+    hsize_t stride[2] = {2, 1};
+    H5Sselect_hyperslab(mem_dataspace, H5S_SELECT_SET, start, stride, dims, NULL);
+    hid_t file_dataset = H5Dcreate2(fid, name, H5T_NATIVE_DOUBLE, file_dataspace, H5P_DEFAULT, prop, H5P_DEFAULT);
+    H5Dwrite(file_dataset, H5T_NATIVE_DOUBLE, mem_dataspace, file_dataspace, H5P_DEFAULT, list.data());
+    H5Dclose(file_dataset);
 }
 
 void Space::dataset_write_body(const char* name, const TBody& body)
 {
-	float heat_const = body.alist.front().heat_const;
-	uint32_t general_slip = body.alist.front().slip;
-	bool can_simplify = true;
-	
-	hsize_t dims[2] = {body.size(), 4};
-	struct ATT *mem = (struct ATT*)malloc(sizeof(struct ATT)*dims[0]);
-	for(hsize_t i=0; i<dims[0]; i++)
-	{
-		TAtt att = body.alist[i];
-		mem[i].x = att.corner.x;
-		mem[i].y = att.corner.y;
-		mem[i].g = att.g;
-		mem[i].gsum = att.gsum;
+    float heat_const = body.alist.front().heat_const;
+    uint32_t general_slip = body.alist.front().slip;
+    bool can_simplify = true;
 
-		if (att.heat_const != heat_const ||
-			att.slip != general_slip)
-			can_simplify = false;
-	}
+    hsize_t dims[2] = {body.size(), 4};
+    struct ATT *mem = (struct ATT*)malloc(sizeof(struct ATT)*dims[0]);
+    for(hsize_t i=0; i<dims[0]; i++)
+    {
+        TAtt att = body.alist[i];
+        mem[i].x = att.corner.x;
+        mem[i].y = att.corner.y;
+        mem[i].g = att.g;
+        mem[i].gsum = att.gsum;
 
-	hsize_t chunkdims[2] = {std::min<hsize_t>(512, dims[0]), 4};
-	hid_t prop = H5Pcreate(H5P_DATASET_CREATE);
-	H5Pset_chunk(prop, 2, chunkdims);
-	H5Pset_deflate(prop, 9);
+        if (att.heat_const != heat_const ||
+                att.slip != general_slip)
+            can_simplify = false;
+    }
 
-	hid_t file_dataspace = H5Screate_simple(2, dims, dims);
-	assert(file_dataspace>=0);
+    hsize_t chunkdims[2] = {std::min<hsize_t>(512, dims[0]), 4};
+    hid_t prop = H5Pcreate(H5P_DATASET_CREATE);
+    H5Pset_chunk(prop, 2, chunkdims);
+    H5Pset_deflate(prop, 9);
 
-	hid_t file_dataset = H5Dcreate2(fid, name, H5T_NATIVE_DOUBLE, file_dataspace, H5P_DEFAULT, prop, H5P_DEFAULT);
-	assert(file_dataset>=0);
+    hid_t file_dataspace = H5Screate_simple(2, dims, dims);
+    assert(file_dataspace>=0);
 
-	if (!can_simplify)
-	{
-		fprintf(stderr, "Can not save simplified %s\n", body.get_name().c_str());
-		exit(1);
-	}
-	attribute_write(file_dataset, "simplified_dataset", uint32_t(2));
-	attribute_write(file_dataset, "general_slip", general_slip);
-	attribute_write(file_dataset, "heat_const", double(heat_const));
+    hid_t file_dataset = H5Dcreate2(fid, name, H5T_NATIVE_DOUBLE, file_dataspace, H5P_DEFAULT, prop, H5P_DEFAULT);
+    assert(file_dataset>=0);
 
-	if (!body.root_body.expired())
-	{
-		auto root_body = body.root_body.lock();
-		attribute_write(file_dataset, "root_body", root_body->get_name());
-	}
-	
-	attribute_write(file_dataset, "holder_position", body.holder);
-	attribute_write(file_dataset, "delta_position", body.dpos);
-	attribute_write<std::string>(file_dataset, "speed_x", body.speed_x);
-	attribute_write<std::string>(file_dataset, "speed_y", body.speed_y);
-	attribute_write<std::string>(file_dataset, "speed_o", body.speed_o);
-	attribute_write(file_dataset, "speed_slae", body.speed_slae);
-	attribute_write(file_dataset, "speed_slae_prev", body.speed_slae_prev);
-	attribute_write(file_dataset, "spring_const", body.kspring);
-	attribute_write(file_dataset, "spring_damping", body.damping);
-	attribute_write(file_dataset, "density", body.density);
-	attribute_write(file_dataset, "force_hydro", body.force_hydro);
-	attribute_write(file_dataset, "force_holder", body.force_holder);
-	attribute_write(file_dataset, "friction_prev", body.friction_prev);
-	
-	attribute_write(file_dataset, "area", body.get_area());
-	attribute_write(file_dataset, "com", body.get_com());
-	attribute_write(file_dataset, "moi_c", body.get_moi_c());
+    if (!can_simplify)
+    {
+        fprintf(stderr, "Can not save simplified %s\n", body.get_name().c_str());
+        exit(1);
+    }
+    attribute_write(file_dataset, "simplified_dataset", uint32_t(2));
+    attribute_write(file_dataset, "general_slip", general_slip);
+    attribute_write(file_dataset, "heat_const", double(heat_const));
 
-	attribute_write(file_dataset, "boundary_condition", body.boundary_condition);
-	attribute_write(file_dataset, "special_segment_no", body.special_segment_no);
-	attribute_write(file_dataset, "heat_condition", body.heat_condition);
+    if (!body.root_body.expired())
+    {
+        auto root_body = body.root_body.lock();
+        attribute_write(file_dataset, "root_body", root_body->get_name());
+    }
 
-	H5Dwrite(file_dataset, H5T_NATIVE_DOUBLE, H5S_ALL, file_dataspace, H5P_DEFAULT, mem);
-	H5Dclose(file_dataset);
-	free(mem);
+    attribute_write(file_dataset, "holder_position", body.holder);
+    attribute_write(file_dataset, "delta_position", body.dpos);
+    attribute_write<std::string>(file_dataset, "speed_x", body.speed_x);
+    attribute_write<std::string>(file_dataset, "speed_y", body.speed_y);
+    attribute_write<std::string>(file_dataset, "speed_o", body.speed_o);
+    attribute_write(file_dataset, "speed_slae", body.speed_slae);
+    attribute_write(file_dataset, "speed_slae_prev", body.speed_slae_prev);
+    attribute_write(file_dataset, "spring_const", body.kspring);
+    attribute_write(file_dataset, "spring_damping", body.damping);
+    attribute_write(file_dataset, "density", body.density);
+    attribute_write(file_dataset, "force_hydro", body.force_hydro);
+    attribute_write(file_dataset, "force_holder", body.force_holder);
+    attribute_write(file_dataset, "friction_prev", body.friction_prev);
+
+    attribute_write(file_dataset, "area", body.get_area());
+    attribute_write(file_dataset, "com", body.get_com());
+    attribute_write(file_dataset, "moi_c", body.get_moi_c());
+
+    attribute_write(file_dataset, "boundary_condition", body.boundary_condition);
+    attribute_write(file_dataset, "special_segment_no", body.special_segment_no);
+    attribute_write(file_dataset, "heat_condition", body.heat_condition);
+
+    H5Dwrite(file_dataset, H5T_NATIVE_DOUBLE, H5S_ALL, file_dataspace, H5P_DEFAULT, mem);
+    H5Dclose(file_dataset);
+    free(mem);
 }
 
 void Space::Save(const char* format)
 {
-	char fname[64]; sprintf(fname, format, int(Time/dt+0.5));
-	fid = H5Fcreate(fname, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-	if (fid < 0)
-	{
-		H5Epop(H5E_DEFAULT, H5Eget_num(H5E_DEFAULT)-1);
-		H5Eprint2(H5E_DEFAULT, stderr);
-		fprintf(stderr, "error: Space::Save: can't open file '%s'\n", fname);
-		return;
-	}
-	datatypes_create_all();
-	
-	attribute_write(fid, "caption", caption);
-	attribute_write(fid, "time", Time);
-	attribute_write(fid, "dt", dt);
-	attribute_write(fid, "dt_save", save_dt);
-	attribute_write(fid, "dt_streak", streak_dt);
-	attribute_write(fid, "dt_profile", profile_dt);
-	attribute_write(fid, "re", Re);
-	attribute_write(fid, "pr", Pr);
-	attribute_write(fid, "inf_marker", InfMarker);
-	attribute_write<std::string>(fid, "inf_speed_x", InfSpeedX);
-	attribute_write<std::string>(fid, "inf_speed_y", InfSpeedY);
-	attribute_write(fid, "inf_circulation", InfCirculation);
-	attribute_write(fid, "gravity", gravitation);
-	attribute_write(fid, "time_to_finish", Finish);
-	attribute_write(fid, "git_info", std::string(gitInfo));
-	attribute_write(fid, "git_diff", std::string(gitDiff));
+    char fname[64]; sprintf(fname, format, int(Time/dt+0.5));
+    fid = H5Fcreate(fname, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+    if (fid < 0)
+    {
+        H5Epop(H5E_DEFAULT, H5Eget_num(H5E_DEFAULT)-1);
+        H5Eprint2(H5E_DEFAULT, stderr);
+        fprintf(stderr, "error: Space::Save: can't open file '%s'\n", fname);
+        return;
+    }
+    datatypes_create_all();
 
-	time_t rt; time(&rt);
-	char *timestr = ctime(&rt); timestr[strlen(timestr)-1] = 0;
-	attribute_write(fid, "time_local", std::string(timestr));
+    attribute_write(fid, "caption", caption);
+    attribute_write(fid, "time", Time);
+    attribute_write(fid, "dt", dt);
+    attribute_write(fid, "dt_save", save_dt);
+    attribute_write(fid, "dt_streak", streak_dt);
+    attribute_write(fid, "dt_profile", profile_dt);
+    attribute_write(fid, "re", Re);
+    attribute_write(fid, "pr", Pr);
+    attribute_write(fid, "inf_marker", InfMarker);
+    attribute_write<std::string>(fid, "inf_speed_x", InfSpeedX);
+    attribute_write<std::string>(fid, "inf_speed_y", InfSpeedY);
+    attribute_write(fid, "inf_circulation", InfCirculation);
+    attribute_write(fid, "gravity", gravitation);
+    attribute_write(fid, "time_to_finish", Finish);
+    attribute_write(fid, "git_info", std::string(gitInfo));
+    attribute_write(fid, "git_diff", std::string(gitDiff));
 
-	dataset_write_list("vort", VortexList);
-	dataset_write_list("heat", HeatList);
-	dataset_write_list("ink", StreakList);
-	dataset_write_list("ink_source", StreakSourceList);
+    time_t rt; time(&rt);
+    char *timestr = ctime(&rt); timestr[strlen(timestr)-1] = 0;
+    attribute_write(fid, "time_local", std::string(timestr));
 
-	for (auto& lbody: BodyList)
-	{
-		dataset_write_body(lbody->get_name().c_str(), *lbody);
-	}
+    dataset_write_list("vort", VortexList);
+    dataset_write_list("heat", HeatList);
+    dataset_write_list("ink", StreakList);
+    dataset_write_list("ink_source", StreakSourceList);
 
-	datatypes_close_all();
-	assert(H5Fclose(fid)>=0);
+    for (auto& lbody: BodyList)
+    {
+        dataset_write_body(lbody->get_name().c_str(), *lbody);
+    }
+
+    datatypes_close_all();
+    assert(H5Fclose(fid)>=0);
 }
 
 /*
-888       .d88888b.         d8888 8888888b.
-888      d88P" "Y88b       d88888 888  "Y88b
-888      888     888      d88P888 888    888
-888      888     888     d88P 888 888    888
-888      888     888    d88P  888 888    888
-888      888     888   d88P   888 888    888
-888      Y88b. .d88P  d8888888888 888  .d88P
-88888888  "Y88888P"  d88P     888 8888888P"
-*/
+   888       .d88888b.         d8888 8888888b.
+   888      d88P" "Y88b       d88888 888  "Y88b
+   888      888     888      d88P888 888    888
+   888      888     888     d88P 888 888    888
+   888      888     888    d88P  888 888    888
+   888      888     888   d88P   888 888    888
+   888      Y88b. .d88P  d8888888888 888  .d88P
+   88888888  "Y88888P"  d88P     888 8888888P"
+   */
 
 herr_t Space::dataset_read_list(hid_t fid, const char *name, vector<TObj>& list)
 {
-	if (!H5Lexists(fid, name, H5P_DEFAULT)) return 0;
+    if (!H5Lexists(fid, name, H5P_DEFAULT)) return 0;
 
-	hid_t dataset = H5Dopen2(fid, name, H5P_DEFAULT);
-	if (dataset < 0)
-	{
-		H5Epop(H5E_DEFAULT, H5Eget_num(H5E_DEFAULT)-1);
-		H5Eprint2(H5E_DEFAULT, stderr);
-		fprintf(stderr, "error: dataset_read_list: can't open dataset '%s'\n", name);
-		return -1;
-	}
+    hid_t dataset = H5Dopen2(fid, name, H5P_DEFAULT);
+    if (dataset < 0)
+    {
+        H5Epop(H5E_DEFAULT, H5Eget_num(H5E_DEFAULT)-1);
+        H5Eprint2(H5E_DEFAULT, stderr);
+        fprintf(stderr, "error: dataset_read_list: can't open dataset '%s'\n", name);
+        return -1;
+    }
 
-	hid_t file_dataspace = H5Dget_space(dataset);
-	assert(file_dataspace>=0);
-	hsize_t dims[2]; H5Sget_simple_extent_dims(file_dataspace, dims, dims);
-	hsize_t dims2[2] = {dims[0]*2, dims[1]};
-	hid_t mem_dataspace = H5Screate_simple(2, dims2, dims2);
-	assert(mem_dataspace>=0);
-	list.resize(dims[0], TObj());
-	hsize_t offset[2] = {0, 0};
-	hsize_t stride[2] = {2, 1};
-	assert(H5Sselect_hyperslab(mem_dataspace, H5S_SELECT_SET, offset, stride, dims, NULL)>=0);
+    hid_t file_dataspace = H5Dget_space(dataset);
+    assert(file_dataspace>=0);
+    hsize_t dims[2]; H5Sget_simple_extent_dims(file_dataspace, dims, dims);
+    hsize_t dims2[2] = {dims[0]*2, dims[1]};
+    hid_t mem_dataspace = H5Screate_simple(2, dims2, dims2);
+    assert(mem_dataspace>=0);
+    list.resize(dims[0], TObj());
+    hsize_t offset[2] = {0, 0};
+    hsize_t stride[2] = {2, 1};
+    assert(H5Sselect_hyperslab(mem_dataspace, H5S_SELECT_SET, offset, stride, dims, NULL)>=0);
 
-	herr_t err = H5Dread(dataset, H5T_NATIVE_DOUBLE, mem_dataspace, file_dataspace, H5P_DEFAULT, list.data());
-	if (err < 0)
-	{
-		H5Epop(H5E_DEFAULT, H5Eget_num(H5E_DEFAULT)-1);
-		H5Eprint2(H5E_DEFAULT, stderr);
-		fprintf(stderr, "error: dataset_read_list: can't read dataset '%s'\n", name);
-		return -1;
-	}
-	H5Dclose(dataset);
-	return 0;
+    herr_t err = H5Dread(dataset, H5T_NATIVE_DOUBLE, mem_dataspace, file_dataspace, H5P_DEFAULT, list.data());
+    if (err < 0)
+    {
+        H5Epop(H5E_DEFAULT, H5Eget_num(H5E_DEFAULT)-1);
+        H5Eprint2(H5E_DEFAULT, stderr);
+        fprintf(stderr, "error: dataset_read_list: can't read dataset '%s'\n", name);
+        return -1;
+    }
+    H5Dclose(dataset);
+    return 0;
 }
 
 herr_t dataset_read_body(hid_t g_id, const char* name, const H5L_info_t *info, void *op_data)
 {
-	if (strncmp(name, "body", 4) != 0)
-		return 0;
+    if (strncmp(name, "body", 4) != 0)
+        return 0;
 
-	Space *S = (Space*)op_data;
-	std::shared_ptr<TBody> body(new TBody(S));
+    Space *S = (Space*)op_data;
+    std::shared_ptr<TBody> body(new TBody(S));
 
-	hid_t dataset = H5Dopen2(g_id, name, H5P_DEFAULT);
-	if (dataset < 0)
-	{
-		H5Epop(H5E_DEFAULT, H5Eget_num(H5E_DEFAULT)-1);
-		H5Eprint2(H5E_DEFAULT, stderr);
-		fprintf(stderr, "error: dataset_read_body: can't open dataset '%s'\n", name);
-		return -1;
-	}
-	hid_t file_dataspace = H5Dget_space(dataset);
-	// FIXME delete all asserts
-	assert(file_dataspace>=0);
-	hsize_t dims[2]; H5Sget_simple_extent_dims(file_dataspace, dims, dims);
-	
+    hid_t dataset = H5Dopen2(g_id, name, H5P_DEFAULT);
+    if (dataset < 0)
+    {
+        H5Epop(H5E_DEFAULT, H5Eget_num(H5E_DEFAULT)-1);
+        H5Eprint2(H5E_DEFAULT, stderr);
+        fprintf(stderr, "error: dataset_read_body: can't open dataset '%s'\n", name);
+        return -1;
+    }
+    hid_t file_dataspace = H5Dget_space(dataset);
+    // FIXME delete all asserts
+    assert(file_dataspace>=0);
+    hsize_t dims[2]; H5Sget_simple_extent_dims(file_dataspace, dims, dims);
 
-	attribute_read(dataset, "holder_position", body->holder);
-	attribute_read(dataset, "delta_position", body->dpos);
-	attribute_read(dataset, "speed_x", body->speed_x);
-	attribute_read(dataset, "speed_y", body->speed_y);
-	attribute_read(dataset, "speed_o", body->speed_o);
-	attribute_read(dataset, "speed_slae", body->speed_slae);
-	attribute_read(dataset, "speed_slae_prev", body->speed_slae_prev);
-	attribute_read(dataset, "spring_const", body->kspring);
-	attribute_read(dataset, "spring_damping", body->damping);
-	attribute_read(dataset, "density", body->density);
-	attribute_read(dataset, "force_hydro", body->force_hydro);
-	attribute_read(dataset, "force_holder", body->force_holder);
-	attribute_read(dataset, "friction_prev", body->friction_prev);
 
-	std::string root_body_name;
-	int root_body_idx;
-	attribute_read(dataset, "root_body", root_body_name);
-	if (sscanf(root_body_name.c_str(), "body%d", &root_body_idx) == 1)
-		body->root_body = S->BodyList[root_body_idx];
-	else
-		body->root_body.reset();
+    attribute_read(dataset, "holder_position", body->holder);
+    attribute_read(dataset, "delta_position", body->dpos);
+    attribute_read(dataset, "speed_x", body->speed_x);
+    attribute_read(dataset, "speed_y", body->speed_y);
+    attribute_read(dataset, "speed_o", body->speed_o);
+    attribute_read(dataset, "speed_slae", body->speed_slae);
+    attribute_read(dataset, "speed_slae_prev", body->speed_slae_prev);
+    attribute_read(dataset, "spring_const", body->kspring);
+    attribute_read(dataset, "spring_damping", body->damping);
+    attribute_read(dataset, "density", body->density);
+    attribute_read(dataset, "force_hydro", body->force_hydro);
+    attribute_read(dataset, "force_holder", body->force_holder);
+    attribute_read(dataset, "friction_prev", body->friction_prev);
 
-	uint32_t simplified_dataset;
-	int32_t general_slip;
-	double heat_const;
-	attribute_read(dataset, "simplified_dataset", simplified_dataset);
-	
-	// Предыдущая версия с HDF форматом использовала H5T_ENUM, который сейчас не читается
-	// Но т.к. simplified dataset == 0 я никогда не считал, то отныне 0 будет означать
-	// старую версию. Новая идет с номером 2.
-	// А нормальный неупрощенный датасет я тк и не сделал (пока)
-	if (simplified_dataset == 0)
-	{
-		attribute_read(dataset, "general_bc", general_slip);
-		attribute_read(dataset, "heat_const", heat_const);
-		general_slip = general_slip == 'l';
+    std::string root_body_name;
+    int root_body_idx;
+    attribute_read(dataset, "root_body", root_body_name);
+    if (sscanf(root_body_name.c_str(), "body%d", &root_body_idx) == 1)
+        body->root_body = S->BodyList[root_body_idx];
+    else
+        body->root_body.reset();
 
-		int32_t special_bc, special_bc_segment, heat_condition;
-		attribute_read(dataset, "special_bc", special_bc);
-		attribute_read(dataset, "special_bc_segment", special_bc_segment);
-		attribute_read(dataset, "heat_condition", heat_condition);
-		body->special_segment_no = special_bc_segment;
-		switch (special_bc)
-		{
-			case 's': 
-			case 'i': body->boundary_condition = bc_t::steady; break;
-			case 'z': body->boundary_condition = bc_t::kutta; break;
-		}
-		switch (heat_condition)
-		{
-			case 'n': body->heat_condition = hc_t::neglect; break;
-			case 'i': body->heat_condition = hc_t::isolate; break;
-			case 't': body->heat_condition = hc_t::const_t; break;
-			case 'w': body->heat_condition = hc_t::const_w; break;
-		}
-	} else
-	if (simplified_dataset == 2)
-	{
-		attribute_read(dataset, "general_slip", general_slip);
-		attribute_read(dataset, "heat_const", heat_const);
-		attribute_read(dataset, "boundary_condition", body->boundary_condition);
-		attribute_read(dataset, "special_segment_no", body->special_segment_no);
-		attribute_read(dataset, "heat_condition", body->heat_condition);
-	}
+    uint32_t simplified_dataset;
+    int32_t general_slip;
+    double heat_const;
+    attribute_read(dataset, "simplified_dataset", simplified_dataset);
 
-	struct ATT *mem = (struct ATT*)malloc(sizeof(struct ATT)*dims[0]);
-	assert(H5Dread(dataset, H5T_NATIVE_DOUBLE, H5S_ALL, file_dataspace, H5P_DEFAULT, mem)>=0);
+    // Предыдущая версия с HDF форматом использовала H5T_ENUM, который сейчас не читается
+    // Но т.к. simplified dataset == 0 я никогда не считал, то отныне 0 будет означать
+    // старую версию. Новая идет с номером 2.
+    // А нормальный неупрощенный датасет я тк и не сделал (пока)
+    if (simplified_dataset == 0)
+    {
+        attribute_read(dataset, "general_bc", general_slip);
+        attribute_read(dataset, "heat_const", heat_const);
+        general_slip = general_slip == 'l';
 
-	for(hsize_t i=0; i<dims[0]; i++)
-	{
-		TAtt latt; // latt.body = body;
-		latt.corner.x = mem[i].x;
-		latt.corner.y = mem[i].y;
-		latt.g = mem[i].g;
-		latt.gsum = mem[i].gsum;
+        int32_t special_bc, special_bc_segment, heat_condition;
+        attribute_read(dataset, "special_bc", special_bc);
+        attribute_read(dataset, "special_bc_segment", special_bc_segment);
+        attribute_read(dataset, "heat_condition", heat_condition);
+        body->special_segment_no = special_bc_segment;
+        switch (special_bc)
+        {
+            case 's': 
+            case 'i': body->boundary_condition = bc_t::steady; break;
+            case 'z': body->boundary_condition = bc_t::kutta; break;
+        }
+        switch (heat_condition)
+        {
+            case 'n': body->heat_condition = hc_t::neglect; break;
+            case 'i': body->heat_condition = hc_t::isolate; break;
+            case 't': body->heat_condition = hc_t::const_t; break;
+            case 'w': body->heat_condition = hc_t::const_w; break;
+        }
+    } else
+        if (simplified_dataset == 2)
+        {
+            attribute_read(dataset, "general_slip", general_slip);
+            attribute_read(dataset, "heat_const", heat_const);
+            attribute_read(dataset, "boundary_condition", body->boundary_condition);
+            attribute_read(dataset, "special_segment_no", body->special_segment_no);
+            attribute_read(dataset, "heat_condition", body->heat_condition);
+        }
 
-		latt.slip = general_slip;
-		latt.heat_const = heat_const;
-		body->alist.push_back(latt);
-	}
+    struct ATT *mem = (struct ATT*)malloc(sizeof(struct ATT)*dims[0]);
+    assert(H5Dread(dataset, H5T_NATIVE_DOUBLE, H5S_ALL, file_dataspace, H5P_DEFAULT, mem)>=0);
 
-	body->doUpdateSegments();
-	body->doFillProperties();
+    for(hsize_t i=0; i<dims[0]; i++)
+    {
+        TAtt latt; // latt.body = body;
+        latt.corner.x = mem[i].x;
+        latt.corner.y = mem[i].y;
+        latt.g = mem[i].g;
+        latt.gsum = mem[i].gsum;
 
-	H5Dclose(dataset);
-	free(mem);
-	S->BodyList.push_back(body);
-	return 0;
+        latt.slip = general_slip;
+        latt.heat_const = heat_const;
+        body->alist.push_back(latt);
+    }
+
+    body->doUpdateSegments();
+    body->doFillProperties();
+
+    H5Dclose(dataset);
+    free(mem);
+    S->BodyList.push_back(body);
+    return 0;
 }
 
 void Space::Load(const char* fname, std::string *info)
 {
-	if (!H5Fis_hdf5(fname))
-	{
-		Load_v1_3(fname);
-		return;
-	}
+    if (!H5Fis_hdf5(fname))
+    {
+        Load_v1_3(fname);
+        return;
+    }
 
-	H5Eset_auto2(H5E_DEFAULT, NULL, NULL);
-	hid_t fid = H5Fopen(fname, H5F_ACC_RDONLY, H5P_DEFAULT);
-	if (fid < 0)
-	{
-		H5Epop(H5E_DEFAULT, H5Eget_num(H5E_DEFAULT)-1);
-		H5Eprint2(H5E_DEFAULT, stderr);
-		fprintf(stderr, "error: Space::Load: can't open file '%s'\n", fname);
-		return;
-	}
-	Load(fid, info);
+    H5Eset_auto2(H5E_DEFAULT, NULL, NULL);
+    hid_t fid = H5Fopen(fname, H5F_ACC_RDONLY, H5P_DEFAULT);
+    if (fid < 0)
+    {
+        H5Epop(H5E_DEFAULT, H5Eget_num(H5E_DEFAULT)-1);
+        H5Eprint2(H5E_DEFAULT, stderr);
+        fprintf(stderr, "error: Space::Load: can't open file '%s'\n", fname);
+        return;
+    }
+    Load(fid, info);
 
-	H5Fclose(fid);
+    H5Fclose(fid);
 }
 
 void Space::Load(hid_t fid, std::string *info)
 {
-	datatypes_create_all();
+    datatypes_create_all();
 
-	attribute_read(fid, "caption", caption);
-	attribute_read(fid, "time", Time);
-	attribute_read(fid, "dt", dt);
-	attribute_read(fid, "dt_save", save_dt);
-	attribute_read(fid, "dt_streak", streak_dt);
-	attribute_read(fid, "dt_profile", profile_dt);
-	attribute_read(fid, "re", Re);
-	attribute_read(fid, "pr", Pr);
-	attribute_read(fid, "inf_marker", InfMarker);
-	attribute_read(fid, "inf_speed_x", InfSpeedX);
-	attribute_read(fid, "inf_speed_y", InfSpeedY);
-	attribute_read(fid, "inf_circulation", InfCirculation);
-	attribute_read(fid, "gravity", gravitation);
-	attribute_read(fid, "time_to_finish", Finish);
+    attribute_read(fid, "caption", caption);
+    attribute_read(fid, "time", Time);
+    attribute_read(fid, "dt", dt);
+    attribute_read(fid, "dt_save", save_dt);
+    attribute_read(fid, "dt_streak", streak_dt);
+    attribute_read(fid, "dt_profile", profile_dt);
+    attribute_read(fid, "re", Re);
+    attribute_read(fid, "pr", Pr);
+    attribute_read(fid, "inf_marker", InfMarker);
+    attribute_read(fid, "inf_speed_x", InfSpeedX);
+    attribute_read(fid, "inf_speed_y", InfSpeedY);
+    attribute_read(fid, "inf_circulation", InfCirculation);
+    attribute_read(fid, "gravity", gravitation);
+    attribute_read(fid, "time_to_finish", Finish);
 
-	if (info)
-	{
-		attribute_read(fid, "git_info", info[0]);
-		attribute_read(fid, "git_diff", info[1]);
-		attribute_read(fid, "time_local", info[2]);
-	}
+    if (info)
+    {
+        attribute_read(fid, "git_info", info[0]);
+        attribute_read(fid, "git_diff", info[1]);
+        attribute_read(fid, "time_local", info[2]);
+    }
 
-	dataset_read_list(fid, "vort", VortexList);
-	dataset_read_list(fid, "heat", HeatList);
-	dataset_read_list(fid, "ink", StreakList);
-	dataset_read_list(fid, "ink_source", StreakSourceList);
+    dataset_read_list(fid, "vort", VortexList);
+    dataset_read_list(fid, "heat", HeatList);
+    dataset_read_list(fid, "ink", StreakList);
+    dataset_read_list(fid, "ink_source", StreakSourceList);
 
-	H5Literate(fid, H5_INDEX_NAME, H5_ITER_NATIVE, NULL, dataset_read_body, this);
-	EnumerateBodies();
-	
-	datatypes_close_all();
+    H5Literate(fid, H5_INDEX_NAME, H5_ITER_NATIVE, NULL, dataset_read_body, this);
+    EnumerateBodies();
+
+    datatypes_close_all();
 }
 
 /*
-888       .d88888b.         d8888 8888888b.       .d88888b.  888      8888888b.
-888      d88P" "Y88b       d88888 888  "Y88b     d88P" "Y88b 888      888  "Y88b
-888      888     888      d88P888 888    888     888     888 888      888    888
-888      888     888     d88P 888 888    888     888     888 888      888    888
-888      888     888    d88P  888 888    888     888     888 888      888    888
-888      888     888   d88P   888 888    888     888     888 888      888    888
-888      Y88b. .d88P  d8888888888 888  .d88P     Y88b. .d88P 888      888  .d88P
-88888888  "Y88888P"  d88P     888 8888888P"       "Y88888P"  88888888 8888888P"
-*/
+   888       .d88888b.         d8888 8888888b.       .d88888b.  888      8888888b.
+   888      d88P" "Y88b       d88888 888  "Y88b     d88P" "Y88b 888      888  "Y88b
+   888      888     888      d88P888 888    888     888     888 888      888    888
+   888      888     888     d88P 888 888    888     888     888 888      888    888
+   888      888     888    d88P  888 888    888     888     888 888      888    888
+   888      888     888   d88P   888 888    888     888     888 888      888    888
+   888      Y88b. .d88P  d8888888888 888  .d88P     Y88b. .d88P 888      888  .d88P
+   88888888  "Y88888P"  d88P     888 8888888P"       "Y88888P"  88888888 8888888P"
+   */
 
 int eq(const char *str1, const char *str2)
 {
-	for (int i=0; i<8; i++)
-	{
-		if (str1[i] != str2[i]) return i+1;
-	}
-	return 9;
+    for (int i=0; i<8; i++)
+    {
+        if (str1[i] != str2[i]) return i+1;
+    }
+    return 9;
 }
 
 void LoadList(vector<TObj> &list, FILE* fin)
 {
-	int64_t size; fread(&size, 8, 1, fin);
-	TObj obj;
-	for (int64_t i=0; i<size; i++)
-	{
-		fread(&obj, 24, 1, fin);
-		list.push_back(obj);
-	}
+    int64_t size; fread(&size, 8, 1, fin);
+    TObj obj;
+    for (int64_t i=0; i<size; i++)
+    {
+        fread(&obj, 24, 1, fin);
+        list.push_back(obj);
+    }
 }
 
 void read_shell_script(FILE* file, ShellScript &script)
 {
-	int32_t len;
-	fread(&len, 4, 1, file);
-	char *str = new char[len+1];
-	fread(str, 1, len, file);
-	str[len] = 0;
-	script = str;
-	delete[] str;
+    int32_t len;
+    fread(&len, 4, 1, file);
+    char *str = new char[len+1];
+    fread(str, 1, len, file);
+    str[len] = 0;
+    script = str;
+    delete[] str;
 }
 
 void Space::Load_v1_3(const char* fname)
 {
-	FILE *fin = fopen(fname, "rb");
-	if (!fin) { perror("Error loading the space"); return; }
+    FILE *fin = fopen(fname, "rb");
+    if (!fin) { perror("Error loading the space"); return; }
 
-	//loading different lists
-	int64_t tmp;
-	char comment[9]; comment[8]=0;
-	for (int i=0; i<64; i++)
-	{
-		fseek(fin, i*16, SEEK_SET);
-		fread(&tmp, 8, 1, fin);
-		fread(comment, 8, 1, fin);
-		if (!tmp) continue;
-		fseek(fin, tmp, SEEK_SET);
+    //loading different lists
+    int64_t tmp;
+    char comment[9]; comment[8]=0;
+    for (int i=0; i<64; i++)
+    {
+        fseek(fin, i*16, SEEK_SET);
+        fread(&tmp, 8, 1, fin);
+        fread(comment, 8, 1, fin);
+        if (!tmp) continue;
+        fseek(fin, tmp, SEEK_SET);
 
-		if (eq(comment, "Header  ")>8)
-		{
-			char version[8]; fread(&version, 8, 1, fin);
-			if (eq(version, "v: 1.3  ") <= 8)
-			{
-				fprintf(stderr, "Cant read binary file version \"%s\".\n", version);
-				exit(1);
-			}
+        if (eq(comment, "Header  ")>8)
+        {
+            char version[8]; fread(&version, 8, 1, fin);
+            if (eq(version, "v: 1.3  ") <= 8)
+            {
+                fprintf(stderr, "Cant read binary file version \"%s\".\n", version);
+                exit(1);
+            }
 
-			char name[64];
-			fread(name, 1, 64, fin);
-			caption = name;
-			fread(&Time, 8, 1, fin);
-			fread(&dt, 8, 1, fin);
-			fread(&save_dt, 8, 1, fin);
-			fread(&streak_dt, 8, 1, fin);
-			fread(&profile_dt, 8, 1, fin);
-			fread(&Re, 8, 1, fin);
-			fread(&Pr, 8, 1, fin);
-			fread(&InfMarker, 16, 1, fin);
-			read_shell_script(fin, InfSpeedX);
-			read_shell_script(fin, InfSpeedY);
-			fread(&InfCirculation, 8, 1, fin);
-			fread(&gravitation, 16, 1, fin);
-			fread(&Finish, 8, 1, fin);
+            char name[64];
+            fread(name, 1, 64, fin);
+            caption = name;
+            fread(&Time, 8, 1, fin);
+            fread(&dt, 8, 1, fin);
+            fread(&save_dt, 8, 1, fin);
+            fread(&streak_dt, 8, 1, fin);
+            fread(&profile_dt, 8, 1, fin);
+            fread(&Re, 8, 1, fin);
+            fread(&Pr, 8, 1, fin);
+            fread(&InfMarker, 16, 1, fin);
+            read_shell_script(fin, InfSpeedX);
+            read_shell_script(fin, InfSpeedY);
+            fread(&InfCirculation, 8, 1, fin);
+            fread(&gravitation, 16, 1, fin);
+            fread(&Finish, 8, 1, fin);
 
-			int64_t rawtime; fread(&rawtime, 8, 1, fin); realtime = rawtime;
-		}
-		else if (eq(comment, "Vortexes")>8) LoadList(VortexList, fin);
-		else if (eq(comment, "Heat    ")>8) LoadList(HeatList, fin);
-		else if (eq(comment, "StrkSrc ")>8) LoadList(StreakSourceList, fin);
-		else if (eq(comment, "Streak  ")>8) LoadList(StreakList, fin);
-		else if (eq(comment, "BData   ")>8)
-		{
-			std::shared_ptr<TBody> body(new TBody(this));
+            int64_t rawtime; fread(&rawtime, 8, 1, fin); realtime = rawtime;
+        }
+        else if (eq(comment, "Vortexes")>8) LoadList(VortexList, fin);
+        else if (eq(comment, "Heat    ")>8) LoadList(HeatList, fin);
+        else if (eq(comment, "StrkSrc ")>8) LoadList(StreakSourceList, fin);
+        else if (eq(comment, "Streak  ")>8) LoadList(StreakList, fin);
+        else if (eq(comment, "BData   ")>8)
+        {
+            std::shared_ptr<TBody> body(new TBody(this));
 
-			fread(&body->holder, 24, 1, fin);
-			fread(&body->dpos, 24, 1, fin);
-			read_shell_script(fin, body->speed_x);
-			read_shell_script(fin, body->speed_y);
-			read_shell_script(fin, body->speed_o);
-			fread(&body->speed_slae, 24, 1, fin);
-			fread(&body->speed_slae_prev, 24, 1, fin);
+            fread(&body->holder, 24, 1, fin);
+            fread(&body->dpos, 24, 1, fin);
+            read_shell_script(fin, body->speed_x);
+            read_shell_script(fin, body->speed_y);
+            read_shell_script(fin, body->speed_o);
+            fread(&body->speed_slae, 24, 1, fin);
+            fread(&body->speed_slae_prev, 24, 1, fin);
 
-			fread(&body->kspring, 24, 1, fin);
-			fread(&body->density, 8, 1, fin);
+            fread(&body->kspring, 24, 1, fin);
+            fread(&body->density, 8, 1, fin);
 
-			fread(&body->force_hydro, 24, 1, fin);
-			fread(&body->force_dead, 24, 1, fin);
-			fread(&body->friction_prev, 24, 1, fin);
+            fread(&body->force_hydro, 24, 1, fin);
+            fread(&body->force_dead, 24, 1, fin);
+            fread(&body->friction_prev, 24, 1, fin);
 
-			BodyList.push_back(body);
-		}
-		else if (eq(comment, "Body    ")>8)
-		{
-			auto body = BodyList.back();
+            BodyList.push_back(body);
+        }
+        else if (eq(comment, "Body    ")>8)
+        {
+            auto body = BodyList.back();
 
-			TAtt att; // att.body = body; // FIXME
-			int64_t size; fread(&size, 8, 1, fin);
-			for (int64_t i=0; i<size; i++)
-			{
-				int64_t bc, hc;
-				double heat_const;
-				fread(&att.corner, 16, 1, fin);
-				fread(&att.g, 8, 1, fin);
-				fread(&bc, 8, 1, fin);
-				fread(&hc, 8, 1, fin);
-				fread(&heat_const, 8, 1, fin);
-				fread(&att.gsum, 8, 1, fin);
-				att.heat_const = heat_const;
-				if (bc == 'l' || bc == 'n')
-					att.slip = bc == 'l';
-				else
-				switch (bc)
-				{
-					case 's': 
-					case 'i': body->boundary_condition = bc_t::steady; break;
-					case 'z': body->boundary_condition = bc_t::kutta; break;
-				}
-				switch (hc)
-				{
-					case 'n': body->heat_condition = hc_t::neglect; break;
-					case 'i': body->heat_condition = hc_t::isolate; break;
-					case 't': body->heat_condition = hc_t::const_t; break;
-					case 'w': body->heat_condition = hc_t::const_w; break;
-				}
-				
-				body->alist.push_back(att);
-			}
-			body->doUpdateSegments();
-			body->doFillProperties();
-		}
-		else fprintf(stderr, "S->Load(): ignoring field \"%s\"", comment);
-	}
+            TAtt att; // att.body = body; // FIXME
+            int64_t size; fread(&size, 8, 1, fin);
+            for (int64_t i=0; i<size; i++)
+            {
+                int64_t bc, hc;
+                double heat_const;
+                fread(&att.corner, 16, 1, fin);
+                fread(&att.g, 8, 1, fin);
+                fread(&bc, 8, 1, fin);
+                fread(&hc, 8, 1, fin);
+                fread(&heat_const, 8, 1, fin);
+                fread(&att.gsum, 8, 1, fin);
+                att.heat_const = heat_const;
+                if (bc == 'l' || bc == 'n')
+                    att.slip = bc == 'l';
+                else
+                    switch (bc)
+                    {
+                        case 's': 
+                        case 'i': body->boundary_condition = bc_t::steady; break;
+                        case 'z': body->boundary_condition = bc_t::kutta; break;
+                    }
+                switch (hc)
+                {
+                    case 'n': body->heat_condition = hc_t::neglect; break;
+                    case 'i': body->heat_condition = hc_t::isolate; break;
+                    case 't': body->heat_condition = hc_t::const_t; break;
+                    case 'w': body->heat_condition = hc_t::const_w; break;
+                }
 
-	EnumerateBodies();
+                body->alist.push_back(att);
+            }
+            body->doUpdateSegments();
+            body->doFillProperties();
+        }
+        else fprintf(stderr, "S->Load(): ignoring field \"%s\"", comment);
+    }
 
-	return;
+    EnumerateBodies();
+
+    return;
 }
 
 FILE* Space::OpenFile(const char* format)
 {
-	char fname[64]; sprintf(fname, format, int(Time/dt+0.5));
-	FILE *fout;
-	fout = fopen(fname, "w");
-	if (!fout) { perror("Error opening file"); return NULL; }
-	return fout;
+    char fname[64]; sprintf(fname, format, int(Time/dt+0.5));
+    FILE *fout;
+    fout = fopen(fname, "w");
+    if (!fout) { perror("Error opening file"); return NULL; }
+    return fout;
 }
 
 void Space::CalcForces()
 {
-	const double C_NyuDt_Pi = dt/(C_PI*Re);
-	const double C_Nyu_Pi = 1./(C_PI*Re);
-	for (auto& lbody: BodyList)
-	{
-		double tmp_gsum = 0;
-		//TObj tmp_fric(0,0,0);
-		lbody->friction_prev = lbody->friction;
-		lbody->friction = TVec3D();
+    const double C_NyuDt_Pi = dt/(C_PI*Re);
+    const double C_Nyu_Pi = 1./(C_PI*Re);
+    for (auto& lbody: BodyList)
+    {
+        double tmp_gsum = 0;
+        //TObj tmp_fric(0,0,0);
+        lbody->friction_prev = lbody->friction;
+        lbody->friction = TVec3D();
 
-		for (auto& latt: lbody->alist)
-		{
-			static_assert(std::is_same<decltype(latt), TAtt&>::value, "latt is not a reference");
-			tmp_gsum+= latt.gsum;
-			latt.Cp += tmp_gsum;
-			latt.Fr += latt.fric * C_NyuDt_Pi;
-			latt.Nu += latt.hsum * (Re*Pr / latt.dl.abs());
+        for (auto& latt: lbody->alist)
+        {
+            static_assert(std::is_same<decltype(latt), TAtt&>::value, "latt is not a reference");
+            tmp_gsum+= latt.gsum;
+            latt.Cp += tmp_gsum;
+            latt.Fr += latt.fric * C_NyuDt_Pi;
+            latt.Nu += latt.hsum * (Re*Pr / latt.dl.abs());
 
-			lbody->friction.r -= latt.dl * (latt.fric * C_Nyu_Pi / latt.dl.abs());
-			lbody->friction.o -= (rotl(latt.r)* latt.dl) * (latt.fric  * C_Nyu_Pi / latt.dl.abs());
-			lbody->nusselt += latt.hsum * (Re*Pr);
-		}
+            lbody->friction.r -= latt.dl * (latt.fric * C_Nyu_Pi / latt.dl.abs());
+            lbody->friction.o -= (rotl(latt.r)* latt.dl) * (latt.fric  * C_Nyu_Pi / latt.dl.abs());
+            lbody->nusselt += latt.hsum * (Re*Pr);
+        }
 
-		lbody->nusselt /= dt;
-	}
+        lbody->nusselt /= dt;
+    }
 
-	//FIXME calculate total pressure
+    //FIXME calculate total pressure
 }
 
 void Space::SaveProfile(const char* fname, TValues vals)
 {
-	if (!Time.divisibleBy(profile_dt)) return;
-	int32_t vals_32=vals, N=0;
-	for (auto& lbody: BodyList) { N+= lbody->size(); }
-	if (!N) return;
-	// FIXME раньше я проверял поинтер на vlist, и узнавал,
-	// что даже если сейчас список пустой, то в будущем он может 
-	// наполниться. Вся проблема в том, что список сохраняемых
-	// величин нельзя изменить после открытия файла
-	if (!VortexList.size()) vals_32 &= ~(val::Cp | val::Fr);
-	if (!HeatList.size()) vals_32 &= ~val::Nu;
+    if (!Time.divisibleBy(profile_dt)) return;
+    int32_t vals_32=vals, N=0;
+    for (auto& lbody: BodyList) { N+= lbody->size(); }
+    if (!N) return;
+    // FIXME раньше я проверял поинтер на vlist, и узнавал,
+    // что даже если сейчас список пустой, то в будущем он может 
+    // наполниться. Вся проблема в том, что список сохраняемых
+    // величин нельзя изменить после открытия файла
+    if (!VortexList.size()) vals_32 &= ~(val::Cp | val::Fr);
+    if (!HeatList.size()) vals_32 &= ~val::Nu;
 
-	FILE *fout = fopen(fname, "ab");
-	if (!fout) { perror("Error saving the body profile"); return; }
-	if (!ftell(fout)) { fwrite(&vals_32, 4, 1, fout); fwrite(&N, 4, 1, fout); }
-	float time_tmp = Time; fwrite(&time_tmp, 4, 1, fout);
-	float buf[5];
+    FILE *fout = fopen(fname, "ab");
+    if (!fout) { perror("Error saving the body profile"); return; }
+    if (!ftell(fout)) { fwrite(&vals_32, 4, 1, fout); fwrite(&N, 4, 1, fout); }
+    float time_tmp = Time; fwrite(&time_tmp, 4, 1, fout);
+    float buf[5];
 
-	for (auto& lbody: BodyList)
-	{
-		for (auto& latt: lbody->alist)
-		{
-			buf[0] = latt.corner.x;
-			buf[1] = latt.corner.y;
-			buf[2] = latt.Cp/save_dt;
-			buf[3] = latt.Fr/save_dt;
-			buf[4] = latt.Nu/save_dt;
+    for (auto& lbody: BodyList)
+    {
+        for (auto& latt: lbody->alist)
+        {
+            buf[0] = latt.corner.x;
+            buf[1] = latt.corner.y;
+            buf[2] = latt.Cp/save_dt;
+            buf[3] = latt.Fr/save_dt;
+            buf[4] = latt.Nu/save_dt;
 
-			fwrite(buf, 4, 2, fout);
-			if (vals_32 & val::Cp) fwrite(buf+2, 4, 1, fout);
-			if (vals_32 & val::Fr) fwrite(buf+3, 4, 1, fout);
-			if (vals_32 & val::Nu) fwrite(buf+4, 4, 1, fout);
+            fwrite(buf, 4, 2, fout);
+            if (vals_32 & val::Cp) fwrite(buf+2, 4, 1, fout);
+            if (vals_32 & val::Fr) fwrite(buf+3, 4, 1, fout);
+            if (vals_32 & val::Nu) fwrite(buf+4, 4, 1, fout);
 
-			latt.Cp = latt.Fr = latt.Nu = 0;
-		}
-	}
-	fclose(fout);
+            latt.Cp = latt.Fr = latt.Nu = 0;
+        }
+    }
+    fclose(fout);
 }
 
 void Space::ZeroForces()
 {
-	for (auto& lbody: BodyList)
-	{
-		for (auto& latt: lbody->alist)
-		{
-			latt.gsum =
-			latt.fric =
-			latt.hsum = 0;
-			latt.heat_layer_obj_no = -1;
-		}
+    for (auto& lbody: BodyList)
+    {
+        for (auto& latt: lbody->alist)
+        {
+            latt.gsum =
+                latt.fric =
+                latt.hsum = 0;
+            latt.heat_layer_obj_no = -1;
+        }
 
-		lbody->force_hydro = TVec3D();
-		lbody->force_holder = TVec3D();
-		lbody->force_dead = TVec3D();
-		lbody->force_born = TVec3D();
-		lbody->friction = TVec3D();
-		lbody->nusselt = 0.;
-	}
+        lbody->force_hydro = TVec3D();
+        lbody->force_holder = TVec3D();
+        lbody->force_dead = TVec3D();
+        lbody->force_born = TVec3D();
+        lbody->friction = TVec3D();
+        lbody->nusselt = 0.;
+    }
 }
 
 /********************************** SAVE/LOAD *********************************/
@@ -705,193 +705,192 @@ void Space::ZeroForces()
 // FIXME merge in one template
 int Space::LoadVorticityFromFile(const char* filename)
 {
-	FILE *fin = fopen(filename, "r");
-	if (!fin) { cerr << "No file called \'" << filename << "\'\n"; return -1; }
+    FILE *fin = fopen(filename, "r");
+    if (!fin) { cerr << "No file called \'" << filename << "\'\n"; return -1; }
 
-	TObj obj(0, 0, 0);
-	while ( fscanf(fin, "%lf %lf %lf", &obj.r.x, &obj.r.y, &obj.g)==3 )
-	{
-		VortexList.push_back(obj);
-	}
+    TObj obj(0, 0, 0);
+    while ( fscanf(fin, "%lf %lf %lf", &obj.r.x, &obj.r.y, &obj.g)==3 )
+    {
+        VortexList.push_back(obj);
+    }
 
-	fclose(fin);
-	return 0;
+    fclose(fin);
+    return 0;
 }
 
 int Space::LoadVorticity_bin(const char* filename)
 {
-	fstream fin;
-	fin.open(filename, ios::in | ios::binary);
-	if (!fin) { cerr << "No file called \'" << filename << "\'\n"; return -1; }
+    fstream fin;
+    fin.open(filename, ios::in | ios::binary);
+    if (!fin) { cerr << "No file called \'" << filename << "\'\n"; return -1; }
 
-	fin.seekg (0, ios::end);
-	// size_t N = (size_t(fin.tellg())-1024)/(sizeof(double)*3);
-	fin.seekp(1024, ios::beg);
+    fin.seekg (0, ios::end);
+    // size_t N = (size_t(fin.tellg())-1024)/(sizeof(double)*3);
+    fin.seekp(1024, ios::beg);
 
-	TObj obj(0, 0, 0);
-	
-	while ( fin.good() )
-	{
-		fin.read(pchar(&obj), 3*sizeof(double));
-		VortexList.push_back(obj);
-	}
+    TObj obj(0, 0, 0);
 
-	fin.close();
-	return 0;
+    while ( fin.good() )
+    {
+        fin.read(pchar(&obj), 3*sizeof(double));
+        VortexList.push_back(obj);
+    }
+
+    fin.close();
+    return 0;
 }
 
 int Space::LoadHeatFromFile(const char* filename)
 {
-	FILE *fin = fopen(filename, "r");
-	if (!fin) { cerr << "No file called " << filename << endl; return -1; }
+    FILE *fin = fopen(filename, "r");
+    if (!fin) { cerr << "No file called " << filename << endl; return -1; }
 
-	TObj obj(0, 0, 0);
-	while ( fscanf(fin, "%lf %lf %lf", &obj.r.x, &obj.r.y, &obj.g)==3 )
-	{
-		HeatList.push_back(obj);
-	}
+    TObj obj(0, 0, 0);
+    while ( fscanf(fin, "%lf %lf %lf", &obj.r.x, &obj.r.y, &obj.g)==3 )
+    {
+        HeatList.push_back(obj);
+    }
 
-	fclose(fin);
-	return 0;
+    fclose(fin);
+    return 0;
 }
 
 int Space::LoadStreak(const char* filename)
 {
-	FILE *fin = fopen(filename, "r");
-	if (!fin) { perror("Error opening streak file"); return -1; }
+    FILE *fin = fopen(filename, "r");
+    if (!fin) { perror("Error opening streak file"); return -1; }
 
-	TObj obj(0, 0, 0);
-	while ( fscanf(fin, "%lf %lf %lf", &obj.r.x, &obj.r.y, &obj.g)==3 )
-	{
-		StreakList.push_back(obj);
-	}
+    TObj obj(0, 0, 0);
+    while ( fscanf(fin, "%lf %lf %lf", &obj.r.x, &obj.r.y, &obj.g)==3 )
+    {
+        StreakList.push_back(obj);
+    }
 
-	fclose(fin);
-	return 0;
+    fclose(fin);
+    return 0;
 }
 
 int Space::LoadStreakSource(const char* filename)
 {
-	FILE *fin = fopen(filename, "r");
-	if (!fin) { perror("Error opening streak source file"); return -1; }
+    FILE *fin = fopen(filename, "r");
+    if (!fin) { perror("Error opening streak source file"); return -1; }
 
-	TObj obj(0, 0, 0);
-	while ( fscanf(fin, "%lf %lf %lf", &obj.r.x, &obj.r.y, &obj.g)==3 )
-	{
-		StreakSourceList.push_back(obj);
-	}
+    TObj obj(0, 0, 0);
+    while ( fscanf(fin, "%lf %lf %lf", &obj.r.x, &obj.r.y, &obj.g)==3 )
+    {
+        StreakSourceList.push_back(obj);
+    }
 
-	fclose(fin);
-	return 0;
+    fclose(fin);
+    return 0;
 }
 
 int Space::LoadBody(const char* filename)
 {
-	std::shared_ptr<TBody> body(new TBody(this));
+    std::shared_ptr<TBody> body(new TBody(this));
 
-	FILE *fin = fopen(filename, "r");
-	if (!fin) { cerr << "No file called " << filename << endl; return -1; }
+    FILE *fin = fopen(filename, "r");
+    if (!fin) { cerr << "No file called " << filename << endl; return -1; }
 
-	TAtt att;
-	// FIXME
-	// att.body = body;
-	att.heat_const = 0;
+    TAtt att;
+    // FIXME
+    // att.body = body;
+    att.heat_const = 0;
 
-	//FIXME seek to end of line
-	while (fscanf(fin, "%lf %lf", &att.corner.x, &att.corner.y)==2)
-	{
-		body->alist.push_back(att);
-		while ( fgetc(fin)!='\n' && !feof(fin) ) {}
-	}
+    //FIXME seek to end of line
+    while (fscanf(fin, "%lf %lf", &att.corner.x, &att.corner.y)==2)
+    {
+        body->alist.push_back(att);
+        while ( fgetc(fin)!='\n' && !feof(fin) ) {}
+    }
 
-	fclose(fin);
-	BodyList.push_back(body);
-	body->doUpdateSegments();
-	body->doFillProperties();
-	EnumerateBodies();
+    fclose(fin);
+    BodyList.push_back(body);
+    body->doUpdateSegments();
+    body->doFillProperties();
+    EnumerateBodies();
 
-	return 0;
+    return 0;
 }
 
 void Space::EnumerateBodies()
 {
-	int eq_no=0;
+    int eq_no=0;
 
-	for(auto &lbody: BodyList)
-	{
-		for (auto& latt: lbody->alist)
-		{
-			latt.eq_no = eq_no++;
-		}
+    for(auto &lbody: BodyList)
+    {
+        for (auto& latt: lbody->alist)
+        {
+            latt.eq_no = eq_no++;
+        }
 
-		lbody->eq_forces_no = eq_no;
-		eq_no+= 9;
-	}
+        lbody->eq_forces_no = eq_no;
+        eq_no+= 9;
+    }
 }
 
 /********************************* INTEGRALS **********************************/
 
 void Space::ZeroSpeed()
 {
-	for (auto& lobj: VortexList) lobj.v = TVec();
-	for (auto& lobj: HeatList) lobj.v = TVec();
+    for (auto& lobj: VortexList) lobj.v = TVec();
+    for (auto& lobj: HeatList) lobj.v = TVec();
 }
 
 double Space::integral()
 {
-	double res = 0;
-	for (const auto& obj: VortexList) res += obj.g * obj.r.abs2();
-	return res;
+    double res = 0;
+    for (const auto& obj: VortexList) res += obj.g * obj.r.abs2();
+    return res;
 }
 
 double Space::gsum()
 {
-	double res = 0;
-	for (const auto& obj: VortexList) res += obj.g;
-	return res;
+    double res = 0;
+    for (const auto& obj: VortexList) res += obj.g;
+    return res;
 }
 
 double Space::gmax()
 {
-	double res = 0;
-	for (const auto& obj: VortexList) res = ( fabs(obj.g) > fabs(res) ) ? obj.g : res;
-	return res;
+    double res = 0;
+    for (const auto& obj: VortexList) res = ( fabs(obj.g) > fabs(res) ) ? obj.g : res;
+    return res;
 }
 
 TVec Space::HydroDynamicMomentum()
 {
-	TVec res(0., 0.);
-	for (const auto& obj: VortexList) res += obj.g * obj.r;
-	return res;
+    TVec res(0., 0.);
+    for (const auto& obj: VortexList) res += obj.g * obj.r;
+    return res;
 }
 
 double Space::AverageSegmentLength()
 {
-	if (!BodyList.size()) return DBL_MIN;
+    if (!BodyList.size()) return std::numeric_limits<double>::lowest();
 
-	double SurfaceLength = BodyList.front()->get_surface();
-	int N = BodyList.front()->size() - 1;
-
-	if (!N) return DBL_MIN;
-	return SurfaceLength / N;
+    double SurfaceLength = BodyList.front()->get_surface();
+    int N = BodyList.front()->size() - 1;
+    if (N<=0) return std::numeric_limits<double>::lowest();
+    return SurfaceLength / N;
 }
 
 int Space::TotalSegmentsCount()
 {
-	int res = 0;
-	for (const auto& lbody: BodyList)
-	{
-		res += lbody->alist.size();
-	}
+    int res = 0;
+    for (const auto& lbody: BodyList)
+    {
+        res += lbody->alist.size();
+    }
 
-	return res;
+    return res;
 }
 
 bool Space::PointIsInBody(TVec p)
 {
-	for (const auto& lbody: BodyList)
-	{
-		if (lbody->isPointInvalid(p)) return true;
-	}
-	return false;
+    for (const auto& lbody: BodyList)
+    {
+        if (lbody->isPointInvalid(p)) return true;
+    }
+    return false;
 }
