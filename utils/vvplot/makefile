@@ -2,8 +2,10 @@ PREFIX=$(HOME)/.local
 
 ifeq ($(CXX),icpc)
         CXXFLAGS+= -O3 -Wall -openmp -mkl=parallel -debug all
+	LDFLAGS =
 else
-        CXXFLAGS+= -O3 -Wall -fopenmp -g -llapack
+        CXXFLAGS+= -O3 -Wall -fopenmp -g
+	LDFLAGS = -llapack
 endif
 
 names:= vvdistrib
@@ -16,10 +18,10 @@ all: $(exes) libvvplot.so libvvplot
 	$(CXX) $(CXXFLAGS) $^ -o $@ -std=c++0x -lhdf5 -Wl,-Bstatic -lvvhd -Wl,-Bdynamic
 
 libvvplot.so: $(patsubst %,source/%.cpp, map_extract map_vorticity map_pressure map_streamfunction isoline)
-	$(CXX) $(CXXFLAGS) $^ -o $@ -shared -fPIC -std=c++0x -lhdf5 -lmatheval -Wl,-soname,libvvplot.so -Wl,-Bstatic -lvvhd -Wl,-Bdynamic
+	$(CXX) $(CXXFLAGS) $^ -o $@ -shared -fPIC -std=c++0x -Wl,-soname,libvvplot.so -Wl,-Bstatic -lvvhd -Wl,-Bdynamic -lhdf5 -lmatheval $(LDFLAGS)
 
 libvvplot: source/libvvplot_main.cpp
-	$(CXX) $(CXXFLAGS) $^ -o $@ -std=c++0x -lhdf5 -lmatheval -L. -Wl,-rpath,\$$ORIGIN -lvvplot -Wl,-Bstatic -lvvhd -Wl,-Bdynamic
+	$(CXX) $(CXXFLAGS) $^ -o $@ -std=c++0x -L. -Wl,-rpath,\$$ORIGIN -lvvplot -Wl,-Bstatic -lvvhd -Wl,-Bdynamic -lhdf5 -lmatheval $(LDFLAGS)
 
 clean:
 	rm -f $(exes)

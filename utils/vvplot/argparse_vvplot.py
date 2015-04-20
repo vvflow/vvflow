@@ -55,12 +55,6 @@ parser.add_argument(
 	help='plot ink (streaklines)'
 )
 parser.add_argument(
-	'-O',
-	dest='plot_isotherms',
-	action='store_true',
-	help='plot isotherms'
-)
-parser.add_argument(
 	'-p',
 	dest='plot_pressure',
 	action='store_true',
@@ -77,12 +71,6 @@ parser.add_argument(
 	dest='plot_streamlines',
 	action='store_true',
 	help='plot streamlines'
-)
-parser.add_argument(
-	'-t',
-	dest='plot_temperature',
-	action='store_true',
-	help='plot temperature field'
 )
 parser.add_argument(
 	'-v',

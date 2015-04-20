@@ -10,7 +10,7 @@ endif
 all: vvcompose
 
 vvcompose: vvcompose.cpp
-	$(CXX) $(CXXFLAGS) $^ -o $@ -std=c++0x -lhdf5 -lmatheval -Wl,-Bstatic -lvvhd -Wl,-Bdynamic
+	$(CXX) $(CXXFLAGS) $^ -o $@ -std=c++0x -Wl,-Bstatic -lvvhd -Wl,-Bdynamic -lhdf5 -lmatheval
 
 clean:
 	rm -f vvcompose

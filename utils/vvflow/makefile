@@ -3,14 +3,16 @@ PREFIX = ~/.local
 ifeq ($(CXX),icpc)
         CXXFLAGS+= -debug all  -O3 -Wall -openmp -mkl=parallel
         AR = xiar
+	LDFLAGS =
 else
-        CXXFLAGS+= -O3 -Wall -fopenmp -llapack
+        CXXFLAGS+= -O3 -Wall -fopenmp
+	LDFLAGS = -llapack
 endif
 
 all: vvflow
 
 vvflow: vvflow.cpp
-	$(CXX) $(CXXFLAGS) $^ -o $@ -std=c++0x -lhdf5 -lmatheval -Wl,-Bstatic -lvvhd -Wl,-Bdynamic
+	$(CXX) $(CXXFLAGS) $^ -o $@ -std=c++0x -Wl,-Bstatic -lvvhd -Wl,-Bdynamic -lhdf5 -lmatheval $(LDFLAGS)
 
 clean:
 	rm -f vvflow

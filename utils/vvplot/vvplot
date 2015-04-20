@@ -12,13 +12,13 @@ import argparse_vvplot
 args = argparse_vvplot.args
 
 def delimiter():
-	"""First time it prints 'plot', else it prints comma
-	"""
-	try:
-		return delimiter.comma
-	except:
-		delimiter.comma = ","
-		return "plot"
+    """First time it prints 'plot', else it prints comma
+    """
+    try:
+        return delimiter.comma
+    except:
+        delimiter.comma = ","
+        return "plot"
 
 logger = logging.getLogger("vvplot")
 log_level = logging.DEBUG if args.debug else logging.ERROR
@@ -33,25 +33,25 @@ fin_name = fin.name
 fout_name = args.output_file
 
 if os.path.isdir(fout_name):
-	#generate filename and override fout_name
-	opts = str()
-	if (args.plot_body): opts+= 'b'
-	if (args.plot_vorticity): opts+= 'g'
-	if (args.plot_heat): opts+= 'H'
-	if (args.plot_ink): opts+= 'i'
-	if (args.plot_isotherms): opts+= 'O'
-	if (args.plot_pressure): opts+= 'p%s'%args.pressure
-	if (args.plot_isopressure): opts+= 'P%s'%args.pressure
-	if (args.plot_streamlines): opts+= 's%s'%args.streamlines
-	if (args.plot_temperature): opts+= 't'
-	if (args.plot_vortexes): opts+= 'v'
-	if (args.plot_vortexes_bold): opts+= 'V'
-	filename = os.path.splitext(os.path.basename(fin_name))[0]
-	fout_name = os.path.join(fout_name, '%s.%s.png'%(filename, opts))
-	del opts
+    #generate filename and override fout_name
+    opts = str()
+    if (args.plot_body): opts+= 'b'
+    if (args.plot_vorticity): opts+= 'g'
+    if (args.plot_heat): opts+= 'H'
+    if (args.plot_ink): opts+= 'i'
+    # if (args.plot_isotherms): opts+= 'O'
+    if (args.plot_pressure): opts+= 'p%s'%args.pressure
+    if (args.plot_isopressure): opts+= 'P%s'%args.pressure
+    if (args.plot_streamlines): opts+= 's%s'%args.streamlines
+    # if (args.plot_temperature): opts+= 't'
+    if (args.plot_vortexes): opts+= 'v'
+    if (args.plot_vortexes_bold): opts+= 'V'
+    filename = os.path.splitext(os.path.basename(fin_name))[0]
+    fout_name = os.path.join(fout_name, '%s.%s.png'%(filename, opts))
+    del opts
 
 if os.path.exists(fout_name) and args.mode_nooverride:
-	exit()
+    exit()
 
 ################################################################################
 ## WORK WITH CONSTRAINTS 
@@ -61,59 +61,59 @@ ymin,ymax = args.size_y;
 pic_w, pic_h = args.size_pic;
 
 class AdjustmentError(Exception):
-	def __init__(self, value):
-		self.value = value
-	def __str__(self):
-		return repr(self.value)
+    def __init__(self, value):
+        self.value = value
+    def __str__(self):
+        return repr(self.value)
 
 #trying to adjust absent sizes
 try:
-	if xmin == xmax:
-		raise Exception("XMIX and XMAX can not be equal")
-	if xmin > xmax:
-		tmp = xmin; xmin = xmax; xmax = tmp; del tmp;
-	if (pic_w > 0 and pic_h > 0):
-		if (ymin!=ymin and ymax!=ymax):
-			#adjust ymax = -ymin
-			ymax = (xmax-xmin)*pic_h/pic_w/2
-			ymin = -ymax
-		elif ymin!=ymin:
-			#adjust ymin
-			ymin = ymax - (xmax-xmin)*pic_h/pic_w
-		elif ymax!=ymax:
-			#adjust ymax
-			ymax = ymin + (xmax-xmin)*pic_h/pic_w
-		elif ymin == ymax:
-			#adjust symmetric ymin, ymax
-			y_center = ymin
-			ymax = y_center + (xmax-xmin)*pic_h/pic_w/2
-			ymin = y_center - (xmax-xmin)*pic_h/pic_w/2
-			del y_center
-		else:
-			#adjust pic_h
-			pic_h = int(float(pic_w) * (ymax-ymin)/(xmax-xmin))
-	else:
-		if (ymin == ymax):
-			raise AdjustmentError("YMIN, YMAX")
-		elif (ymin!=ymin and ymax!=ymax):
-			raise AdjustmentError("YMIN, YMAX")
-		elif (ymin!=ymin):
-			raise AdjustmentError("YMIN")
-		elif (ymax!=ymax):
-			raise AdjustmentError("YMAX")
-		# if both ymin and ymax are present we can continue
-		if (pic_w == 0):
-			pic_w = int(float(pic_h) * (xmax-xmin)/(ymax-ymin))
-		else:
-			pic_h = int(float(pic_w) * (ymax-ymin)/(xmax-xmin))
+    if xmin == xmax:
+        raise Exception("XMIX and XMAX can not be equal")
+    if xmin > xmax:
+        tmp = xmin; xmin = xmax; xmax = tmp; del tmp;
+    if (pic_w > 0 and pic_h > 0):
+        if (ymin!=ymin and ymax!=ymax):
+            #adjust ymax = -ymin
+            ymax = (xmax-xmin)*pic_h/pic_w/2
+            ymin = -ymax
+        elif ymin!=ymin:
+            #adjust ymin
+            ymin = ymax - (xmax-xmin)*pic_h/pic_w
+        elif ymax!=ymax:
+            #adjust ymax
+            ymax = ymin + (xmax-xmin)*pic_h/pic_w
+        elif ymin == ymax:
+            #adjust symmetric ymin, ymax
+            y_center = ymin
+            ymax = y_center + (xmax-xmin)*pic_h/pic_w/2
+            ymin = y_center - (xmax-xmin)*pic_h/pic_w/2
+            del y_center
+        else:
+            #adjust pic_h
+            pic_h = int(float(pic_w) * (ymax-ymin)/(xmax-xmin))
+    else:
+        if (ymin == ymax):
+            raise AdjustmentError("YMIN, YMAX")
+        elif (ymin!=ymin and ymax!=ymax):
+            raise AdjustmentError("YMIN, YMAX")
+        elif (ymin!=ymin):
+            raise AdjustmentError("YMIN")
+        elif (ymax!=ymax):
+            raise AdjustmentError("YMAX")
+        # if both ymin and ymax are present we can continue
+        if (pic_w == 0):
+            pic_w = int(float(pic_h) * (xmax-xmin)/(ymax-ymin))
+        else:
+            pic_h = int(float(pic_w) * (ymax-ymin)/(xmax-xmin))
 except AdjustmentError as s:
-	argparse_vvplot.parser.print_usage()
-	print 'AdjustmentError: Can not adjust both %s and picture size' % s.value
-	exit()
+    argparse_vvplot.parser.print_usage()
+    print 'AdjustmentError: Can not adjust both %s and picture size' % s.value
+    exit()
 except Exception as s:
-	argparse_vvplot.parser.print_usage()
-	print 'Error: %s' % s.message
-	exit()
+    argparse_vvplot.parser.print_usage()
+    print 'Error: %s' % s.message
+    exit()
 
 ################################################################################
 ## READING BINARY HEADER
@@ -126,116 +126,97 @@ h5_fid = h5_file.fid.id
 # print 'Re = '+str(h5_file.attrs['re']);
 
 try:
-	realtime = h5_file.attrs['time_local']
+    realtime = h5_file.attrs['time_local']
 except:
-	realtime = 0
+    realtime = 0
 try:
-	time = (lambda frac: float(frac[0])/float(frac[1]))(h5_file.attrs['time'])
+    time = (lambda frac: float(frac[0])/float(frac[1]))(h5_file.attrs['time'])
 except:
-	time = 0.0
+    time = 0.0
 try:
-	marker_x, marker_y = h5_file.attrs['inf_marker']
+    marker_x, marker_y = h5_file.attrs['inf_marker']
 except:
-	marker_x, marker_y = [0, 0]
+    marker_x, marker_y = [0, 0]
 
 datasets = h5_file.keys()
 # bodies = [str(b) for b in datasets if str(b)[0:4] == "body"]
 bodies = []
 for b in datasets:
-	if str(b)[0:4] == "body":
-		name = str(b)
-		try:
-			holder_position = h5_file[b].attrs['holder_position']
-		except:
-			holder_position = (0, 0, 0)
-		try:
-			delta_position = h5_file[b].attrs['delta_position']
-		except:
-			delta_position = (0, 0, 0)
-		bodies.append({'name':name, 'holder_position':holder_position, 'delta_position':delta_position})
+    if str(b)[0:4] == "body":
+        name = str(b)
+        try:
+            holder_position = h5_file[b].attrs['holder_position']
+        except:
+            holder_position = (0, 0, 0)
+        try:
+            delta_position = h5_file[b].attrs['delta_position']
+        except:
+            delta_position = (0, 0, 0)
+        bodies.append({'name':name, 'holder_position':holder_position, 'delta_position':delta_position})
 lists = [str(l) for l in datasets if str(l) in ["vort", "heat", "ink", "ink_source"]]
 
 ################################################################################
 ## 
 
 if args.referenceframe == 'o':
-	x_shift = y_shift = 0.;
+    x_shift = y_shift = 0.;
 elif args.referenceframe == 'b':
-	raise Exception("Body reference frame is not implemented yet")
+    raise Exception("Body reference frame is not implemented yet")
 elif args.referenceframe == 'f':
-	x_shift = -marker_x;
-	y_shift = -marker_y;
+    x_shift = -marker_x;
+    y_shift = -marker_y;
 
 try:
-	vv_prec_hi = os.getenv("VV_PREC_HI") or 500.0
-	vv_prec_hi = (xmax-xmin)/float(vv_prec_hi)
+    vv_prec_hi = os.getenv("VV_PREC_HI") or 500.0
+    vv_prec_hi = (xmax-xmin)/float(vv_prec_hi)
 except ValueError as e:
-	print "vvplot: error: environment VV_PREC_HI: %s" % e.message
-	exit()
+    print "vvplot: error: environment VV_PREC_HI: %s" % e.message
+    exit()
 
 try:
-	vv_prec_lo = os.getenv("VV_PREC_LO") or 200.0
-	vv_prec_lo = (xmax-xmin)/float(vv_prec_lo)
+    vv_prec_lo = os.getenv("VV_PREC_LO") or 200.0
+    vv_prec_lo = (xmax-xmin)/float(vv_prec_lo)
 except ValueError as e:
-	print "vvplot: error: environment VV_PREC_LO: %s" % e.message
-	exit()
+    print "vvplot: error: environment VV_PREC_LO: %s" % e.message
+    exit()
 
 try:
-	vv_vort_range = os.getenv("VV_VORT_RANGE") or 50.
-	vv_vort_range = float(vv_vort_range)
+    vv_vort_range = os.getenv("VV_VORT_RANGE") or 50.
+    vv_vort_range = float(vv_vort_range)
 except ValueError as e:
-	print "vvplot: error: environment VV_VORT_RANGE: %s" % e.message
-	exit()
+    print "vvplot: error: environment VV_VORT_RANGE: %s" % e.message
+    exit()
 
 
 ############################## CALC FIELDS #####################################
 
-boundaries = (str(xmin - vv_prec_lo),
-              str(xmax + vv_prec_lo),
-              str(ymin - vv_prec_lo),
-              str(ymax + vv_prec_lo))
-
-pids = list()
-
-home = os.getenv("HOME")
-heatplot_exe = os.path.join(home, ".local/bin/heatplot_exe")
-isoline_exe = os.path.join(home, ".local/bin/isoline_exe")
 c_boundaries = (ctypes.c_double(xmin-x_shift - vv_prec_lo),
                 ctypes.c_double(xmax-x_shift + vv_prec_lo),
                 ctypes.c_double(ymin-y_shift - vv_prec_lo),
                 ctypes.c_double(ymax-y_shift + vv_prec_lo),
                 ctypes.c_double(vv_prec_hi))
 try:
-	libvvplot = ctypes.cdll.LoadLibrary("%s/libvvplot.so" % os.path.abspath(os.path.dirname(sys.argv[0])))
+    libvvplot = ctypes.cdll.LoadLibrary("%s/libvvplot.so" % os.path.abspath(os.path.dirname(sys.argv[0])))
 except OSError as e:
-	print 'Can not load libvvplot.so: %s' % e
-	exit(-1)
+    print 'Can not load libvvplot.so: %s' % e
+    exit(-1)
 
 #PRESS FIELD
 if (args.plot_pressure or args.plot_isopressure) and (not libvvplot.map_check(h5_fid, "map_pressure.%s"%args.pressure, *c_boundaries) or args.mode_force):
-	libvvplot.map_pressure(h5_fid, ctypes.c_char(args.pressure), *c_boundaries)
-
-#TEMPERATURE FIELD
-if args.plot_temperature or args.plot_isotherms:
-	if not os.path.exists("%s.heat" % fin_name) or args.mode_force:
-		pids.append(os.spawnvp(os.P_NOWAIT, heatplot_exe,
-		               (heatplot_exe, fin_name, str(vv_prec_hi)) + boundaries));
+    libvvplot.map_pressure(h5_fid, ctypes.c_char(args.pressure), *c_boundaries)
 
 #VORTICITY FIELD
 if args.plot_vorticity and (not libvvplot.map_check(h5_fid, "map_vorticity", *c_boundaries) or args.mode_force):
-	libvvplot.map_vorticity(h5_fid, *c_boundaries)
+    libvvplot.map_vorticity(h5_fid, *c_boundaries)
 
 #PSI FUNCTION FIELD
 if args.plot_streamlines and (not libvvplot.map_check(h5_fid, "map_streamfunction.%s"%args.streamlines, *c_boundaries) or args.mode_force):
-	libvvplot.map_streamfunction(h5_fid, ctypes.c_char(args.streamlines),
-		ctypes.c_double(xmin - vv_prec_lo),
-		ctypes.c_double(xmax + vv_prec_lo),
-		ctypes.c_double(ymin - vv_prec_lo),
-		ctypes.c_double(ymax + vv_prec_lo),
-		ctypes.c_double(vv_prec_lo))
-
-for i in pids:
-	os.waitpid(i, 0)
+    libvvplot.map_streamfunction(h5_fid, ctypes.c_char(args.streamlines),
+        ctypes.c_double(xmin - vv_prec_lo),
+        ctypes.c_double(xmax + vv_prec_lo),
+        ctypes.c_double(ymin - vv_prec_lo),
+        ctypes.c_double(ymax + vv_prec_lo),
+        ctypes.c_double(vv_prec_lo))
 
 h5_file.close()
 if args.mode_dry: exit()
@@ -244,183 +225,135 @@ if args.mode_dry: exit()
 ############################## CALL GNUPLOT ####################################
 
 gp = os.popen("gnuplot", "w")
-def gpw(str, **kwargs):
-	"""Format string and send it to gnuplot"""
-	gp.write(str.format(
-		plot=delimiter(),
-		fin_name=fin_name,
-		**kwargs))
+def gpw(str, *args, **kwargs):
+    """Format string and send it to gnuplot"""
+    try:
+        gp.write(str.format(*args, fin_name=fin_name, **kwargs))
+    except:
+        gp.write(str.format(*args, plot=delimiter(), fin_name=fin_name, **kwargs))
 
-gpw("""set terminal pngcairo enhanced {} size {}, {} font "FreeSerif, 26" \n""", "mono" if args.mode_bw else "color", pic_w, pic_h)
+gpw("""set terminal pngcairo enhanced {}""", "mono" if args.mode_bw else "color")
+gpw("""    size {}, {}""", pic_w, pic_h)
+gpw("""    font "FreeSerif, 26" \n""")
 gpw("""set output '{}' \n""", fout_name)
-
-gp.write("""
-set lmargin 0
-set rmargin 0
-set bmargin 0
-set tmargin 0
-unset key
-set border 0
-set zeroaxis
-unset xtics
-unset ytics
-set xrange [%f: %f]
-set yrange [%f: %f]
-""" % (xmin-x_shift, xmax-x_shift, ymin-y_shift, ymax-y_shift))
+gpw("""set lmargin 0 \n""")
+gpw("""set rmargin 0 \n""")
+gpw("""set bmargin 0 \n""")
+gpw("""set tmargin 0 \n""")
+gpw("""unset key \n""")
+gpw("""set border 0 \n""")
+gpw("""set zeroaxis \n""")
+gpw("""unset xtics \n""")
+gpw("""unset ytics \n""")
+gpw("""set xrange [{}:{}] \n""", xmin-x_shift, xmax-x_shift)
+gpw("""set yrange [{}:{}] \n""", ymin-y_shift, ymax-y_shift)
 
 if args.mode_colorbox:
-	gp.write("""set colorbox horizontal user origin .1,.02 size .8,.04\n""")
+    gpw("""set colorbox horizontal user origin .1,.02 size .8,.04\n""")
 else:
-	gp.write("""unset colorbox\n""")
+    gpw("""unset colorbox\n""")
 
 if args.mode_timelabel:
-	gp.write("""set label "t = %f" at graph 0.05, 0.90 front""" % time)
+    gpw("""set label "t = {}" """, time)
+    gpw("""    at graph 0.05, 0.90 front \n""")
 
-gp.write("""
-set macros
-dots = "dots lc rgb variable"
-vortex_style = "circles lc rgb variable fs transparent solid 0.3 noborder"
-heat_style = "circles lc rgb 'black' fs transparent solid 0.3 noborder"
-ink_style = "circles lc rgb 'black' fs transparent solid 1 noborder"
-body_style = "filledcurve lc rgb '#adadad' lw 2 fs solid border -1"
-body_clear = "filledcurve lc rgb '#adadad' lw 2 fs transparent solid 0 border -1 "
-""")
+gpw("""set macros \n""")
+gpw("""dots = "dots lc rgb variable" \n""")
+gpw("""vortex_style = "circles lc rgb variable fs transparent solid 0.3 noborder" \n""")
+gpw("""heat_style = "circles lc rgb 'black' fs transparent solid 0.3 noborder" \n""")
+gpw("""ink_style = "circles lc rgb 'black' fs transparent solid 1 noborder" \n""")
+gpw("""body_style = "filledcurve lc rgb '#adadad' lw 2 fs solid border -1" \n""")
+gpw("""body_clear = "filledcurve lc rgb '#adadad' lw 2 fs transparent solid 0 border -1 " \n""")
 
 if args.mode_bw:
-	gp.write("""
-	color(x) = (x>0) ? 0xffffff : 0x000000
-	set object 1 rectangle from screen 0,0 to screen 1,1 fillcolor rgb "#808080" behind
-	""")
+    gpw("""set object 1 rectangle from screen 0,0 to screen 1,1 fillcolor rgb "#808080" behind \n""")
+    gpw("""color(x) = (x>0) ? 0xffffff : 0x000000 \n""")
 else:
-	gp.write("""
-	color(x) = (x>0) ? 0xFF0000 : 0x0000FF
-	""")
-
-gp.write("""
-isoline(C) = sprintf("< isoline_exe %s.psi %%s %f %f %f %f %f", C)
-""" % (fin_name, vv_prec_lo, xmin, xmax, ymin, ymax))
+    gpw("""color(x) = (x>0) ? 0xFF0000 : 0x0000FF \n""")
 
 if args.plot_pressure or args.plot_isopressure:
-	gp.write("""
-	set cbrange [-1.5:1]
-	""")
-	if args.mode_colorbox:
-		gp.write("""
-		set label "-1.5" at graph 0.096, 0.039 right front
-		set label "1" at graph 0.904, 0.039 left front
-		""")
-	if args.mode_bw:
-		gp.write("""
-		set palette defined (-1.5 "#000000", 0 "#c8c8c8", 0.5 "#f0f0f0", 1 "#ffffff")
-		""")
-	else:
-		gp.write("""
-		set palette defined (-1.5 "#0829d5", -0.5 "#1ffcff", 0 "#2ef62e", 0.3 "yellow", 1 "red")
-		""")
+    gpw("""set cbrange [-1.5:1] \n""")
+    if args.mode_colorbox:
+        gpw("""set label "-1.5" at graph 0.096, 0.039 right front \n""")
+        gpw("""set label "1" at graph 0.904, 0.039 left front \n""")
+    if args.mode_bw:
+        gpw("""set palette defined (-1.5 "#000000", 0 "#c8c8c8", 0.5 "#f0f0f0", 1 "#ffffff") \n""")
+    else:
+        gpw("""set palette defined (-1.5 "#0829d5", -0.5 "#1ffcff", 0 "#2ef62e", 0.3 "yellow", 1 "red") \n""")
 
 if args.plot_vorticity:
-	gp.write("""
-	set cbrange [%f:%f]
-	""" % (-vv_vort_range, vv_vort_range))
-	if args.mode_bw:
-		gp.write("""
-		set palette defined (-1 "#000000", 0 "#808080", 1 "#ffffff")
-		""")
-	else:
-		gp.write("""
-		set palette defined (-1 "#0000ff", 0 "#ffffff", 1 "#ff0000")
-		""")
+    gpw("""set cbrange [{}:{}] \n""", -vv_vort_range, vv_vort_range)
+    if args.mode_bw:
+        gpw("""set palette defined (-1 "#000000", 0 "#808080", 1 "#ffffff") \n""")
+    else:
+        gpw("""set palette defined (-1 "#0000ff", 0 "#ffffff", 1 "#ff0000") \n""")
 
-if args.plot_temperature:
-	gp.write("""
-	set cbrange [0:1]
-	""")
-	if args.mode_colorbox:
-		gp.write("""
-		set label "0" at graph 0.096, 0.039 right front
-		set label "1" at graph 0.904, 0.039 left front
-		""")
-	if args.mode_bw:
-		gp.write("""
-		set palette defined (0 "#000000", 1 "#ffffff")
-		""")
-	else:
-		gp.write("""
-		set palette defined (0 "#0829d5", 0.3 "#1ffcff", 0.5 "red", 1 "yellow", 2 "white")
-		""")
+# if args.plot_temperature:
+#     gpw("""set cbrange [0:1] \n""")
+#     if args.mode_colorbox:
+#         gpw("""set label "0" at graph 0.096, 0.039 right front \n""")
+#         gpw("""set label "1" at graph 0.904, 0.039 left front \n""")
+#     if args.mode_bw:
+#         gpw("""set palette defined (0 "#000000", 1 "#ffffff") \n""")
+#     else:
+#         gpw("""set palette defined (0 "#0829d5", 0.3 "#1ffcff", 0.5 "red", 1 "yellow", 2 "white") \n""")
 
 # parameters = {",": delimiter()}
 if args.plot_pressure or args.plot_isopressure:
-	gp.write("""{plot} '< libvvplot -M {fin_name} map_pressure.{mode}'""".format(
-		plot=delimiter(), fin_name=fin_name, mode=args.pressure))
-	gp.write(""" binary format='%3float' w image""")
-	if args.plot_isopressure:
-		vv_isopres = os.popen("seq -s ' ' -1.5 0.075757576 1").read()[:-1]
-		gp.write("""{plot} '< libvvplot -I {fin_name} map_pressure.{mode} {vv_isopres}'""".format(
-			plot=delimiter(), fin_name=fin_name, mode=args.pressure, vv_isopres=vv_isopres))
-		gp.write(""" binary format='%2float' w lines lw 1 lc rgb '#9999cc'""")
-
-if args.plot_temperature:
-	gp.write("""{plot} '< libvvplot -M {fin_name} map_temperature'""".format(plot=delimiter(), fin_name=fin_name)
-	gp.write(""" binary format='%3float' w image""")
+    gpw("""{plot} '< libvvplot -M {fin_name} map_pressure.{mode}'""", mode=args.pressure)
+    gpw(""" binary format='%3float' w image""")
+    if args.plot_isopressure:
+        vv_isopres = os.popen("seq -s ' ' -1.5 0.075757576 1").read()[:-1]
+        gpw("""{plot} '< libvvplot -I {fin_name} map_pressure.{mode} {vv_isopres}'""", mode=args.pressure, vv_isopres=vv_isopres)
+        gpw(""" binary format='%2float' w lines lw 1 lc rgb '#9999cc'""")
 
 if args.plot_vorticity:
-	gp.write("""{plot} '< libvvplot -M {fin_name} map_vorticity'""".format(plot=delimiter(), fin_name=fin_name))
-	gp.write(""" binary format='%3float' w image""")
+    gpw("""{plot} '< libvvplot -M {fin_name} map_vorticity'""")
+    gpw(""" binary format='%3float' w image""")
 
 if args.plot_vortexes and 'vort' in lists:
-	gp.write("""{plot} '< libvvplot -L {fin_name} vort'""".format(plot=delimiter(), fin_name=fin_name))
-	gp.write(""" binary format='%3double'""")
-	gp.write(""" u 1:2:(color($3)) w @dots""")
+    gpw("""{plot} '< libvvplot -L {fin_name} vort'""")
+    gpw(""" binary format='%3double'""")
+    gpw(""" u 1:2:(color($3)) w @dots""")
 
 if args.plot_vortexes_bold and 'vort' in lists:
-	gp.write("""{plot} '< libvvplot -L {fin_name} vort'""".format(plot=delimiter(), fin_name=fin_name))
-	gp.write(""" binary format='%3double'""")
-	gp.write(""" u 1:2:({vv_prec_hi}):(color($3)) w @vortex_style""".format(vv_prec_hi=vv_prec_hi))
+    gpw("""{plot} '< libvvplot -L {fin_name} vort'""")
+    gpw(""" binary format='%3double'""")
+    gpw(""" u 1:2:({}):(color($3)) w @vortex_style""", vv_prec_hi)
 
-if args.plot_heat and 'heat' in lists:
-	gp.write("""{plot} '< libvvplot -L {fin_name} heat'""".format(plot=delimiter(), fin_name=fin_name))
-	gp.write(""" binary format='%3double'""")
-	gp.write(""" u 1:2:({vv_prec_hi}):(color($3)) w @heat_style""".format(vv_prec_hi=vv_prec_hi))
-	
-	gp.write("""%s '< h5totxt %s -s " " -d heat'""" % (delimiter(), fin_name))
-	gp.write(""" u 1:2:(%f) w @heat_style""" % vv_prec_hi)
+if args.plot_heat and 'heat' in lists:    
+    gpw("""{plot} '< libvvplot -L {fin_name} heat'""")
+    gpw(""" binary format='%3double'""")
+    gpw(""" u 1:2:({}) w @heat_style""", vv_prec_hi)
 
 if args.plot_ink and 'ink' in lists:
-	gp.write("""%s '< h5totxt %s -s " " -d ink'""" % (delimiter(), fin_name))
-	gp.write(""" u 1:2:(%f) w @ink_style""" % vv_prec_hi)
+    gpw("""{plot} '< libvvplot -L {fin_name} ink'""")
+    gpw(""" u 1:2:({}) w @ink_style""", vv_prec_hi)
 
 if args.plot_streamlines:
-	# gp.write("""%s '< libvvplot -M %s map_streamfunction.%s' binary format='%%float%%float%%float' w image""" % (delimiter(), fin_name, args.streamlines))
-	vv_isopsi = os.getenv("VV_ISOPSI") or os.popen("seq -s ' ' -10 0.1 10").read()[:-1]
-	gp.write("""{plot} '< libvvplot -I {fin_name} map_streamfunction.{mode} {vv_isopsi}'""".format(
-		plot=delimiter(), fin_name=fin_name, mode=args.streamlines, vv_isopsi=vv_isopsi))
-	gp.write(""" binary format='%2float' w lines lw 1.5 lc rgb 'black'""")
-
-if args.plot_isotherms:
-	vv_isotherms = os.getenv("VV_ISOTHERMS") or os.popen("seq -s ' ' 0.05 0.05 0.95").read()[:-1]
-	gp.write("""%s "< %s %s.heat %s" w lines lw 2 lc rgb 'black'""" % (delimiter(), isoline_exe, fin_name, vv_isotherms))
+    # gp.write("""%s '< libvvplot -M %s map_streamfunction.%s' binary format='%%float%%float%%float' w image""" % (delimiter(), fin_name, args.streamlines))
+    vv_isopsi = os.getenv("VV_ISOPSI") or os.popen("seq -s ' ' -10 0.1 10").read()[:-1]
+    gpw("""{plot} '< libvvplot -I {fin_name} map_streamfunction.{mode} {vv_isopsi}'""", mode=args.streamlines, vv_isopsi=vv_isopsi)
+    gpw(""" binary format='%2float' w lines lw 1.5 lc rgb 'black'""")
 
 if args.plot_body:
-	for b in bodies:
-		gp.write("""{plot} '< libvvplot -L {fin_name} {body}' u 1:2 w @{style}""".format(
-			plot=delimiter(), fin_name=fin_name, body=b['name'],
-		gp.write(""" binary format='%2float%*2float' w @{{style}}""".format(
-			style="body_clear" if args.blankbody-1==bodies.index(b) else "body_style")
-			))
-		if args.plot_spring:
-			p1 = b['holder_position']
-			dp = b['delta_position']
-			p2 = (p1[0]+dp[0], p1[1]+dp[1], p1[2]+dp[2])
-			gp.write("""%s '< echo %f %f %f %f' w vectors nohead lc rgb 'black' lw 1.5"""
-				% (delimiter(), p1[0], p1[1], dp[0], dp[1]))
-			gp.write("""%s '< printf "%f %f\\n%f %f\\n"' u 1:2:(1.5*%f) w circles lc rgb 'black' fs solid noborder"""
-				% (delimiter(), p1[0], p1[1], p2[0], p2[1], vv_prec_hi))
+    for b in bodies:
+        gpw("""{plot} '< libvvplot -L {fin_name} {}'""", b['name'])
+        gpw(""" binary format='%2double%*2double'""")
+        gpw(""" u 1:2 w @{}""", "body_clear" if args.blankbody-1==bodies.index(b) else "body_style")
+        if args.plot_spring:
+            p1 = b['holder_position']
+            dp = b['delta_position']
+            p2 = (p1[0]+dp[0], p1[1]+dp[1], p1[2]+dp[2])
+            gpw("""{plot} '< echo {} {} {} {}'""", p1[0], p1[1], dp[0], dp[1])
+            gpw(""" w vectors nohead lc rgb 'black' lw 1.5""")
+            gpw("""{plot} '< echo -e {} {}\\\\n{} {}\\\\n'""", p1[0], p1[1], p2[0], p2[1])
+            gpw(""" u 1:2:(1.5*{}) w circles lc rgb 'black' fs solid noborder""", vv_prec_hi)
 
 if args.tree:
-	gp.write("""%s '%s' using 1:2:($3/2):($4/2) with boxxy fill empty lc rgb 'red'""" % (delimiter(), args.tree))
+    gpw("""{plot} '{}' using 1:2:($3/2):($4/2) with boxxy fill empty lc rgb 'red'""", args.tree)
 
-gp.write("\n")
+gpw("\n")
 gp.flush()
 gp.close()
 
@@ -429,7 +362,8 @@ gp.close()
 allargs = ""
 for arg in sys.argv: allargs = allargs+arg+" "
 
-comment = """realtime = %s
+comment = """
+realtime = %s
 argv = %s
 time = %g
 shift  = (%g, %g)
@@ -439,18 +373,18 @@ yrange = [%g, %g]
 
 for envname in ["VV_PREC_HI", "VV_ISOPSI", "VV_ISOTHERMS",
                 "VV_VORT_RANGE", "VV_EPS_MULT", "VV_BODY_TEMP"]:
-	if os.getenv(envname): comment+= "\n%s: %s" % (envname, os.getenv(envname))
+    if os.getenv(envname): comment+= "\n%s: %s" % (envname, os.getenv(envname))
 
 try:
-	subprocess.check_call(["exiv2",
-	           '-M', "set Exif.Photo.DateTimeOriginal %s" % realtime,
-	           '-M', "set Exif.Image.DateTime %s" % realtime,
-	           '-M', "set Exif.Photo.UserComment charset=Ascii %s" % comment,
-	           """%s""" % fout_name
-	                     ])
+    subprocess.check_call(["exiv2",
+               '-M', "set Exif.Photo.DateTimeOriginal %s" % realtime,
+               '-M', "set Exif.Image.DateTime %s" % realtime,
+               '-M', "set Exif.Photo.UserComment charset=Ascii %s" % comment,
+               """%s""" % fout_name
+                         ])
 except subprocess.CalledProcessError:
-	print "Failed to execute exiv2"
+    print "Failed to execute exiv2"
 except OSError:
-	print "Warning: exiv2 not installed, cannot write exif comment"
+    print "Warning: exiv2 not installed, cannot write exif comment"
 
 
