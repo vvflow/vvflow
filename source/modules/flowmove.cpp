@@ -26,7 +26,7 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
         if (!root) continue;
         double da = root->speed_slae.o * dt;
         TVec dr = lbody->holder.r - root->get_axis();
-        lbody->speed_slae.r -= rotl(dr)*da - (dr*cos(da)+rotl(dr)*sin(da));
+        lbody->speed_slae.r -= (dr+rotl(dr)*da) - (dr*cos(da)+rotl(dr)*sin(da));
     }
     for (auto& lbody: S->BodyList) lbody->doRotationAndMotion();
     // Move vortexes, heat, ink

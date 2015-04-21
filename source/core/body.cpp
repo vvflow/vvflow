@@ -97,7 +97,7 @@ void TBody::doMotion()
     {
         TVec dr = holder.r - root_body->get_axis();
         double da = S->dt * root_body->speed_slae.o;
-        delta_root = S->dt * root_body->speed_slae.r + dr*cos(da) + rotl(dr)*sin(da);
+        delta_root = S->dt * root_body->speed_slae.r + (dr*cos(da)+rotl(dr)*sin(da)-dr);
     }
 
     holder.r += delta_solid + delta_root;
