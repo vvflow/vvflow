@@ -1,4 +1,3 @@
-#include <assert.h>
 #include "limits"
 #include "hdf5.h"
 #include "core.h"
@@ -20,6 +19,11 @@ static hid_t vec3d_t;    bool commited_vec3d = false;
 
 static const hsize_t numbers[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
 
+#define H5ASSERT(expr, msg) if (expr<0) { \
+	fprintf(stderr, "%s failed. Aborting.", msg); \
+	std::exit(5); \
+}
+
 struct ATT {
     double x, y, g, gsum;
 };
@@ -31,10 +35,11 @@ struct ATT {
   double heat_const;
   };*/
 
+// ############################################################################
+// **** READ ******************************************************************
+// ############################################################################
 
-/******************************************************************************
- ***** NATIVE ******************************************************************
- ******************************************************************************/
+template<typename T> void attribute_read(hid_t, const char*, T& value);
 
 bool attread(hid_t hid, const char *name, void *value, hid_t type_id)
 {
@@ -48,27 +53,67 @@ bool attread(hid_t hid, const char *name, void *value, hid_t type_id)
     return true;
 }
 
-template<typename T> void attribute_read(hid_t, const char*, T& value);
-template<> void attribute_read(hid_t hid, const char *name, uint32_t& val) { if (!attread(hid, name, &val, H5T_NATIVE_UINT32)) val = 0;}
-template<> void attribute_read(hid_t hid, const char *name, int32_t& val)  { if (!attread(hid, name, &val, H5T_NATIVE_INT32)) val = 0;}
-template<> void attribute_read(hid_t hid, const char *name, double& val)   { if (!attread(hid, name, &val, H5T_NATIVE_DOUBLE)) val = 0.0;}
-template<> void attribute_read(hid_t hid, const char *name, TVec& val)     { if (!attread(hid, name, &val, vec_t))             val = TVec();}
-template<> void attribute_read(hid_t hid, const char *name, TVec3D& val)   { if (!attread(hid, name, &val, vec3d_t))           val = TVec3D();}
-template<> void attribute_read(hid_t hid, const char *name, TTime& val)    { if (!attread(hid, name, &val, fraction_t)) val = TTime(std::numeric_limits<int32_t>::max(), 1);}
-template<> void attribute_read(hid_t hid, const char *name, std::string& val)
+template<>
+void attribute_read(hid_t hid, const char *name, uint32_t& val)
+{
+    if (!attread(hid, name, &val, H5T_NATIVE_UINT32))
+        val = 0;
+}
+
+template<>
+void attribute_read(hid_t hid, const char *name, int32_t& val)
+{
+    if (!attread(hid, name, &val, H5T_NATIVE_INT32))
+        val = 0;
+}
+
+template<>
+void attribute_read(hid_t hid, const char *name, double& val)
+{
+    if (!attread(hid, name, &val, H5T_NATIVE_DOUBLE))
+        val = 0.0;
+}
+
+template<>
+void attribute_read(hid_t hid, const char *name, TVec& val)
+{
+    if (!attread(hid, name, &val, vec_t))
+        val = TVec();
+}
+
+template<>
+void attribute_read(hid_t hid, const char *name, TVec3D& val)
+{
+    if (!attread(hid, name, &val, vec3d_t))
+        val = TVec3D();
+}
+
+template<>
+void attribute_read(hid_t hid, const char *name, TTime& val)
+{
+    if (!attread(hid, name, &val, fraction_t))
+        val = TTime(std::numeric_limits<int32_t>::max(), 1);
+}
+
+template<>
+void attribute_read(hid_t hid, const char *name, std::string& val)
 {
     char *c_buf = NULL;
     if (attread(hid, name, &c_buf, string_t)) val = c_buf;
     else val = "";
     free(c_buf);
 }
-template<> void attribute_read(hid_t hid, const char *name, ShellScript& val)
+
+template<>
+void attribute_read(hid_t hid, const char *name, ShellScript& val)
 {
     std::string buf;
     attribute_read<std::string>(hid, name, buf);
     val = buf;
 }
-template<> void attribute_read(hid_t hid, const char *name, bc_t& bc)
+
+template<>
+void attribute_read(hid_t hid, const char *name, bc_t& bc)
 {
     uint32_t bc_raw = 0;
     attread(hid, name, &bc_raw, H5T_NATIVE_UINT32);
@@ -81,7 +126,9 @@ template<> void attribute_read(hid_t hid, const char *name, bc_t& bc)
                 bc = bc_t::steady;
     }
 }
-template<> void attribute_read(hid_t hid, const char *name, hc_t& hc)
+
+template<>
+void attribute_read(hid_t hid, const char *name, hc_t& hc)
 {
     uint32_t hc_raw = 0;
     attread(hid, name, &hc_raw, H5T_NATIVE_UINT32);
@@ -97,24 +144,39 @@ template<> void attribute_read(hid_t hid, const char *name, hc_t& hc)
     }
 }
 
-/******************************************************************************
- ***** NATIVE ******************************************************************
- ******************************************************************************/
+// ############################################################################
+// **** WRITE *****************************************************************
+// ############################################################################
+
+template<typename T> void attribute_write(hid_t, const char*, T value);
 
 void attwrite(hid_t hid, const char *name, void *value, hid_t type_id)
 {
-    //FIXME this code does not work witd -DNODEBUG flag
     hid_t aid = H5Acreate2(hid, name, type_id, DATASPACE_SCALAR(), H5P_DEFAULT, H5P_DEFAULT);
-    assert(aid>=0);
-    assert(H5Awrite(aid, type_id, value)>=0);
-    assert(H5Aclose(aid)>=0);
+    if (H5Awrite(aid, type_id, value)<0) return;
+    if (H5Aclose(aid)<0) return;
 }
 
-template<typename T> void attribute_write(hid_t, const char*, T value);
-template<> void attribute_write(hid_t hid, const char *name, uint32_t val) { if (val) attwrite(hid, name, &val, H5T_NATIVE_UINT32); }
-template<> void attribute_write(hid_t hid, const char *name, int32_t val) { if (val) attwrite(hid, name, &val, H5T_NATIVE_INT32); }
-template<> void attribute_write(hid_t hid, const char *name, double val) { if (val) attwrite(hid, name, &val, H5T_NATIVE_DOUBLE); }
-template<> void attribute_write(hid_t hid, const char *name, bc_t bc)
+template<>
+void attribute_write(hid_t hid, const char *name, uint32_t val)
+{
+    if (val) attwrite(hid, name, &val, H5T_NATIVE_UINT32);
+}
+
+template<>
+void attribute_write(hid_t hid, const char *name, int32_t val)
+{
+    if (val) attwrite(hid, name, &val, H5T_NATIVE_INT32);
+}
+
+template<>
+void attribute_write(hid_t hid, const char *name, double val)
+{
+    if (val) attwrite(hid, name, &val, H5T_NATIVE_DOUBLE);
+}
+
+template<>
+void attribute_write(hid_t hid, const char *name, bc_t bc)
 {
     if (bc == bc_t::steady) return;
 
@@ -122,7 +184,9 @@ template<> void attribute_write(hid_t hid, const char *name, bc_t bc)
     /**/ if (bc == bc_t::kutta) bc_raw = 1;
     attwrite(hid, name, &bc_raw, H5T_NATIVE_UINT32);
 }
-template<> void attribute_write(hid_t hid, const char *name, hc_t hc)
+
+template<>
+void attribute_write(hid_t hid, const char *name, hc_t hc)
 {
     if (hc == hc_t::neglect) return;
 
@@ -133,11 +197,8 @@ template<> void attribute_write(hid_t hid, const char *name, hc_t hc)
     attwrite(hid, name, &hc_raw, H5T_NATIVE_UINT32);
 }
 
-/******************************************************************************
- ***** STRING ******************************************************************
- ******************************************************************************/
-
-template<> void attribute_write(hid_t hid, const char *name, std::string str)
+template<>
+void attribute_write(hid_t hid, const char *name, std::string str)
 {
     if (str.empty()) return;
     if (!commited_string)
@@ -147,17 +208,14 @@ template<> void attribute_write(hid_t hid, const char *name, std::string str)
     }
 
     hid_t aid = H5Acreate2(hid, name, string_t, DATASPACE_SCALAR(), H5P_DEFAULT, H5P_DEFAULT);
-    assert(aid>=0);
+    H5ASSERT(aid, "H5Acreate");
     const char* c_str = str.c_str();
-    assert(H5Awrite(aid, string_t, &c_str)>=0);
-    assert(H5Aclose(aid)>=0);
+    H5ASSERT(H5Awrite(aid, string_t, &c_str), "H5Awrite");
+    H5ASSERT(H5Aclose(aid), "H5Aclose");
 }
 
-/******************************************************************************
- ***** FRACTION ****************************************************************
- ******************************************************************************/
-
-template<> void attribute_write(hid_t hid, const char *name, TTime time)
+template<>
+void attribute_write(hid_t hid, const char *name, TTime time)
 {
     if (time.value == INT32_MAX) return;
     if (!commited_fraction)
@@ -167,16 +225,13 @@ template<> void attribute_write(hid_t hid, const char *name, TTime time)
     }
 
     hid_t aid = H5Acreate2(hid, name, fraction_t, DATASPACE_SCALAR(), H5P_DEFAULT, H5P_DEFAULT);
-    assert(aid>=0);
-    assert(H5Awrite(aid, fraction_t, &time)>=0);
-    assert(H5Aclose(aid)>=0);
+    H5ASSERT(aid, "H5Acreate");
+    H5ASSERT(H5Awrite(aid, fraction_t, &time), "H5Awrite");
+    H5ASSERT(H5Aclose(aid), "H5Aclose");
 }
 
-/******************************************************************************
- ***** VEC *********************************************************************
- ******************************************************************************/
-
-template<> void attribute_write(hid_t hid, const char *name, TVec vec)
+template<>
+void attribute_write(hid_t hid, const char *name, TVec vec)
 {
     if (vec.iszero()) return;
     if (!commited_vec)
@@ -186,16 +241,13 @@ template<> void attribute_write(hid_t hid, const char *name, TVec vec)
     }
 
     hid_t aid = H5Acreate2(hid, name, vec_t, DATASPACE_SCALAR(), H5P_DEFAULT, H5P_DEFAULT);
-    assert(aid>=0);
-    assert(H5Awrite(aid, vec_t, &vec)>=0);
-    assert(H5Aclose(aid)>=0);
+    H5ASSERT(aid, "H5Acreate");
+    H5ASSERT(H5Awrite(aid, vec_t, &vec), "H5Awrite");
+    H5ASSERT(H5Aclose(aid), "H5Aclose");
 }
 
-/******************************************************************************
- ***** VEC3D *******************************************************************
- ******************************************************************************/
-
-template<> void attribute_write(hid_t hid, const char *name, TVec3D vec3d)
+template<>
+void attribute_write(hid_t hid, const char *name, TVec3D vec3d)
 {
     if (vec3d.iszero()) return;
     if (!commited_vec3d)
@@ -205,14 +257,14 @@ template<> void attribute_write(hid_t hid, const char *name, TVec3D vec3d)
     }
 
     hid_t aid = H5Acreate2(hid, name, vec3d_t, DATASPACE_SCALAR(), H5P_DEFAULT, H5P_DEFAULT);
-    assert(aid>=0);
-    assert(H5Awrite(aid, vec3d_t, &vec3d)>=0);
-    assert(H5Aclose(aid)>=0);
+    H5ASSERT(aid, "H5Acreate");
+    H5ASSERT(H5Awrite(aid, vec3d_t, &vec3d), "H5Awrite");
+    H5ASSERT(H5Aclose(aid), "H5Aclose");
 }
 
-/******************************************************************************
- ***** DATATYPES ***************************************************************
- ******************************************************************************/
+// ############################################################################
+// **** DATATYPES *************************************************************
+// ############################################################################
 
 void datatypes_create_all()
 {
@@ -253,3 +305,5 @@ void datatypes_close_all()
     if (vec_t>0) { H5Tclose(vec_t); vec_t = 0; }
     if (vec3d_t>0) { H5Tclose(vec3d_t); vec3d_t = 0; }
 }
+
+#undef H5ASSERT

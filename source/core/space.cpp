@@ -6,7 +6,7 @@
 #include <cstring>
 #include <fstream>
 #include <time.h>
-#include <type_traits>
+#include <type_traits> // static_assert
 
 #include "space.h"
 #include "body.h"
@@ -58,27 +58,19 @@ void Space::FinishStep()
     Time= TTime::add(Time, dt);
 }
 
-/*
-   888    888 8888888b.  8888888888 888888888
-   888    888 888  "Y88b 888        888
-   888    888 888    888 888        888
-   8888888888 888    888 8888888    8888888b.
-   888    888 888    888 888             "Y88b
-   888    888 888    888 888               888
-   888    888 888  .d88P 888        Y88b  d88P
-   888    888 8888888P"  888         "Y8888P"
-   */
+//  .d8888b.         d8888 888     888 8888888888     888    888 8888888b.  8888888888
+// d88P  Y88b       d88888 888     888 888            888    888 888  "Y88b 888
+// Y88b.           d88P888 888     888 888            888    888 888    888 888
+//  "Y888b.       d88P 888 Y88b   d88P 8888888        8888888888 888    888 8888888
+//     "Y88b.    d88P  888  Y88b d88P  888            888    888 888    888 888
+//       "888   d88P   888   Y88o88P   888            888    888 888    888 888
+// Y88b  d88P  d8888888888    Y888P    888            888    888 888  .d88P 888
+//  "Y8888P"  d88P     888     Y8P     8888888888     888    888 8888888P"  888
 
-/*
-      .d8888b.         d8888 888     888 8888888888
-     d88P  Y88b       d88888 888     888 888
-     Y88b.           d88P888 888     888 888
-      "Y888b.       d88P 888 Y88b   d88P 8888888
-         "Y88b.    d88P  888  Y88b d88P  888
-           "888   d88P   888   Y88o88P   888
-     Y88b  d88P  d8888888888    Y888P    888
-      "Y8888P"  d88P     888     Y8P     8888888888
-*/
+#define H5ASSERT(expr, msg) if (expr<0) { \
+	fprintf(stderr, "%s failed (%s:%d). Aborting.", msg, __FILE__, __LINE__); \
+	std::exit(5); \
+}
 
 void Space::dataset_write_list(const char *name, const vector<TObj>& list)
 {
@@ -92,14 +84,15 @@ void Space::dataset_write_list(const char *name, const vector<TObj>& list)
     H5Pset_deflate(prop, 9);
 
     hid_t file_dataspace = H5Screate_simple(2, dims, dims);
-    assert(file_dataspace>=0);
+    H5ASSERT(file_dataspace, "H5Screate_simple");
     hid_t mem_dataspace = H5Screate_simple(2, dims2, dims2);
     hsize_t start[2] = {0, 0};
     hsize_t stride[2] = {2, 1};
-    H5Sselect_hyperslab(mem_dataspace, H5S_SELECT_SET, start, stride, dims, NULL);
+    H5ASSERT(H5Sselect_hyperslab(mem_dataspace, H5S_SELECT_SET, start, stride, dims, NULL), "H5Sselect_hyperslab");
     hid_t file_dataset = H5Dcreate2(fid, name, H5T_NATIVE_DOUBLE, file_dataspace, H5P_DEFAULT, prop, H5P_DEFAULT);
-    H5Dwrite(file_dataset, H5T_NATIVE_DOUBLE, mem_dataspace, file_dataspace, H5P_DEFAULT, list.data());
-    H5Dclose(file_dataset);
+    H5ASSERT(file_dataset, "H5Dcreate");
+    H5ASSERT(H5Dwrite(file_dataset, H5T_NATIVE_DOUBLE, mem_dataspace, file_dataspace, H5P_DEFAULT, list.data()), "H5Dwrite");
+    H5ASSERT(H5Dclose(file_dataset), "H5Dclose");
 }
 
 void Space::dataset_write_body(const char* name, const TBody& body)
@@ -129,10 +122,10 @@ void Space::dataset_write_body(const char* name, const TBody& body)
     H5Pset_deflate(prop, 9);
 
     hid_t file_dataspace = H5Screate_simple(2, dims, dims);
-    assert(file_dataspace>=0);
+    H5ASSERT(file_dataspace, "H5Screate_simple");
 
     hid_t file_dataset = H5Dcreate2(fid, name, H5T_NATIVE_DOUBLE, file_dataspace, H5P_DEFAULT, prop, H5P_DEFAULT);
-    assert(file_dataset>=0);
+    H5ASSERT(file_dataset, "H5Dcreate");
 
     if (!can_simplify)
     {
@@ -171,8 +164,8 @@ void Space::dataset_write_body(const char* name, const TBody& body)
     attribute_write(file_dataset, "special_segment_no", body.special_segment_no);
     attribute_write(file_dataset, "heat_condition", body.heat_condition);
 
-    H5Dwrite(file_dataset, H5T_NATIVE_DOUBLE, H5S_ALL, file_dataspace, H5P_DEFAULT, mem);
-    H5Dclose(file_dataset);
+    H5ASSERT(H5Dwrite(file_dataset, H5T_NATIVE_DOUBLE, H5S_ALL, file_dataspace, H5P_DEFAULT, mem), "H5Dwrite");
+    H5ASSERT(H5Dclose(file_dataset), "H5Dclose");
     free(mem);
 }
 
@@ -221,19 +214,17 @@ void Space::Save(const char* format)
     }
 
     datatypes_close_all();
-    assert(H5Fclose(fid)>=0);
+    H5ASSERT(H5Fclose(fid), "H5Fclose");
 }
 
-/*
-   888       .d88888b.         d8888 8888888b.
-   888      d88P" "Y88b       d88888 888  "Y88b
-   888      888     888      d88P888 888    888
-   888      888     888     d88P 888 888    888
-   888      888     888    d88P  888 888    888
-   888      888     888   d88P   888 888    888
-   888      Y88b. .d88P  d8888888888 888  .d88P
-   88888888  "Y88888P"  d88P     888 8888888P"
-   */
+// 888       .d88888b.         d8888 8888888b.      888    888 8888888b.  8888888888
+// 888      d88P" "Y88b       d88888 888  "Y88b     888    888 888  "Y88b 888
+// 888      888     888      d88P888 888    888     888    888 888    888 888
+// 888      888     888     d88P 888 888    888     8888888888 888    888 8888888
+// 888      888     888    d88P  888 888    888     888    888 888    888 888
+// 888      888     888   d88P   888 888    888     888    888 888    888 888
+// 888      Y88b. .d88P  d8888888888 888  .d88P     888    888 888  .d88P 888
+// 88888888  "Y88888P"  d88P     888 8888888P"      888    888 8888888P"  888
 
 herr_t Space::dataset_read_list(hid_t fid, const char *name, vector<TObj>& list)
 {
@@ -249,15 +240,15 @@ herr_t Space::dataset_read_list(hid_t fid, const char *name, vector<TObj>& list)
     }
 
     hid_t file_dataspace = H5Dget_space(dataset);
-    assert(file_dataspace>=0);
+    H5ASSERT(file_dataspace, "H5Dget_space");
     hsize_t dims[2]; H5Sget_simple_extent_dims(file_dataspace, dims, dims);
     hsize_t dims2[2] = {dims[0]*2, dims[1]};
     hid_t mem_dataspace = H5Screate_simple(2, dims2, dims2);
-    assert(mem_dataspace>=0);
+    H5ASSERT(mem_dataspace, "H5Screate_simple");
     list.resize(dims[0], TObj());
     hsize_t offset[2] = {0, 0};
     hsize_t stride[2] = {2, 1};
-    assert(H5Sselect_hyperslab(mem_dataspace, H5S_SELECT_SET, offset, stride, dims, NULL)>=0);
+    H5ASSERT(H5Sselect_hyperslab(mem_dataspace, H5S_SELECT_SET, offset, stride, dims, NULL), "H5Sselect_hyperslab");
 
     herr_t err = H5Dread(dataset, H5T_NATIVE_DOUBLE, mem_dataspace, file_dataspace, H5P_DEFAULT, list.data());
     if (err < 0)
@@ -267,7 +258,7 @@ herr_t Space::dataset_read_list(hid_t fid, const char *name, vector<TObj>& list)
         fprintf(stderr, "error: dataset_read_list: can't read dataset '%s'\n", name);
         return -1;
     }
-    H5Dclose(dataset);
+    H5ASSERT(H5Dclose(dataset), "H5Dclose");
     return 0;
 }
 
@@ -288,8 +279,7 @@ herr_t dataset_read_body(hid_t g_id, const char* name, const H5L_info_t *info, v
         return -1;
     }
     hid_t file_dataspace = H5Dget_space(dataset);
-    // FIXME delete all asserts
-    assert(file_dataspace>=0);
+    H5ASSERT(file_dataspace, "H5Dget_space");
     hsize_t dims[2]; H5Sget_simple_extent_dims(file_dataspace, dims, dims);
 
 
@@ -359,7 +349,7 @@ herr_t dataset_read_body(hid_t g_id, const char* name, const H5L_info_t *info, v
         }
 
     struct ATT *mem = (struct ATT*)malloc(sizeof(struct ATT)*dims[0]);
-    assert(H5Dread(dataset, H5T_NATIVE_DOUBLE, H5S_ALL, file_dataspace, H5P_DEFAULT, mem)>=0);
+    H5ASSERT(H5Dread(dataset, H5T_NATIVE_DOUBLE, H5S_ALL, file_dataspace, H5P_DEFAULT, mem), "H5Dread");
 
     for(hsize_t i=0; i<dims[0]; i++)
     {
@@ -377,7 +367,7 @@ herr_t dataset_read_body(hid_t g_id, const char* name, const H5L_info_t *info, v
     body->doUpdateSegments();
     body->doFillProperties();
 
-    H5Dclose(dataset);
+    H5ASSERT(H5Dclose(dataset), "H5Dclose");
     free(mem);
     S->BodyList.push_back(body);
     return 0;
@@ -442,18 +432,15 @@ void Space::Load(hid_t fid, std::string *info)
     datatypes_close_all();
 }
 
-/*
-   888       .d88888b.         d8888 8888888b.       .d88888b.  888      8888888b.
-   888      d88P" "Y88b       d88888 888  "Y88b     d88P" "Y88b 888      888  "Y88b
-   888      888     888      d88P888 888    888     888     888 888      888    888
-   888      888     888     d88P 888 888    888     888     888 888      888    888
-   888      888     888    d88P  888 888    888     888     888 888      888    888
-   888      888     888   d88P   888 888    888     888     888 888      888    888
-   888      Y88b. .d88P  d8888888888 888  .d88P     Y88b. .d88P 888      888  .d88P
-   88888888  "Y88888P"  d88P     888 8888888P"       "Y88888P"  88888888 8888888P"
-   */
+//   888       .d88888b.         d8888 8888888b.       .d88888b.  888      8888888b.
+//   888      d88P" "Y88b       d88888 888  "Y88b     d88P" "Y88b 888      888  "Y88b
+//   888      888     888      d88P888 888    888     888     888 888      888    888
+//   888      888     888     d88P 888 888    888     888     888 888      888    888
+//   888      888     888    d88P  888 888    888     888     888 888      888    888
+//   888      888     888   d88P   888 888    888     888     888 888      888    888
+//   888      Y88b. .d88P  d8888888888 888  .d88P     Y88b. .d88P 888      888  .d88P
+//   88888888  "Y88888P"  d88P     888 8888888P"       "Y88888P"  88888888 8888888P"
 
-int eq(const char *str1, const char *str2)
 {
     for (int i=0; i<8; i++)
     {
@@ -464,7 +451,8 @@ int eq(const char *str1, const char *str2)
 
 void LoadList(vector<TObj> &list, FILE* fin)
 {
-    int64_t size; fread(&size, 8, 1, fin);
+    int64_t size;
+    (void)fread(&size, 8, 1, fin);
     TObj obj;
     for (int64_t i=0; i<size; i++)
     {
