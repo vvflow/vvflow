@@ -441,6 +441,7 @@ void Space::Load(hid_t fid, std::string *info)
 //   888      Y88b. .d88P  d8888888888 888  .d88P     Y88b. .d88P 888      888  .d88P
 //   88888888  "Y88888P"  d88P     888 8888888P"       "Y88888P"  88888888 8888888P"
 
+int eq(const char *str1, const char *str2)
 {
     for (int i=0; i<8; i++)
     {
