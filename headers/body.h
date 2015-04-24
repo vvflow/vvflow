@@ -73,6 +73,7 @@ class TBody
         TVec3D damping; // spring damping: tau_x, tau_y, tau_a;
         TVec3D speed_slae;
         TVec3D speed_slae_prev;
+	TVec rotation_error;
 
         //double kx, ky, ka;
         double density; //in doc \frac{\rho_b}{\rho_0}

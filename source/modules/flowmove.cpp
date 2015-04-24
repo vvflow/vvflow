@@ -23,10 +23,16 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
     for (auto& lbody: S->BodyList)
     {
         auto root = lbody->root_body.lock();
-        if (!root) continue;
-        double da = root->speed_slae.o * dt;
-        TVec dr = lbody->holder.r - root->get_axis();
-        lbody->speed_slae.r -= (dr+rotl(dr)*da) - (dr*cos(da)+rotl(dr)*sin(da));
+	auto child = lbody;
+	while(root)
+	{
+		TVec dr = child->holder.r - root->get_axis();
+		double da = root->speed_slae.o * dt;
+		lbody->rotation_error += (dr+rotl(dr)*da) - (dr*cos(da)+rotl(dr)*sin(da));
+
+		child = root;
+		root = root->root_body.lock();
+	}
     }
     for (auto& lbody: S->BodyList) lbody->doRotationAndMotion();
     // Move vortexes, heat, ink

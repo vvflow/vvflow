@@ -24,6 +24,7 @@ TBody::TBody(Space *space):
     _moi_c = _moi_com = 0;
     kspring = TVec3D(-1., -1., -1.);
     damping = TVec3D(0., 0., 0.);
+    rotation_error = TVec(0., 0.);
     density = 1.;
     special_segment_no = 0;
     boundary_condition = bc_t::steady;
@@ -85,8 +86,8 @@ void TBody::doRotation()
 
 void TBody::doMotion()
 {
-    TVec delta_slae = speed_slae.r * S->dt;
-    TVec delta_solid = get_speed().r * S->dt;
+    TVec delta_slae = speed_slae.r * S->dt - rotation_error;
+    TVec delta_solid = get_speed().r * S->dt - rotation_error;
     for (auto& obj: alist)
     {
         obj.corner += delta_slae;
@@ -95,14 +96,15 @@ void TBody::doMotion()
     TVec delta_root(0, 0);
     if (root_body)
     {
-        TVec dr = holder.r - root_body->get_axis();
-        double da = S->dt * root_body->speed_slae.o;
-        delta_root = S->dt * root_body->speed_slae.r + (dr*cos(da)+rotl(dr)*sin(da)-dr);
+	TVec dr = holder.r - root_body->get_axis();
+	double da = S->dt * root_body->speed_slae.o;
+	delta_root = S->dt * root_body->speed_slae.r + (dr*cos(da)+rotl(dr)*sin(da)-dr);
     }
 
-    holder.r += delta_solid + delta_root;
-    dpos.r += delta_slae - delta_solid - delta_root;
+    holder.r += delta_solid;
+    dpos.r += delta_slae - delta_solid;
     speed_slae_prev.r = speed_slae.r;
+    rotation_error = TVec3D();
 }
 
 void TBody::doUpdateSegments()
