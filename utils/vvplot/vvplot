@@ -108,11 +108,11 @@ try:
             pic_h = int(float(pic_w) * (ymax-ymin)/(xmax-xmin))
 except AdjustmentError as s:
     argparse_vvplot.parser.print_usage()
-    print 'AdjustmentError: Can not adjust both %s and picture size' % s.value
+    print('AdjustmentError: Can not adjust both {} and picture size'.format(s.value))
     exit()
 except Exception as s:
     argparse_vvplot.parser.print_usage()
-    print 'Error: %s' % s.message
+    print('Error: %s'.format(s.message))
     exit()
 
 ################################################################################
@@ -170,21 +170,21 @@ try:
     vv_prec_hi = os.getenv("VV_PREC_HI") or 500.0
     vv_prec_hi = (xmax-xmin)/float(vv_prec_hi)
 except ValueError as e:
-    print "vvplot: error: environment VV_PREC_HI: %s" % e.message
+    print("vvplot: error: environment VV_PREC_HI: %s" % e.message)
     exit()
 
 try:
     vv_prec_lo = os.getenv("VV_PREC_LO") or 200.0
     vv_prec_lo = (xmax-xmin)/float(vv_prec_lo)
 except ValueError as e:
-    print "vvplot: error: environment VV_PREC_LO: %s" % e.message
+    print("vvplot: error: environment VV_PREC_LO: %s" % e.message)
     exit()
 
 try:
     vv_vort_range = os.getenv("VV_VORT_RANGE") or 50.
     vv_vort_range = float(vv_vort_range)
 except ValueError as e:
-    print "vvplot: error: environment VV_VORT_RANGE: %s" % e.message
+    print("vvplot: error: environment VV_VORT_RANGE: %s" % e.message)
     exit()
 
 
@@ -198,7 +198,7 @@ c_boundaries = (ctypes.c_double(xmin-x_shift - vv_prec_lo),
 try:
     libvvplot = ctypes.cdll.LoadLibrary("%s/libvvplot.so" % os.path.abspath(os.path.dirname(sys.argv[0])))
 except OSError as e:
-    print 'Can not load libvvplot.so: %s' % e
+    print('Can not load libvvplot.so: %s' % e)
     exit(-1)
 
 #PRESS FIELD
@@ -383,8 +383,8 @@ try:
                """%s""" % fout_name
                          ])
 except subprocess.CalledProcessError:
-    print "Failed to execute exiv2"
+    print("Failed to execute exiv2")
 except OSError:
-    print "Warning: exiv2 not installed, cannot write exif comment"
+    print("Warning: exiv2 not installed, cannot write exif comment")
 
 
