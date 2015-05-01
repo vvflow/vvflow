@@ -51,10 +51,6 @@ Space::Space():
     inline
 void Space::FinishStep()
 {
-    for(auto& lbody: BodyList)
-    {
-        lbody->doRotationAndMotion();
-    }
     Time= TTime::add(Time, dt);
 }
 
@@ -129,7 +125,7 @@ void Space::dataset_write_body(const char* name, const TBody& body)
 
     if (!can_simplify)
     {
-        fprintf(stderr, "Can not save simplified %s\n", body.get_name().c_str());
+        fprintf(stderr, "Can not save simplified %s\n", get_body_name(&body).c_str());
         exit(1);
     }
     attribute_write(file_dataset, "simplified_dataset", uint32_t(2));
@@ -139,7 +135,7 @@ void Space::dataset_write_body(const char* name, const TBody& body)
     if (!body.root_body.expired())
     {
         auto root_body = body.root_body.lock();
-        attribute_write(file_dataset, "root_body", root_body->get_name());
+        attribute_write(file_dataset, "root_body", get_body_name(root_body.get()));
     }
 
     attribute_write(file_dataset, "holder_position", body.holder);
@@ -210,7 +206,7 @@ void Space::Save(const char* format)
 
     for (auto& lbody: BodyList)
     {
-        dataset_write_body(lbody->get_name().c_str(), *lbody);
+        dataset_write_body(get_body_name(lbody.get()).c_str(), *lbody);
     }
 
     datatypes_close_all();
@@ -262,13 +258,13 @@ herr_t Space::dataset_read_list(hid_t fid, const char *name, vector<TObj>& list)
     return 0;
 }
 
-herr_t dataset_read_body(hid_t g_id, const char* name, const H5L_info_t *info, void *op_data)
+herr_t dataset_read_body(hid_t g_id, const char* name, const H5L_info_t*, void *op_data)
 {
     if (strncmp(name, "body", 4) != 0)
         return 0;
 
     Space *S = (Space*)op_data;
-    std::shared_ptr<TBody> body(new TBody(S));
+    std::shared_ptr<TBody> body(new TBody());
 
     hid_t dataset = H5Dopen2(g_id, name, H5P_DEFAULT);
     if (dataset < 0)
@@ -523,7 +519,7 @@ void Space::Load_v1_3(const char* fname)
         else if (eq(comment, "Streak  ")>8) LoadList(StreakList, fin);
         else if (eq(comment, "BData   ")>8)
         {
-            std::shared_ptr<TBody> body(new TBody(this));
+            std::shared_ptr<TBody> body(new TBody());
 
             fread(&body->holder, 24, 1, fin);
             fread(&body->dpos, 24, 1, fin);
@@ -776,7 +772,7 @@ int Space::LoadStreakSource(const char* filename)
 
 int Space::LoadBody(const char* filename)
 {
-    std::shared_ptr<TBody> body(new TBody(this));
+    std::shared_ptr<TBody> body(new TBody());
 
     FILE *fin = fopen(filename, "r");
     if (!fin) { cerr << "No file called " << filename << endl; return -1; }
@@ -883,3 +879,24 @@ bool Space::PointIsInBody(TVec p)
     }
     return false;
 }
+
+int Space::get_body_index(const TBody* body) const
+{
+    int i = 0;
+    for (auto lbody: BodyList)
+    {
+        if (lbody.get() == body) return i;
+        i++;
+    }
+    return -1;
+}
+
+std::string Space::get_body_name(const TBody* body) const
+{
+    char name[8];
+    sprintf(name, "body%02d", get_body_index(body));
+    return std::string(name);
+}
+
+
+

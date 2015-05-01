@@ -3,6 +3,7 @@
 #include "math.h"
 #include <cstdlib>
 #include <algorithm>
+#include <map>
 #include <time.h>
 
 flowmove::flowmove(Space *sS, double sRemoveEps)
@@ -19,26 +20,42 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
     S->InfMarker+= S->InfSpeed()*S->dt;
 
     // Move bodies
+    std::map<TBody*,TVec3D> deltaHolder;
+    std::map<TBody*,TVec3D> deltaBody;
     // to prevent bodies from separating, fix tangential velocities
     for (auto& lbody: S->BodyList)
     {
+        TVec3D dHolder = lbody->speed(S->Time);
+        TVec3D dBody = lbody->speed_slae;
+
         auto root = lbody->root_body.lock();
-        auto child = lbody;
         if (root) {
             TVec dr = lbody->holder.r - root->get_axis();
-            lbody->holder_speed = root->speed_slae.r + rotl(dr)*root->speed_slae.o;
+            dHolder.r += root->speed_slae.r + rotl(dr)*root->speed_slae.o;
+            dHolder.o += root->speed_slae.o;
         }
+
+        dHolder.r *= dt;
+        dHolder.o *= dt;
+        dBody.r *= dt;
+        dBody.o *= dt;
+        auto child = lbody;
         while(root)
         {
             TVec dr = child->holder.r - root->get_axis();
             double da = root->speed_slae.o * dt;
-            lbody->rotation_error += (dr+rotl(dr)*da) - (dr*cos(da)+rotl(dr)*sin(da));
+            TVec error = (dr+rotl(dr)*da) - (dr*cos(da)+rotl(dr)*sin(da));
+            dHolder.r -= error;
+            dBody.r -= error;
 
             child = root;
             root = root->root_body.lock();
         }
+
+        deltaHolder[lbody.get()] = dHolder;
+        deltaBody[lbody.get()] = dBody;
     }
-    for (auto& lbody: S->BodyList) lbody->doRotationAndMotion();
+    for (auto& lbody: S->BodyList) lbody->move(deltaHolder[lbody.get()], deltaBody[lbody.get()]);
     // Move vortexes, heat, ink
     for (auto& lobj: S->VortexList) lobj.r += lobj.v * dt;
     for (auto& lobj: S->HeatList)   lobj.r += lobj.v * dt;

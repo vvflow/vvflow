@@ -6,7 +6,7 @@ class stree; typedef stree TSortedTree;
 
 #include "core.h"
 #include <stdio.h>
-#include <float.h>
+#include <limits>
 #include <vector>
 
 using std::vector;
@@ -59,7 +59,7 @@ class snode
 class stree
 {
     public:
-        stree(Space *sS, int sFarCriteria, double sMinNodeSize, double sMaxNodeSize = DBL_MAX);
+        stree(Space *sS, int sFarCriteria, double sMinNodeSize, double sMaxNodeSize = std::numeric_limits<double>::max());
         //~tree();
 
         void build(bool IncludeVortexes = true, bool IncludeBody = true, bool IncludeHeat = true);

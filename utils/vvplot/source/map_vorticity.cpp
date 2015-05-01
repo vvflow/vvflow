@@ -4,6 +4,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <iostream>
+#include <limits>
 #include <fstream>
 #include <math.h>
 #include <assert.h>
@@ -22,7 +23,7 @@ double eps2h(const TSortedNode &Node, TVec p)
 {
 	TVec dr;
 	double res1, res2;
-	res2 = res1 = DBL_MAX;
+	res2 = res1 = std::numeric_limits<double>::max();
 
 	for (TSortedNode* lnnode: *Node.NearNodes)
 	{
@@ -43,8 +44,8 @@ double eps2h(const TSortedNode &Node, TVec p)
 		}
 	}
 
-	if ( res1 == DBL_MAX ) return DBL_MIN;
-	if ( res2 == DBL_MAX ) return DBL_MIN;//res1;
+	if ( res1 == std::numeric_limits<double>::max() ) return std::numeric_limits<double>::lowest();
+	if ( res2 == std::numeric_limits<double>::max() ) return std::numeric_limits<double>::lowest();//res1;
 
 	return res2;
 }
@@ -52,7 +53,7 @@ double eps2h(const TSortedNode &Node, TVec p)
 TObj* Nearest(TSortedNode &Node, TVec p)
 {
 	TVec dr(0, 0);
-	double resr = DBL_MAX;
+	double resr = std::numeric_limits<double>::max();
 	TObj *res = NULL;
 
 	for (TSortedNode* lnnode: *Node.NearNodes)
@@ -75,7 +76,7 @@ TObj* Nearest(TSortedNode &Node, TVec p)
 
 double h2(TSortedNode &Node, TVec p)
 {
-	double resh2 = DBL_MAX;
+	double resh2 = std::numeric_limits<double>::max();
 
 	for (TSortedNode* lnnode: *Node.NearNodes)
 	{
@@ -133,7 +134,7 @@ int map_vorticity(hid_t fid, double xmin, double xmax, double ymin, double ymax,
 	S->StreakList.clear();
 
 	dl = S->AverageSegmentLength();
-	S->Tree = new TSortedTree(S, 8, dl*20, DBL_MAX);
+	S->Tree = new TSortedTree(S, 8, dl*20, std::numeric_limits<double>::max());
 	S->Tree->build();
 
 	auto& bnodes = S->Tree->getBottomNodes();

@@ -38,10 +38,10 @@ class TAtt : public TObj
         double Nu; // computed by S->CalcForces;
 
         TAtt():TObj(), heat_layer_obj_no(-1), heat_const(0.0), slip(0)
-    {
-        gsum = hsum = fric = 0.0;
-        Cp = Fr = Nu = 0.0;
-    }
+        {
+            gsum = hsum = fric = 0.0;
+            Cp = Fr = Nu = 0.0;
+        }
         //TAtt(TBody *body, int eq_no);
         //void zero() { r.x = r.y = g = gsum = hsum = /*FIXME fric?*/ Cp = Fr = Nu = 0; heat_layer_obj_no = -1; }
 
@@ -53,15 +53,12 @@ class TAtt : public TObj
 class TBody
 {
     public:
-        TBody(Space *space);
+        TBody();
         ~TBody() = default;
-        TBody() = delete;
         TBody(const TBody&) = delete;
         TBody(TBody&&) = delete;
         TBody& operator= (const TBody&) = delete;
         TBody& operator= (TBody&&) = delete;
-        int get_index() const; // index of body in Space list
-        std::string get_name() const;
 
         // FIXME rename to lower case
         std::vector<TAtt> alist;
@@ -73,68 +70,60 @@ class TBody
         TVec3D damping; // spring damping: tau_x, tau_y, tau_a;
         TVec3D speed_slae;
         TVec3D speed_slae_prev;
-        TVec rotation_error;
-        TVec holder_speed;
 
         //double kx, ky, ka;
-        double density; //in doc \frac{\rho_b}{\rho_0}
+        double density; //in doc rho_b/rho_0
+        int32_t special_segment_no;
+        bc_t boundary_condition;
+        hc_t heat_condition;
 
-int32_t special_segment_no;
-bc_t boundary_condition;
-hc_t heat_condition;
-
-TVec3D friction, friction_prev; //computed by S->CalcForces
-TVec3D force_born, force_dead; //computed by flowmove->MoveAndClean
-TVec3D force_hydro, force_holder; //computed by convectivefast->CalcCirculationFast
-double nusselt; //computed by S->CalcForces
-double g_dead;
+        TVec3D friction, friction_prev; //computed by S->CalcForces
+        TVec3D force_born, force_dead; //computed by flowmove->MoveAndClean
+        TVec3D force_hydro, force_holder; //computed by convectivefast->CalcCirculationFast
+        double nusselt; //computed by S->CalcForces
+        double g_dead;
 
     public:
-//functions \vec V(t), \omega(t)
-ShellScript speed_x;
-ShellScript speed_y;
-ShellScript speed_o;
-TVec3D get_speed() const;
+        //functions \vec V(t), \omega(t)
+        ShellScript speed_x;
+        ShellScript speed_y;
+        ShellScript speed_o;
+        TVec3D speed(double t) const;
 
-//see \vec c_s \vert_Rotation
-void doRotationAndMotion();
-//update TAtt-> rx, ry, dl after doRotationAndMotion()
-void doUpdateSegments();
+        //see \vec c_s \vert_Rotation
+        void move(TVec3D deltaHolder, TVec3D deltaBody);
+        //update TAtt-> rx, ry, dl after doRotationAndMotion()
+        void doUpdateSegments();
 
-TAtt* isPointInvalid(TVec p);
-TAtt* isPointInHeatLayer(TVec p);
-bool isInsideValid() {return _area<=0;}
+        TAtt* isPointInvalid(TVec p);
+        TAtt* isPointInHeatLayer(TVec p);
+        bool isInsideValid() {return _area<=0;}
 
-void doFillProperties();
-double get_surface() const {return _surface;}
-double get_area() const {return _area;}
-TVec   get_com() const {return _com;} // center of mass
-TVec   get_axis() const {return holder.r + dpos.r;}
-double get_moi_c() const {return _moi_c;} // moment of inertia about rotation axis
-void override_moi_c(double newMoi_c) {_moi_c = newMoi_c;}
-size_t size() const    {return alist.size();}
+        void doFillProperties();
+        double get_surface() const {return _surface;}
+        double get_area() const {return _area;}
+        TVec   get_com() const {return _com;} // center of mass
+        TVec   get_axis() const {return holder.r + dpos.r;}
+        double get_moi_c() const {return _moi_c;} // moment of inertia about rotation axis
+        void override_moi_c(double newMoi_c) {_moi_c = newMoi_c;}
+        size_t size() const    {return alist.size();}
 
-int eq_forces_no; // starting number of forces equations
+        int eq_forces_no; // starting number of forces equations
 
-//Heat layer
-//void CleanHeatLayer();
-//int *ObjectIsInHeatLayer(TObj &obj); //link to element of HeatLayer array
+        //Heat layer
+        //void CleanHeatLayer();
+        //int *ObjectIsInHeatLayer(TObj &obj); //link to element of HeatLayer array
 
     private:
-Space* S;
+        double _surface;
+        double _area;
+        TVec   _com; //center of mass (in global ref frame)
+        double _moi_com; //moment of inertia about com;
+        double _moi_c; //moi about rotation axis
 
-double _surface;
-double _area;
-TVec   _com; //center of mass (in global ref frame)
-double _moi_com; //moment of inertia about com;
-double _moi_c; //moi about rotation axis
-
-std::vector<TVec> heat_layer;
-template <class T>
-    TAtt* isPointInContour(TVec p, vector<T> &list);
-
-void doRotation();
-void doMotion();
+        std::vector<TVec> heat_layer;
+        template <class T>
+            TAtt* isPointInContour(TVec p, vector<T> &list);
 };
 
 #endif /* BODY_H_ */

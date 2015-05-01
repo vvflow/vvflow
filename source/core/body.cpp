@@ -6,14 +6,12 @@
 #include <math.h>
 using namespace std;
 
-TBody::TBody(Space *space):
+TBody::TBody():
     alist(),
     speed_x(),
     speed_y(),
     speed_o()
 {
-    S = space;
-
     holder = dpos = TVec3D(0., 0., 0.);
     g_dead = 0;
     friction = friction_prev = TVec3D(0,0,0);
@@ -24,79 +22,40 @@ TBody::TBody(Space *space):
     _moi_c = _moi_com = 0;
     kspring = TVec3D(-1., -1., -1.);
     damping = TVec3D(0., 0., 0.);
-    rotation_error = holder_speed = TVec(0., 0.);
     density = 1.;
     special_segment_no = 0;
     boundary_condition = bc_t::steady;
     heat_condition = hc_t::neglect;
 }
 
-int TBody::get_index() const
-{
-    int i = 0;
-    for (auto lbody: S->BodyList)
-    {
-        if (lbody.get() == this) return i;
-        i++;
-    }
-    return -1;
-}
-
-std::string TBody::get_name() const
-{
-    char name[8];
-    sprintf(name, "body%02d", get_index());
-    return std::string(name);
-}
-
-
-TVec3D TBody::get_speed() const
+TVec3D TBody::speed(double t) const
 {
     return TVec3D(
-            speed_x.getValue(S->Time),
-            speed_y.getValue(S->Time),
-            speed_o.getValue(S->Time)
+            speed_x.getValue(t),
+            speed_y.getValue(t),
+            speed_o.getValue(t)
             );
 }
 
-void TBody::doRotationAndMotion()
+void TBody::move(TVec3D deltaHolder, TVec3D deltaBody)
 {
-    doRotation();
-    doMotion();
-    doUpdateSegments();
-    doFillProperties();
-}
-
-void TBody::doRotation()
-{
-    const double angle_slae = speed_slae.o * S->dt; //in doc \omega_? \Delta t
-    const double angle_solid = get_speed().o * S->dt; //in doc \omega \Delta t
+    TVec axis = get_axis();
+    double _cos = cos(deltaBody.o);
+    double _sin = sin(deltaBody.o);
     for (auto& att: alist)
     {
-        TVec dr = att.corner - get_axis();
-        att.corner = get_axis() + dr*cos(angle_slae) + rotl(dr)*sin(angle_slae);
-    }
-
-    auto root_body = this->root_body.lock();
-    double angle_root = !root_body ? 0 : S->dt * root_body->speed_slae.o;
-    holder.o += angle_solid + angle_root;
-    dpos.o += angle_slae - angle_solid - angle_root;
-    speed_slae_prev.o = speed_slae.o;
-}
-
-void TBody::doMotion()
-{
-    TVec delta_slae = speed_slae.r * S->dt - rotation_error;
-    TVec delta_solid = (holder_speed+get_speed().r) * S->dt - rotation_error;
-    for (auto& obj: alist)
-    {
-        obj.corner += delta_slae;
-    }
-
-    holder.r += delta_solid;
-    dpos.r += delta_slae - delta_solid;
+        TVec dr = att.corner - axis;
+        att.corner = axis + deltaBody.r + dr*_cos + rotl(dr)*_sin;
+    } 
+    holder.r += deltaHolder.r;
+    holder.o += deltaHolder.o;
+    dpos.r += deltaBody.r - deltaHolder.r;
+    dpos.o += deltaBody.o - deltaHolder.o;
     speed_slae_prev.r = speed_slae.r;
-    rotation_error = holder_speed = TVec();
+    speed_slae_prev.o = speed_slae.o;
+
+    doUpdateSegments();
+    doFillProperties();
 }
 
 void TBody::doUpdateSegments()

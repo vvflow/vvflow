@@ -1,5 +1,5 @@
 #include "stepdata.h"
-#include "assert.h"
+#include "stddef.h"
 #include "hdf5.h"
 
 Stepdata::Stepdata(Space* s_)
@@ -10,12 +10,17 @@ Stepdata::Stepdata(Space* s_)
     DATASPACE_SCALAR = -1;
 }
 
+#define H5ASSERT(expr, msg) if (expr<0) { \
+	fprintf(stderr, "%s failed (%s:%d). Aborting.", msg, __FILE__, __LINE__); \
+	std::exit(5); \
+}
+
 void Stepdata::attribute_write(const char *name, const char *str)
 {
     hid_t aid = H5Acreate2(file_hid, name, string_hid, DATASPACE_SCALAR, H5P_DEFAULT, H5P_DEFAULT);
-    assert(aid>=0);
-    assert(H5Awrite(aid, string_hid, &str)>=0);
-    assert(H5Aclose(aid)>=0);
+    H5ASSERT(aid, "H5Acreate");
+    H5ASSERT(H5Awrite(aid, string_hid, &str), "H5Awrite");
+    H5ASSERT(H5Aclose(aid), "H5Aclose");
 }
 
 void Stepdata::append(int dataspace_hid, const void *buf)
@@ -97,8 +102,8 @@ void Stepdata::create(const char *format)
     time_d_hid = create_dataset(file_hid, "time", 1);
     for (auto& lbody: S->BodyList)
     {
-        int body_n = lbody->get_index();
-        hid_t body_g_hid = H5Gcreate2(file_hid, lbody->get_name().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        int body_n = S->get_body_index(lbody.get());
+        hid_t body_g_hid = H5Gcreate2(file_hid, S->get_body_name(lbody.get()).c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
         born_d_hid[body_n] = create_dataset(body_g_hid, "force_born", 3);
         hydro_d_hid[body_n] = create_dataset(body_g_hid, "force_hydro", 3);
@@ -121,7 +126,7 @@ void Stepdata::write()
 
     for (auto& lbody: S->BodyList)
     {
-        int body_n = lbody->get_index();
+        int body_n = S->get_body_index(lbody.get());
         append(born_d_hid[body_n], lbody->force_born - lbody->force_dead);
         append(hydro_d_hid[body_n], lbody->force_hydro);
         append(holder_d_hid[body_n], lbody->force_holder);

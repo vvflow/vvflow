@@ -135,16 +135,7 @@ void do_set(Space* S, const char *arg, const char *value)
 			case 'd': vec->o = parse<double>(value)*C_PI/180.0; break;
 			default: ALERT();
 		}
-		if (vec == &move_vec)
-		{
-			for (auto& latt: body->alist)
-			{
-				TVec dr = latt.corner - body->get_axis();
-				latt.corner = move_vec.r + body->get_axis() + dr*cos(move_vec.o) + rotl(dr)*sin(move_vec.o);
-			}
-			body->doUpdateSegments();
-			body->doFillProperties();
-		}
+		if (vec == &move_vec) body->move(move_vec, move_vec);
 	}
 	else ALERT();
 	#undef ALERT

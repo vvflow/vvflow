@@ -216,7 +216,7 @@ bool convectivefast::canUseInverse()
     return false;
     for (auto& lbody1: S->BodyList)
     {
-        if (!lbody1->get_speed().iszero()) return false;
+        if (!lbody1->speed(S->Time).iszero()) return false;
         if (lbody1->kspring.r.x >= 0) return false;
         if (lbody1->kspring.r.y >= 0) return false;
         if (lbody1->kspring.o >= 0) return false;
@@ -346,7 +346,7 @@ void convectivefast::_2PI_A123(const TAtt &seg, const TBody* ibody, const TBody 
     *_2PI_A1 = (ibody == &b)?  C_2PI * seg.dl.y : 0;
     *_2PI_A2 = (ibody == &b)? -C_2PI * seg.dl.x : 0;
     *_2PI_A3 = 0;
-    if ((b.kspring.o<0) && (!b.get_speed().o)) 
+    if ((b.kspring.o<0) && (!b.speed_o.getValue(S->Time))) 
     {
         //FIXME econome time. uncomment return
         //fprintf(stderr, "ret:\t%lf\t%lf\n", seg.corner.rx, seg.corner.ry);
@@ -840,7 +840,7 @@ void convectivefast::fillSpeedXEquation(TBody* ibody, bool rightColOnly)
 {
     const int eq_no = ibody->eq_forces_no+0;
 
-    *matrix.rightColAtIndex(eq_no) = ibody->get_speed().r.x;
+    *matrix.rightColAtIndex(eq_no) = ibody->speed_x.getValue(S->Time);
     if (rightColOnly) return;
 
     //place solution pointer
@@ -866,7 +866,7 @@ void convectivefast::fillSpeedYEquation(TBody* ibody, bool rightColOnly)
 {
     const int eq_no = ibody->eq_forces_no+1;
 
-    *matrix.rightColAtIndex(eq_no) = ibody->get_speed().r.y;
+    *matrix.rightColAtIndex(eq_no) = ibody->speed_y.getValue(S->Time);
     if (rightColOnly) return;
 
     //place solution pointer
@@ -892,7 +892,7 @@ void convectivefast::fillSpeedOEquation(TBody* ibody, bool rightColOnly)
 {
     const int eq_no = ibody->eq_forces_no+2;
 
-    *matrix.rightColAtIndex(eq_no) = ibody->get_speed().o;
+    *matrix.rightColAtIndex(eq_no) = ibody->speed_o.getValue(S->Time);
     if (rightColOnly) return;
 
     //place solution pointer
