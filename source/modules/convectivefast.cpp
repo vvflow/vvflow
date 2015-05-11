@@ -270,6 +270,11 @@ void convectivefast::CalcCirculationFast()
     matrix.solveUsingInverseMatrix(use_inverse);
 }
 
+static inline double log_real(complex<double> arg)
+{
+    return 0.5*log(sqr(arg.real()) + sqr(arg.imag()));
+}
+
 double convectivefast::_2PI_Xi_g(TVec p, const TAtt &seg, double rd) // in doc 2\pi\Xi_\gamma (1.7)
 {
     complex<double> z(p.x, -p.y);
@@ -282,7 +287,7 @@ double convectivefast::_2PI_Xi_g(TVec p, const TAtt &seg, double rd) // in doc 2
     double c2=abs(z-z2);
     if ((c1>=rd)&&(c2>=rd))
     {
-        return -log((z-z1)/(z-z2)).real();
+        return -log_real((z-z1)/(z-z2));
     } else
         if ((c1<=rd)&&(c2<=rd))
         {
@@ -298,11 +303,16 @@ double convectivefast::_2PI_Xi_g(TVec p, const TAtt &seg, double rd) // in doc 2
 
             if (c1 < rd)
                 return (((z1+z3)*0.5-z)*conj(z3-z1)).real()/(rd*rd) -
-                    log((z-z3)/(z-z2)).real();
+                    log_real((z-z3)/(z-z2));
             else
-                return -log((z-z1)/(z-z3)).real() +
+                return -log_real((z-z1)/(z-z3)) +
                     (((z3+z2)*0.5-z)*conj(z2-z3)).real()/(rd*rd);
         }
+}
+
+static inline double log_imag(complex<double> arg)
+{
+    return atan2(arg.imag(), arg.real());
 }
 
 double convectivefast::_2PI_Xi_q(const TVec &p, const TAtt &seg, double rd) // in doc 2\pi\Xi_q (1.8)
@@ -318,7 +328,7 @@ double convectivefast::_2PI_Xi_q(const TVec &p, const TAtt &seg, double rd) // i
     double c2=abs(z-z2);
     if ((c1>=rd)&&(c2>=rd))
     {
-        return -log((z-z1)/(z-z2)).imag();
+        return -log_imag((z-z1)/(z-z2));
     } else
         if ((c1<=rd)&&(c2<=rd))
         {
@@ -334,9 +344,9 @@ double convectivefast::_2PI_Xi_q(const TVec &p, const TAtt &seg, double rd) // i
 
             if (c1 < rd)
                 return -(((z1+z3)*0.5-z)*conj(z3-z1)).imag()/(rd*rd) -
-                    log((z-z3)/(z-z2)).imag();
+                    log_imag((z-z3)/(z-z2));
             else
-                return -log((z-z1)/(z-z3)).imag() -
+                return -log_imag((z-z1)/(z-z3)) -
                     (((z3+z2)*0.5-z)*conj(z2-z3)).imag()/(rd*rd);
         }
 }
