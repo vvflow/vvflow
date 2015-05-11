@@ -36,7 +36,8 @@ class convectivefast
         Matrix matrix;
 
         double _2PI_Xi_g(TVec p, const TAtt &seg, double rd); // in doc 2\pi\Xi_\gamma (1.7)
-        double _2PI_Xi_q(const TVec &p, const TAtt &seg, double rd); // in doc 2\pi\Xi_q (1.8)
+        //double _2PI_Xi_q(const TVec &p, const TAtt &seg, double rd); // in doc 2\pi\Xi_q (1.8)
+        TVec _2PI_Xi(const TVec &p, const TAtt &seg, double rd);
         void _2PI_A123(const TAtt &seg, const TBody* ibody, const TBody &b, double *_2PI_A1, double *_2PI_A2, double *_2PI_A3);
         double ConvectiveInfluence(TVec p, const TAtt &seg, double rd);
         double NodeInfluence(const TSortedNode &Node, const TAtt &seg);

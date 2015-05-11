@@ -270,85 +270,104 @@ void convectivefast::CalcCirculationFast()
     matrix.solveUsingInverseMatrix(use_inverse);
 }
 
-static inline double log_real(complex<double> arg)
+static inline double _2PI_Xi_g_near(TVec p, TVec pc, TVec dl, double rd)
 {
-    return 0.5*log(sqr(arg.real()) + sqr(arg.imag()));
+    // pc - center of segment (seg.r)
+    return (pc-p)*dl/sqr(rd);
+}
+
+static inline double _2PI_Xi_g_dist(TVec p, TVec p1, TVec p2)
+{
+    return 0.5*log( (p-p2).abs2() / (p-p1).abs2() );
 }
 
 double convectivefast::_2PI_Xi_g(TVec p, const TAtt &seg, double rd) // in doc 2\pi\Xi_\gamma (1.7)
 {
-    complex<double> z(p.x, -p.y);
-    complex<double> zc(seg.r.x,-seg.r.y);
-    complex<double> dz(seg.dl.x,-seg.dl.y);
-    complex<double> z1 = zc-dz*0.5;
-    complex<double> z2 = zc+dz*0.5;
-
-    double c1=abs(z-z1);
-    double c2=abs(z-z2);
-    if ((c1>=rd)&&(c2>=rd))
+    double rd_sqr = sqr(rd);
+    double dr1_sqr = (p-seg.corner).abs2();
+    double dr2_sqr = (p-seg.corner-seg.dl).abs2();
+    if ( dr1_sqr>=rd_sqr && dr2_sqr>=rd_sqr )
+        return 0.5*log(dr2_sqr/dr1_sqr);
+    else if ( dr1_sqr<=rd_sqr && dr2_sqr<=rd_sqr )
+        return _2PI_Xi_g_near(p, seg.r, seg.dl, rd);
+    else
     {
-        return -log_real((z-z1)/(z-z2));
-    } else
-        if ((c1<=rd)&&(c2<=rd))
-        {
-            return ((seg.r-p)*seg.dl)/(rd*rd);
-        }
-        else
-        {
-            double a0 = seg.dl.abs2();
-            double b0 = (p-seg.r)*seg.dl;
-            double d  = sqrt(b0*b0-a0*((p-seg.r).abs2()-rd*rd));
-            double k  = (b0+d)/a0; if ((k<=-0.5)||(k>=0.5)) k = (b0-d)/a0;
-            complex<double> z3 = zc + k*dz;
+        double a0 = seg.dl.abs2();
+        double b0 = (p-seg.r)*seg.dl;
+        double d  = sqrt(b0*b0-a0*((p-seg.r).abs2()-rd*rd));
+        double k  = (b0+d)/a0; if ((k<=-0.5)||(k>=0.5)) k = (b0-d)/a0;
+        TVec p3 = seg.r + k*seg.dl;
 
-            if (c1 < rd)
-                return (((z1+z3)*0.5-z)*conj(z3-z1)).real()/(rd*rd) -
-                    log_real((z-z3)/(z-z2));
-            else
-                return -log_real((z-z1)/(z-z3)) +
-                    (((z3+z2)*0.5-z)*conj(z2-z3)).real()/(rd*rd);
-        }
+        if ( dr1_sqr<rd_sqr )
+            return _2PI_Xi_g_near(p, 0.5*(p3+seg.corner), (p3-seg.corner), rd) +
+                _2PI_Xi_g_dist(p, p3, seg.corner+seg.dl);
+        else
+            return _2PI_Xi_g_dist(p, seg.corner, p3) +
+                _2PI_Xi_g_near(p, 0.5*(seg.corner+seg.dl+p3), (seg.corner+seg.dl-p3), rd);
+    }
 }
 
-static inline double log_imag(complex<double> arg)
+static inline double _2PI_Xi_q_near(TVec p, TVec pc, TVec dl, double rd)
 {
-    return atan2(arg.imag(), arg.real());
+    return (pc-p)*rotl(dl)/sqr(rd);
 }
 
-double convectivefast::_2PI_Xi_q(const TVec &p, const TAtt &seg, double rd) // in doc 2\pi\Xi_q (1.8)
+static inline double _2PI_Xi_q_dist(TVec p, TVec p1, TVec p2)
 {
-    if (&p == &seg.r) { TVec pnew = p+rotl(seg.dl)*0.001; return _2PI_Xi_q(pnew, seg, rd); }
-    complex<double> z(p.x, -p.y);
-    complex<double> zc(seg.r.x,-seg.r.y);
-    complex<double> dz(seg.dl.x,-seg.dl.y);
-    complex<double> z1 = zc-dz*0.5;
-    complex<double> z2 = zc+dz*0.5;
+    TVec dp1 = p-p1;
+    TVec dp2 = p-p2;
+    return atan2(dp1*rotl(dp2), dp1*dp2);
+}
 
-    double c1=abs(z-z1);
-    double c2=abs(z-z2);
-    if ((c1>=rd)&&(c2>=rd))
+TVec convectivefast::_2PI_Xi(const TVec &p, const TAtt &seg, double rd)
+{
+    if (&p == &seg.r) { TVec pnew = p+rotl(seg.dl)*0.001; return _2PI_Xi(pnew, seg, rd); }
+
+    double rd_sqr = sqr(rd);
+    TVec p1 = seg.corner;
+    TVec p2 = seg.corner+seg.dl;
+    double dr1_sqr = (p-p1).abs2();
+    double dr2_sqr = (p-p2).abs2();
+    if ( dr1_sqr>=rd_sqr && dr2_sqr>=rd_sqr )
     {
-        return -log_imag((z-z1)/(z-z2));
-    } else
-        if ((c1<=rd)&&(c2<=rd))
-        {
-            return ((seg.r-p)*rotl(seg.dl))/(rd*rd);
-        }
-        else
-        {
-            double a0 = seg.dl.abs2();
-            double b0 = (p-seg.r)*seg.dl;
-            double d  = sqrt(b0*b0-a0*((p-seg.r).abs2()-rd*rd));
-            double k  = (b0+d)/a0; if ((k<=-0.5)||(k>=0.5)) k = (b0-d)/a0;
-            complex<double> z3 = zc + k*dz;
+        TVec dp1 = p-p1;
+        TVec dp2 = p-p2;
+        return TVec(
+                0.5*log(dr2_sqr/dr1_sqr),
+                atan2(dp1*rotl(dp2), dp1*dp2)
+                );
+    }
+    else if ( dr1_sqr<=rd_sqr && dr2_sqr<=rd_sqr )
+    {
+        TVec dp = p-seg.r;
+        return TVec(dp*seg.dl, dp*rotl(seg.dl))/sqr(rd);
+    }
+    else
+    {
+        double a0 = seg.dl.abs2();
+        double b0 = (p-seg.r)*seg.dl;
+        double d  = sqrt(b0*b0-a0*((p-seg.r).abs2()-rd*rd));
+        double k  = (b0+d)/a0; if ((k<=-0.5)||(k>=0.5)) k = (b0-d)/a0;
+        TVec p3 = seg.r + k*seg.dl;
 
-            if (c1 < rd)
-                return -(((z1+z3)*0.5-z)*conj(z3-z1)).imag()/(rd*rd) -
-                    log_imag((z-z3)/(z-z2));
-            else
-                return -log_imag((z-z1)/(z-z3)) -
-                    (((z3+z2)*0.5-z)*conj(z2-z3)).imag()/(rd*rd);
-        }
+        if ( dr1_sqr<rd_sqr )
+            return
+                TVec(
+                        _2PI_Xi_g_near(p, 0.5*(p1+p3), p3-p1, rd),
+                        _2PI_Xi_q_near(p, 0.5*(p1+p3), p3-p1, rd)) +
+                TVec(
+                        _2PI_Xi_g_dist(p, p3, p2),
+                        _2PI_Xi_q_dist(p, p3, p2));
+        else
+            return
+                TVec(
+                        _2PI_Xi_g_dist(p, p1, p3),
+                        _2PI_Xi_q_dist(p, p1, p3)) +
+                TVec(
+                        _2PI_Xi_g_near(p, 0.5*(p3+p2), p2-p3, rd),
+                        _2PI_Xi_q_near(p, 0.5*(p3+p2), p2-p3, rd));
+
+    }
 }
 
 void convectivefast::_2PI_A123(const TAtt &seg, const TBody* ibody, const TBody &b, double *_2PI_A1, double *_2PI_A2, double *_2PI_A3)
@@ -364,9 +383,7 @@ void convectivefast::_2PI_A123(const TAtt &seg, const TBody* ibody, const TBody 
     }
     for (auto& latt: b.alist)
     {
-        double _2piXi_g = _2PI_Xi_g(latt.r, seg, latt.dl.abs()*0.25);
-        double _2piXi_q = _2PI_Xi_q(latt.r, seg, latt.dl.abs()*0.25);
-        TVec Xi(_2piXi_g, _2piXi_q);
+        TVec Xi = _2PI_Xi(latt.r, seg, latt.dl.abs()*0.25);
         TVec r0 = latt.r - b.get_axis();
         //		*A1 -= Xi*latt.dl;
         //		*A2 -= rotl(Xi)*latt.dl;
@@ -389,8 +406,8 @@ double convectivefast::NodeInfluence(const TSortedNode &Node, const TAtt &seg)
 
     for (TSortedNode* lfnode: *Node.FarNodes)
     {
-        res+= _2PI_Xi_g(lfnode->CMp.r, seg, 0) * lfnode->CMp.g;
-        res+= _2PI_Xi_g(lfnode->CMm.r, seg, 0) * lfnode->CMm.g;
+        res+= _2PI_Xi_g_dist(lfnode->CMp.r, seg.corner, seg.corner+seg.dl) * lfnode->CMp.g;
+        res+= _2PI_Xi_g_dist(lfnode->CMm.r, seg.corner, seg.corner+seg.dl) * lfnode->CMm.g;
     }
 
     return res*C_1_2PI;
@@ -407,8 +424,9 @@ double convectivefast::AttachInfluence(const TAtt &seg, double rd)
         {
             TVec Vs = lbody->speed_slae.r + lbody->speed_slae.o * rotl(latt.r - lbody->get_axis());
             if (&latt == &seg) { res_tmp+= -(-rotl(Vs) * latt.dl)*0.5*C_2PI; continue; }
-            res+= _2PI_Xi_g(latt.r, seg, rd) * (-Vs * latt.dl);
-            res+= _2PI_Xi_q(latt.r, seg, rd) * (-rotl(Vs) * latt.dl);
+            TVec Xi = _2PI_Xi(latt.r, seg, rd);
+            res+= Xi.x * (-Vs * latt.dl);
+            res+= Xi.y * (-rotl(Vs) * latt.dl);
         }
     }
 
