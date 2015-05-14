@@ -120,6 +120,9 @@ class TBody
         TVec   _com; //center of mass (in global ref frame)
         double _moi_com; //moment of inertia about com;
         double _moi_c; //moi about rotation axis
+        double _min_disc_r2; //min((corner-com).abs2())
+        TVec   _min_rect_bl; //TVec(min(corner.x), min(corner.y))
+        TVec   _min_rect_tr; //TVec(max(corner.x), max(corner.y))
 
         std::vector<TVec> heat_layer;
         template <class T>

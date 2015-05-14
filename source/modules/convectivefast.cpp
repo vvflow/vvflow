@@ -69,7 +69,7 @@ void convectivefast::CalcConvectiveFast()
     auto& bnodes = S->Tree->getBottomNodes();
 
     //FIXME omp here
-    // #pragma omp parallel for schedule(dynamic, 10)
+    #pragma omp parallel for schedule(dynamic, 10)
     for (auto llbnode = bnodes.begin(); llbnode < bnodes.end(); llbnode++)
     {
         const TSortedNode *lbnode = *llbnode;
@@ -213,7 +213,8 @@ bool convectivefast::canUseInverse()
 {
     //Algorithm:
 
-    return false;
+    if (S->BodyList.size() <= 1) return true;
+
     for (auto& lbody1: S->BodyList)
     {
         if (!lbody1->speed(S->Time).iszero()) return false;

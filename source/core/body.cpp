@@ -90,12 +90,20 @@ TAtt* TBody::isPointInHeatLayer(TVec p)
 }
 
 template <class T> TVec corner(T lobj);
-template <> TVec corner(TVec lobj) {return lobj;}
-template <> TVec corner(TAtt lobj) {return lobj.corner;}
+template <> inline TVec corner(TVec lobj) {return lobj;}
+template <> inline TVec corner(TAtt lobj) {return lobj.corner;}
 template <class T>
 TAtt* TBody::isPointInContour(TVec p, vector<T> &list)
 {
     bool inContour = isInsideValid();
+    if ( !inContour && (
+        p.x < _min_rect_bl.x ||
+        p.y < _min_rect_bl.y ||
+        p.x > _min_rect_tr.x ||
+        p.y > _min_rect_tr.y ||
+        (p-_com).abs2() > _min_disc_r2
+        )) return NULL;
+
     TAtt *nearest = NULL;
     double nearest_dr2 = std::numeric_limits<double>::max();
 
@@ -150,6 +158,23 @@ void TBody::doFillProperties()
     _com = _3S_com/(3*_area);
     _moi_com = _12moi_0/12. - _area*_com.abs2();
     _moi_c = _moi_com + _area*(get_axis() - _com).abs2();
+
+    _min_disc_r2 = 0;
+    _min_rect_bl = TVec(
+            std::numeric_limits<double>::infinity(),
+            std::numeric_limits<double>::infinity());
+    _min_rect_tr = TVec(
+            -std::numeric_limits<double>::infinity(),
+            -std::numeric_limits<double>::infinity());
+    for (auto& latt: alist)
+    {
+        double r2 = (latt.corner-_com).abs2();
+        if (r2 > _min_disc_r2) _min_disc_r2 = r2;
+        if (latt.corner.x > _min_rect_tr.x) _min_rect_tr.x = latt.corner.x;
+        if (latt.corner.y > _min_rect_tr.y) _min_rect_tr.y = latt.corner.y;
+        if (latt.corner.x < _min_rect_bl.x) _min_rect_bl.x = latt.corner.x;
+        if (latt.corner.y < _min_rect_bl.y) _min_rect_bl.y = latt.corner.y;
+    }
 }
 
 inline double atan2(const TVec &p)
