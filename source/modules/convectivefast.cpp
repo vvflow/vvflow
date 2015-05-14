@@ -213,8 +213,6 @@ bool convectivefast::canUseInverse()
 {
     //Algorithm:
 
-    if (S->BodyList.size() <= 1) return true;
-
     for (auto& lbody1: S->BodyList)
     {
         if (!lbody1->speed(S->Time).iszero()) return false;
