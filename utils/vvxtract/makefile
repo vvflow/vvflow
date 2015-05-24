@@ -16,7 +16,7 @@ clean:
 	rm -f vvxtract
 
 install: | $(PREFIX)/bin
-	cp vvxtract $(PREFIX)/bin/
+	cp vvxtract h5xtract $(PREFIX)/bin/
 
 $(PREFIX)/bin:
 	mkdir -p $@
