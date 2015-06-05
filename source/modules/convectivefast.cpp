@@ -885,7 +885,7 @@ void convectivefast::fillSpeedXEquation(TBody* ibody, bool rightColOnly)
     {
         *matrix.objectAtIndex(eq_no, root_body->eq_forces_no+0) = -1;
         *matrix.objectAtIndex(eq_no, root_body->eq_forces_no+1) = 0;
-        *matrix.objectAtIndex(eq_no, root_body->eq_forces_no+2) = (ibody->get_axis() - root_body->get_axis()).y;
+        *matrix.objectAtIndex(eq_no, root_body->eq_forces_no+2) = (ibody->holder.r - root_body->get_axis()).y;
     }
 }
 

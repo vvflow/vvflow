@@ -232,7 +232,7 @@ def gpw(str, *args, **kwargs):
     except:
         gp.write(str.format(*args, plot=delimiter(), fin_name=fin_name, **kwargs))
 
-gpw("""set terminal pngcairo enhanced {}""", "mono" if args.mode_bw else "color")
+gpw("""set terminal pngcairo enhanced""", "mono" if args.mode_bw else "color")
 gpw("""    size {}, {}""", pic_w, pic_h)
 gpw("""    font "FreeSerif, 26" \n""")
 gpw("""set output '{}' \n""", fout_name)
