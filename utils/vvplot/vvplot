@@ -1,11 +1,8 @@
 #!/usr/bin/python
 
-import sys
-import math
+from sys import argv
 import os
-import struct
-import h5py
-import subprocess
+# h5py is imported later
 import ctypes
 import logging
 import argparse_vvplot
@@ -118,6 +115,7 @@ except Exception as s:
 ################################################################################
 ## READING BINARY HEADER
 
+import h5py
 h5_file = h5py.File(fin_name, "r+")
 h5_fid = h5_file.fid.id
 # print dir(h5_file)
@@ -196,7 +194,7 @@ c_boundaries = (ctypes.c_double(xmin-x_shift - vv_prec_lo),
                 ctypes.c_double(ymax-y_shift + vv_prec_lo),
                 ctypes.c_double(vv_prec_hi))
 try:
-    libvvplot = ctypes.cdll.LoadLibrary("%s/libvvplot.so" % os.path.abspath(os.path.dirname(sys.argv[0])))
+    libvvplot = ctypes.cdll.LoadLibrary("%s/libvvplot.so" % os.path.abspath(os.path.dirname(argv[0])))
 except OSError as e:
     print('Can not load libvvplot.so: %s' % e)
     exit(-1)
@@ -360,7 +358,7 @@ gp.close()
 ############################ WRITE EXIF DATA ###################################
 
 allargs = ""
-for arg in sys.argv: allargs = allargs+arg+" "
+for arg in argv: allargs = allargs+arg+" "
 
 comment = """
 realtime = %s
@@ -376,6 +374,7 @@ for envname in ["VV_PREC_HI", "VV_ISOPSI", "VV_ISOTHERMS",
     if os.getenv(envname): comment+= "\n%s: %s" % (envname, os.getenv(envname))
 
 try:
+    import subprocess
     subprocess.check_call(["exiv2",
                '-M', "set Exif.Photo.DateTimeOriginal %s" % realtime,
                '-M', "set Exif.Image.DateTime %s" % realtime,
