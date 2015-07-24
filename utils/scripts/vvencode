@@ -1,0 +1,16 @@
+#!/bin/bash
+
+if [[ $# < 2 ]]; then
+	echo "Usage: vvencode FILEMASK OUTPUT"
+	exit 0
+fi
+
+GLOB=$1
+OUTPUT=$2
+FIRSTFILE=$(ls $1 | head -n1)
+COMMENT="$(exiv2 -P t -bg Exif.Photo.UserComment $FIRSTFILE)"
+echo $FIRSTFILE "$COMMENT"
+ffmpeg -pattern_type glob -i "$GLOB" \
+	-r 25 -c:v libx264 -crf 28 -pix_fmt yuv420p \
+	-metadata comment="$COMMENT" $3 \
+	$OUTPUT
