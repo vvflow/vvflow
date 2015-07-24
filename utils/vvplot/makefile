@@ -17,7 +17,7 @@ all: $(exes) libvvplot.so libvvplot
 %_exe: %.cpp
 	$(CXX) $(CXXFLAGS) $^ -o $@ -std=c++0x -lhdf5 -Wl,-Bstatic -lvvhd -Wl,-Bdynamic
 
-libvvplot.so: $(patsubst %,source/%.cpp, map_extract map_vorticity map_pressure map_streamfunction isoline)
+libvvplot.so: $(patsubst %,source/%.cpp, map_extract map_vorticity map_pressure map_streamfunction map_velocity isoline)
 	$(CXX) $(CXXFLAGS) $^ -o $@ -shared -fPIC -std=c++0x -Wl,-soname,libvvplot.so -Wl,-Bstatic -lvvhd -Wl,-Bdynamic -lhdf5 -lmatheval $(LDFLAGS)
 
 libvvplot: source/libvvplot_main.cpp

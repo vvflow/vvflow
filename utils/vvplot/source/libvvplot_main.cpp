@@ -15,12 +15,14 @@ void print_version()
 
 void print_help()
 {
-	fprintf(stderr, "Usage: libvvplot {-h,-v,-p,-M,-I,-L} FILE DATASET [ARGS]\n");
+	fprintf(stderr, "Usage: libvvplot {-h,-v,-p,-M,-m,-V,-L,-I} FILE DATASET [ARGS]\n");
 	fprintf(stderr, "Options:\n");
 	fprintf(stderr, " -h : show this message\n");
 	fprintf(stderr, " -v : show version info\n");
 	fprintf(stderr, " -p : print dataset from hdf file in plain text\n");
-	fprintf(stderr, " -M : extract a binary dataset from hdf file\n");
+	fprintf(stderr, " -M : extract a binary dataset from hdf file (x, y, value)\n");
+	fprintf(stderr, " -m : extract a binary dataset from hdf file (binary matrix)\n");
+	fprintf(stderr, " -V : calculate velocity args of format px,py\n");
 	fprintf(stderr, " -L : extract a list of domains from hdf file\n");
 	fprintf(stderr, " -I : plot isolines on a dataset with constants in args\n");
 	fflush(stderr);
@@ -34,7 +36,8 @@ int main(int argc, char **argv)
 	else if (!strcmp(argv[1], "-v")) { print_version(); exit(0); }
 	else if (argc < 4) { print_help(); exit(1); }
 	else if (!strcmp(argv[1], "-I") || !strcmp(argv[1], "-p") ||
-	         !strcmp(argv[1], "-M") || !strcmp(argv[1], "-L")) {;}
+	         !strcmp(argv[1], "-M") || !strcmp(argv[1], "-L") ||
+             !strcmp(argv[1], "-m") || !strcmp(argv[1], "-V")) {;}
 	else {fprintf(stderr, "Bad option '%s'. See '-h' for help.\n", argv[1]); exit(-1); }
 
 	H5Eset_auto2(H5E_DEFAULT, NULL, NULL);
@@ -53,7 +56,26 @@ int main(int argc, char **argv)
 	}
 	else if (!strcmp(argv[1], "-M"))
 	{
-		map_extract(fid, argv[3]);
+		map_extract(fid, argv[3], binary_mode::xyvalue);
+	}
+	else if (!strcmp(argv[1], "-m"))
+	{
+		map_extract(fid, argv[3], binary_mode::matrix);
+	}
+	else if (!strcmp(argv[1], "-V"))
+	{
+        TVec* points = (TVec*)malloc((argc-4)*sizeof(TVec));
+        for (int i=4; i<argc; i++)
+        {
+            int len;
+            if (sscanf(argv[i], "%lf,%lf%n", &points[i-4].x, &points[i-4].y, &len)!=2 || argv[i][len])
+            {
+                fprintf(stderr, "error: bad point %s: the format is 'px,py'\n", argv[i]);
+                exit(-1);
+            }
+        }
+		velocity_print(fid, points, argc-4);
+        free(points);
 	}
 	else if (!strcmp(argv[1], "-L"))
 	{
@@ -61,11 +83,21 @@ int main(int argc, char **argv)
 	}
 	else if (!strcmp(argv[1], "-I"))
 	{
-		float vals[512];
-		for (int i=4; i<argc; i++) { sscanf(argv[i], "%f", &vals[i-4]); }
+		float* vals = (float*)malloc((argc-4)*sizeof(float));
+		for (int i=4; i<argc; i++)
+        {
+            int len;
+            if (sscanf(argv[i], "%f%n", &vals[i-4], &len)!=1 || argv[i][len])
+            {
+                fprintf(stderr, "error: argument should be float");
+                exit(-1);
+            }
+        }
 		map_isoline(fid, argv[3], vals, argc-4);
+        free(vals);
 	}
 	H5Fclose(fid);
 
 	exit(0);
 }
+

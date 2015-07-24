@@ -1,11 +1,11 @@
 PREFIX = ~/.local
 
 ifeq ($(CXX),icpc)
-        CXXFLAGS+= -debug all  -O3 -Wall -openmp -mkl=parallel
-        AR = xiar
+	CXXFLAGS+= -debug all  -O3 -Wall -openmp -mkl=parallel
+	AR = xiar
 	LDFLAGS =
 else
-        CXXFLAGS+= -O3 -Wall -fopenmp
+	CXXFLAGS+= -O3 -Wall -fopenmp
 	LDFLAGS = -llapack
 endif
 

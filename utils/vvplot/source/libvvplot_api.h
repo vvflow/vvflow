@@ -2,6 +2,7 @@
 #define __LIBVVPLOT_API__
 
 #include "hdf5.h"
+#include "elementary.h"
 
 inline
 void attribute_read_double(hid_t hid, const char *name, double &value)
@@ -15,14 +16,20 @@ void attribute_read_double(hid_t hid, const char *name, double &value)
 	H5Aclose(aid);
 }
 
+enum class binary_mode {
+    xyvalue,
+    matrix
+};
+
 extern "C" {
 	bool map_check(hid_t fid, const char *dsetname,
 		double xmin, double xmax, double ymin, double ymax, double spacing);
 	int map_save(hid_t fid, const char *dsetname, const float* data, const hsize_t *dims,
 		double xmin, double xmax, double ymin, double ymax, double spacing);
-	int map_extract(hid_t fid, const char *dsetname);
+	int map_extract(hid_t fid, const char *dsetname, binary_mode mode);
 	int list_extract(hid_t fid, const char *dsetname);
 	int dset_print(hid_t fid, const char *dsetname);
+	int velocity_print(hid_t fid, TVec *_points, int _count);
 	int map_isoline(hid_t fid, const char *dsetname, float *_cvals, int _cnum);
 
 	int map_pressure(hid_t fid, char RefFrame, double xmin, double xmax, double ymin, double ymax, double spacing);
@@ -31,3 +38,4 @@ extern "C" {
 }
 
 #endif
+

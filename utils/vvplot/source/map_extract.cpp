@@ -112,7 +112,7 @@ int map_save(
 }}
 
 extern "C" {
-int map_extract(hid_t fid, const char *dsetname)
+int map_extract(hid_t fid, const char *dsetname, binary_mode mode)
 {
 	H5Eset_auto2(H5E_DEFAULT, NULL, NULL);
 	hid_t dataset = H5Dopen2(fid, dsetname, H5P_DEFAULT);
@@ -148,18 +148,26 @@ int map_extract(hid_t fid, const char *dsetname)
 		H5Eprint2(H5E_DEFAULT, stderr);
 		return 5;
 	}
-	
+
 	// fprintf(stdout, "%lf %lf %lf %lf %lf\n", xmin, xmax, ymin, ymax, spacing);
 	// fwrite(args, sizeof(double), 5, stdout);
-	for (size_t i=0; i<dims[0]; i++)
-	for (size_t j=0; j<dims[1]; j++)
-	{
-		float x = args[0] + i*args[4];
-		float y = args[2] + j*args[4];
-		fwrite(&x, sizeof(float), 1, stdout);
-		fwrite(&y, sizeof(float), 1, stdout);
-		fwrite(mem+i*dims[1]+j, sizeof(float), 1, stdout);
-	}
+    if (mode == binary_mode::matrix)
+    {
+        fwrite(args, sizeof(args), 1, stdout);
+        fwrite(mem, sizeof(float), dims[0]*dims[1], stdout);
+    }
+    else if (mode == binary_mode::xyvalue)
+    {
+        for (size_t i=0; i<dims[0]; i++)
+            for (size_t j=0; j<dims[1]; j++)
+            {
+                float x = args[0] + i*args[4];
+                float y = args[2] + j*args[4];
+                fwrite(&x, sizeof(float), 1, stdout);
+                fwrite(&y, sizeof(float), 1, stdout);
+                fwrite(mem+i*dims[1]+j, sizeof(float), 1, stdout);
+            }
+    }
 	fflush(stdout);
 	// assert(c == dims[0]*dims[1]);
 	// fwrite(dims, sizeof(hsize_t), 2, stdout);
