@@ -16,6 +16,7 @@ snode::snode(stree *sParent)
     NearNodes = FarNodes = NULL;
     ch1 = ch2 = NULL;
     CMp = CMm = TObj(0., 0., 0.);
+    CMp._1_eps = CMm._1_eps = std::numeric_limits<double>::infinity();
 }
 
 snode::~snode()
@@ -166,6 +167,7 @@ void TSortedNode::CalculateCMass()
 void TSortedNode::CalculateCMassFromScratch()
 {
     CMp = CMm = TObj();
+    CMp._1_eps = CMm._1_eps = std::numeric_limits<double>::infinity();
 
     for (TObj *lobj = vRange.first; lobj < vRange.last; lobj++)
     {
