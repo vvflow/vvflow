@@ -6,6 +6,7 @@
 
 #include "libvvplot_api.h"
 #include "convectivefast.h"
+#include "epsfast.h"
 #include "flowmove.h"
 #include "core.h"
 #include "hdf5.h"
@@ -27,8 +28,10 @@ int velocity_print(hid_t fid, TVec* points, int count)
     S->Tree = new TSortedTree(S, 8, dl*20, 0.3);
     convectivefast conv(S);
     flowmove flow(S);
+    epsfast eps(S);
     flow.VortexShed();
     S->Tree->build();
+    eps.CalcEpsilonFast(true);
 
     for (int i=0; i<count; i++)
     {
