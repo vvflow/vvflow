@@ -20,5 +20,8 @@ BEGIN{
     array[mod]=$col
     for (i=1; i<col; i++)
         printf "%s%s", $i, OFS
-    print sum/count
+    printf "%.6e%s", sum/count, OFS
+    for (i=col+1; i<=NF; i++)
+        printf "%s%s", $i, OFS
+    printf "%s", RS
 }
