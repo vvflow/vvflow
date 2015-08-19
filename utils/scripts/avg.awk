@@ -1,9 +1,9 @@
 #!/usr/bin/awk -f
 BEGIN{
 	if (ARGC<2) {
-		print "Usage: avg.awk -v VAR=VALUE"
+		print "Usage: avg.awk [-v VAR=VALUE] FILE"
 		print "Variables:"
-		print "\tcol -- number of column being averaged (default: 2)"
+		print "\tcol -- column number to be averaged (default: 2)"
 		print "\txmin, xmax -- X-axis range (default: -inf,+inf)"
 		exit 0
 	}
