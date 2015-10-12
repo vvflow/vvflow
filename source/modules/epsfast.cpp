@@ -25,7 +25,7 @@ void epsfast::CalcEpsilonFast(bool merge)
         TAtt *nearestAtt = nearestBodySegment(*lbnode, bnode_center);
 
         double merge_criteria_sq = (merge && nearestAtt) ? 
-            0.16 * nearestAtt->dl.abs2() * (1. + (bnode_center - nearestAtt->r).abs2())
+            0.16 * nearestAtt->dl.abs2() * (1. + (bnode_center - nearestAtt->r).abs())
             : 0;
         double eps_restriction = nearestAtt->dl.abs()*(1.0/3.0);
 
