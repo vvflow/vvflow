@@ -69,7 +69,6 @@ void convectivefast::CalcConvectiveFast()
     auto& bnodes = S->Tree->getBottomNodes();
 
     //FIXME omp here
-    #pragma omp parallel for schedule(dynamic, 10)
     for (auto llbnode = bnodes.begin(); llbnode < bnodes.end(); llbnode++)
     {
         const TSortedNode *lbnode = *llbnode;
@@ -102,6 +101,7 @@ void convectivefast::CalcConvectiveFast()
 
         TVec dr_local, nodeCenter = TVec(lbnode->x, lbnode->y);
 
+    	#pragma omp parallel for schedule(dynamic, 10)
         for (TObj *lobj = lbnode->vRange.first; lobj < lbnode->vRange.last; lobj++)
         {
             if (!lobj->g) {continue;}
@@ -111,6 +111,7 @@ void convectivefast::CalcConvectiveFast()
                         TVec(Teilor4, -Teilor3)*dr_local);
         }
 
+    	#pragma omp parallel for schedule(dynamic, 10)
         for (TObj *lobj = lbnode->hRange.first; lobj < lbnode->hRange.last; lobj++)
         {
             if (!lobj->g) {continue;}
@@ -120,6 +121,7 @@ void convectivefast::CalcConvectiveFast()
                         TVec(Teilor4, -Teilor3)*dr_local);
         }
 
+    	#pragma omp parallel for schedule(dynamic, 10)
         for (TObj *lobj = lbnode->sRange.first; lobj < lbnode->sRange.last; lobj++)
         {
             dr_local = lobj->r - nodeCenter;
