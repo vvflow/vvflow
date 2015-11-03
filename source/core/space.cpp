@@ -465,7 +465,8 @@ void read_shell_script(FILE* file, ShellScript &script)
     char *str = new char[len+1];
     fread(str, 1, len, file);
     str[len] = 0;
-    script = str;
+    if (!script.setEvaluator(str))
+        fprintf(stderr, "Warning: bad math expression (%s), using 0\n", str);
     delete[] str;
 }
 

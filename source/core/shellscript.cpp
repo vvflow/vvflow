@@ -17,45 +17,36 @@ ShellScript::ShellScript():
 {
 }
 
-ShellScript::ShellScript(const std::string &s):
-    script(s),
-    cacheTime1(std::numeric_limits<double>::lowest()),
-    cacheValue1(),
-    cacheTime2(std::numeric_limits<double>::lowest()),
-    cacheValue2()
-{
-    if (script.empty()) return;
-    evaluator = evaluator_create((char*)script.c_str());
-    if (!evaluator)
-    {
-        fprintf(stderr, "Can not create evaluator for %s\n", script.c_str());
-        script = "";
-    }
-}
-
 ShellScript::~ShellScript()
 {
-    if (evaluator) evaluator_destroy(evaluator);
-    evaluator = NULL;
+    if (evaluator)
+        evaluator_destroy(evaluator);
 }
 
-ShellScript& ShellScript::operator=(const std::string &s)
+bool ShellScript::setEvaluator(const std::string &s)
 {
-    script = s;
-    if (evaluator)
-    {
-        evaluator_destroy(evaluator);
-        evaluator = NULL;
-    }
+    cacheTime1 = cacheTime2 = std::numeric_limits<double>::lowest();
+    script = s.empty() ? "0" : s;
 
-    if (script.empty()) return *this;
+    if (evaluator)
+        evaluator_destroy(evaluator);
     evaluator = evaluator_create((char*)script.c_str());
     if (!evaluator)
-    {
-        fprintf(stderr, "Can not assign evaluator for %s\n", script.c_str());
-        script = "";
-    }
-    return *this;
+        goto fail;
+
+    char **var_names;
+    int var_count;
+    evaluator_get_variables(evaluator, &var_names, &var_count);
+    if (var_count > 1)
+        goto fail;
+    if (var_count && strcmp(var_names[0], evaluator_names[0]))
+        goto fail;
+
+    return true;
+
+fail:
+    script = "";
+    return false;
 }
 
 double ShellScript::getValue(double t) const

@@ -10,10 +10,9 @@ class ShellScript
         std::string script;
     public:
         ShellScript();
-        ShellScript(const std::string &s);
         ~ShellScript();
+        bool setEvaluator(const std::string &s);
         double getValue(double t) const;
-        ShellScript& operator=(const std::string &s);
 
         operator const std::string() const { return script; }
 

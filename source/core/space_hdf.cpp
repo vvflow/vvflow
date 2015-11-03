@@ -109,7 +109,8 @@ void attribute_read(hid_t hid, const char *name, ShellScript& val)
 {
     std::string buf;
     attribute_read<std::string>(hid, name, buf);
-    val = buf;
+    if (!val.setEvaluator(buf))
+        fprintf(stderr, "Warning: bad math expression (%s), using 0\n", buf.c_str());
 }
 
 template<>
