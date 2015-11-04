@@ -26,10 +26,15 @@ ShellScript::~ShellScript()
 bool ShellScript::setEvaluator(const std::string &s)
 {
     cacheTime1 = cacheTime2 = std::numeric_limits<double>::lowest();
-    script = s.empty() ? "0" : s;
+    script = s;
 
     if (evaluator)
+    {
         evaluator_destroy(evaluator);
+        evaluator = NULL;
+    }
+    if (script.empty())
+        goto pass;
     evaluator = evaluator_create((char*)script.c_str());
     if (!evaluator)
         goto fail;
@@ -42,6 +47,7 @@ bool ShellScript::setEvaluator(const std::string &s)
     if (var_count && strcmp(var_names[0], evaluator_names[0]))
         goto fail;
 
+pass:
     return true;
 
 fail:
