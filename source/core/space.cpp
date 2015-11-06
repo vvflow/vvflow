@@ -42,8 +42,8 @@ Space::Space():
     InfCirculation = 0.;
     gravitation = TVec(0., 0.);
     Finish = std::numeric_limits<double>::max();
-    Time = dt = TTime(0, 0);
-    save_dt = streak_dt = profile_dt = TTime(INT32_MAX, 1);
+    Time = dt = TTime(1, 1);
+    save_dt = streak_dt = profile_dt = TTime(1, 1);
     Re = Pr = 0.;
     InfMarker = TVec(0., 0.);
 }
