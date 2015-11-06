@@ -65,6 +65,14 @@ class TVec
         friend const TVec rotl(const TVec &p) { return TVec(-p.y, p.x); }
         //NB: double * rotl(vec) = (in terms of math) (e_z*double) \times vec
         friend const TVec operator- (const TVec &p) { return TVec(-p.x, -p.y); }
+    public:
+        operator std::string() const
+        {
+            char buf[64] = {0};
+            if (!iszero())
+                sprintf(buf, "%lg, %lg", x, y);
+            return std::string(buf);
+        }
 };
 
 /* VVD DOMAINS ***************************************************************/
@@ -251,6 +259,25 @@ template<> bool parse(const char* text, TTime* result)
             *result = TTime::makeWithSecondsDecimal(dbl);
         return ret;
     }
+}
+
+template<> bool parse(const char* text, TVec* result)
+{
+    // can't save result
+    if (!result)
+        return false;
+
+    // empty string defaults to 0
+    if (text[0] == '\0')
+    {
+        result->x = 0.;
+        result->y = 0.;
+        return true;
+    }
+
+    int len, ret;
+    ret = sscanf(text, "%lg, %lg%n", &result->x, &result->y, &len);
+    return (ret==2 && text[len]=='\0');
 }
 
 #endif

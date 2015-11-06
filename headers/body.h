@@ -60,6 +60,7 @@ class TBody
         TBody& operator= (const TBody&) = delete;
         TBody& operator= (TBody&&) = delete;
 
+        std::string label;
         // FIXME rename to lower case
         std::vector<TAtt> alist;
         weak_ptr<TBody> root_body;
