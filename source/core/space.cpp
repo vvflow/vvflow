@@ -93,6 +93,7 @@ void Space::dataset_write_list(const char *name, const vector<TObj>& list)
 
 void Space::dataset_write_body(const char* name, const TBody& body)
 {
+
     float heat_const = body.alist.front().heat_const;
     uint32_t general_slip = body.alist.front().slip;
     bool can_simplify = true;
@@ -310,7 +311,7 @@ herr_t dataset_read_body(hid_t g_id, const char* name, const H5L_info_t*, void *
     // Но т.к. simplified dataset == 0 я никогда не считал, то отныне 0 будет означать
     // старую версию. Новая идет с номером 2.
     // А нормальный неупрощенный датасет я тк и не сделал (пока)
-    if (simplified_dataset == 0)
+    if (simplified_dataset < 2)
     {
         attribute_read(dataset, "general_bc", general_slip);
         attribute_read(dataset, "heat_const", heat_const);
@@ -334,15 +335,15 @@ herr_t dataset_read_body(hid_t g_id, const char* name, const H5L_info_t*, void *
             case 't': body->heat_condition = hc_t::const_t; break;
             case 'w': body->heat_condition = hc_t::const_w; break;
         }
-    } else
-        if (simplified_dataset == 2)
-        {
-            attribute_read(dataset, "general_slip", general_slip);
-            attribute_read(dataset, "heat_const", heat_const);
-            attribute_read(dataset, "boundary_condition", body->boundary_condition);
-            attribute_read(dataset, "special_segment_no", body->special_segment_no);
-            attribute_read(dataset, "heat_condition", body->heat_condition);
-        }
+    }
+    else if (simplified_dataset == 2)
+    {
+        attribute_read(dataset, "general_slip", general_slip);
+        attribute_read(dataset, "heat_const", heat_const);
+        attribute_read(dataset, "boundary_condition", body->boundary_condition);
+        attribute_read(dataset, "special_segment_no", body->special_segment_no);
+        attribute_read(dataset, "heat_condition", body->heat_condition);
+    }
 
     struct ATT *mem = (struct ATT*)malloc(sizeof(struct ATT)*dims[0]);
     H5ASSERT(H5Dread(dataset, H5T_NATIVE_DOUBLE, H5S_ALL, file_dataspace, H5P_DEFAULT, mem), "H5Dread");
@@ -376,7 +377,7 @@ void Space::Load(const char* fname, std::string *info)
     HeatList.clear();
     StreakSourceList.clear();
     StreakList.clear();
-    
+
     if (!H5Fis_hdf5(fname))
     {
         Load_v1_3(fname);

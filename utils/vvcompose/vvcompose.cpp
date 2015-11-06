@@ -229,5 +229,6 @@ int main(int argc, char *argv[])
 			return 1;
 		}
 	}
+	delete S;
 	return 0;
 }
