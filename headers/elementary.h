@@ -118,6 +118,14 @@ class TVec3D
         friend const TVec3D operator- (const TVec3D &p1, const TVec3D &p2) { return TVec3D(p1.r.x-p2.r.x, p1.r.y-p2.r.y, p1.o-p2.o); }
         friend std::istream& operator>> (std::istream& is, TVec3D& p) { return is >> p.r.x >> p.r.y >> p.o; }
         friend std::ostream& operator<< (std::ostream& os, const TVec3D& p) { return os << p.r.x << " \t" << p.r.y << " \t" << p.o; }
+    public:
+        operator std::string() const
+        {
+            char buf[64] = {0};
+            if (!iszero())
+                sprintf(buf, "%lg, %lg, %lg", r.x, r.y, o);
+            return std::string(buf);
+        }
 };
 
 class TTime
@@ -278,6 +286,26 @@ template<> bool parse(const char* text, TVec* result)
     int len, ret;
     ret = sscanf(text, "%lg, %lg%n", &result->x, &result->y, &len);
     return (ret==2 && text[len]=='\0');
+}
+
+template<> bool parse(const char* text, TVec3D* result)
+{
+    // can't save result
+    if (!result)
+        return false;
+
+    // empty string defaults to 0
+    if (text[0] == '\0')
+    {
+        result->r.x = 0.;
+        result->r.y = 0.;
+        result->o = 0.;
+        return true;
+    }
+
+    int len, ret;
+    ret = sscanf(text, "%lg, %lg, %lg%n", &result->r.x, &result->r.y, &result->o, &len);
+    return (ret==3 && text[len]=='\0');
 }
 
 #endif
