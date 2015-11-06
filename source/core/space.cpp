@@ -371,6 +371,12 @@ herr_t dataset_read_body(hid_t g_id, const char* name, const H5L_info_t*, void *
 
 void Space::Load(const char* fname, std::string *info)
 {
+    BodyList.clear();
+    VortexList.clear();
+    HeatList.clear();
+    StreakSourceList.clear();
+    StreakList.clear();
+    
     if (!H5Fis_hdf5(fname))
     {
         Load_v1_3(fname);
