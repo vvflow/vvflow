@@ -62,8 +62,8 @@ void do_set(Space* S, const char *arg, const char *value)
 	else if ( (len=0, sscanf(arg, "dt_profile%n",      &len), !arg[len]) ) { S->profile_dt = parse<TTime>(value); }
 	else if ( (len=0, sscanf(arg, "re%n",              &len), !arg[len]) ) { S->Re = parse<double>(value); }
 	else if ( (len=0, sscanf(arg, "pr%n",              &len), !arg[len]) ) { S->Pr = parse<double>(value); }
-	else if ( (len=0, sscanf(arg, "inf_speed.x%n",     &len), !arg[len]) ) { S->InfSpeedX = std::string(value); }
-	else if ( (len=0, sscanf(arg, "inf_speed.y%n",     &len), !arg[len]) ) { S->InfSpeedY = std::string(value); }
+	else if ( (len=0, sscanf(arg, "inf_speed.x%n",     &len), !arg[len]) ) { S->InfSpeedX.setEvaluator(value); }
+	else if ( (len=0, sscanf(arg, "inf_speed.y%n",     &len), !arg[len]) ) { S->InfSpeedY.setEvaluator(value); }
 	else if ( (len=0, sscanf(arg, "inf_circulation%n", &len), !arg[len]) ) { S->InfCirculation = parse<double>(value); }
 	else if ( (len=0, sscanf(arg, "gravity.x%n",       &len), !arg[len]) ) { S->gravitation.x = parse<double>(value); }
 	else if ( (len=0, sscanf(arg, "gravity.y%n",       &len), !arg[len]) ) { S->gravitation.y = parse<double>(value); }
@@ -86,9 +86,9 @@ void do_set(Space* S, const char *arg, const char *value)
 		else if ( (len=0, sscanf(arg, "move.%c%n",            &c, &len), !arg[len]) ) { vec = &move_vec; }
 		else if ( (len=0, sscanf(arg, "spring_const.%c%n",    &c, &len), !arg[len]) ) { vec = &body->kspring; }
 		else if ( (len=0, sscanf(arg, "spring_damping.%c%n",  &c, &len), !arg[len]) ) { vec = &body->damping; }
-		else if ( (len=0, sscanf(arg, "speed.x%n",                &len), !arg[len]) ) { body->speed_x = std::string(value); }
-		else if ( (len=0, sscanf(arg, "speed.y%n",                &len), !arg[len]) ) { body->speed_y = std::string(value); }
-		else if ( (len=0, sscanf(arg, "speed.o%n",                &len), !arg[len]) ) { body->speed_o = std::string(value); }
+		else if ( (len=0, sscanf(arg, "speed.x%n",                &len), !arg[len]) ) { body->speed_x.setEvaluator(value); }
+		else if ( (len=0, sscanf(arg, "speed.y%n",                &len), !arg[len]) ) { body->speed_y.setEvaluator(value); }
+		else if ( (len=0, sscanf(arg, "speed.o%n",                &len), !arg[len]) ) { body->speed_o.setEvaluator(value); }
 		else if ( (len=0, sscanf(arg, "density%n",                &len), !arg[len]) ) { body->density = parse<double>(value); }
 		else if ( (len=0, sscanf(arg, "special_segment_no%n",     &len), !arg[len]) ) { body->special_segment_no = parse<int>(value); }
 		else if ( (len=0, sscanf(arg, "boundary_condition%n",     &len), !arg[len]) )
