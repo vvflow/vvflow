@@ -139,6 +139,7 @@ void Space::dataset_write_body(const char* name, const TBody& body)
         attribute_write(file_dataset, "root_body", get_body_name(root_body.get()));
     }
 
+    attribute_write(file_dataset, "label", body.label);
     attribute_write(file_dataset, "holder_position", body.holder);
     attribute_write(file_dataset, "delta_position", body.dpos);
     attribute_write<std::string>(file_dataset, "speed_x", body.speed_x);
@@ -280,6 +281,7 @@ herr_t dataset_read_body(hid_t g_id, const char* name, const H5L_info_t*, void *
     hsize_t dims[2]; H5Sget_simple_extent_dims(file_dataspace, dims, dims);
 
 
+    attribute_read(dataset, "label", body->label);
     attribute_read(dataset, "holder_position", body->holder);
     attribute_read(dataset, "delta_position", body->dpos);
     attribute_read(dataset, "speed_x", body->speed_x);

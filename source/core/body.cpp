@@ -7,6 +7,7 @@
 using namespace std;
 
 TBody::TBody():
+    label(),
     alist(),
     speed_x(),
     speed_y(),

@@ -89,7 +89,10 @@ void print_general(Space* S)
 	
 	for (auto& lbody: S->BodyList)
 	{
-		printf("\n%s:\n", S->get_body_name(lbody.get()).c_str());
+		printf("\n%s", S->get_body_name(lbody.get()).c_str());
+		if (!lbody->label.empty())
+			printf(" (%s)", lbody->label.c_str());
+		printf(":\n");
 		print_body(lbody.get());
 	}
 

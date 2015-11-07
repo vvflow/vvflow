@@ -83,6 +83,7 @@ void do_set(Space* S, const char *arg, const char *value)
 		TVec3D move_vec = TVec3D();
 		/**/ if ( (len=0, sscanf(arg, "holder_position.%c%n", &c, &len), !arg[len]) ) { vec = &body->holder; }
 		else if ( (len=0, sscanf(arg, "delta_position.%c%n",  &c, &len), !arg[len]) ) { vec = &body->dpos; }
+		else if ( (len=0, sscanf(arg, "label%n",                  &len), !arg[len]) ) { body->label = value; }
 		else if ( (len=0, sscanf(arg, "move.%c%n",            &c, &len), !arg[len]) ) { vec = &move_vec; }
 		else if ( (len=0, sscanf(arg, "spring_const.%c%n",    &c, &len), !arg[len]) ) { vec = &body->kspring; }
 		else if ( (len=0, sscanf(arg, "spring_damping.%c%n",  &c, &len), !arg[len]) ) { vec = &body->damping; }
