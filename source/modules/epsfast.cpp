@@ -27,7 +27,9 @@ void epsfast::CalcEpsilonFast(bool merge)
         double merge_criteria_sq = (merge && nearestAtt) ? 
             0.16 * nearestAtt->dl.abs2() * (1. + (bnode_center - nearestAtt->r).abs())
             : 0;
-        double eps_restriction = nearestAtt->dl.abs()*(1.0/3.0);
+        double eps_restriction = nearestAtt ?
+            nearestAtt->dl.abs()*(1.0/3.0)
+            : 0;
 
         for (TObj *lobj = lbnode->vRange.first; lobj < lbnode->vRange.last; lobj++)
         {
@@ -184,6 +186,6 @@ TAtt* epsfast::nearestBodySegment(TSortedNode &Node, TVec p)
             }
         }
 
-    return static_cast<TAtt*>(att);
+    return att ? static_cast<TAtt*>(att) : NULL;
 }
 

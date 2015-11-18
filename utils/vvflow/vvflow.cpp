@@ -58,7 +58,9 @@ int main(int argc, char** argv)
 	// fprintf(f, "Nv\t Nh \n");
 
 	double dl = S->AverageSegmentLength();
-	TSortedTree tr(S, 8, dl*5, dl*100);
+	double min_node_size = dl>0 ? dl*5 : 0;
+	double max_node_size = dl>0 ? dl*100 : std::numeric_limits<double>::max();
+	TSortedTree tr(S, 8, min_node_size, max_node_size);
 	S->Tree = &tr;
 	convectivefast conv(S);
 	epsfast eps(S);
@@ -71,9 +73,12 @@ int main(int argc, char** argv)
 
 	while (S->Time < S->Finish + S->dt/2)
 	{
-		dbg(tr.build());
-		dbg(conv.CalcCirculationFast());
-		dbg(tr.destroy());
+		if (S->BodyList.size())
+		{
+			dbg(tr.build());
+			dbg(conv.CalcCirculationFast());
+			dbg(tr.destroy());
+		}
 
 		dbg(fm.HeatShed());
 
