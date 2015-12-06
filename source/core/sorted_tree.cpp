@@ -30,7 +30,7 @@ snode::~snode()
 void TSortedNode::DivideNode()
 {
     if ( max(h,w) < parent->maxNodeSize )
-        if ( min(h,w) < parent->minNodeSize )
+        if ( min(h,w) <= parent->minNodeSize )
         {
             parent->bottomNodes.push_back(this);
             return;
