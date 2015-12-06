@@ -326,6 +326,7 @@ if args.plot_heat and 'heat' in lists:
 
 if args.plot_ink and 'ink' in lists:
     gpw("""{plot} '< libvvplot -L {fin_name} ink'""")
+    gpw(""" binary format='%3double'""")
     gpw(""" u 1:2:({}) w @ink_style""", vv_prec_hi)
 
 if args.plot_streamlines:
