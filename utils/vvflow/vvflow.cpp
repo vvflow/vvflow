@@ -30,6 +30,13 @@ int main(int argc, char** argv)
 		return -1;
 	}
 
+	bool b_progress = false;
+	if (!strcmp(argv[1], "--progress"))
+	{
+		b_progress = true;
+		argv++;
+	}
+
 	Space *S = new Space();
 	S->Load(argv[1]);
 
@@ -140,10 +147,12 @@ int main(int argc, char** argv)
 		dbg(fm.CropHeat());
 		S->Time = TTime::add(S->Time, S->dt);
 
-		fprintf(stderr, "\r%-10g \t%-10zd \t%-10zd", double(S->Time), S->VortexList.size(), S->HeatList.size());
+		if (b_progress)
+			fprintf(stderr, "\r%-10g \t%-10zd \t%-10zd", double(S->Time), S->VortexList.size(), S->HeatList.size());
 	}
 
-	fprintf(stderr, "\n");
+	if (b_progress)
+		fprintf(stderr, "\n");
 	// fclose(f);
 	stepdata->close();
 }
