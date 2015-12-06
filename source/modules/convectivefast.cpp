@@ -60,6 +60,18 @@ TVec convectivefast::SpeedSum(const TSortedNode &Node, const TVec &p)
         }
     }
 
+    // что бы избежать неустойчивости при использовании стока
+    // эпсилон динамически определяется из шага по времени
+    // условием устойчивости для точечного стока является V(r)*dt < r
+    // отсюда sqr(eps) > g*dt/2pi
+    // мы используем sqr(eps) = 2*g*dt/2pi = g*dt/pi
+    const double eps2_div_srcg = S->dt * C_1_PI;
+    for (const auto& src: S->SourceList)
+    {
+        TVec dr = p - src.r;
+        res += dr*(src.g / (dr.abs2() + eps2_div_srcg*abs(src.g)) );
+    }
+
     res *= C_1_2PI;
     return res;
 }
