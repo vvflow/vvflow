@@ -86,7 +86,8 @@ void print_general(Space* S)
 	attribute_print("HeatList:", long(S->HeatList.size()));
 	attribute_print("InkList:", long(S->StreakList.size()));
 	attribute_print("InkSourceList:", long(S->StreakSourceList.size()));
-	
+	attribute_print("SourceList:", long(S->SourceList.size()));
+
 	for (auto& lbody: S->BodyList)
 	{
 		printf("\n%s", S->get_body_name(lbody.get()).c_str());

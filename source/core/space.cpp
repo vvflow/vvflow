@@ -205,6 +205,7 @@ void Space::Save(const char* format)
     dataset_write_list("heat", HeatList);
     dataset_write_list("ink", StreakList);
     dataset_write_list("ink_source", StreakSourceList);
+    dataset_write_list("source", SourceList);
 
     for (auto& lbody: BodyList)
     {
@@ -430,6 +431,7 @@ void Space::Load(hid_t fid, std::string *info)
     dataset_read_list(fid, "heat", HeatList);
     dataset_read_list(fid, "ink", StreakList);
     dataset_read_list(fid, "ink_source", StreakSourceList);
+    dataset_read_list(fid, "source", SourceList);
 
     H5Literate(fid, H5_INDEX_NAME, H5_ITER_NATIVE, NULL, dataset_read_body, this);
     EnumerateBodies();
@@ -779,6 +781,22 @@ int Space::LoadStreakSource(const char* filename)
     fclose(fin);
     return 0;
 }
+
+int Space::LoadSource(const char* filename)
+{
+    FILE *fin = fopen(filename, "r");
+    if (!fin) { perror("Error opening source file"); return -1; }
+
+    TObj obj(0, 0, 0);
+    while ( fscanf(fin, "%lf %lf %lf", &obj.r.x, &obj.r.y, &obj.g)==3 )
+    {
+        SourceList.push_back(obj);
+    }
+
+    fclose(fin);
+    return 0;
+}
+
 
 int Space::LoadBody(const char* filename)
 {

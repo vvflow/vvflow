@@ -9,6 +9,7 @@ void do_load(Space* S, const char *arg, const char *file)
 	else if (!strcmp(arg, "body")) { S->LoadBody(file); }
 	else if (!strcmp(arg, "vort")) { S->LoadVorticityFromFile(file); }
 	else if (!strcmp(arg, "heat")) { S->LoadHeatFromFile(file); }
+	else if (!strcmp(arg, "source")) { S->LoadSource(file); }
 	else if (!strcmp(arg, "ink"))  { S->LoadStreak(file); }
 	else if (!strcmp(arg, "ink_source")) { S->LoadStreakSource(file); }
 	else
