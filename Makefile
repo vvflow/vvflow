@@ -55,6 +55,12 @@ uninstall:
 	rm -f $(patsubst headers/%, $(INSTALLDIR)/include/%, $(wildcard headers/*.h))
 	rmdir $(INSTALLDIR)/lib/ $(INSTALLDIR)/include/ $(INSTALLDIR)/ --ignore-fail-on-non-empty
 
+test:
+	@mkdir -p test_results
+	@PATH=bin/:$$PATH ./tests/nobody/sink.sh $(PWD)/test_results
+.PHONY: run_tests
+
+
 #------------------------------------------------#
 #                     RULES                      #
 #------------------------------------------------#
