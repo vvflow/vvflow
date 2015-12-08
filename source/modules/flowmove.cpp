@@ -235,7 +235,7 @@ void flowmove::CropHeat(double scale)
 
 void flowmove::StreakShed()
 {
-    if (!S->Time.divisibleBy(S->streak_dt)) return;
+    if (!S->Time.divisibleBy(S->dt_streak)) return;
     for (auto& lobj: S->StreakSourceList)
     {
         S->StreakList.push_back(lobj);
