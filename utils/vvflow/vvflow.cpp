@@ -89,7 +89,7 @@ int main(int argc, char** argv)
 
 		dbg(fm.HeatShed());
 
-		if (S->Time.divisibleBy(S->save_dt)  && (double(S->Time) > 0))
+		if (S->Time.divisibleBy(S->dt_save)  && (double(S->Time) > 0))
 		{
 			char tmp_filename[256]; sprintf(tmp_filename, "%s/%%06d.h5", dir);
 			S->Save(tmp_filename);

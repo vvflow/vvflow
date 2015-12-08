@@ -70,9 +70,9 @@ void print_general(Space* S)
 	attribute_print("Caption:", S->caption);
 	attribute_print("Time:", S->Time);
 	attribute_print("dt:", S->dt);
-	attribute_print("Save dt:", S->save_dt);
-	attribute_print("Streak dt:", S->streak_dt);
-	attribute_print("Profile dt:", S->profile_dt);
+	attribute_print("Save dt:", S->dt_save);
+	attribute_print("Streak dt:", S->dt_streak);
+	attribute_print("Profile dt:", S->dt_profile);
 	attribute_print("1/nyu:", S->Re);
 	attribute_print("Pr:", S->Pr);
 	attribute_print("Inf marker:", S->InfMarker);

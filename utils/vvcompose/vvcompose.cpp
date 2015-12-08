@@ -58,9 +58,9 @@ void do_set(Space* S, const char *arg, const char *value)
 	     if ( (len=0, sscanf(arg, "caption%n",         &len), !arg[len]) ) { S->caption = value; }
 	else if ( (len=0, sscanf(arg, "time%n",            &len), !arg[len]) ) { S->Time = parse<TTime>(value); }
 	else if ( (len=0, sscanf(arg, "dt%n",              &len), !arg[len]) ) { S->dt = parse<TTime>(value); }
-	else if ( (len=0, sscanf(arg, "dt_save%n",         &len), !arg[len]) ) { S->save_dt = parse<TTime>(value); }
-	else if ( (len=0, sscanf(arg, "dt_streak%n",       &len), !arg[len]) ) { S->streak_dt = parse<TTime>(value); }
-	else if ( (len=0, sscanf(arg, "dt_profile%n",      &len), !arg[len]) ) { S->profile_dt = parse<TTime>(value); }
+	else if ( (len=0, sscanf(arg, "dt_save%n",         &len), !arg[len]) ) { S->dt_save = parse<TTime>(value); }
+	else if ( (len=0, sscanf(arg, "dt_streak%n",       &len), !arg[len]) ) { S->dt_streak = parse<TTime>(value); }
+	else if ( (len=0, sscanf(arg, "dt_profile%n",      &len), !arg[len]) ) { S->dt_profile = parse<TTime>(value); }
 	else if ( (len=0, sscanf(arg, "re%n",              &len), !arg[len]) ) { S->Re = parse<double>(value); }
 	else if ( (len=0, sscanf(arg, "pr%n",              &len), !arg[len]) ) { S->Pr = parse<double>(value); }
 	else if ( (len=0, sscanf(arg, "inf_speed.x%n",     &len), !arg[len]) ) { S->InfSpeedX.setEvaluator(value); }
@@ -228,9 +228,9 @@ int main(int argc, char *argv[])
 			CHECK(1);
 
 			#define DT_WARNING(STR) fprintf(stderr, "vvcompose WARNING: " STR " is not divisible by dt\n");
-			if (!S->save_dt.divisibleBy(S->dt)) DT_WARNING("dt_save");
-			if (!S->streak_dt.divisibleBy(S->dt)) DT_WARNING("dt_streak");
-			if (!S->profile_dt.divisibleBy(S->dt)) DT_WARNING("dt_profile");
+			if (!S->dt_save.divisibleBy(S->dt)) DT_WARNING("dt_save");
+			if (!S->dt_streak.divisibleBy(S->dt)) DT_WARNING("dt_streak");
+			if (!S->dt_profile.divisibleBy(S->dt)) DT_WARNING("dt_profile");
 			#undef DT_WARNING
 
 			S->Save(argv[i+1]);
