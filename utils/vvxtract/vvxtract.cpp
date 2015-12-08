@@ -2,53 +2,55 @@
 #include "stdio.h"
 #include "string.h"
 #include "stdlib.h"
+#include <limits>
+
 
 void attribute_print(const char *name, std::string str)
 {
 	if (str.empty()) return;
-	printf("%-15s \"%s\"\n", name, str.c_str());
+	printf(" %-15s \"%s\"\n", name, str.c_str());
 }
 
 void attribute_print(const char *name, TTime time)
 {
-	if (time.value == INT32_MAX) return;
-	printf("%-15s %lg\n", name, double(time));
+	if (!time.value) return;
+	printf(" %-15s %lg\n", name, double(time));
 }
 
 void attribute_print(const char *name, bool value)
 {
-	printf("%-15s %s\n", name, value?"True":"False");
+	printf(" %-15s %s\n", name, value?"True":"False");
 }
 
 void attribute_print(const char *name, double value, double ignored=0);
 void attribute_print(const char *name, double value, double ignored)
 {
 	if (value == ignored) return;
-	printf("%-15s %lg\n", name, value);
+	printf(" %-15s %lg\n", name, value);
 }
 
 void attribute_print(const char *name, long int value)
 {
 	if (value == 0) return;
-	printf("%-15s %ld\n", name, value);
+	printf(" %-15s %ld\n", name, value);
 }
 
 void attribute_print(const char *name, TVec vec)
 {
 	if (vec.iszero()) return;
-	printf("%-15s (%lg, %lg)\n", name, vec.x, vec.y);
+	printf(" %-15s (%lg, %lg)\n", name, vec.x, vec.y);
 }
 
 void attribute_print(const char *name, TVec3D vec3d, double ignored=0);
 void attribute_print(const char *name, TVec3D vec3d, double ignored)
 {
 	if (vec3d.r.x == ignored && vec3d.r.y == ignored && vec3d.o == ignored) return;
-	printf("%-15s (%lg, %lg, %lg)\n", name, vec3d.r.x, vec3d.r.y, vec3d.o);
+	printf(" %-15s (%lg, %lg, %lg)\n", name, vec3d.r.x, vec3d.r.y, vec3d.o);
 }
 
 void print_body(TBody *body)
 {
-	attribute_print("holder_position", body->holder, INT32_MAX);
+	attribute_print("holder_position", body->holder, std::numeric_limits<double>::quiet_NaN());
 	attribute_print("delta_position", body->dpos);
 	attribute_print("speed_x", body->speed_x);
 	attribute_print("speed_y", body->speed_y);
@@ -61,6 +63,11 @@ void print_body(TBody *body)
 	attribute_print("force_hydro", body->force_hydro);
 	attribute_print("force_holder", body->force_holder);
 	attribute_print("friction_prev", body->friction_prev);
+	attribute_print("surface", body->get_surface());
+	attribute_print("area", body->get_area());
+	attribute_print("com", body->get_com());
+	attribute_print("axis", body->get_axis());
+	attribute_print("moi_c", body->get_moi_c());
 }
 
 static std::string info[3];
@@ -82,7 +89,6 @@ void print_general(Space* S)
 	attribute_print("Gravity:", S->gravitation);
 	attribute_print("Finish:", S->Finish);
 	attribute_print("VortexList:", long(S->VortexList.size()));
-	attribute_print("BodyList:", long(S->BodyList.size()));
 	attribute_print("HeatList:", long(S->HeatList.size()));
 	attribute_print("InkList:", long(S->StreakList.size()));
 	attribute_print("InkSourceList:", long(S->StreakSourceList.size()));
