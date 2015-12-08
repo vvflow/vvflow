@@ -35,6 +35,7 @@ TVec convectivefast::SpeedSumFast(TVec p)
     }
     res *= C_1_2PI;
     res += SpeedSum(*Node, p);
+    res += SrcSpeed(p);
     res += S->InfSpeed();
 
     return res;
@@ -60,6 +61,13 @@ TVec convectivefast::SpeedSum(const TSortedNode &Node, const TVec &p)
         }
     }
 
+    res *= C_1_2PI;
+    return res;
+}
+
+TVec convectivefast::SrcSpeed(const TVec &p)
+{
+    TVec res(0, 0);
     // что бы избежать неустойчивости при использовании стока
     // эпсилон динамически определяется из шага по времени
     // условием устойчивости для точечного стока является V(r)*dt < r
@@ -118,9 +126,9 @@ void convectivefast::CalcConvectiveFast()
         {
             if (!lobj->g) {continue;}
             dr_local = lobj->r - nodeCenter;
-            lobj->v += TVec(Teilor1, Teilor2) + S->InfSpeed() + SpeedSum(*lbnode, lobj->r) +
-                TVec(TVec(Teilor3,  Teilor4)*dr_local,
-                        TVec(Teilor4, -Teilor3)*dr_local);
+            lobj->v += S->InfSpeed() + SrcSpeed(lobj->r) + SpeedSum(*lbnode, lobj->r) +
+                TVec(Teilor1, Teilor2) +
+                TVec(TVec(Teilor3,  Teilor4)*dr_local, TVec(Teilor4, -Teilor3)*dr_local);
         }
 
     	#pragma omp parallel for schedule(dynamic, 10)
@@ -128,18 +136,18 @@ void convectivefast::CalcConvectiveFast()
         {
             if (!lobj->g) {continue;}
             dr_local = lobj->r - nodeCenter;
-            lobj->v += TVec(Teilor1, Teilor2) + S->InfSpeed() + SpeedSum(*lbnode, lobj->r) +
-                TVec(TVec(Teilor3,  Teilor4)*dr_local,
-                        TVec(Teilor4, -Teilor3)*dr_local);
+            lobj->v += S->InfSpeed() + SrcSpeed(lobj->r) + SpeedSum(*lbnode, lobj->r) +
+                TVec(Teilor1, Teilor2) +
+                TVec(TVec(Teilor3,  Teilor4)*dr_local, TVec(Teilor4, -Teilor3)*dr_local);
         }
 
     	#pragma omp parallel for schedule(dynamic, 10)
         for (TObj *lobj = lbnode->sRange.first; lobj < lbnode->sRange.last; lobj++)
         {
             dr_local = lobj->r - nodeCenter;
-            lobj->v += TVec(Teilor1, Teilor2) + S->InfSpeed() + SpeedSum(*lbnode, lobj->r) +
-                TVec(TVec(Teilor3,  Teilor4)*dr_local,
-                        TVec(Teilor4, -Teilor3)*dr_local);
+            lobj->v += S->InfSpeed() + SrcSpeed(lobj->r) + SpeedSum(*lbnode, lobj->r) +
+                TVec(Teilor1, Teilor2) +
+                TVec(TVec(Teilor3,  Teilor4)*dr_local, TVec(Teilor4, -Teilor3)*dr_local);
         }
     }
 }
@@ -472,6 +480,7 @@ void convectivefast::fillSlipEquationForSegment(TAtt* seg, TBody* ibody, bool ri
     //right column
     //influence of infinite speed
     *matrix.rightColAtIndex(seg_eq_no) = rotl(S->InfSpeed())*seg->dl;
+    *matrix.rightColAtIndex(seg_eq_no) += rotl(SrcSpeed(seg->r))*seg->dl;
     //influence of all free vortices
     TSortedNode* Node = S->Tree->findNode(seg->r);
     *matrix.rightColAtIndex(seg_eq_no) -= NodeInfluence(*Node, *seg);
