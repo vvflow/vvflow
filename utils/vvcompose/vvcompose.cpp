@@ -2,6 +2,7 @@
 #include "stdio.h"
 #include "string.h"
 #include "stdlib.h"
+#include <algorithm>
 
 void do_load(Space* S, const char *arg, const char *file)
 {
@@ -125,7 +126,15 @@ void do_set(Space* S, const char *arg, const char *value)
 			for (auto& latt: body->alist) latt.heat_const = heat_const;
 		}
 		else if (  len=0, sscanf(arg, "root_body%n",              &len), !arg[len])
-			{ body->root_body = S->BodyList[parse<int>(value)]; }
+		{
+			body->root_body = S->BodyList[parse<int>(value)];
+		}
+		else if (  len=0, sscanf(arg, "reverse%n",              &len), !arg[len])
+		{
+			std::reverse(body->alist.begin(),body->alist.end());
+			body->doUpdateSegments();
+    		body->doFillProperties();
+		}
 		else ALERT();
 
 		if (vec) switch (c)
