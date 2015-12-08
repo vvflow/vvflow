@@ -13,6 +13,7 @@ vvcompose \
 	"load" "source" <(echo 0 0 -3.14) \
 	"load" "ink_source" <(echo 0 1 1) \
 	"set"  "time" 0 \
+	"set"  "re" inf \
 	"set"  "dt" 0.001 \
 	"set"  "dt_streak" 0.03 \
 	"set"  "dt_save" 1 \

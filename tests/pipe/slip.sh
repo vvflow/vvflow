@@ -21,6 +21,7 @@ vvcompose \
 	"load" "body" <(pipe_body) \
 	"load" "ink_source" <(seq 0 11 | awk '{print -5+0.2*cos($1*6.28/12), 0.2*sin($1*6.28/12), 0}') \
 	"set"  "time" 1 \
+	"set"  "re" inf \
 	"set"  "dt" 0.002 \
 	"set"  "dt_save" 1 \
 	"set"  "dt_streak" 0.02 \
@@ -33,7 +34,7 @@ vvflow slip.h5 <(seq -f "0 %+0.2f" -0.4 +0.1 0.4) \
 || raise_error "vvflow failed"
 
 vvplot results_slip/001000.h5 -x -6 6 -y -1 1 --size 720x $1/pipe_slip.png \
-       -i -b --blankbody 1 \
+       -i -bvV --blankbody 1 \
 || raise_error "vvplot failed"
 
 cp results_slip/001000.h5 $1/pipe_slip.h5
