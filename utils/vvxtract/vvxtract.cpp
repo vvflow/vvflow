@@ -50,6 +50,7 @@ void attribute_print(const char *name, TVec3D vec3d, double ignored)
 
 void print_body(TBody *body)
 {
+	attribute_print("segments", long(body->size()));
 	attribute_print("holder_position", body->holder, std::numeric_limits<double>::quiet_NaN());
 	attribute_print("delta_position", body->dpos);
 	attribute_print("speed_x", body->speed_x);
