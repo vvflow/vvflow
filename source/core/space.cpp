@@ -636,14 +636,15 @@ void Space::CalcForces()
 
 void Space::SaveProfile(const char* fname, TValues vals)
 {
+    if (!Time.divisibleBy(dt_profile)) return;
+    // TODO
+
     static int warning = 0;
     if (!warning)
         fprintf(stderr, "SaveProfile not implemented\n");
     warning = 1;
     return;
 
-    // TODO
-    if (!Time.divisibleBy(dt_profile)) return;
     int32_t vals_32=vals, N=0;
     for (auto& lbody: BodyList) { N+= lbody->size(); }
     if (!N) return;
