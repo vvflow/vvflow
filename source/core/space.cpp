@@ -34,7 +34,8 @@ using std::ios;
 Space::Space():
     caption(),
     InfSpeedX(),
-    InfSpeedY()
+    InfSpeedY(),
+    Time(), save_dt(), streak_dt(), profile_dt()
 {
     // static_assert(std::is_pod<TVec>::value, "TVec is not POD");
     // static_assert(std::is_pod<TObj>::value, "TObj is not POD");
@@ -42,8 +43,7 @@ Space::Space():
     InfCirculation = 0.;
     gravitation = TVec(0., 0.);
     Finish = std::numeric_limits<double>::max();
-    Time = dt = TTime(1, 1);
-    save_dt = streak_dt = profile_dt = TTime(1, 1);
+    dt = TTime(1, 1);
     Re = Pr = 0.;
     InfMarker = TVec(0., 0.);
 }

@@ -136,14 +136,14 @@ class TTime
         uint32_t timescale;
 
     public:
-        TTime()
-        {value = timescale = 0;}
-        TTime(int32_t _value, uint32_t _timescale)
-        {value = _value; timescale=_timescale;}
+        TTime():value(0),timescale(1) {}
+        TTime(int32_t v, uint32_t ts):value(v),timescale(ts) {}
+
         static TTime makeWithSeconds(double seconds, uint32_t preferredTimescale)
         {
             return TTime(int32_t(seconds*preferredTimescale), preferredTimescale);
         }
+
         static TTime makeWithSecondsDecimal(double seconds)
         {
             uint32_t newTS = 1;
@@ -154,6 +154,7 @@ class TTime
             //fprintf(stderr, "%lf sec -> %d / %u\n", seconds, int32_t(seconds*newTS), newTS);
             return TTime(int32_t(seconds*newTS), newTS);
         }
+
         static TTime add(TTime time1, TTime time2)
         {
             uint32_t newTS = lcm(time1.timescale, time2.timescale);
@@ -162,11 +163,14 @@ class TTime
                     + time2.value*newTS/time2.timescale
                     , newTS);
         }
+
         bool divisibleBy(TTime divisor)
         {
             // divisible = кратно
             // dividend = делимое
             // divisor = делитель
+            if (!divisor.value || !divisor.timescale)
+                return false;
             uint32_t lcm_ts = lcm(timescale, divisor.timescale);
             return !((int64_t(value)*lcm_ts/timescale) % (int64_t(divisor.value)*lcm_ts/divisor.timescale));
         }

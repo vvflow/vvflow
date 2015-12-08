@@ -92,7 +92,7 @@ template<>
 void attribute_read(hid_t hid, const char *name, TTime& val)
 {
     if (!attread(hid, name, &val, fraction_t))
-        val = TTime(std::numeric_limits<int32_t>::max(), 1);
+        val = TTime();
 }
 
 template<>
@@ -216,9 +216,9 @@ void attribute_write(hid_t hid, const char *name, std::string str)
 }
 
 template<>
-void attribute_write(hid_t hid, const char *name, TTime time)
+void attribute_write(hid_t hid, const char *name, TTime tval)
 {
-    if (time.value == INT32_MAX) return;
+    if (!tval.value) return;
     if (!commited_fraction)
     {
         commited_fraction = true;
@@ -227,7 +227,7 @@ void attribute_write(hid_t hid, const char *name, TTime time)
 
     hid_t aid = H5Acreate2(hid, name, fraction_t, DATASPACE_SCALAR(), H5P_DEFAULT, H5P_DEFAULT);
     H5ASSERT(aid, "H5Acreate");
-    H5ASSERT(H5Awrite(aid, fraction_t, &time), "H5Awrite");
+    H5ASSERT(H5Awrite(aid, fraction_t, &tval), "H5Awrite");
     H5ASSERT(H5Aclose(aid), "H5Aclose");
 }
 

@@ -13,7 +13,7 @@ void do_load(Space* S, const char *arg, const char *file)
 	else if (!strcmp(arg, "ink_source")) { S->LoadStreakSource(file); }
 	else
 	{
-		fprintf(stderr, "vvcompose: load: bad argument: %s\n", arg);
+		fprintf(stderr, "vvcompose ERROR: load: bad argument: %s\n", arg);
 		exit(1);
 	}
 }
@@ -25,10 +25,10 @@ template<> double parse(const char *val)
 	int len;
 	if (sscanf(val, "%lg%n", &res, &len) != 1 || val[len])
 	{
-		fprintf(stderr, "vvcompose: set: bad double value: %s\n", val);
+		fprintf(stderr, "vvcompose ERROR: set: bad double value: %s\n", val);
 		exit(3);
 	}
-	return res;	
+	return res;
 }
 template<> int parse(const char *val)
 {
@@ -36,10 +36,10 @@ template<> int parse(const char *val)
 	int len;
 	if (sscanf(val, "%d%n", &res, &len) != 1 || val[len])
 	{
-		fprintf(stderr, "vvcompose: set: bad int value: %s\n", val);
+		fprintf(stderr, "vvcompose ERROR: set: bad int value: %s\n", val);
 		exit(3);
 	}
-	return res;	
+	return res;
 }
 template<> TTime parse(const char *val)
 {
@@ -52,7 +52,7 @@ void do_set(Space* S, const char *arg, const char *value)
 	unsigned body_no;
 	const char* arg_original = arg;
 
-	#define ALERT() { fprintf(stderr, "vvcompose: set: ambiguous argument: %s\n", arg_original); exit(3); }
+	#define ALERT() { fprintf(stderr, "vvcompose ERROR: set: ambiguous argument: %s\n", arg_original); exit(3); }
 
 	     if ( (len=0, sscanf(arg, "caption%n",         &len), !arg[len]) ) { S->caption = value; }
 	else if ( (len=0, sscanf(arg, "time%n",            &len), !arg[len]) ) { S->Time = parse<TTime>(value); }
@@ -72,7 +72,7 @@ void do_set(Space* S, const char *arg, const char *value)
 	{
 		if (body_no >= S->BodyList.size())
 		{
-			fprintf(stderr, "vvcompose: set: body%02u: no such body\n", body_no);
+			fprintf(stderr, "vvcompose ERROR: set: body%02u: no such body\n", body_no);
 			exit(3);
 		}
 		TBody *body = S->BodyList[body_no].get();
@@ -98,7 +98,7 @@ void do_set(Space* S, const char *arg, const char *value)
 			else if (!strcmp(value, "kutta")) body->boundary_condition = bc_t::kutta;
 			else
 			{
-				fprintf(stderr, "vvcompose: set: bad BC value: %s (valid: steady|kutta)\n", value);
+				fprintf(stderr, "vvcompose ERROR: set: bad BC value: %s (valid: steady|kutta)\n", value);
 				exit(3);
 			}
 		}
@@ -110,7 +110,7 @@ void do_set(Space* S, const char *arg, const char *value)
 			else if (!strcmp(value, "const_w")) body->heat_condition = hc_t::const_w;
 			else
 			{
-				fprintf(stderr, "vvcompose: set: bad HC value: %s (valid: neglect|isolate|const_t|const_w)\n", value);
+				fprintf(stderr, "vvcompose ERROR: set: bad HC value: %s (valid: neglect|isolate|const_t|const_w)\n", value);
 				exit(3);
 			}
 		}
@@ -162,14 +162,14 @@ void do_del(Space *S, const char *arg)
 	{
 		if (body_no >= S->BodyList.size())
 		{
-			fprintf(stderr, "vvcompose: del: no such body \"body%02u\"\n", body_no);
+			fprintf(stderr, "vvcompose ERROR: del: no such body \"body%02u\"\n", body_no);
 			exit(3);
 		}
 		S->BodyList.erase(S->BodyList.begin()+body_no);
 	}
 	else
 	{
-		fprintf(stderr, "vvcompose: del: bad argument: %s\n", arg);
+		fprintf(stderr, "vvcompose ERROR: del: bad argument: %s\n", arg);
 		exit(1);
 	}
 }
@@ -218,15 +218,27 @@ int main(int argc, char *argv[])
 	}
 	while (i<argc)
 	{
-		#define CHECK(x) if (i+x>=argc) {fprintf(stderr, "vvcompose: %s: not enought arguments\n", argv[i]); return 2; }
+		#define CHECK(x) if (i+x>=argc) {fprintf(stderr, "vvcompose ERROR: %s: not enought arguments\n", argv[i]); return 2; }
 		     if (!strcmp(argv[i], "load")) { CHECK(2); do_load(S, argv[i+1], argv[i+2]); i+=3; }
 		else if (!strcmp(argv[i], "set"))  { CHECK(2); do_set(S, argv[i+1], argv[i+2]); i+=3; }
 		else if (!strcmp(argv[i], "del"))  { CHECK(1); do_del(S, argv[i+1]); i+=2; }
-		else if (!strcmp(argv[i], "save")) { CHECK(1); S->Save(argv[i+1]); i+=2; }
+		else if (!strcmp(argv[i], "save"))
+		{
+			CHECK(1);
+
+			#define DT_WARNING(STR) fprintf(stderr, "vvcompose WARNING: " STR " is not divisible by dt\n");
+			if (!S->save_dt.divisibleBy(S->dt)) DT_WARNING("dt_save");
+			if (!S->streak_dt.divisibleBy(S->dt)) DT_WARNING("dt_streak");
+			if (!S->profile_dt.divisibleBy(S->dt)) DT_WARNING("dt_profile");
+			#undef DT_WARNING
+
+			S->Save(argv[i+1]);
+			i+=2;
+		}
 		#undef CHECK
 		else
 		{
-			fprintf(stderr, "vvcompose: bad command: %s\n", argv[i]);
+			fprintf(stderr, "vvcompose ERROR: bad command: %s\n", argv[i]);
 			return 1;
 		}
 	}
