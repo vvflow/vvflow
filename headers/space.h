@@ -46,7 +46,8 @@ class Space
         void ZeroSpeed();
         double InfCirculation;
         TVec gravitation; //gravitational acceleration
-        TTime Time, dt, save_dt, streak_dt, profile_dt;
+        TTime Time, dt;
+        TTime dt_save, dt_streak, dt_profile;
         double Re, Pr, Finish;
 
         void Save(const char* format);

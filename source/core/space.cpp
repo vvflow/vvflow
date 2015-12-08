@@ -35,7 +35,8 @@ Space::Space():
     caption(),
     InfSpeedX(),
     InfSpeedY(),
-    Time(), save_dt(), streak_dt(), profile_dt()
+    Time(), dt(1, 1),
+    dt_save(), dt_streak(), dt_profile()
 {
     // static_assert(std::is_pod<TVec>::value, "TVec is not POD");
     // static_assert(std::is_pod<TObj>::value, "TObj is not POD");
@@ -43,7 +44,6 @@ Space::Space():
     InfCirculation = 0.;
     gravitation = TVec(0., 0.);
     Finish = std::numeric_limits<double>::max();
-    dt = TTime(1, 1);
     Re = Pr = 0.;
     InfMarker = TVec(0., 0.);
 }
@@ -183,9 +183,9 @@ void Space::Save(const char* format)
     attribute_write(fid, "caption", caption);
     attribute_write(fid, "time", Time);
     attribute_write(fid, "dt", dt);
-    attribute_write(fid, "dt_save", save_dt);
-    attribute_write(fid, "dt_streak", streak_dt);
-    attribute_write(fid, "dt_profile", profile_dt);
+    attribute_write(fid, "dt_save", dt_save);
+    attribute_write(fid, "dt_streak", dt_streak);
+    attribute_write(fid, "dt_profile", dt_profile);
     attribute_write(fid, "re", Re);
     attribute_write(fid, "pr", Pr);
     attribute_write(fid, "inf_marker", InfMarker);
@@ -407,9 +407,9 @@ void Space::Load(hid_t fid, std::string *info)
     attribute_read(fid, "caption", caption);
     attribute_read(fid, "time", Time);
     attribute_read(fid, "dt", dt);
-    attribute_read(fid, "dt_save", save_dt);
-    attribute_read(fid, "dt_streak", streak_dt);
-    attribute_read(fid, "dt_profile", profile_dt);
+    attribute_read(fid, "dt_save", dt_save);
+    attribute_read(fid, "dt_streak", dt_streak);
+    attribute_read(fid, "dt_profile", dt_profile);
     attribute_read(fid, "re", Re);
     attribute_read(fid, "pr", Pr);
     attribute_read(fid, "inf_marker", InfMarker);
@@ -509,9 +509,9 @@ void Space::Load_v1_3(const char* fname)
             caption = name;
             fread(&Time, 8, 1, fin);
             fread(&dt, 8, 1, fin);
-            fread(&save_dt, 8, 1, fin);
-            fread(&streak_dt, 8, 1, fin);
-            fread(&profile_dt, 8, 1, fin);
+            fread(&dt_save, 8, 1, fin);
+            fread(&dt_streak, 8, 1, fin);
+            fread(&dt_profile, 8, 1, fin);
             fread(&Re, 8, 1, fin);
             fread(&Pr, 8, 1, fin);
             fread(&InfMarker, 16, 1, fin);
@@ -636,7 +636,14 @@ void Space::CalcForces()
 
 void Space::SaveProfile(const char* fname, TValues vals)
 {
-    if (!Time.divisibleBy(profile_dt)) return;
+    static int warning = 0;
+    if (!warning)
+        fprintf(stderr, "SaveProfile not implemented\n");
+    warning = 1;
+    return;
+
+    // TODO
+    if (!Time.divisibleBy(dt_profile)) return;
     int32_t vals_32=vals, N=0;
     for (auto& lbody: BodyList) { N+= lbody->size(); }
     if (!N) return;
@@ -659,9 +666,9 @@ void Space::SaveProfile(const char* fname, TValues vals)
         {
             buf[0] = latt.corner.x;
             buf[1] = latt.corner.y;
-            buf[2] = latt.Cp/save_dt;
-            buf[3] = latt.Fr/save_dt;
-            buf[4] = latt.Nu/save_dt;
+            buf[2] = latt.Cp/dt_save;
+            buf[3] = latt.Fr/dt_save;
+            buf[4] = latt.Nu/dt_save;
 
             fwrite(buf, 4, 2, fout);
             if (vals_32 & val::Cp) fwrite(buf+2, 4, 1, fout);
