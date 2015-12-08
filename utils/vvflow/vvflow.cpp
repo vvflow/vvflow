@@ -40,6 +40,11 @@ int main(int argc, char** argv)
 	Space *S = new Space();
 	S->Load(argv[1]);
 
+	// error checking
+	#define RAISE(STR) { cerr << "vvflow ERROR: " << STR << endl; return -1; }
+	if (S->Re == 0) RAISE("invalid value re=0");
+	#undef RAISE
+
 	char dir[256]; sprintf(dir, "results_%s", S->caption.c_str()); mkdir(dir, 0777);
 	char profile[256]; sprintf(profile, "profile_%s", S->caption.c_str());
 	char sensors_output[256]; sprintf(sensors_output, "velocity_%s", S->caption.c_str());
