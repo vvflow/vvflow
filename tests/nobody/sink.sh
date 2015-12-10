@@ -25,7 +25,11 @@ vvcompose \
 vvflow sink.h5 \
 || raise_error "vvflow failed"
 
-vvplot results_sink/001000.h5 -x -1.5 1.5 --size 400x400 -i $1/sink.png \
+LAST=$(ls results_sink/*.h5 | tail -n1)
+
+vvplot $LAST -x -1.5 1.5 --size 400x400 -i $1/nobody_sink.png \
 || raise_error "vvplot failed"
+
+cp $LAST $1/nobody_sink.h5
 
 rm -rf $TMP
