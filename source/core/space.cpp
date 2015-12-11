@@ -310,10 +310,13 @@ herr_t dataset_read_body(hid_t g_id, const char* name, const H5L_info_t*, void *
     double heat_const;
     attribute_read(dataset, "simplified_dataset", simplified_dataset);
 
+    // simplified_dataset по хорошему должен называться dataset_version,
+    // но исторически я теперь привязан именно к этому названию.
     // Предыдущая версия с HDF форматом использовала H5T_ENUM, который сейчас не читается
-    // Но т.к. simplified dataset == 0 я никогда не считал, то отныне 0 будет означать
-    // старую версию. Новая идет с номером 2.
-    // А нормальный неупрощенный датасет я тк и не сделал (пока)
+    // и в любом случае отвечает 0. К моему счастью я сохранял только один формат,
+    // поэтому отныне 0 будет означать старую версию.
+    // Новая версия упрощенного датасета имеет номер 2.
+    // Новая версия полноценного датасета имеет номер 3.
     if (simplified_dataset < 2)
     {
         attribute_read(dataset, "general_bc", general_slip);
@@ -808,24 +811,31 @@ int Space::LoadSource(const char* filename)
 
 int Space::LoadBody(const char* filename)
 {
-    std::shared_ptr<TBody> body(new TBody());
+    int err = 0;
+    auto body = std::make_shared<TBody>();
+    TAtt att;
 
     FILE *fin = fopen(filename, "r");
-    if (!fin) { cerr << "No file called " << filename << endl; return -1; }
+    if (!fin) goto fail;
 
-    TAtt att;
-    // FIXME
-    // att.body = body;
-    att.heat_const = 0;
-
-    //FIXME seek to end of line
-    while (fscanf(fin, "%lf %lf", &att.corner.x, &att.corner.y)==2)
+    char str[128];
+    while (!err && !feof(fin) && !ferror(fin) && fgets(str, sizeof(str), fin))
     {
+        err |= sscanf(str, "%lf %lf %u", &att.corner.x, &att.corner.y, &att.slip) < 2;
         body->alist.push_back(att);
-        while ( fgetc(fin)!='\n' && !feof(fin) ) {}
     }
 
+    err |= ferror(fin);
     fclose(fin);
+
+    if (err)
+    {
+fail:
+        errno = errno?:EINVAL;
+        perror("Error parsing body from file");
+        return -1;
+    }
+
     BodyList.push_back(body);
     body->doUpdateSegments();
     body->doFillProperties();
