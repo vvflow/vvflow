@@ -186,6 +186,8 @@ void Space::dataset_write_body(const char* name, const TBody& body)
     H5ASSERT(H5Dwrite(file_dataset, H5T_NATIVE_DOUBLE, H5S_ALL, file_dataspace, H5P_DEFAULT, att_array), "H5Dwrite");
     H5ASSERT(H5Dclose(file_dataset), "H5Dclose");
     free(att_array);
+    free(slip_array);
+    free(heat_array);
 }
 
 void Space::Save(const char* format)
@@ -326,6 +328,10 @@ herr_t dataset_read_body(hid_t g_id, const char* name, const H5L_info_t*, void *
     else
         body->root_body.reset();
 
+    struct ATT *att_array = (struct ATT*)malloc(dims[0] * sizeof(struct ATT));
+    uint32_t *slip_array = NULL;
+    H5ASSERT(H5Dread(dataset, H5T_NATIVE_DOUBLE, H5S_ALL, file_dataspace, H5P_DEFAULT, att_array), "H5Dread");
+
     uint32_t simplified_dataset;
     int32_t general_slip;
     double heat_const;
@@ -365,25 +371,33 @@ herr_t dataset_read_body(hid_t g_id, const char* name, const H5L_info_t*, void *
     }
     else if (simplified_dataset == 2)
     {
-        attribute_read(dataset, "general_slip", general_slip);
-        attribute_read(dataset, "heat_const", heat_const);
+        if (H5Aexists(dataset, "slip"))
+        {
+            slip_array = (uint32_t*)malloc(dims[0] * sizeof(uint32_t));
+            hid_t aid = H5Aopen(dataset, "slip", H5P_DEFAULT);
+            H5Aread(aid, H5T_NATIVE_UINT32, slip_array);
+            H5Aclose(aid);
+        }
+        else
+        {
+            attribute_read(dataset, "general_slip", general_slip);
+        }
+        attribute_read(dataset, "general_heat_const", heat_const);
         attribute_read(dataset, "boundary_condition", body->boundary_condition);
         attribute_read(dataset, "special_segment_no", body->special_segment_no);
         attribute_read(dataset, "heat_condition", body->heat_condition);
     }
 
-    struct ATT *mem = (struct ATT*)malloc(sizeof(struct ATT)*dims[0]);
-    H5ASSERT(H5Dread(dataset, H5T_NATIVE_DOUBLE, H5S_ALL, file_dataspace, H5P_DEFAULT, mem), "H5Dread");
 
     for(hsize_t i=0; i<dims[0]; i++)
     {
         TAtt latt; // latt.body = body;
-        latt.corner.x = mem[i].x;
-        latt.corner.y = mem[i].y;
-        latt.g = mem[i].g;
-        latt.gsum = mem[i].gsum;
+        latt.corner.x = att_array[i].x;
+        latt.corner.y = att_array[i].y;
+        latt.g = att_array[i].g;
+        latt.gsum = att_array[i].gsum;
 
-        latt.slip = general_slip;
+        latt.slip = slip_array ? slip_array[i] : general_slip;
         latt.heat_const = heat_const;
         body->alist.push_back(latt);
     }
@@ -392,7 +406,8 @@ herr_t dataset_read_body(hid_t g_id, const char* name, const H5L_info_t*, void *
     body->doFillProperties();
 
     H5ASSERT(H5Dclose(dataset), "H5Dclose");
-    free(mem);
+    free(att_array);
+    free(slip_array);
     S->BodyList.push_back(body);
     return 0;
 }
