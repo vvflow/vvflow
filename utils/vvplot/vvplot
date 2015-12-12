@@ -339,7 +339,7 @@ if args.plot_body:
     for b in bodies:
         gpw("""{plot} '< libvvplot -L {fin_name} {}'""", b['name'])
         gpw(""" binary format='%2double%*2double'""")
-        gpw(""" u 1:2 w @{}""", "body_clear" if args.blankbody-1==bodies.index(b) else "body_style")
+        gpw(""" u 1:2 w @{}""", "body_clear" if (args.blankbody-1==bodies.index(b)) else "body_style")
         if args.plot_spring:
             p1 = b['holder_position']
             dp = b['delta_position']
