@@ -96,21 +96,25 @@ void Space::dataset_write_body(const char* name, const TBody& body)
 
     float heat_const = body.alist.front().heat_const;
     uint32_t general_slip = body.alist.front().slip;
-    bool can_simplify = true;
+    bool can_simplify_slip = true;
+    bool can_simplify_heat = true;
 
     hsize_t dims[2] = {body.size(), 4};
-    struct ATT *mem = (struct ATT*)malloc(sizeof(struct ATT)*dims[0]);
+    struct ATT *att_array = (struct ATT*)malloc(dims[0] * sizeof(struct ATT));
+    uint32_t *slip_array = (uint32_t*)malloc(dims[0] * sizeof(uint32_t));
+    float *heat_array = (float*)malloc(dims[0] * sizeof(float));
     for(hsize_t i=0; i<dims[0]; i++)
     {
         TAtt att = body.alist[i];
-        mem[i].x = att.corner.x;
-        mem[i].y = att.corner.y;
-        mem[i].g = att.g;
-        mem[i].gsum = att.gsum;
+        att_array[i].x = att.corner.x;
+        att_array[i].y = att.corner.y;
+        att_array[i].g = att.g;
+        att_array[i].gsum = att.gsum;
+        slip_array[i] = att.slip;
+        heat_array[i] = att.heat_const;
 
-        if (att.heat_const != heat_const ||
-                att.slip != general_slip)
-            can_simplify = false;
+        can_simplify_slip &= (att.slip == general_slip);
+        can_simplify_heat &= (att.heat_const == heat_const);
     }
 
     hsize_t chunkdims[2] = {std::min<hsize_t>(512, dims[0]), 4};
@@ -124,15 +128,32 @@ void Space::dataset_write_body(const char* name, const TBody& body)
     hid_t file_dataset = H5Dcreate2(fid, name, H5T_NATIVE_DOUBLE, file_dataspace, H5P_DEFAULT, prop, H5P_DEFAULT);
     H5ASSERT(file_dataset, "H5Dcreate");
 
-    if (!can_simplify)
+    if (!can_simplify_slip)
     {
-        fprintf(stderr, "Can not save simplified %s\n", get_body_name(&body).c_str());
+        hid_t slip_dataspace = H5Screate_simple(1, dims, dims);
+        H5ASSERT(slip_dataspace, "H5Screate_simple");
+
+        hid_t aid = H5Acreate(file_dataset, "slip", H5T_NATIVE_UINT32, slip_dataspace, H5P_DEFAULT, H5P_DEFAULT);
+        if (H5Awrite(aid, H5T_NATIVE_UINT32, slip_array)<0) return;
+        if (H5Aclose(aid)<0) return;
+    }
+    else
+    {
+        attribute_write(file_dataset, "general_slip", general_slip);
+    }
+
+    if (!can_simplify_heat)
+    {
+        fprintf(stderr, "Can not save simplified heat in %s\n", get_body_name(&body).c_str());
         exit(1);
     }
-    attribute_write(file_dataset, "simplified_dataset", uint32_t(2));
-    attribute_write(file_dataset, "general_slip", general_slip);
-    attribute_write(file_dataset, "heat_const", double(heat_const));
+    else
+    {
+        attribute_write(file_dataset, "general_heat_const", double(heat_const));
+    }
 
+    attribute_write(file_dataset, "simplified_dataset", uint32_t(2));
+        
     if (!body.root_body.expired())
     {
         auto root_body = body.root_body.lock();
@@ -162,9 +183,9 @@ void Space::dataset_write_body(const char* name, const TBody& body)
     attribute_write(file_dataset, "special_segment_no", body.special_segment_no);
     attribute_write(file_dataset, "heat_condition", body.heat_condition);
 
-    H5ASSERT(H5Dwrite(file_dataset, H5T_NATIVE_DOUBLE, H5S_ALL, file_dataspace, H5P_DEFAULT, mem), "H5Dwrite");
+    H5ASSERT(H5Dwrite(file_dataset, H5T_NATIVE_DOUBLE, H5S_ALL, file_dataspace, H5P_DEFAULT, att_array), "H5Dwrite");
     H5ASSERT(H5Dclose(file_dataset), "H5Dclose");
-    free(mem);
+    free(att_array);
 }
 
 void Space::Save(const char* format)
