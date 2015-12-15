@@ -1,11 +1,4 @@
-PREFIX = ~/.local
-
-ifeq ($(CXX),icpc)
-        CXXFLAGS+= -debug all  -O3 -Wall -openmp -mkl=parallel
-        AR = xiar
-else
-        CXXFLAGS+= -O3 -Wall -fopenmp
-endif
+include ../../vvhd.mk
 
 all: vvcompose
 
@@ -15,15 +8,13 @@ vvcompose: vvcompose.cpp
 clean:
 	rm -f vvcompose
 
-install: | $(PREFIX)/bin
-	cp vvcompose $(PREFIX)/bin/
-	bash -c "source completion_vvcompose; _install_vvcompose_completion"
-
-$(PREFIX)/bin:
-	mkdir -p $@
+install: all | $(PREFIX)/bin $(PREFIX)/share/vvhd/bash_completion.d
+	cp vvcompose -t $(PREFIX)/bin/
+	cp completion_vvcompose -t $(PREFIX)/share/vvhd/bash_completion.d
+ifeq ($(SHELL),/bin/bash)
+	bash -c "source completion_vvcompose"
+endif
 
 uninstall:
 	rm -f $(PREFIX)/bin/vvcompose
-	bash -c "source completion_vvcompose; _uninstall_vvcompose_completion"
-
-
+	rm -f $(PREFIX)/share/vvhd

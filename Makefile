@@ -47,7 +47,6 @@ uninstall:
 	rm -f $(patsubst headers/%, $(PREFIX)/include/%, $(wildcard headers/*.h))
 	rmdir $(PREFIX)/lib/ $(PREFIX)/include/ $(PREFIX)/ --ignore-fail-on-non-empty
 
-.PHONY: all clean install uninstall
 #------------------------------------------------#
 #                     RULES                      #
 #------------------------------------------------#
@@ -68,8 +67,5 @@ bin/libvvhd.so: $(patsubst %, bin/%.o, $(core_objects) $(modules_objects))
 	$(CXX) $(LDFLAGS) -shared -fPIC $(LDLIBS) -Wl,-soname,libvvhd.so -o $@ $^
 
 bin/:
-	mkdir $@ -p
-
-$(PREFIX)/%:
 	mkdir $@ -p
 
