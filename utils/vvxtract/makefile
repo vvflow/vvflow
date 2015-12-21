@@ -1,27 +1,21 @@
-PREFIX = ~/.local
-
-ifeq ($(CXX),icpc)
-        CXXFLAGS+= -O3 -Wall -openmp -mkl=parallel
-        AR = xiar
-else
-        CXXFLAGS+= -O3 -Wall -fopenmp
-endif
+include ../../vvhd.mk
 
 all: vvxtract
 
-vvxtract: vvxtract.cpp
-	$(CXX) $(CXXFLAGS) $^ -o $@ -std=c++0x -Wl,-Bstatic -lvvhd -Wl,-Bdynamic -lhdf5 -lmatheval
+CXXFLAGS += -I../../headers
+LDFLAGS += -L../../bin
+vvxtract: vvxtract.cpp ../../bin/libvvhd.so
+	$(CXX) $(CXXFLAGS) -std=c++0x $(LDFLAGS) -lvvhd $< -o ./$@
 
 clean:
 	rm -f vvxtract
 
-install: | $(PREFIX)/bin
-	cp vvxtract h5xtract $(PREFIX)/bin/
-
-$(PREFIX)/bin:
-	mkdir -p $@
+install: all | $(PREFIX)/bin
+	cp vvxtract -t $(PREFIX)/bin/
+	cp h5xtract -t $(PREFIX)/bin/
 
 uninstall:
 	rm -f $(PREFIX)/bin/vvxtract
+	rm -f $(PREFIX)/bin/h5xtract
 
 

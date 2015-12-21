@@ -1,29 +1,19 @@
-PREFIX = ~/.local
-
-ifeq ($(CXX),icpc)
-	CXXFLAGS+= -debug all  -O3 -Wall -openmp -mkl=parallel
-	AR = xiar
-	LDFLAGS =
-else
-	CXXFLAGS+= -O3 -Wall -fopenmp
-	LDFLAGS = -llapack
-endif
+include ../../vvhd.mk
 
 all: vvflow
 
-vvflow: vvflow.cpp
-	$(CXX) $(CXXFLAGS) $^ -o $@ -std=c++0x -Wl,-Bstatic -lvvhd -Wl,-Bdynamic -lhdf5 -lmatheval $(LDFLAGS)
+CXXFLAGS += -I../../headers
+LDFLAGS += -L../../bin
+vvflow: vvflow.cpp  ../../bin/libvvhd.so
+	$(CXX) $(CXXFLAGS) -std=c++0x $(LDFLAGS) -lvvhd $< -o ./$@
 
 clean:
 	rm -f vvflow
 
-install: | $(PREFIX)/bin
-	cp vvflow calc.py $(PREFIX)/bin/
-
-$(PREFIX)/bin:
-	mkdir -p $@
+install: all | $(PREFIX)/bin
+	cp vvflow -t $(PREFIX)/bin/
 
 uninstall:
-	rm -f $(PREFIX)/bin/vvflow $(PREFIX)/bin/calc.py
+	rm -f $(PREFIX)/bin/vvflow
 
 

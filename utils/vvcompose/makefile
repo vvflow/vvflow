@@ -2,8 +2,10 @@ include ../../vvhd.mk
 
 all: vvcompose
 
-vvcompose: vvcompose.cpp
-	$(CXX) $(CXXFLAGS) $^ -o $@ -std=c++0x -Wl,-Bstatic -lvvhd -Wl,-Bdynamic -lhdf5 -lmatheval
+CXXFLAGS += -I../../headers
+LDFLAGS += -L../../bin
+vvcompose: vvcompose.cpp ../../bin/libvvhd.so
+	$(CXX) $(CXXFLAGS) -std=c++0x $(LDFLAGS) -lvvhd $< -o ./$@
 
 clean:
 	rm -f vvcompose
@@ -17,4 +19,4 @@ endif
 
 uninstall:
 	rm -f $(PREFIX)/bin/vvcompose
-	rm -f $(PREFIX)/share/vvhd
+	rm -f $(PREFIX)/share/vvhd/bash_completion.d/completion_vvcompose
