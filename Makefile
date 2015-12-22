@@ -21,8 +21,8 @@ include vvhd.mk
 core_objects    := space body shellscript sorted_tree stepdata
 modules_objects := flowmove epsfast diffusivefast matrix convectivefast
 
-CPATH           += headers/
-LIBRARY_PATH    += bin/
+CPATH           := headers/:$(CPATH)
+LIBRARY_PATH    := bin/:$(CPATH)
 GITINFO         := -DDEF_GITINFO="\"$(shell git log -1 | head -n1 | cut -d" " -f2)\""
 GITDIFF         := -DDEF_GITDIFF="\"$(shell git diff --name-only)\""
 export CPATH
@@ -50,11 +50,20 @@ install: libvvhd_install $(TARGETS_INSTALL) | $(PREFIX)/lib/
 libvvhd_install:
 	cp ./bin/libvvhd.so -t $(PREFIX)/lib/
 
+.PHONY: devinstall
+devinstall: | $(PREFIX)/lib/ $(PREFIX)/include/
+	cp ./bin/libvvhd.a -t $(PREFIX)/lib/
+	cp ./headers/*.h -t $(PREFIX)/include/
+
+
 uninstall: libvvhd_uninstall $(TARGETS_UNINSTALL)
 	rm -rf $(PREFIX)/share/vvhd/
 libvvhd_uninstall:
+	rm -f $(PREFIX)/lib/libvvhd.a
 	rm -f $(PREFIX)/lib/libvvhd.so
+	rm -f $(patsubst headers/%, $(PREFIX)/include/%, $(wildcard headers/*.h))
 	rmdir --ignore-fail-on-non-empty $(PREFIX)/lib/ || true
+	rmdir --ignore-fail-on-non-empty $(PREFIX)/include/ || true
 
 #------------------------------------------------#
 #                     RULES                      #
