@@ -46,8 +46,10 @@ all: bin/libvvhd.a bin/libvvhd.so $(TARGETS_ALL)
 clean:
 	rm -rf bin
 
-install: libvvhd_install $(TARGETS_INSTALL) | $(PREFIX)/lib/
-libvvhd_install:
+install: libvvhd_install $(TARGETS_INSTALL) | $(PREFIX)/share/vvhd/
+	echo 'for d in $(PREFIX)/share/vvhd/bash_completion.d/*; do . $$d; done' \
+	> $(PREFIX)/share/vvhd/bash_completion
+libvvhd_install: | $(PREFIX)/lib/
 	cp ./bin/libvvhd.so -t $(PREFIX)/lib/
 
 .PHONY: devinstall
