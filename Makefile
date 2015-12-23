@@ -9,51 +9,63 @@
 #
 # Usage:
 # make [optimization="-O3 -pg"] [warnings="-Wall"]
-# make [INSTALLDIR="~/.libVVHDinstall"] install
+# make [PREFIX="~/.libVVHDinstall"] install
 #
 
 #------------------------------------------------#
 #                   VARIABLES                    #
 #------------------------------------------------#
 
-ifeq ($(CXX),icpc)
-        CXXFLAGS+= -g -debug all -O3 -Wall -openmp -mkl
-        LDFLAGS+= -mkl=parallel
-        AR = xiar
-else
-        CXXFLAGS+= -O3 -Wall -fopenmp
-endif
+include vvhd.mk
 
-parts 	:= core modules
-core_objects 	:= space body shellscript sorted_tree stepdata
+core_objects    := space body shellscript sorted_tree stepdata
 modules_objects := flowmove epsfast diffusivefast matrix convectivefast
-VPATH := $(addprefix source/, $(parts) ) 
-# VPATH is special make var 
 
-INCLUDE 		:= headers/
-
-INSTALLDIR 		:= $(HOME)/.local
+CPATH           := headers/:$(CPATH)
+LIBRARY_PATH    := bin/:$(CPATH)
 GITINFO         := -DDEF_GITINFO="\"$(shell git log -1 | head -n1 | cut -d" " -f2)\""
-GITDIFF 		:= -DDEF_GITDIFF="\"$(shell git diff --name-only)\""
+GITDIFF         := -DDEF_GITDIFF="\"$(shell git diff --name-only)\""
+export CPATH
+export LIBRARY_PATH
 
 #------------------------------------------------#
 #                    TARGETS                     #
 #------------------------------------------------#
 
+# DEPENDENCIES
+VPATH           += $(addprefix utils/, vvcompose vvxtract vvflow vvplot scripts)
+include utils/vvcompose/make.mk
+include utils/vvxtract/make.mk
+include utils/vvflow/make.mk
+include utils/vvplot/make.mk
+include utils/scripts/make.mk
+# ---
 
-all: bin/libvvhd.a bin/libvvhd.so
+all: bin/libvvhd.a bin/libvvhd.so $(TARGETS_ALL)
 
 clean:
 	rm -rf bin
 
-install: | $(INSTALLDIR)/lib/ $(INSTALLDIR)/include/
-	cp bin/libvvhd.a bin/libvvhd.so -t $(INSTALLDIR)/lib/
-	cp headers/*.h -t $(INSTALLDIR)/include/
+install: libvvhd_install $(TARGETS_INSTALL) | $(PREFIX)/share/vvhd/
+	echo 'for d in $(PREFIX)/share/vvhd/bash_completion.d/*; do . $$d; done' \
+	> $(PREFIX)/share/vvhd/bash_completion
+libvvhd_install: | $(PREFIX)/lib/
+	cp ./bin/libvvhd.so -t $(PREFIX)/lib/
 
-uninstall:
-	rm -f $(patsubst %, $(INSTALLDIR)/lib/libvvhd.%, a so)
-	rm -f $(patsubst headers/%, $(INSTALLDIR)/include/%, $(wildcard headers/*.h))
-	rmdir $(INSTALLDIR)/lib/ $(INSTALLDIR)/include/ $(INSTALLDIR)/ --ignore-fail-on-non-empty
+.PHONY: devinstall
+devinstall: | $(PREFIX)/lib/ $(PREFIX)/include/
+	cp ./bin/libvvhd.a -t $(PREFIX)/lib/
+	cp ./headers/*.h -t $(PREFIX)/include/
+
+
+uninstall: libvvhd_uninstall $(TARGETS_UNINSTALL)
+	rm -rf $(PREFIX)/share/vvhd/
+libvvhd_uninstall:
+	rm -f $(PREFIX)/lib/libvvhd.a
+	rm -f $(PREFIX)/lib/libvvhd.so
+	rm -f $(patsubst headers/%, $(PREFIX)/include/%, $(wildcard headers/*.h))
+	rmdir --ignore-fail-on-non-empty $(PREFIX)/lib/ || true
+	rmdir --ignore-fail-on-non-empty $(PREFIX)/include/ || true
 
 test:
 	@mkdir -p test_results
@@ -68,25 +80,21 @@ test:
 #                     RULES                      #
 #------------------------------------------------#
 
-bin/%.o: %.cpp headers/%.h headers/elementary.h | bin/
-	$(CXX) $(CXXFLAGS) $< -o $@ $(addprefix -I, $(INCLUDE)) -c -std=c++0x -fPIC
+bin/:
+	@mkdir -p $@
+
+vpath %.cpp source/core:source/modules
+bin/%.o: %.cpp $(wildcard headers/*.h) | bin/
+	$(CXX) $(CXXFLAGS) -fPIC -c $< -o ./$@
 
 bin/space.o: space.cpp headers/space.h headers/elementary.h | bin/
-	$(CXX) $(CXXFLAGS) $< -o $@ \
-	$(addprefix -I, $(INCLUDE)) -c -std=c++0x -fPIC \
+	$(CXX) $(CXXFLAGS) -fPIC -c $< -o ./$@ \
 	$(GITINFO) \
 	$(GITDIFF)
 
 bin/libvvhd.a: $(patsubst %, bin/%.o, $(core_objects) $(modules_objects))
-	$(AR) ruc $@ $^
-	ranlib $@
+	$(AR) Drc ./$@ $^
+	ranlib ./$@
 
 bin/libvvhd.so: $(patsubst %, bin/%.o, $(core_objects) $(modules_objects))
-	$(CXX) $(LDFLAGS) -shared -fPIC -Wl,-soname,libvvhd.so -o $@ $^
-
-bin/:
-	mkdir $@ -p
-
-$(INSTALLDIR)/%:
-	mkdir $@ -p
-
+	$(CXX) $(LDFLAGS) -shared -fPIC $(LDLIBS) -Wl,-soname,libvvhd.so $^ -o ./$@

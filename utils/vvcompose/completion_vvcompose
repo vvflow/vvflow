@@ -32,17 +32,4 @@ _vvcompose(){
 	return 0
 }
 
-bash_completion='for i in $(ls ~/.bash_completion.d/); do . ~/.bash_completion.d/$i; done'
-
-_install_vvcompose_completion(){
-	[[ ! -e ~/.bash_completion ]] && echo "$bash_completion" > ~/.bash_completion
-	[[ ! -e ~/.bash_completion.d/ ]] && mkdir ~/.bash_completion.d/
-	cp completion_vvcompose ~/.bash_completion.d/vvcompose
-}
-
-_uninstall_vvcompose_completion(){
-	rm -f ~/.bash_completion.d/vvcompose
-}
-
 complete -F _vvcompose -o filenames vvcompose
-
