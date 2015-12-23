@@ -22,7 +22,7 @@ core_objects    := space body shellscript sorted_tree stepdata
 modules_objects := flowmove epsfast diffusivefast matrix convectivefast
 
 CPATH           := headers/:$(CPATH)
-LIBRARY_PATH    := bin/:$(CPATH)
+LIBRARY_PATH    := bin/:$(LIBRARY_PATH)
 GITINFO         := -DDEF_GITINFO="\"$(shell git log -1 | head -n1 | cut -d" " -f2)\""
 GITDIFF         := -DDEF_GITDIFF="\"$(shell git diff --name-only)\""
 export CPATH
@@ -44,7 +44,7 @@ include utils/scripts/make.mk
 all: bin/libvvhd.a bin/libvvhd.so $(TARGETS_ALL)
 
 clean:
-	rm -rf bin
+	rm -rf ./bin
 
 install: libvvhd_install $(TARGETS_INSTALL) | $(PREFIX)/share/vvhd/
 	echo 'for d in $(PREFIX)/share/vvhd/bash_completion.d/*; do . $$d; done' \
@@ -97,4 +97,4 @@ bin/libvvhd.a: $(patsubst %, bin/%.o, $(core_objects) $(modules_objects))
 	ranlib ./$@
 
 bin/libvvhd.so: $(patsubst %, bin/%.o, $(core_objects) $(modules_objects))
-	$(CXX) $(LDFLAGS) -shared -fPIC $(LDLIBS) -Wl,-soname,libvvhd.so $^ -o ./$@
+	$(CXX) $(LDFLAGS) -shared -fPIC $^ -Wl,-soname,libvvhd.so $(LDLIBS) -o ./$@
