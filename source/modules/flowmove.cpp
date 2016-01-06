@@ -55,6 +55,14 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
         deltaHolder[lbody.get()] = dHolder;
         deltaBody[lbody.get()] = dBody;
     }
+
+    // пробегаем в цикле все тела А
+    // если у тела скорость ноль - пропускаем
+    // пробегаем в цикле все отрезки
+    // пробегаем в цикле все тела Б
+    // если тело А == Б - пропускаем
+    // если вершина тела А после этого шага залезет внутрь тела Б - устраиваем соударение
+
     for (auto& lbody: S->BodyList) lbody->move(deltaHolder[lbody.get()], deltaBody[lbody.get()]);
     // Move vortexes, heat, ink
     for (auto& lobj: S->VortexList) lobj.r += lobj.v * dt;

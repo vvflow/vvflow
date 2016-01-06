@@ -27,6 +27,9 @@ TBody::TBody():
     special_segment_no = 0;
     boundary_condition = bc_t::steady;
     heat_condition = hc_t::neglect;
+
+    double nan = std::numeric_limits<double>::quiet_NaN();
+    collision_min = collision_max = TVec3D(nan, nan, nan);
 }
 
 TVec3D TBody::speed(double t) const

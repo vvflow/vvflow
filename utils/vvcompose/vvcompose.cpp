@@ -85,6 +85,8 @@ void do_set(Space* S, const char *arg, const char *value)
 		TVec3D move_vec = TVec3D();
 		/**/ if ( (len=0, sscanf(arg, "holder_position.%c%n", &c, &len), !arg[len]) ) { vec = &body->holder; }
 		else if ( (len=0, sscanf(arg, "delta_position.%c%n",  &c, &len), !arg[len]) ) { vec = &body->dpos; }
+		else if ( (len=0, sscanf(arg, "collision_min.%c%n",   &c, &len), !arg[len]) ) { vec = &body->collision_min; }
+		else if ( (len=0, sscanf(arg, "collision_max.%c%n",   &c, &len), !arg[len]) ) { vec = &body->collision_max; }
 		else if ( (len=0, sscanf(arg, "label%n",                  &len), !arg[len]) ) { body->label = value; }
 		else if ( (len=0, sscanf(arg, "move.%c%n",            &c, &len), !arg[len]) ) { vec = &move_vec; }
 		else if ( (len=0, sscanf(arg, "spring_const.%c%n",    &c, &len), !arg[len]) ) { vec = &body->kspring; }
@@ -224,6 +226,9 @@ int main(int argc, char *argv[])
 		printf("bodyXX.boundary_condition        steady|kutta\n");
 		printf("bodyXX.heat_condition            neglect|isolate|const_t|const_w\n");
 		printf("bodyXX.heat_const                DOUBLE\n");
+
+		printf("bodyXX.collision_min.{x|y|o|d}   DOUBLE\n");
+		printf("bodyXX.collision_max.{x|y|o|d}   DOUBLE\n");
 		return 0;
 	}
 	while (i<argc)

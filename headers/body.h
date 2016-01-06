@@ -72,6 +72,9 @@ class TBody
         TVec3D speed_slae;
         TVec3D speed_slae_prev;
 
+        TVec3D collision_min; // workaround for collisions
+        TVec3D collision_max;
+
         //double kx, ky, ka;
         double density; //in doc rho_b/rho_0
         int32_t special_segment_no;
