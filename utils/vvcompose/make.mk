@@ -2,8 +2,9 @@ TARGETS_ALL       += bin/vvcompose
 TARGETS_INSTALL   += vvcompose_install vvcompose_completion_install
 TARGETS_UNINSTALL += vvcompose_uninstall
 
-bin/vvcompose: vvcompose.cpp bin/libvvhd.so
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) -lvvhd $< -o ./$@
+bin/vvcompose: bin/libvvhd.so
+bin/vvcompose: vvcompose.cpp
+	$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) -lvvhd -o ./$@
 
 vvcompose_install: | $(PREFIX)/bin
 	cp ./bin/vvcompose -t $(PREFIX)/bin/
