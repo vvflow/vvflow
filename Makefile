@@ -32,6 +32,8 @@ export LIBRARY_PATH
 #                    TARGETS                     #
 #------------------------------------------------#
 
+all: bin/libvvhd.a bin/libvvhd.so
+
 # DEPENDENCIES
 VPATH           += $(addprefix utils/, vvcompose vvxtract vvflow vvplot scripts)
 include utils/vvcompose/make.mk
@@ -39,9 +41,8 @@ include utils/vvxtract/make.mk
 include utils/vvflow/make.mk
 include utils/vvplot/make.mk
 include utils/scripts/make.mk
+all: $(TARGETS_ALL)
 # ---
-
-all: bin/libvvhd.a bin/libvvhd.so $(TARGETS_ALL)
 
 clean:
 	rm -rf ./bin
