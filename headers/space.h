@@ -14,14 +14,6 @@ class TBody;
 using std::vector;
 using std::shared_ptr;
 
-typedef const char TValues;
-namespace val
-{
-    TValues Cp = 1;
-    TValues Fr = 2;
-    TValues Nu = 4;
-}
-
 class Space
 {
     public:
@@ -55,7 +47,6 @@ class Space
         void Load(int fid, std::string *info = NULL);
         FILE* OpenFile(const char* format);
         void CalcForces();
-        void SaveProfile(const char* filename, TValues vals);
         void ZeroForces(); //zero all att-> Cp, Fr, Nu, gsum, fric, hsum variables.
 
         /***************** SAVE/LOAD ******************/

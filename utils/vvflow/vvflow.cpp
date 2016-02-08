@@ -46,9 +46,7 @@ int main(int argc, char** argv)
 	#undef RAISE
 
 	char dir[256]; sprintf(dir, "results_%s", S->caption.c_str()); mkdir(dir, 0777);
-	char profile[256]; sprintf(profile, "profile_%s", S->caption.c_str());
 	char sensors_output[256]; sprintf(sensors_output, "velocity_%s", S->caption.c_str());
-
 
 	Stepdata *stepdata = new Stepdata(S);
 	stepdata->create("stepdata_%s.h5");
@@ -104,7 +102,6 @@ int main(int argc, char** argv)
 		dbg(fm.StreakShed());
 
 		dbg(S->CalcForces());
-		if (S->Time > 0) S->SaveProfile(profile, val::Cp | val::Fr | val::Nu);
 		stepdata->write();
 		/*fprintf(f, "%-10g \t", double(S->Time));
 		const_for(S->BodyList, llbody)

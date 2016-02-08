@@ -68,7 +68,7 @@ int Stepdata::create_dataset(int loc_id, const char *name, unsigned cols)
     hsize_t dims[2] = {0, cols};
     hsize_t maxdims[2] = {H5S_UNLIMITED, cols};
     hid_t time_s = H5Screate_simple(2, dims, maxdims);
-    hid_t dataset = H5Dcreate2(loc_id, name, H5T_NATIVE_DOUBLE, time_s, H5P_DEFAULT, prop, H5P_DEFAULT);
+    hid_t dataset = H5Dcreate2(loc_id, name, H5T_NATIVE_FLOAT, time_s, H5P_DEFAULT, prop, H5P_DEFAULT);
     H5Sclose(time_s);
     H5Pclose(prop);
 
@@ -90,14 +90,16 @@ void Stepdata::create(const char *format)
     attribute_write("git_diff", S->getGitDiff());
 
     int blsize = S->BodyList.size();
-    born_d_hid = new int[blsize];
-    hydro_d_hid = new int[blsize];
-    holder_d_hid = new int[blsize];
-    friction_d_hid = new int[blsize];
+    force_born_d_hid = new int[blsize];
+    force_hydro_d_hid = new int[blsize];
+    force_holder_d_hid = new int[blsize];
+    force_friction_d_hid = new int[blsize];
     nusselt_d_hid = new int[blsize];
     position_d_hid = new int[blsize];
     spring_d_hid = new int[blsize];
     speed_d_hid = new int[blsize];
+    pressure_d_hid = new int[blsize];
+    friction_d_hid = new int[blsize];
 
     time_d_hid = create_dataset(file_hid, "time", 1);
     for (auto& lbody: S->BodyList)
@@ -105,14 +107,16 @@ void Stepdata::create(const char *format)
         int body_n = S->get_body_index(lbody.get());
         hid_t body_g_hid = H5Gcreate2(file_hid, S->get_body_name(lbody.get()).c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
-        born_d_hid[body_n] = create_dataset(body_g_hid, "force_born", 3);
-        hydro_d_hid[body_n] = create_dataset(body_g_hid, "force_hydro", 3);
-        holder_d_hid[body_n] = create_dataset(body_g_hid, "force_holder", 3);
-        friction_d_hid[body_n] = create_dataset(body_g_hid, "friction", 3);
+        force_born_d_hid[body_n] = create_dataset(body_g_hid, "force_born", 3);
+        force_hydro_d_hid[body_n] = create_dataset(body_g_hid, "force_hydro", 3);
+        force_holder_d_hid[body_n] = create_dataset(body_g_hid, "force_holder", 3);
+        force_friction_d_hid[body_n] = create_dataset(body_g_hid, "force_friction", 3);
         nusselt_d_hid[body_n] = -1; //create_dataset(body_g_hid, "nusselt", 1);
         position_d_hid[body_n] = create_dataset(body_g_hid, "holder_position", 3);
         spring_d_hid[body_n] = create_dataset(body_g_hid, "delta_position", 3);
         speed_d_hid[body_n] = create_dataset(body_g_hid, "speed_slae", 3);
+        pressure_d_hid[body_n] = create_dataset(body_g_hid, "pressure", lbody->size());
+        friction_d_hid[body_n] = create_dataset(body_g_hid, "friction", lbody->size());
 
         H5Gclose(body_g_hid);
     }
@@ -127,14 +131,26 @@ void Stepdata::write()
     for (auto& lbody: S->BodyList)
     {
         int body_n = S->get_body_index(lbody.get());
-        append(born_d_hid[body_n], lbody->force_born - lbody->force_dead);
-        append(hydro_d_hid[body_n], lbody->force_hydro);
-        append(holder_d_hid[body_n], lbody->force_holder);
-        append(friction_d_hid[body_n], lbody->friction);
+        append(force_born_d_hid[body_n], lbody->force_born - lbody->force_dead);
+        append(force_hydro_d_hid[body_n], lbody->force_hydro);
+        append(force_holder_d_hid[body_n], lbody->force_holder);
+        append(force_friction_d_hid[body_n], lbody->friction);
         append(nusselt_d_hid[body_n], lbody->nusselt);
         append(position_d_hid[body_n], lbody->holder);
         append(spring_d_hid[body_n], lbody->dpos);
         append(speed_d_hid[body_n], lbody->speed_slae);
+
+        double pressure_buf[lbody->size()];
+        double friction_buf[lbody->size()];
+        for (size_t s=0; s<lbody->size(); s++)
+        {
+            TAtt &latt = lbody->alist[s];
+            pressure_buf[s] = latt.Cp/S->dt;
+            friction_buf[s] = latt.Fr/S->dt;
+            latt.Cp = latt.Fr = latt.Nu = 0;
+        }
+        append(pressure_d_hid[body_n], pressure_buf);
+        append(friction_d_hid[body_n], friction_buf);
     }
 
     H5Fflush(file_hid, H5F_SCOPE_GLOBAL);
@@ -148,10 +164,10 @@ void Stepdata::close()
     H5Sclose(DATASPACE_SCALAR); DATASPACE_SCALAR = -1;
     H5Fclose(file_hid); file_hid = -1;
 
-    delete [] born_d_hid;
-    delete [] hydro_d_hid;
-    delete [] holder_d_hid;
-    delete [] friction_d_hid;
+    delete [] force_born_d_hid;
+    delete [] force_hydro_d_hid;
+    delete [] force_holder_d_hid;
+    delete [] force_friction_d_hid;
     delete [] nusselt_d_hid;
     delete [] position_d_hid;
     delete [] spring_d_hid;
