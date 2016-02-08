@@ -89,6 +89,8 @@ int main(int argc, char** argv)
 		{
 			dbg(tr.build());
 			dbg(conv.CalcCirculationFast());
+			if (fm.DetectCollision())
+				conv.CalcCirculationFast();
 			dbg(tr.destroy());
 		}
 

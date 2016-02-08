@@ -8,6 +8,7 @@ class flowmove
     public:
         flowmove(Space *sS, double sRemoveEps = 1E-10);
         void MoveAndClean(bool remove, bool zero_speed = true);
+        bool DetectCollision();
         void VortexShed();
         void StreakShed();
         void HeatShed();

@@ -54,12 +54,6 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
 
         deltaHolder[lbody.get()] = dHolder;
         deltaBody[lbody.get()] = dBody;
-
-        if (dHolder.o > lbody->collision_max.o ||
-            dHolder.o < lbody->collision_min.o)
-        {
-            /* collision */
-        }
     }
 
     // пробегаем в цикле все тела А
@@ -171,6 +165,22 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
         lbody->force_dead.r /= dt;
         lbody->force_dead.o /= 2.*dt;
     }
+}
+
+bool flowmove::DetectCollision()
+{
+    for (auto& lbody: S->BodyList)
+    {
+        TVec3D new_pos = lbody->holder + lbody->dpos + dt*lbody->speed_slae;
+        if (new_pos.o > lbody->collision_max.o ||
+            new_pos.o < lbody->collision_min.o)
+        {
+            lbody->force_dead.o = 2*lbody->get_moi_c()*lbody->density*lbody->speed_slae.o/dt;
+            printf("collision\n");
+            return true;
+        }
+    }
+    return false;
 }
 
 void flowmove::VortexShed()
