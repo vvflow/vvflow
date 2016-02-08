@@ -54,6 +54,12 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
 
         deltaHolder[lbody.get()] = dHolder;
         deltaBody[lbody.get()] = dBody;
+
+        if (dHolder.o > lbody->collision_max.o ||
+            dHolder.o < lbody->collision_min.o)
+        {
+            /* collision */
+        }
     }
 
     // пробегаем в цикле все тела А
