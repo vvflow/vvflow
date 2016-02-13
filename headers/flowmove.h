@@ -8,7 +8,8 @@ class flowmove
     public:
         flowmove(Space *sS, double sRemoveEps = 1E-10);
         void MoveAndClean(bool remove, bool zero_speed = true);
-        bool DetectCollision();
+        // see TBody.collision_state
+        bool DetectCollision(uint8_t collision_iter);
         void VortexShed();
         void StreakShed();
         void HeatShed();

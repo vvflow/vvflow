@@ -167,20 +167,19 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
     }
 }
 
-bool flowmove::DetectCollision()
+bool flowmove::DetectCollision(uint8_t collision_iter)
 {
-    for (auto& lbody: S->BodyList)
+    bool collision = false;
+    for (auto lbody: S->BodyList)
     {
+        static_assert(std::is_same<decltype(lbody), shared_ptr<TBody>>::value, "lbody should be shared_ptr<TBody>");
         TVec3D new_pos = lbody->holder + lbody->dpos + dt*lbody->speed_slae;
-        if (new_pos.o > lbody->collision_max.o ||
-            new_pos.o < lbody->collision_min.o)
-        {
-            lbody->force_dead.o = 2*lbody->get_moi_c()*lbody->density*lbody->speed_slae.o/dt;
-            printf("collision\n");
-            return true;
-        }
+        /**/ if (new_pos.o > lbody->collision_max.o) { lbody->collision_state = +1; collision = true; }
+        else if (new_pos.o < lbody->collision_min.o) { lbody->collision_state = -1; collision = true; }
+        else { lbody->collision_state = 0; }
+        lbody->collision_state *= collision_iter;
     }
-    return false;
+    return collision;
 }
 
 void flowmove::VortexShed()

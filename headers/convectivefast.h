@@ -58,6 +58,7 @@ class convectivefast
         void fillNewtonXEquation(TBody* ibody, bool rightColOnly);
         void fillNewtonYEquation(TBody* ibody, bool rightColOnly);
         void fillNewtonOEquation(TBody* ibody, bool rightColOnly);
+        void fillCollisionOEquation(TBody* ibody);
 
         void fillHookeXEquation(TBody* ibody, bool rightColOnly);
         void fillHookeYEquation(TBody* ibody, bool rightColOnly);

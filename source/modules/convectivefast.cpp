@@ -241,6 +241,7 @@ bool convectivefast::canUseInverse()
         if (lbody1->kspring.r.x >= 0) return false;
         if (lbody1->kspring.r.y >= 0) return false;
         if (lbody1->kspring.o >= 0) return false;
+        if (lbody1->collision_state) return false;
     }
 
     return true;
@@ -289,6 +290,13 @@ void convectivefast::CalcCirculationFast()
         FillMatrix(false);
 
     matrix.solveUsingInverseMatrix(use_inverse);
+    for (auto& libody: S->BodyList)
+    {
+        if (libody->collision_state)
+            matrix.spoilMatrix();
+        libody->collision_state = 0;
+    }
+
 }
 
 static inline double _2PI_Xi_g_near(TVec p, TVec pc, TVec dl, double rd)
@@ -807,6 +815,42 @@ void convectivefast::fillNewtonOEquation(TBody* ibody, bool rightColOnly)
     }
 }
 
+void convectivefast::fillCollisionOEquation(TBody* ibody)
+{
+    const int eq_no = ibody->eq_forces_no+8;
+
+    if (!ibody->collision_state)
+    {
+        fprintf(stderr, "Trying to fill collision equetion without the need\n");
+        exit(-2);
+    }
+    else if (ibody->collision_state>0)
+    {
+        *matrix.rightColAtIndex(eq_no) =
+            ibody->collision_max.o
+            -ibody->holder.o
+            -ibody->dpos.o;
+        *matrix.rightColAtIndex(eq_no) /= S->dt;
+    }
+    else if (ibody->collision_state<0)
+    {
+        *matrix.rightColAtIndex(eq_no) =
+            ibody->holder.o+
+            ibody->dpos.o
+            -ibody->collision_min.o;
+        *matrix.rightColAtIndex(eq_no) /= S->dt;
+    }
+
+    //place solution pointer
+    *matrix.solutionAtIndex(eq_no) = &ibody->speed_slae.o;
+
+    // self
+    {
+        // speed_slae
+        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+2) = 1;
+    }
+}
+
 /*
    888    888  .d88888b.   .d88888b.  888    d8P  8888888888
    888    888 d88P" "Y88b d88P" "Y88b 888   d8P   888
@@ -1006,7 +1050,23 @@ void convectivefast::FillMatrix(bool rightColOnly)
 
         fillNewtonXEquation(libody.get(), rightColOnly);
         fillNewtonYEquation(libody.get(), rightColOnly);
-        fillNewtonOEquation(libody.get(), rightColOnly);		
+
+        if (!libody->collision_state)
+            fillNewtonOEquation(libody.get(), rightColOnly);
+        else if (abs(libody->collision_state) == 1)
+        {
+            fillNewtonOEquation(libody.get(), rightColOnly);
+            const int eq_no = libody->eq_forces_no+8;
+            *matrix.rightColAtIndex(eq_no) +=
+                2*libody->get_moi_c()
+                *libody->density
+                *libody->speed_slae.o/S->dt;
+        }
+        else if (abs(libody->collision_state) == 2)
+        {
+            fillCollisionOEquation(libody.get());
+            matrix.spoilInverseMatrix();
+        }
 
         if (libody->kspring.r.x >= 0 && S->Time>0)
             fillHookeXEquation(libody.get(), rightColOnly);

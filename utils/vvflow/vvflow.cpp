@@ -88,9 +88,18 @@ int main(int argc, char** argv)
 		if (S->BodyList.size())
 		{
 			dbg(tr.build());
-			dbg(conv.CalcCirculationFast());
-			if (fm.DetectCollision())
+			for (int iter=1;; iter++)
+			{
+				// решаем СЛАУ
 				conv.CalcCirculationFast();
+				if (!fm.DetectCollision(iter))
+					break;
+				else if (iter>2)
+				{
+					fprintf(stderr, "Collition is not resolved in 2 iterations\n");
+					break;
+				}
+			}
 			dbg(tr.destroy());
 		}
 
