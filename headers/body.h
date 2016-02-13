@@ -77,7 +77,7 @@ class TBody
         // 2 - collision detected, trying to lean
         // >0 - collision at max
         // <0 - collision at min
-        uint8_t collision_state;
+        int8_t collision_state;
         // coordinates of collision
         TVec3D collision_min;
         TVec3D collision_max;

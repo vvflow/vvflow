@@ -30,6 +30,7 @@ TBody::TBody():
 
     double nan = std::numeric_limits<double>::quiet_NaN();
     collision_min = collision_max = TVec3D(nan, nan, nan);
+    collision_state = 0;
 }
 
 TVec3D TBody::speed(double t) const
