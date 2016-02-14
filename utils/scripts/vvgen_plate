@@ -1,0 +1,56 @@
+#!/usr/bin/env python
+
+import sys
+from math import pi, sin, cos, asin
+from numpy import arange
+
+if len(sys.argv) != 5:
+	print("Usage: {} R1 R2 L N".format(sys.argv[0]))
+	sys.exit(0)
+
+try:
+	R1 = float(sys.argv[1])
+	R2 = float(sys.argv[2])
+	L = float(sys.argv[3])
+	N = int(sys.argv[4])
+except Exception as e:
+	print(e)
+	sys.exit(-1)
+
+# some calculations
+alpha = asin((R2-R1)/L)
+phi = pi/2+alpha
+l = 2 * ( (pi-phi)*R1 + (phi)*R2 + L*cos(alpha) )
+N1 = int(2*(pi-phi)*R1/l*N)
+N2 = int(2*(phi)*R2/l*N)
+Ns = int(L*cos(alpha)/l*N)
+
+# left arc
+for i in range(N1):
+	a0 = 2*pi-phi
+	a1 = phi
+	ai = a0 + (a1-a0)*i/N1
+	print("{:+0.6e}\t {:+0.6e}".format(R1*cos(ai), R1*sin(ai)))
+
+#top segment
+for i in range(Ns):
+	x0 = R1*cos(phi)
+	y0 = R1*sin(phi)
+	x1 = L+R2*cos(phi)
+	y1 = R2*sin(phi)
+	print("{:+0.6e}\t {:+0.6e}".format(x0+(x1-x0)*i/Ns, y0+(y1-y0)*i/Ns))
+
+# right arc
+for i in range(N2):
+	a0 = phi
+	a1 = -phi
+	ai = a0 + (a1-a0)*i/N2
+	print("{:+0.6e}\t {:+0.6e}".format(L+R2*cos(ai), R2*sin(ai)))
+
+#bottom segment
+for i in range(Ns):
+	x0 = L+R2*cos(phi)
+	y0 = -R2*sin(phi)
+	x1 = R1*cos(phi)
+	y1 = -R1*sin(phi)
+	print("{:+0.6e}\t {:+0.6e}".format(x0+(x1-x0)*i/Ns, y0+(y1-y0)*i/Ns))
