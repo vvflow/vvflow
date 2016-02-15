@@ -2,9 +2,10 @@
 #include "stddef.h"
 #include "hdf5.h"
 
-Stepdata::Stepdata(Space* s_)
+Stepdata::Stepdata(Space* s_, bool b_save_profile)
 {
     S = s_;
+    this->b_save_profile = b_save_profile;
     file_hid = -1;
     string_hid = -1;
     DATASPACE_SCALAR = -1;
@@ -115,8 +116,11 @@ void Stepdata::create(const char *format)
         position_d_hid[body_n] = create_dataset(body_g_hid, "holder_position", 3);
         spring_d_hid[body_n] = create_dataset(body_g_hid, "delta_position", 3);
         speed_d_hid[body_n] = create_dataset(body_g_hid, "speed_slae", 3);
-        pressure_d_hid[body_n] = create_dataset(body_g_hid, "pressure", lbody->size());
-        friction_d_hid[body_n] = create_dataset(body_g_hid, "friction", lbody->size());
+        if (b_save_profile)
+        {
+            pressure_d_hid[body_n] = create_dataset(body_g_hid, "pressure", lbody->size());
+            friction_d_hid[body_n] = create_dataset(body_g_hid, "friction", lbody->size());
+        }
 
         H5Gclose(body_g_hid);
     }
@@ -140,17 +144,20 @@ void Stepdata::write()
         append(spring_d_hid[body_n], lbody->dpos);
         append(speed_d_hid[body_n], lbody->speed_slae);
 
-        double pressure_buf[lbody->size()];
-        double friction_buf[lbody->size()];
-        for (size_t s=0; s<lbody->size(); s++)
+        if (b_save_profile)
         {
-            TAtt &latt = lbody->alist[s];
-            pressure_buf[s] = latt.Cp/S->dt;
-            friction_buf[s] = latt.Fr/S->dt;
-            latt.Cp = latt.Fr = latt.Nu = 0;
+            double pressure_buf[lbody->size()];
+            double friction_buf[lbody->size()];
+            for (size_t s=0; s<lbody->size(); s++)
+            {
+                TAtt &latt = lbody->alist[s];
+                pressure_buf[s] = latt.Cp/S->dt;
+                friction_buf[s] = latt.Fr/S->dt;
+                latt.Cp = latt.Fr = latt.Nu = 0;
+            }
+            append(pressure_d_hid[body_n], pressure_buf);
+            append(friction_d_hid[body_n], friction_buf);
         }
-        append(pressure_d_hid[body_n], pressure_buf);
-        append(friction_d_hid[body_n], friction_buf);
     }
 
     H5Fflush(file_hid, H5F_SCOPE_GLOBAL);
