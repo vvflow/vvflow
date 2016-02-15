@@ -1,7 +1,7 @@
 #!/usr/bin/awk -f
 BEGIN{
 	if (ARGC<2) {
-		print "Usage: mse.awk -v VAR=VALUE"
+		print "Usage: stdev.awk -v VAR=VALUE"
 		print "Variables:"
 		print "\tcol -- column, which mean square error is applied to (default: 2)"
 		print "\txmin, xmax -- X-axis range (default: -inf,+inf)"
