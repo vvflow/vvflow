@@ -681,54 +681,6 @@ void Space::CalcForces()
     //FIXME calculate total pressure
 }
 
-void Space::SaveProfile(const char* fname, TValues vals)
-{
-    if (!Time.divisibleBy(dt_profile)) return;
-    // TODO
-
-    static int warning = 0;
-    if (!warning)
-        fprintf(stderr, "SaveProfile not implemented\n");
-    warning = 1;
-    return;
-
-    int32_t vals_32=vals, N=0;
-    for (auto& lbody: BodyList) { N+= lbody->size(); }
-    if (!N) return;
-    // FIXME раньше я проверял поинтер на vlist, и узнавал,
-    // что даже если сейчас список пустой, то в будущем он может 
-    // наполниться. Вся проблема в том, что список сохраняемых
-    // величин нельзя изменить после открытия файла
-    if (!VortexList.size()) vals_32 &= ~(val::Cp | val::Fr);
-    if (!HeatList.size()) vals_32 &= ~val::Nu;
-
-    FILE *fout = fopen(fname, "ab");
-    if (!fout) { perror("Error saving the body profile"); return; }
-    if (!ftell(fout)) { fwrite(&vals_32, 4, 1, fout); fwrite(&N, 4, 1, fout); }
-    float time_tmp = Time; fwrite(&time_tmp, 4, 1, fout);
-    float buf[5];
-
-    for (auto& lbody: BodyList)
-    {
-        for (auto& latt: lbody->alist)
-        {
-            buf[0] = latt.corner.x;
-            buf[1] = latt.corner.y;
-            buf[2] = latt.Cp/dt_save;
-            buf[3] = latt.Fr/dt_save;
-            buf[4] = latt.Nu/dt_save;
-
-            fwrite(buf, 4, 2, fout);
-            if (vals_32 & val::Cp) fwrite(buf+2, 4, 1, fout);
-            if (vals_32 & val::Fr) fwrite(buf+3, 4, 1, fout);
-            if (vals_32 & val::Nu) fwrite(buf+4, 4, 1, fout);
-
-            latt.Cp = latt.Fr = latt.Nu = 0;
-        }
-    }
-    fclose(fout);
-}
-
 void Space::ZeroForces()
 {
     for (auto& lbody: BodyList)

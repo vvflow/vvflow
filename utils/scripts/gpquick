@@ -1,0 +1,55 @@
+#!/usr/bin/env python
+
+from __future__ import print_function
+import os, sys
+import argparse
+
+parser = argparse.ArgumentParser(description='Quickly plot some data from pipe',
+    formatter_class=argparse.RawDescriptionHelpFormatter);
+
+parser.add_argument(
+    '-l', '--lines',
+    dest='plot_w_lines',
+    action='store_true',
+    help='plot with lines'
+)
+
+parser.add_argument(
+    '-p', '--points',
+    dest='plot_w_points',
+    action='store_true',
+    help='plot with points'
+)
+
+parser.add_argument(
+    '-u', '--using',
+    dest='plot_usung',
+    type = str,
+    help='plot using clause'
+)
+
+args = parser.parse_args()
+if sys.stdout.isatty():
+    print("You are trying to write a png to stdout. It may be harmful.", file=sys.stderr)
+    print("Aborting.", file=sys.stderr)
+    sys.exit(-1)
+
+gp = os.popen("gnuplot", "w")
+def gpw(str, *args, **kwargs):
+    gp.write(str.format(*args, **kwargs))
+
+gpw("""set terminal pngcairo enhanced\n""")
+gpw("""unset key\n""")
+
+style = "lt 1 pt 0"
+if (args.plot_w_points):
+    style = "lt 0 pt 7"
+    if (args.plot_w_lines):
+        style = "lt 1 pt 7"
+gpw("plot '-' {} w linespoints {} lc rgb 'black'\n", args.plot_usung or "", style)
+gpw(sys.stdin.read())
+gpw("e\n")
+
+gpw("\n")
+gp.flush()
+gp.close()

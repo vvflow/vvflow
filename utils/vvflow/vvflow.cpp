@@ -31,11 +31,14 @@ int main(int argc, char** argv)
 	}
 
 	bool b_progress = false;
-	if (!strcmp(argv[1], "--progress"))
+	bool b_save_profile = false;
+	do
 	{
-		b_progress = true;
+		/**/ if (!strcmp(argv[1], "--progress")) b_progress = true;
+		else if (!strcmp(argv[1], "--profile")) b_save_profile = true;
+		else break;
 		argv++;
-	}
+	} while (1);
 
 	Space *S = new Space();
 	S->Load(argv[1]);
@@ -46,11 +49,9 @@ int main(int argc, char** argv)
 	#undef RAISE
 
 	char dir[256]; sprintf(dir, "results_%s", S->caption.c_str()); mkdir(dir, 0777);
-	char profile[256]; sprintf(profile, "profile_%s", S->caption.c_str());
 	char sensors_output[256]; sprintf(sensors_output, "velocity_%s", S->caption.c_str());
 
-
-	Stepdata *stepdata = new Stepdata(S);
+	Stepdata *stepdata = new Stepdata(S, b_save_profile);
 	stepdata->create("stepdata_%s.h5");
 
 	// FILE *f = fopen(stepdata, "a");
@@ -115,36 +116,7 @@ int main(int argc, char** argv)
 		dbg(fm.StreakShed());
 
 		dbg(S->CalcForces());
-		if (S->Time > 0) S->SaveProfile(profile, val::Cp | val::Fr | val::Nu);
 		stepdata->write();
-		/*fprintf(f, "%-10g \t", double(S->Time));
-		const_for(S->BodyList, llbody)
-		{
-		fprintf(f, "%-+20e\t %-+20e\t %-+20e\t %-+20e\t %-+20e\t %-+20e\t %-+20e\t ",
-		             (**llbody).Force_export.r.x,
-		             (**llbody).Force_export.r.y,
-		             (**llbody).Force_export.o,
-		             (**llbody).Friction.r.x,
-		             (**llbody).Friction.r.y,
-		             (**llbody).Friction.o,
-		             (**llbody).Nusselt);
-		fprintf(f, "%-+20e\t %-+20e\t %-+20e\t %-+20e\t %-+20e\t %-+20e\t ",
-		             (**llbody).pos.r.x,
-		             (**llbody).pos.r.y,
-		             (**llbody).pos.o,
-		             (**llbody).dPos.r.x,
-		             (**llbody).dPos.r.y,
-		             (**llbody).dPos.o);
-		fprintf(f, "%-+20e\t %-+20e\t %-+20e\t ",
-		             (**llbody).Speed_slae.r.x,
-		             (**llbody).Speed_slae.r.y,
-		             (**llbody).Speed_slae.o);
-		}
-		fprintf(f, "%-10ld \t%-10ld \n",
-		             S->VortexList->size_safe(),
-		             S->HeatList->size_safe());
-		fflush(f);*/
-
 		S->ZeroForces();
 
 		dbg(tr.build());
