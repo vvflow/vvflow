@@ -1,14 +1,14 @@
 #!/usr/bin/awk -f
 BEGIN{
 	if (ARGC<2) {
-		print "Usage: vvawk.sd [-v VAR=VALUE] FILE"
-		print "Calculate the standard deviation of a column"
-		print "\tSD(x) = sqrt(E(x^2) - E(x)^2)"
-		print "\tWhere E(x) = sum(x)/N - expected value"
-		print "See http://en.wikipedia.org/wiki/Standard_deviation"
-		print "Variables:"
-		print "\tcol -- column, which mean square error is applied to (default: 2)"
-		print "\txmin, xmax -- X-axis range (default: -inf,+inf)"
+		print "Usage: vvawk.sd [-v VAR=VALUE] FILE" > "/dev/stderr"
+		print "Calculate the standard deviation of a column" > "/dev/stderr"
+		print "\tSD(x) = sqrt(E(x^2) - E(x)^2)" > "/dev/stderr"
+		print "\tWhere E(x) = sum(x)/N - expected value" > "/dev/stderr"
+		print "See http://en.wikipedia.org/wiki/Standard_deviation" > "/dev/stderr"
+		print "Variables:" > "/dev/stderr"
+		print "\tcol -- column to process (default: 2)" > "/dev/stderr"
+		print "\txmin, xmax -- X-axis range (default: -inf,+inf)" > "/dev/stderr"
 		exit 0
 	}
 	col =  col ? col+0 : 2

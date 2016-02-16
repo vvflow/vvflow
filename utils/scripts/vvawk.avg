@@ -1,13 +1,13 @@
 #!/usr/bin/awk -f
 BEGIN{
 	if (ARGC<2) {
-		print "Usage: vvawk.avg [-v VAR=VALUE] FILE"
-		print "Calculate the average of a column"
-		print "\tE(x) = sum(x)/N"
-		print "See http://en.wikipedia.org/wiki/Arithmetic_mean"
-		print "Variables:"
-		print "\tcol -- column number to be averaged (default: 2)"
-		print "\txmin, xmax -- X-axis range (default: -inf,+inf)"
+		print "Usage: vvawk.avg [-v VAR=VALUE] FILE" > "/dev/stderr"
+		print "Calculate the average of a column" > "/dev/stderr"
+		print "\tE(x) = sum(x)/N" > "/dev/stderr"
+		print "See http://en.wikipedia.org/wiki/Arithmetic_mean" > "/dev/stderr"
+		print "Variables:" > "/dev/stderr"
+		print "\tcol -- column number to be averaged (default: 2)" > "/dev/stderr"
+		print "\txmin, xmax -- X-axis range (default: -inf,+inf)" > "/dev/stderr"
 		exit 0
 	}
 	col =  col ? col+0 : 2
