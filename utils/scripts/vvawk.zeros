@@ -1,11 +1,11 @@
 #!/usr/bin/awk -f
 BEGIN{
 	if (ARGC<2) {
-		print "Usage: vvawk.zeros [-v VAR=VALUE] FILE"
-		print "Find zeros of the function"
-		print "Variables:"
-		print "\tcol -- column, which mean square error is applied to (default: 2)"
-		print "\txmin, xmax -- X-axis range (default: -inf,+inf)"
+		print "Usage: vvawk.zeros [-v VAR=VALUE] FILE" > "/dev/stderr"
+		print "Find zeros of the function" > "/dev/stderr"
+		print "Variables:" > "/dev/stderr"
+		print "\tcol -- column to analyze (default: 2)" > "/dev/stderr"
+		print "\txmin, xmax -- X-axis range (default: -inf,+inf)" > "/dev/stderr"
 		exit 0
 	}
 	col =  col ? col+0 : 2
