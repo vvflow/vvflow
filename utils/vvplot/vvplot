@@ -201,7 +201,7 @@ except OSError as e:
 
 #PRESS FIELD
 if (args.plot_pressure or args.plot_isopressure) and (not libvvplot.map_check(h5_fid, "map_pressure.%s"%args.pressure, *c_boundaries) or args.mode_force):
-    libvvplot.map_pressure(h5_fid, ctypes.c_char(args.pressure), *c_boundaries)
+    libvvplot.map_pressure(h5_fid, ctypes.c_char(bytes(args.pressure, 'utf-8')), *c_boundaries)
 
 #VORTICITY FIELD
 if args.plot_vorticity and (not libvvplot.map_check(h5_fid, "map_vorticity", *c_boundaries) or args.mode_force):
@@ -209,7 +209,7 @@ if args.plot_vorticity and (not libvvplot.map_check(h5_fid, "map_vorticity", *c_
 
 #PSI FUNCTION FIELD
 if args.plot_streamlines and (not libvvplot.map_check(h5_fid, "map_streamfunction.%s"%args.streamlines, *c_boundaries) or args.mode_force):
-    libvvplot.map_streamfunction(h5_fid, ctypes.c_char(args.streamlines),
+    libvvplot.map_streamfunction(h5_fid, ctypes.c_char(bytes(args.streamlines, 'utf-8')),
         ctypes.c_double(xmin - vv_prec_lo),
         ctypes.c_double(xmax + vv_prec_lo),
         ctypes.c_double(ymin - vv_prec_lo),
@@ -336,10 +336,10 @@ if args.plot_streamlines:
     gpw(""" binary format='%2float' w lines lw 1.5 lc rgb 'black'""")
 
 if args.plot_body:
-    for b in bodies:
+    for idx,b in enumerate(bodies):
         gpw("""{plot} '< libvvplot -L {fin_name} {}'""", b['name'])
         gpw(""" binary format='%2double%*2double'""")
-        gpw(""" u 1:2 w @{}""", "body_clear" if (args.blankbody-1==bodies.index(b)) else "body_style")
+        gpw(""" u 1:2 w @{}""", "body_clear" if (args.blankbody==idx+1) else "body_style")
         if args.plot_spring:
             p1 = b['holder_position']
             dp = b['delta_position']
