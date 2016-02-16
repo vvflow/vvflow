@@ -1,7 +1,9 @@
 #!/usr/bin/awk -f
 BEGIN{
     if (ARGC<2) {
-        print "Usage: movavg.awk [-v VAR=VALUE] FILE"
+        print "Usage: vvawk.mavg [-v VAR=VALUE] FILE"
+        print "Perform simple moving average algorithm on a particular column"
+        print "See http://en.wikipedia.org/wiki/Moving_average#Simple_moving_average"
         print "Variables:"
         print "\tspan -- number of samples being averaged (default: 20)"
         print "\tcol -- column number to be averaged (default: 2)"
