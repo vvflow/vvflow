@@ -14,15 +14,14 @@ bin/%.o: source/%.cpp $(wildcard headers/*.h) | bin/
 	$(CXX) $(CXXFLAGS) -fPIC -c $< -o ./$@
 
 vvplot_install: vvplot argparse_vvplot.py | $(PREFIX)/bin
-	cp ./bin/libvvplot -t $(PREFIX)/bin/
-	cp ./bin/libvvplot.so -t $(PREFIX)/bin/
-	cp $^ -t $(PREFIX)/bin/
+	$(foreach f,bin/libvvplot bin/libvvplot.so $^,\
+		cp $(f) -t $(PREFIX)/bin${\n}\
+	)
 vvplot_completion_install: completion_vvplot | $(PREFIX)/share/vvhd/bash_completion.d
 	cp $^ -t $(PREFIX)/share/vvhd/bash_completion.d/
 
 vvplot_uninstall:
-	rm -f $(PREFIX)/bin/vvplot
-	rm -f $(PREFIX)/bin/libvvplot
-	rm -f $(PREFIX)/bin/libvvplot.so
-	rm -f $(PREFIX)/bin/argparse_vvplot.py
+	$(foreach f,vvplot libvvplot libvvplot.so argparse_vvplot.py,\
+		rm -f $(PREFIX)/bin/$(f)${\n}\
+	)
 	rm -f $(PREFIX)/share/vvhd/bash_completion.d/completion_vvplot
