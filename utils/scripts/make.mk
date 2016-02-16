@@ -1,7 +1,7 @@
 TARGETS_INSTALL   += vvscripts_install
 TARGETS_UNINSTALL += vvscripts_uninstall
 VVSCRIPTS = gpquick vvencode
-VVSCRIPTS += vvawk.avg vvawk.mavg vvawk.mse vvawk.zeros
+VVSCRIPTS += vvawk.avg vvawk.mavg vvawk.sd vvawk.zeros
 
 vvscripts_install: $(VVSCRIPTS) | $(PREFIX)/bin
 	$(foreach f,$^,\
