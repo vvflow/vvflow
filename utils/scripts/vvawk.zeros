@@ -1,7 +1,8 @@
 #!/usr/bin/awk -f
 BEGIN{
 	if (ARGC<2) {
-		print "Usage: zeros.awk -v VAR=VALUE"
+		print "Usage: vvawk.zeros [-v VAR=VALUE] FILE"
+		print "Find zeros of the function"
 		print "Variables:"
 		print "\tcol -- column, which mean square error is applied to (default: 2)"
 		print "\txmin, xmax -- X-axis range (default: -inf,+inf)"
@@ -26,10 +27,10 @@ function abs(v) {
 			yprev > 0 && ycurr < 0) {
 			z = xcurr*abs(yprev) + xprev*abs(ycurr)
 			z = z / ( abs(yprev) + abs(ycurr) )
-			print z
+			printf "%.6e\n", z
 		}
 		else if (ycurr == 0) {
-			print xcurr
+			printf "%.6e\n", xcurr
 		}
 	}
 	xprev = xcurr

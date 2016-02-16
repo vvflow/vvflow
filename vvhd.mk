@@ -14,4 +14,9 @@ endif
 $(PREFIX)/%:
 	mkdir $@ -p
 
+define \n
+
+
+endef
+
 .PHONY: all clean install uninstall
