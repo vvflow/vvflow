@@ -192,31 +192,43 @@ c_boundaries = (ctypes.c_double(xmin-x_shift - vv_prec_lo),
                 ctypes.c_double(xmax-x_shift + vv_prec_lo),
                 ctypes.c_double(ymin-y_shift - vv_prec_lo),
                 ctypes.c_double(ymax-y_shift + vv_prec_lo),
-                ctypes.c_double(vv_prec_hi))
+                )
+c_boundaries_hi = c_boundaries + (ctypes.c_double(vv_prec_hi),)
+c_boundaries_lo = c_boundaries + (ctypes.c_double(vv_prec_lo),)
+
 try:
     libvvplot = ctypes.cdll.LoadLibrary("%s/libvvplot.so" % os.path.abspath(os.path.dirname(argv[0])))
 except OSError as e:
     print('Can not load libvvplot.so: %s' % e)
     exit(-1)
 
-#PRESS FIELD
-if (args.plot_pressure or args.plot_isopressure) and (not libvvplot.map_check(h5_fid, "map_pressure.%s"%args.pressure, *c_boundaries) or args.mode_force):
-    libvvplot.map_pressure(h5_fid, ctypes.c_char(bytes(args.pressure, 'utf-8')), *c_boundaries)
+def c_char(s):
+    return ctypes.c_char(bytes(s, 'utf-8'))
+def c_str(s):
+    return bytes(s, 'utf-8')
 
 #VORTICITY FIELD
-if args.plot_vorticity and (not libvvplot.map_check(h5_fid, "map_vorticity", *c_boundaries) or args.mode_force):
-    libvvplot.map_vorticity(h5_fid, *c_boundaries)
+if args.plot_vorticity:
+    if args.mode_force or \
+        not libvvplot.map_check(h5_fid, c_str("map_vorticity"), *c_boundaries_hi):
+        libvvplot.map_vorticity(h5_fid, *c_boundaries_hi)
+
+#PRESS FIELD
+if args.plot_pressure or args.plot_isopressure:
+    if args.mode_force or \
+        not libvvplot.map_check(h5_fid, c_str("map_pressure.%s"%args.pressure), *c_boundaries_hi):
+        libvvplot.map_pressure(h5_fid, c_char(args.pressure), *c_boundaries_hi)
 
 #PSI FUNCTION FIELD
-if args.plot_streamlines and (not libvvplot.map_check(h5_fid, "map_streamfunction.%s"%args.streamlines, *c_boundaries) or args.mode_force):
-    libvvplot.map_streamfunction(h5_fid, ctypes.c_char(bytes(args.streamlines, 'utf-8')),
-        ctypes.c_double(xmin - vv_prec_lo),
-        ctypes.c_double(xmax + vv_prec_lo),
-        ctypes.c_double(ymin - vv_prec_lo),
-        ctypes.c_double(ymax + vv_prec_lo),
-        ctypes.c_double(vv_prec_lo))
+if args.plot_streamlines:
+    if args.mode_force or \
+        not libvvplot.map_check(h5_fid, c_str("map_streamfunction.%s"%args.streamlines), *c_boundaries_lo):
+        libvvplot.map_streamfunction(h5_fid, c_char(args.streamlines), *c_boundaries_lo)
 
 h5_file.close()
+del c_boundaries, c_boundaries_hi, c_boundaries_lo
+del c_char, c_str
+del h5_file
 if args.mode_dry: exit()
 #TODOread more about subprocess module
 
