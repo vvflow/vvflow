@@ -105,6 +105,7 @@ int map_save(
 	}
 	H5Dclose(file_dataset);
 	H5Sclose(DATASPACE_SCALAR);
+	DATASPACE_SCALAR = -1;
 	H5Sclose(file_dataspace);
 	// H5Fclose(fid);
 
