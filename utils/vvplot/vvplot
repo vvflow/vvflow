@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 from sys import argv
 import os
@@ -202,10 +202,13 @@ except OSError as e:
     print('Can not load libvvplot.so: %s' % e)
     exit(-1)
 
-def c_char(s):
-    return ctypes.c_char(bytes(s, 'utf-8'))
 def c_str(s):
-    return bytes(s, 'utf-8')
+    try:
+        return bytes(s, 'utf-8')
+    except TypeError:
+        return s
+def c_char(s):
+    return ctypes.c_char(c_str(s))
 
 #VORTICITY FIELD
 if args.plot_vorticity:
