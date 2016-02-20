@@ -12,7 +12,8 @@ typedef void* pointer;
 typedef char* pchar;
 const double C_PI =		3.14159265358979323846;
 const double C_2PI =	2.*C_PI;
-const double C_1_2PI =	1./(2.*C_PI);
+const double C_1_2PI =  1./(2.*C_PI);
+const double C_1_4PI =	1./(4.*C_PI);
 const double C_1_PI = 	1./C_PI;
 const double C_2_PI = 	2./C_PI;
 
