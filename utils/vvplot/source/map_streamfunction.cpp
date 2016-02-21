@@ -168,7 +168,7 @@ int map_streamfunction(hid_t fid, char RefFrame, double xmin, double xmax, doubl
 	hid_t map_h5d = H5Dopen2(fid, map_name, H5P_DEFAULT);
 	hid_t gap_h5t = H5Tcreate(H5T_COMPOUND, 8);
 	H5Tinsert(gap_h5t, "xi", 0, H5T_NATIVE_UINT16);
-	H5Tinsert(gap_h5t, "y1", 2, H5T_NATIVE_UINT16);
+	H5Tinsert(gap_h5t, "yj", 2, H5T_NATIVE_UINT16);
 	H5Tinsert(gap_h5t, "gap", 4, H5T_NATIVE_FLOAT);
 	H5Tcommit2(map_h5d, "gap_t", gap_h5t, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
