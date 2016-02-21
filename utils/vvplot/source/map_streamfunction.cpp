@@ -8,7 +8,9 @@
 #include "core.h"
 #include "hdf5.h"
 
-static double Rd2;
+static double dl;
+static double rd2_global;
+static double EPS_MULT;
 static TVec RefFrame_Speed;
 
 typedef struct {
@@ -17,10 +19,13 @@ typedef struct {
 	float psi_gap;
 } gap_t;
 
+double eps2h(const TSortedNode &Node, TVec p);
+// eps2h is implemented in map_vorticity.cpp
+
 inline static
-double _4pi_psi_g(TVec dr, double g)
+double _4pi_psi_g(TVec dr, double rd2, double g)
 {
-	return -g * log(dr.abs2() + Rd2);
+	return -g * log(dr.abs2() + rd2);
 }
 
 inline static
@@ -47,7 +52,7 @@ double Psi(Space* S, TVec p, double spacing, double& psi_gap)
 	{
 		for (auto& latt: lbody->alist)
 		{
-			tmp_4pi_psi_g += _4pi_psi_g(p-latt.r, latt.g);
+			tmp_4pi_psi_g += _4pi_psi_g(p-latt.r, rd2_global, latt.g);
 		}
 
 		if (lbody->speed_slae.iszero()) continue;
@@ -57,7 +62,7 @@ double Psi(Space* S, TVec p, double spacing, double& psi_gap)
 			TVec Vs = lbody->speed_slae.r + lbody->speed_slae.o * rotl(latt.r - lbody->get_axis());
 			double g = -Vs * latt.dl;
 			double q = -rotl(Vs) * latt.dl;
-			tmp_4pi_psi_g += _4pi_psi_g(p-latt.r, g);
+			tmp_4pi_psi_g += _4pi_psi_g(p-latt.r, rd2_global, g);
 			tmp_2pi_psi_q += _2pi_psi_qatt(p, latt.r, lbody->get_com(), q);
 		}
 	}
@@ -77,14 +82,14 @@ double Psi(Space* S, TVec p, double spacing, double& psi_gap)
 	if (!Node) return 0;
 	for (TSortedNode* lfnode: *Node->FarNodes)
 	{
-		tmp_4pi_psi_g += _4pi_psi_g(p-lfnode->CMp.r, lfnode->CMp.g);
-		tmp_4pi_psi_g += _4pi_psi_g(p-lfnode->CMm.r, lfnode->CMm.g);
+		tmp_4pi_psi_g += _4pi_psi_g(p-lfnode->CMp.r, rd2_global, lfnode->CMp.g);
+		tmp_4pi_psi_g += _4pi_psi_g(p-lfnode->CMm.r, rd2_global, lfnode->CMm.g);
 	}
 	for (TSortedNode* lnnode: *Node->NearNodes)
 	{
 		for (TObj *lobj = lnnode->vRange.first; lobj < lnnode->vRange.last; lobj++)
 		{
-			tmp_4pi_psi_g += _4pi_psi_g(p-lobj->r, lobj->g);
+			tmp_4pi_psi_g += _4pi_psi_g(p-lobj->r, lobj->v.x, lobj->g); // v.x stores eps^2
 		}
 	}
 
@@ -95,13 +100,11 @@ double Psi(Space* S, TVec p, double spacing, double& psi_gap)
 extern "C" {
 int map_streamfunction(hid_t fid, char RefFrame, double xmin, double xmax, double ymin, double ymax, double spacing)
 {
-	Space *S = new Space();
-	S->Load(fid);
-
-	double dl = S->AverageSegmentLength(); Rd2 = dl*dl/25;
-	S->Tree = new TSortedTree(S, 8, dl*20, 0.3);
+	char *mult_env = getenv("VV_EPS_MULT");
+	EPS_MULT = mult_env ? atof(mult_env) : 2;
 
 	/**************************** LOAD ARGUMENTS ******************************/
+	Space *S = new Space();
 	switch (RefFrame)
 	{
 		case 'o': RefFrame_Speed = TVec(0, 0); break;
@@ -115,7 +118,28 @@ int map_streamfunction(hid_t fid, char RefFrame, double xmin, double xmax, doubl
 		fprintf(stderr, " 'b' : body reference frame\n" );
 	}
 
+	S->Load(fid);
+	// что б не мешались
+	S->HeatList.clear();
+	S->StreakList.clear();
+
+	dl = S->AverageSegmentLength();
+	rd2_global = sqr(0.2*dl);
+	S->Tree = new TSortedTree(S, 8, dl*20, std::numeric_limits<double>::max());
 	S->Tree->build();
+
+	auto& bnodes = S->Tree->getBottomNodes();
+	#pragma omp parallel for
+	for (auto llbnode = bnodes.begin(); llbnode < bnodes.end(); llbnode++)
+	{
+		TSortedNode* lbnode = *llbnode;
+		for (TObj *lobj = lbnode->vRange.first; lobj < lbnode->vRange.last; lobj++)
+		{
+			lobj->v.x = sqr(EPS_MULT)*max(eps2h(*lbnode, lobj->r)*0.25, rd2_global);
+		}
+	}
+
+	// Calculate field ********************************************************
 	hsize_t dims[2] = {
 		static_cast<size_t>((xmax-xmin)/spacing) + 1,
 		static_cast<size_t>((ymax-ymin)/spacing) + 1
