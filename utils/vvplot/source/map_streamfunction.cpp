@@ -29,6 +29,14 @@ double _2pi_psi_q(TVec dr, double q)
 	return q * atan2(dr.y, dr.x);
 }
 
+inline static
+double _2pi_psi_qatt(TVec p, TVec att, TVec com, double q)
+{
+	TVec v1 = com-p;
+	TVec v2 = att-p;
+	return q * atan2(rotl(v2)*v1, v2*v1);
+}
+
 double Psi(Space* S, TVec p, double spacing, double& psi_gap)
 {
 	double tmp_4pi_psi_g = 0.0;
@@ -50,19 +58,14 @@ double Psi(Space* S, TVec p, double spacing, double& psi_gap)
 			double g = -Vs * latt.dl;
 			double q = -rotl(Vs) * latt.dl;
 			tmp_4pi_psi_g += _4pi_psi_g(p-latt.r, g);
-			tmp_2pi_psi_q += _2pi_psi_q(p-latt.r, q);
-
-			if (p.x < latt.r.x && latt.r.x <= p.x+spacing &&
-				p.y < latt.r.y && latt.r.y <= p.y+spacing)
-			{
-				psi_gap += q;
-			}
+			tmp_2pi_psi_q += _2pi_psi_qatt(p, latt.r, lbody->get_com(), q);
 		}
 	}
 
 	for (const auto& src: S->SourceList)
 	{
 		tmp_2pi_psi_q += _2pi_psi_q(p-src.r, src.g);
+
 		if (p.x < src.r.x && src.r.x <= p.x+spacing &&
 			p.y < src.r.y && src.r.y <= p.y+spacing)
 		{
