@@ -95,6 +95,7 @@ void do_set(Space* S, const char *arg, const char *value)
 		else if ( (len=0, sscanf(arg, "speed.y%n",                &len), !arg[len]) ) { body->speed_y.setEvaluator(value); }
 		else if ( (len=0, sscanf(arg, "speed.o%n",                &len), !arg[len]) ) { body->speed_o.setEvaluator(value); }
 		else if ( (len=0, sscanf(arg, "density%n",                &len), !arg[len]) ) { body->density = parse<double>(value); }
+		else if ( (len=0, sscanf(arg, "bounce%n",                 &len), !arg[len]) ) { body->bounce = parse<double>(value); }
 		else if ( (len=0, sscanf(arg, "special_segment_no%n",     &len), !arg[len]) ) { body->special_segment_no = parse<int>(value); }
 		else if ( (len=0, sscanf(arg, "boundary_condition%n",     &len), !arg[len]) )
 		{
@@ -227,6 +228,7 @@ int main(int argc, char *argv[])
 		printf("bodyXX.heat_condition            neglect|isolate|const_t|const_w\n");
 		printf("bodyXX.heat_const                DOUBLE\n");
 
+		printf("bodyXX.bounce                    DOUBLE\n");
 		printf("bodyXX.collision_min.{x|y|o|d}   DOUBLE\n");
 		printf("bodyXX.collision_max.{x|y|o|d}   DOUBLE\n");
 		return 0;

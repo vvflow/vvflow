@@ -177,6 +177,7 @@ void Space::dataset_write_body(const char* name, const TBody& body)
 
     attribute_write(file_dataset, "collision_min", body.collision_min);
     attribute_write(file_dataset, "collision_max", body.collision_max);
+    attribute_write(file_dataset, "bounce", body.bounce);
 
     attribute_write(file_dataset, "area", body.get_area());
     attribute_write(file_dataset, "com", body.get_com());
@@ -325,6 +326,7 @@ herr_t dataset_read_body(hid_t g_id, const char* name, const H5L_info_t*, void *
 
     attribute_read(dataset, "collision_min", body->collision_min);
     attribute_read(dataset, "collision_max", body->collision_max);
+    attribute_read(dataset, "bounce", body->bounce);
 
     std::string root_body_name;
     int root_body_idx;

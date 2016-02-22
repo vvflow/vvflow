@@ -81,6 +81,7 @@ class TBody
         // coordinates of collision
         TVec3D collision_min;
         TVec3D collision_max;
+        double bounce;
 
         //double kx, ky, ka;
         double density; //in doc rho_b/rho_0
