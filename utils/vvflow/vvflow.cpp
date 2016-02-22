@@ -46,6 +46,12 @@ int main(int argc, char** argv)
 	// error checking
 	#define RAISE(STR) { cerr << "vvflow ERROR: " << STR << endl; return -1; }
 	if (S->Re == 0) RAISE("invalid value re=0");
+	for (auto lbody: S->BodyList)
+	{
+		if (lbody->bounce < 0 ||
+			lbody->bounce > 1)
+			RAISE("invalid value bounce. Must be in range [0, 1]");
+	}
 	#undef RAISE
 
 	char dir[256]; sprintf(dir, "results_%s", S->caption.c_str()); mkdir(dir, 0777);

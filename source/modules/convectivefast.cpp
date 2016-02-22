@@ -1058,7 +1058,8 @@ void convectivefast::FillMatrix(bool rightColOnly)
             fillNewtonOEquation(libody.get(), rightColOnly);
             const int eq_no = libody->eq_forces_no+8;
             *matrix.rightColAtIndex(eq_no) +=
-                2*libody->get_moi_c()
+                (1+libody->bounce)
+                *libody->get_moi_c()
                 *libody->density
                 *libody->speed_slae.o/S->dt;
         }
