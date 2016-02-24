@@ -88,7 +88,7 @@ try:
             del y_center
         else:
             #adjust pic_h
-            pic_h = int(float(pic_w) * (ymax-ymin)/(xmax-xmin))
+            pic_h = int(float(pic_w) * (ymax-ymin)/(xmax-xmin)/2)*2
     else:
         if (ymin == ymax):
             raise AdjustmentError("YMIN, YMAX")
@@ -100,9 +100,9 @@ try:
             raise AdjustmentError("YMAX")
         # if both ymin and ymax are present we can continue
         if (pic_w == 0):
-            pic_w = int(float(pic_h) * (xmax-xmin)/(ymax-ymin))
+            pic_w = int(float(pic_h) * (xmax-xmin)/(ymax-ymin)/2)*2
         else:
-            pic_h = int(float(pic_w) * (ymax-ymin)/(xmax-xmin))
+            pic_h = int(float(pic_w) * (ymax-ymin)/(xmax-xmin)/2)*2
 except AdjustmentError as s:
     argparse_vvplot.parser.print_usage()
     print('AdjustmentError: Can not adjust both {} and picture size'.format(s.value))
