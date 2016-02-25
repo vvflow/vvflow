@@ -15,7 +15,7 @@ except Exception as e:
 	print(e)
 	sys.exit(-1)
 
-# left arc
+# just a cylinder
 for i in range(N):
 	ai = 2*pi*i/N
 	print("{:+0.6e}\t {:+0.6e}".format(R*cos(ai), -R*sin(ai)))
