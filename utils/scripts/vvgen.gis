@@ -5,7 +5,7 @@ from math import pi, sin, cos, sqrt
 from numpy import arange
 
 if len(sys.argv) != 9:
-	print("Usage: {} x0 r0 x1 x2 y3 y4 x4 N".format(sys.argv[0]))
+	print("Usage: {} x0 r0 x1 x2 y3 y4 x4 dl".format(sys.argv[0]))
 	sys.exit(0)
 
 
@@ -31,7 +31,7 @@ try:
 	y3 = float(sys.argv[5])
 	y4 = float(sys.argv[6])
 	x4 = float(sys.argv[7])
-	N = int(sys.argv[8])
+	dl = float(sys.argv[8])
 except Exception as e:
 	print(e)
 	sys.exit(-1)
@@ -55,12 +55,6 @@ def min(a, b):
 	return a if (a<b) else b
 def max(a, b):
 	return a if (a>b) else b
-
-# some calculations
-# length of the viscous segments
-l = 2 * ( (x2-x1) + sqrt(x2**2 + (y3-r0)**2) )
-dl = l / N
-print(dl)
 
 gen_line(0, -y4, 0, -y3, min(dl*3, (y4-y3)/5), 0);
 gen_line(0, -y3, x2, -r0, dl, 0);
