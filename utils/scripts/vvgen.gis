@@ -4,8 +4,8 @@ import sys
 from math import pi, sin, cos, sqrt
 from numpy import arange
 
-if len(sys.argv) != 9:
-	print("Usage: {} x0 r0 x1 x2 y3 y4 x4 dl".format(sys.argv[0]))
+if len(sys.argv) != 10:
+	print("Usage: {} x0 r0 x1 x2 y3 y4 x4 dl dl_slip".format(sys.argv[0]))
 	sys.exit(0)
 
 
@@ -32,6 +32,7 @@ try:
 	y4 = float(sys.argv[6])
 	x4 = float(sys.argv[7])
 	dl = float(sys.argv[8])
+	dl_slip = float(sys.argv[9])
 except Exception as e:
 	print(e)
 	sys.exit(-1)
@@ -56,15 +57,15 @@ def min(a, b):
 def max(a, b):
 	return a if (a>b) else b
 
-gen_line(0, -y4, 0, -y3, min(dl*3, (y4-y3)/5), 0);
+gen_line(0, -y4, 0, -y3, min(dl_slip, (y4-y3)/5), 0);
 gen_line(0, -y3, x2, -r0, dl, 0);
 gen_line(x2, -r0, x1, -r0, dl, 0);
-gen_line(x1, -r0, x0, -r0, dl*3, 1);
-gen_arc(x0, 0, r0, 3*pi/2, pi/2, dl*3, 1);
-gen_line(x0, r0, x1, r0, dl*3, 1);
+gen_line(x1, -r0, x0, -r0, dl_slip, 1);
+gen_arc(x0, 0, r0, 3*pi/2, pi/2, dl_slip, 1);
+gen_line(x0, r0, x1, r0, dl_slip, 1);
 gen_line(x1, r0, x2, r0, dl, 0);
 gen_line(x2, r0, 0, y3, dl, 0);
-gen_line(0, y3, 0, y4, min(dl*3, (y4-y3)/5), 0);
-gen_line(0, y4, x4, y4, dl*9, 1);
-gen_line(x4, y4, x4, -y4, dl*9, 1);
-gen_line(x4, -y4, 0, -y4, dl*9, 1);
+gen_line(0, y3, 0, y4, min(dl_slip, (y4-y3)/5), 0);
+gen_line(0, y4, x4, y4, dl_slip, 1);
+gen_line(x4, y4, x4, -y4, dl_slip, 1);
+gen_line(x4, -y4, 0, -y4, dl_slip, 1);
