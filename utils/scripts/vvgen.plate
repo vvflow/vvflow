@@ -21,9 +21,9 @@ except Exception as e:
 alpha = asin((R2-R1)/L)
 phi = pi/2+alpha
 l = 2 * ( (pi-phi)*R1 + (phi)*R2 + L*cos(alpha) )
-N1 = int(2*(pi-phi)*R1/l*N)
-N2 = int(2*(phi)*R2/l*N)
-Ns = int(L*cos(alpha)/l*N)
+N1 = int(2*(pi-phi)*R1/l*N+0.5)
+N2 = int(2*(phi)*R2/l*N+0.5)
+Ns = int(L*cos(alpha)/l*N+0.5)
 
 # left arc
 for i in range(N1):
