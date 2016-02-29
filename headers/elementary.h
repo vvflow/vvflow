@@ -159,8 +159,8 @@ class TTime
         {
             uint32_t newTS = lcm(time1.timescale, time2.timescale);
             return TTime(
-                    time1.value*newTS/time1.timescale
-                    + time2.value*newTS/time2.timescale
+                    time1.value*(newTS/time1.timescale)
+                    + time2.value*(newTS/time2.timescale)
                     , newTS);
         }
 
