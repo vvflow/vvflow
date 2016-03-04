@@ -9,6 +9,7 @@ Stepdata::Stepdata(Space* s_, bool b_save_profile)
     file_hid = -1;
     string_hid = -1;
     DATASPACE_SCALAR = -1;
+    last_flush_time = 0;
 }
 
 #define H5ASSERT(expr, msg) if (expr<0) { \
@@ -124,8 +125,6 @@ void Stepdata::create(const char *format)
 
         H5Gclose(body_g_hid);
     }
-
-    H5Fflush(file_hid, H5F_SCOPE_GLOBAL);
 }
 
 void Stepdata::write()
@@ -160,7 +159,18 @@ void Stepdata::write()
         }
     }
 
-    H5Fflush(file_hid, H5F_SCOPE_GLOBAL);
+    struct timespec clk;
+    clock_gettime(CLOCK_MONOTONIC, &clk);
+    if (clk.tv_sec - last_flush_time > 20)
+    {
+        H5Fflush(file_hid, H5F_SCOPE_GLOBAL);
+        last_flush_time = clk.tv_sec;
+    }
+}
+
+void Stepdata::flush()
+{
+    last_flush_time = 0;
 }
 
 void Stepdata::close()

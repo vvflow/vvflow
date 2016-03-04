@@ -3,6 +3,7 @@
 
 #include "core.h"
 #include <iostream>
+#include <time.h>
 
 class Stepdata
 {
@@ -10,6 +11,7 @@ class Stepdata
         Stepdata(Space* s_, bool b_save_profile);
         void create(const char *format);
         void write();
+        void flush();
         void close();
 
     private:
@@ -23,6 +25,7 @@ class Stepdata
         int file_hid;
         int string_hid;
         int DATASPACE_SCALAR;
+        time_t last_flush_time;
 
         int time_d_hid;
         int vorts_d_hid;

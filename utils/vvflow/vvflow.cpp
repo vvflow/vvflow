@@ -99,6 +99,7 @@ int main(int argc, char** argv)
 		{
 			char tmp_filename[256]; sprintf(tmp_filename, "%s/%%06d.h5", dir);
 			S->Save(tmp_filename);
+			stepdata->flush();
 		}
 
 		dbg(fm.VortexShed());
