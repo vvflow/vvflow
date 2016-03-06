@@ -852,6 +852,7 @@ bool Space::PointIsInBody(TVec p)
 
 int Space::get_body_index(const TBody* body) const
 {
+    // TODO: rewrite with uint
     int i = 0;
     for (auto lbody: BodyList)
     {

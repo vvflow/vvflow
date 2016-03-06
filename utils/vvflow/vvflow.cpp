@@ -54,8 +54,7 @@ int main(int argc, char** argv)
 	char f_sensors_output[256]; snprintf(f_sensors_output, 256, "velocity_%s", S->caption.c_str());
 	mkdir(f_results, 0777);
 
-	Stepdata *stepdata = new Stepdata(S, b_save_profile);
-	stepdata->create(f_stepdata);
+	Stepdata *stepdata = new Stepdata(S, f_stepdata, b_save_profile);
 
 	double dl = S->AverageSegmentLength();
 	double min_node_size = dl>0 ? dl*5 : 0;
@@ -118,6 +117,4 @@ int main(int argc, char** argv)
 
 	if (b_progress)
 		fprintf(stderr, "\n");
-	// fclose(f);
-	stepdata->close();
 }
