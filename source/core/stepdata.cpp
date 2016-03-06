@@ -3,7 +3,7 @@
 #include "hdf5.h"
 
 #define H5ASSERT(expr, msg) if (expr<0) { \
-    fprintf(stderr, "%s failed (%s:%d). Aborting.", msg, __FILE__, __LINE__); \
+    fprintf(stderr, "%s failed (%s:%d). Aborting.\n", msg, __FILE__, __LINE__); \
     std::exit(5); \
 }
 
@@ -30,7 +30,7 @@ Stepdata::Stepdata(Space* s_, const char *fname, bool b_save_profile)
     friction_h5d       = new int[blsize];
 
     size_t rows = 0;
-    if (!H5Fis_hdf5(fname))
+    if (H5Fis_hdf5(fname)<=0)
     {
         h5f = H5Fcreate(fname, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
         H5ASSERT(h5f, "H5Hcreate");
@@ -237,6 +237,7 @@ int Stepdata::h5d_init(int loc_id, const char *name, size_t rows, size_t cols)
         hsize_t new_dims[2] = {rows, cols};
         H5Sget_simple_extent_dims(h5s, cur_dims, NULL);
         H5ASSERT(H5Dset_extent(h5d, new_dims), "H5Dset_extent");
+        H5Sclose(h5s);
     } else {
         hid_t h5p = H5Pcreate(H5P_DATASET_CREATE);
         hsize_t chunk_dims[2] = {0x80, cols};

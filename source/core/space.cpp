@@ -380,6 +380,7 @@ void Space::Load(const char* fname, std::string *info)
     StreakSourceList.clear();
     StreakList.clear();
 
+    // FIXME <= 0 here
     if (!H5Fis_hdf5(fname))
     {
         Load_v1_3(fname);
