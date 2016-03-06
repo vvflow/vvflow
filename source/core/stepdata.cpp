@@ -18,16 +18,17 @@ Stepdata::Stepdata(Space* s_, const char *fname, bool b_save_profile)
     string_h5t = H5Tcopy(H5T_C_S1);
     H5Tset_size(string_h5t, H5T_VARIABLE);
 
-    force_born_h5d     = new int[blsize];
-    force_hydro_h5d    = new int[blsize];
-    force_holder_h5d   = new int[blsize];
-    force_friction_h5d = new int[blsize];
-    nusselt_h5d        = new int[blsize];
-    position_h5d       = new int[blsize];
-    spring_h5d         = new int[blsize];
-    speed_h5d          = new int[blsize];
-    pressure_h5d       = new int[blsize];
-    friction_h5d       = new int[blsize];
+    time_h5d = -1;
+    force_born_h5d.resize(blsize, -1);
+    force_hydro_h5d.resize(blsize, -1);
+    force_holder_h5d.resize(blsize, -1);
+    force_friction_h5d.resize(blsize, -1);
+    nusselt_h5d.resize(blsize, -1);
+    position_h5d.resize(blsize, -1);
+    spring_h5d.resize(blsize, -1);
+    speed_h5d.resize(blsize, -1);
+    pressure_h5d.resize(blsize, -1);
+    friction_h5d.resize(blsize, -1);
 
     size_t rows = 0;
     if (H5Fis_hdf5(fname)<=0)
@@ -52,7 +53,7 @@ Stepdata::Stepdata(Space* s_, const char *fname, bool b_save_profile)
             H5Sget_simple_extent_dims(h5s, dims, NULL);
             float* tbuf = new float[dims[0]*dims[1]];
             H5Dread(h5d, H5T_NATIVE_FLOAT, h5s, h5s, H5P_DEFAULT, tbuf);
-            for (rows=0; rows<dims[0] && tbuf[rows*dims[1]] < S->Time; rows++)
+            for (rows=0; rows<dims[0] && tbuf[rows*dims[1]] < float(S->Time); rows++)
             {
                 /* DO NOTHING */;
             }
@@ -82,7 +83,7 @@ Stepdata::Stepdata(Space* s_, const char *fname, bool b_save_profile)
         force_hydro_h5d[body_n]    = h5d_init(body_h5g, "force_hydro", rows, 3);
         force_holder_h5d[body_n]   = h5d_init(body_h5g, "force_holder", rows, 3);
         force_friction_h5d[body_n] = h5d_init(body_h5g, "force_friction", rows, 3);
-        nusselt_h5d[body_n]        = -1; //h5d_init(body_h5g, "nusselt", rows, 1);
+        // nusselt_h5d[body_n]        = h5d_init(body_h5g, "nusselt", rows, 1);
         position_h5d[body_n]       = h5d_init(body_h5g, "holder_position", rows, 3);
         spring_h5d[body_n]         = h5d_init(body_h5g, "delta_position", rows, 3);
         speed_h5d[body_n]          = h5d_init(body_h5g, "speed_slae", rows, 3);
@@ -91,8 +92,18 @@ Stepdata::Stepdata(Space* s_, const char *fname, bool b_save_profile)
             pressure_h5d[body_n]   = h5d_init(body_h5g, "pressure", rows, lbody->size());
             friction_h5d[body_n]   = h5d_init(body_h5g, "friction", rows, lbody->size());
         } else {
-            pressure_h5d[body_n]   = -1;
-            friction_h5d[body_n]   = -1;
+            if (H5Lexists(body_h5g, "pressure", H5P_DEFAULT) > 0)
+            {
+                // shrink dataset
+                hid_t h5d = h5d_init(body_h5g, "pressure", rows, lbody->size());
+                H5Dclose(h5d);
+            }
+            if (H5Lexists(body_h5g, "friction", H5P_DEFAULT) > 0)
+            {
+                // shrink dataset
+                hid_t h5d = h5d_init(body_h5g, "friction", rows, lbody->size());
+                H5Dclose(h5d);
+            }
         }
 
         H5Gclose(body_h5g);
@@ -119,17 +130,6 @@ Stepdata::~Stepdata()
     H5Tclose(string_h5t);
     H5Sclose(scalar_h5s);
     H5Fclose(h5f);
-
-    delete [] force_born_h5d;
-    delete [] force_hydro_h5d;
-    delete [] force_holder_h5d;
-    delete [] force_friction_h5d;
-    delete [] nusselt_h5d;
-    delete [] position_h5d;
-    delete [] spring_h5d;
-    delete [] speed_h5d;
-    delete [] pressure_h5d;
-    delete [] friction_h5d;
 }
 
 void Stepdata::flush()

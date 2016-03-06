@@ -3,6 +3,7 @@
 
 #include "core.h"
 #include <iostream>
+#include <vector>
 #include <time.h>
 
 class Stepdata
@@ -28,16 +29,16 @@ class Stepdata
         int scalar_h5s;
 
         int time_h5d;
-        int *force_born_h5d;
-        int *force_hydro_h5d;
-        int *force_holder_h5d;
-        int *force_friction_h5d;
-        int *nusselt_h5d;
-        int *position_h5d;
-        int *spring_h5d;
-        int *speed_h5d;
-        int *pressure_h5d;
-        int *friction_h5d;
+        std::vector<int> force_born_h5d;
+        std::vector<int> force_hydro_h5d;
+        std::vector<int> force_holder_h5d;
+        std::vector<int> force_friction_h5d;
+        std::vector<int> nusselt_h5d;
+        std::vector<int> position_h5d;
+        std::vector<int> spring_h5d;
+        std::vector<int> speed_h5d;
+        std::vector<int> pressure_h5d;
+        std::vector<int> friction_h5d;
 };
 
 #endif
