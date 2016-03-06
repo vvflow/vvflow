@@ -50,14 +50,15 @@ Stepdata::Stepdata(Space* s_, const char *fname, bool b_save_profile)
             hid_t h5s = H5Dget_space(h5d);
             hsize_t dims[2];
             H5Sget_simple_extent_dims(h5s, dims, NULL);
-            float* tbuf = (float*)malloc(dims[0]*dims[1]);
+            float* tbuf = new float[dims[0]*dims[1]];
             H5Dread(h5d, H5T_NATIVE_FLOAT, h5s, h5s, H5P_DEFAULT, tbuf);
-            for (rows=0; rows<dims[0] && tbuf[rows*dims[0]] < S->Time; rows++)
+            for (rows=0; rows<dims[0] && tbuf[rows*dims[1]] < S->Time; rows++)
             {
                 /* DO NOTHING */;
             }
             H5Sclose(h5s);
             H5Dclose(h5d);
+            delete [] tbuf;
         }
     }
 
