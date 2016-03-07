@@ -4,7 +4,7 @@ TARGETS_UNINSTALL += vvplot_uninstall
 
 bin/libvvplot: bin/libvvhd.so bin/libvvplot.so
 bin/libvvplot: bin/libvvplot_main.o
-	$(CXX) $(CXXFLAGS) $^ -Wl,-rpath,\$$ORIGIN -Wl,-rpath-link,bin $(LDFLAGS) -lvvplot -lvvhd -lhdf5 -o ./$@
+	$(CXX) $(CXXFLAGS) $^ -Wl,-rpath,\$$ORIGIN -Wl,-rpath-link,bin $(LDFLAGS) -lvvplot -lvvhd $(LDLIBS) -o ./$@
 
 bin/libvvplot.so: bin/libvvhd.so
 bin/libvvplot.so: $(patsubst %,bin/%.o, map_extract map_vorticity map_pressure map_streamfunction map_velocity isoline)

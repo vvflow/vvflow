@@ -428,6 +428,7 @@ void Space::Load(const char* fname, std::string *info)
     StreakSourceList.clear();
     StreakList.clear();
 
+    // FIXME <= 0 here
     if (!H5Fis_hdf5(fname))
     {
         Load_v1_3(fname);
@@ -924,6 +925,7 @@ bool Space::PointIsInBody(TVec p)
 
 int Space::get_body_index(const TBody* body) const
 {
+    // TODO: rewrite with uint
     int i = 0;
     for (auto lbody: BodyList)
     {
