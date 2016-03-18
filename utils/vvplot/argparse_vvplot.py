@@ -187,7 +187,7 @@ parser.add_argument(
 	type=decimal_value,
 	default=(-10, 10, 0.1),
 	metavar=('MIN', 'MAX', 'STEP'),
-	help='streamlines levels'
+	help='isolines values of streamfunction field (streamlines)'
 )
 
 ################################################################################
