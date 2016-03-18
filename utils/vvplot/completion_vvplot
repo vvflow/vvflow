@@ -13,6 +13,7 @@ _vvplot(){
 				COMPREPLY=($(compgen -W '-b -f -g -h -H -i -n -O -p -P -s -t \
 					-v -V -w -x -y --blankbody --size --nooverride --referenceframe \
 					--streamlines --pressure --colorbox --timelabel --spring\
+					--isopsi \
 					--force --grayscale'  -- ${cur}));;
 			*)
 				COMPREPLY=($(compgen -f -X '!*.png' -o plusdirs  -- ${cur}));;

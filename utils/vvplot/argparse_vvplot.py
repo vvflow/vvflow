@@ -1,12 +1,11 @@
 #!/usr/bin/python
 
 import argparse
+from decimal import Decimal as decimal
 
 my_epilog="""Additional environmental variables:
 VV_PREC_HI - horiz resolution of temperature and pressure fields (default 500; affects -opPt)
 VV_PREC_LO - horiz resolution of streamlines (default 200; affects -s)
-VV_ISOPSI - streamlines levels (default $(seq -s \' \' -10 0.1 10); affects -s)
-VV_ISOTHERMS - temperature isolines (default $(seq -s \' \' 0.05 0.05 0.95); affects -o)
 VV_VORT_RANGE - change contrast of vorticity field (default 50; affects -g)
 VV_EPS_MULT - smooth temperature field (default 2; affects -gt)
 VV_BODY_TEMP - body surface temperature (default 1; affects -t)"""
@@ -173,6 +172,25 @@ parser.add_argument(
 )
 
 ################################################################################
+def decimal_value(string):
+	try:
+		result = decimal(string)
+	except Exception:
+		msg = "invalid decimal value: %r" % string
+		raise argparse.ArgumentTypeError(msg)
+	return result
+
+parser.add_argument(
+	'--isopsi',
+	# dest='isopsi',
+	nargs=3,
+	type=decimal_value,
+	default=(-10, 10, 0.1),
+	metavar=('MIN', 'MAX', 'STEP'),
+	help='streamlines levels'
+)
+
+################################################################################
 def picture_size(string):
 	try:
 		w_str,h_str = string.split('x')
@@ -244,3 +262,25 @@ parser.add_argument(
 
 
 args = parser.parse_args()
+
+################################################################################
+def drange(start, stop, step):
+	if start > stop:
+		raise ValueError("MAX must be greater than MIN")
+	if step <= 0:
+		raise ValueError("STEP must be positive")
+	result = []
+	x = start
+	while x<stop:
+		result.append(str(x))
+		x+=step
+	return result
+
+try:
+	args.isopsi = " ".join(drange(*args.isopsi))
+except Exception as s:
+	parser.print_usage()
+	print('{}: error: argument --isopsi: {}'.format(parser.prog, str(s)))
+	exit()
+
+del drange

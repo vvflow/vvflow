@@ -346,8 +346,9 @@ if args.plot_ink and 'ink' in lists:
 
 if args.plot_streamlines:
     # gp.write("""%s '< libvvplot -M %s map_streamfunction.%s' binary format='%%float%%float%%float' w image""" % (delimiter(), fin_name, args.streamlines))
-    vv_isopsi = os.getenv("VV_ISOPSI") or os.popen("seq -s ' ' -10 0.1 10").read()[:-1]
-    gpw("""{plot} '< libvvplot -I {fin_name} map_streamfunction.{mode} {vv_isopsi}'""", mode=args.streamlines, vv_isopsi=vv_isopsi)
+    gpw("""{plot} '< libvvplot -I {fin_name} map_streamfunction.{mode} {isopsi}'""",
+        mode=args.streamlines,
+        isopsi=args.isopsi)
     gpw(""" binary format='%2float' w lines lw 1.5 lc rgb 'black'""")
 
 if args.plot_body:
@@ -385,7 +386,7 @@ xrange = [%g, %g]
 yrange = [%g, %g]
 """ % (realtime, allargs, time, x_shift, y_shift, xmin, xmax, ymin, ymax)
 
-for envname in ["VV_PREC_HI", "VV_ISOPSI", "VV_ISOTHERMS",
+for envname in ["VV_PREC_HI", "VV_PREC_LO",
                 "VV_VORT_RANGE", "VV_EPS_MULT", "VV_BODY_TEMP"]:
     if os.getenv(envname): comment+= "\n%s: %s" % (envname, os.getenv(envname))
 
