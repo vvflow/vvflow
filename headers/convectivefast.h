@@ -25,6 +25,7 @@ class convectivefast
     private:
         TVec BioSavar(const TObj &obj, const TVec &p);
         TVec SpeedSum(const TSortedNode &Node, const TVec &p);
+        TVec SrcSpeed(const TVec &p); // indeuced by S->SourceList in point p
 
         TVec BoundaryConvective(const TBody &b, const TVec &p);
         TVec BoundaryConvectiveSlip(const TBody &b, const TVec &p);
@@ -57,6 +58,7 @@ class convectivefast
         void fillNewtonXEquation(TBody* ibody, bool rightColOnly);
         void fillNewtonYEquation(TBody* ibody, bool rightColOnly);
         void fillNewtonOEquation(TBody* ibody, bool rightColOnly);
+        void fillCollisionOEquation(TBody* ibody);
 
         void fillHookeXEquation(TBody* ibody, bool rightColOnly);
         void fillHookeYEquation(TBody* ibody, bool rightColOnly);

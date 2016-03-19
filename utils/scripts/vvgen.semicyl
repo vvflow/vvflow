@@ -1,0 +1,33 @@
+#!/usr/bin/env python
+
+import sys
+from math import pi, sin, cos
+from numpy import arange
+
+if len(sys.argv) != 3:
+	print("Usage: {} R N".format(sys.argv[0]))
+	sys.exit(0)
+
+try:
+	R = float(sys.argv[1])
+	N = int(sys.argv[2])
+except Exception as e:
+	print(e)
+	sys.exit(-1)
+
+# some calculations
+N1 = int(N*2./(pi+2)+0.5)
+N2 = int(N*pi/(pi+2)+0.5)
+
+# bottom line
+for i in range(N1):
+	xi = R - 2*R*i/N1
+	print("{:+0.6e}\t {:+0.6e}".format(xi, 0))
+
+# top arc
+for i in range(N2):
+	a0 = pi
+	a1 = 0
+	ai = a0 + (a1-a0)*i/N2
+	print("{:+0.6e}\t {:+0.6e}".format(R*cos(ai), R*sin(ai)))
+

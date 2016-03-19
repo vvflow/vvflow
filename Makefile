@@ -68,6 +68,15 @@ libvvhd_uninstall:
 	rmdir --ignore-fail-on-non-empty $(PREFIX)/lib/ || true
 	rmdir --ignore-fail-on-non-empty $(PREFIX)/include/ || true
 
+test:
+	@mkdir -p test_results
+	@PATH=bin/:$$PATH ./tests/nobody/sink.sh $(PWD)/test_results
+	@PATH=bin/:$$PATH ./tests/pipe/slip.sh $(PWD)/test_results
+	@PATH=bin/:$$PATH ./tests/pipe/noslip.sh $(PWD)/test_results
+	@PATH=bin/:$$PATH ./tests/pipe/semislip.sh $(PWD)/test_results
+.PHONY: run_tests
+
+
 #------------------------------------------------#
 #                     RULES                      #
 #------------------------------------------------#

@@ -1,0 +1,21 @@
+#!/usr/bin/env python
+
+import sys
+from math import pi, sin, cos
+from numpy import arange
+
+if len(sys.argv) != 3:
+	print("Usage: {} R N".format(sys.argv[0]))
+	sys.exit(0)
+
+try:
+	R = float(sys.argv[1])
+	N = int(sys.argv[2])
+except Exception as e:
+	print(e)
+	sys.exit(-1)
+
+# just a cylinder
+for i in range(N):
+	ai = 2*pi*i/N
+	print("{:+0.6e}\t {:+0.6e}".format(R*cos(ai), -R*sin(ai)))

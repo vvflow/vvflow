@@ -21,6 +21,7 @@ class Matrix
         double *rightColAtIndex(unsigned i);
         void markBodyMatrixAsFilled() {bodyMatrixIsOk_ = true;}
         void spoilMatrix() {bodyMatrixIsOk_ = inverseMatrixIsOk_ = false;}
+        void spoilInverseMatrix() {inverseMatrixIsOk_ = false;}
         void solveUsingInverseMatrix(bool useInverseMatrix);
 
     private:

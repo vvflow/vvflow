@@ -8,10 +8,8 @@
 #include <list>
 #include <limits>
 
-//#include "core.h"
-using namespace std;
-
-static const float NaN = numeric_limits<float>::quiet_NaN();
+static const float NaN = std::numeric_limits<float>::quiet_NaN();
+static bool inrange(float z1, float z2, float c) { return (z1 <= c && c < z2) || (z1 >= c && c > z2); }
 
 class vec_t
 {
@@ -22,19 +20,14 @@ class vec_t
 		inline bool operator==(const vec_t &v) const { return v.x == x && v.y == y; }
 };
 
-/*class seg_t
-{
-	public:
-		vec_t v1, v2;
-		float c;
-		seg_t(): v1(),v2(),c() {}
-		seg_t(vec_t _v1, vec_t _v2, float _c): v1(_v1), v2(_v2), c(_c) {}
-};*/
+typedef struct {
+	uint16_t xi;
+	uint16_t yj;
+	float psi_gap;
+} gap_t;
 
-static bool inrange(float z1, float z2, float c) { return (z1 <= c && c < z2) || (z1 >= c && c > z2); }
-
-typedef vector<vec_t> line_t;
-static list<line_t*> *isolines = NULL;
+typedef std::vector<vec_t> line_t;
+static std::list<line_t*> *isolines = NULL;
 
 void merge_lines(line_t* dst, bool dst_side)
 {
@@ -80,60 +73,86 @@ void commit_segment(vec_t vec1, vec_t vec2)
 	return;
 }
 
-void process_rect(float x, float y, float z[4], float C)
+void process_rect(float x, float y, float z[5], float C)
 {
 	vec_t vecs[4];
 	int N = 0;
 	if (inrange(z[0], z[1], C)) vecs[N++] = vec_t(x,                        y + (C-z[0])/(z[1]-z[0]));
 	if (inrange(z[1], z[2], C)) vecs[N++] = vec_t(x + (C-z[1])/(z[2]-z[1]), y + 1.0);
 	if (inrange(z[2], z[3], C)) vecs[N++] = vec_t(x + 1.0,                  y + (C-z[3])/(z[2]-z[3]));
-	if (inrange(z[3], z[0], C)) vecs[N++] = vec_t(x + (C-z[0])/(z[3]-z[0]), y);
-	
+	if (inrange(z[3], z[4], C)) vecs[N++] = vec_t(x + (C-z[4])/(z[3]-z[4]), y);
+
 	if (N>=2) commit_segment(vecs[0], vecs[1]);
 	if (N>=4) commit_segment(vecs[2], vecs[3]);
 }
 
 int map_isoline(hid_t fid, const char *dsetname, float *cvals, int cnum)
 {
-	if (!isolines) isolines = new list<line_t*>();
+	if (!isolines) isolines = new std::list<line_t*>();
+	herr_t err = 0;
 
 	H5Eset_auto2(H5E_DEFAULT, NULL, NULL);
-	hid_t dataset = H5Dopen2(fid, dsetname, H5P_DEFAULT);
-	if (dataset < 0)
+	hid_t map_h5d = H5Dopen2(fid, dsetname, H5P_DEFAULT);
+	if (map_h5d < 0)
 	{
 		H5Epop(H5E_DEFAULT, H5Eget_num(H5E_DEFAULT)-1);
 		H5Eprint2(H5E_DEFAULT, stderr);
 		fprintf(stderr, "error: argument dataset: can't open dataset '%s'\n", dsetname);
 		return 3;
 	}
-
-	double xmin, xmax, ymin, ymax, spacing;
-	attribute_read_double(dataset, "xmin", xmin);
-	attribute_read_double(dataset, "xmax", xmax);
-	attribute_read_double(dataset, "ymin", ymin);
-	attribute_read_double(dataset, "ymax", ymax);
-	attribute_read_double(dataset, "spacing", spacing);
-
-	hid_t dataspace = H5Dget_space(dataset);
-	if (dataspace < 0)
+	hid_t map_h5s = H5Dget_space(map_h5d);
+	if (map_h5s < 0)
 	{
 		H5Epop(H5E_DEFAULT, H5Eget_num(H5E_DEFAULT)-1);
 		H5Eprint2(H5E_DEFAULT, stderr);
 		return 5;
 	}
+
 	hsize_t dims[2];
-	H5Sget_simple_extent_dims(dataspace, dims, dims);
+	H5Sget_simple_extent_dims(map_h5s, dims, dims);
 	float *mem = (float*)malloc(sizeof(float)*dims[0]*dims[1]);
-	herr_t err = H5Dread(dataset, H5T_NATIVE_FLOAT, H5S_ALL, dataspace, H5P_DEFAULT, mem);
+	err = H5Dread(map_h5d, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, mem);
 	if (err < 0)
 	{
 		H5Epop(H5E_DEFAULT, H5Eget_num(H5E_DEFAULT)-1);
 		H5Eprint2(H5E_DEFAULT, stderr);
 		return 5;
 	}
-	
-	// fprintf(stdout, "%lf %lf %lf %lf %lf\n", xmin, xmax, ymin, ymax, spacing);
-	// fwrite(args, sizeof(double), 5, stdout);
+
+	double xmin, xmax, ymin, ymax, spacing;
+	attribute_read_double(map_h5d, "xmin", xmin);
+	attribute_read_double(map_h5d, "xmax", xmax);
+	attribute_read_double(map_h5d, "ymin", ymin);
+	attribute_read_double(map_h5d, "ymax", ymax);
+	attribute_read_double(map_h5d, "spacing", spacing);
+
+	std::vector<gap_t> gap_list;
+	if (H5Aexists(map_h5d, "gaps"))
+	{
+		hid_t gap_h5t = H5Tcreate(H5T_COMPOUND, 8);
+		H5Tinsert(gap_h5t, "xi", 0, H5T_NATIVE_UINT16);
+		H5Tinsert(gap_h5t, "yj", 2, H5T_NATIVE_UINT16);
+		H5Tinsert(gap_h5t, "gap", 4, H5T_NATIVE_FLOAT);
+
+		hid_t gap_h5a = H5Aopen(map_h5d, "gaps", H5P_DEFAULT);
+		hid_t gap_h5s = H5Aget_space(gap_h5a);
+		hsize_t gap_dims;
+		H5Sget_simple_extent_dims(gap_h5s, &gap_dims, &gap_dims);
+
+		gap_list.resize(gap_dims);
+		err = H5Aread(gap_h5a, gap_h5t, gap_list.data());
+		if (err < 0)
+		{
+			H5Epop(H5E_DEFAULT, H5Eget_num(H5E_DEFAULT)-1);
+			H5Eprint2(H5E_DEFAULT, stderr);
+			return 5;
+		}
+
+		H5Sclose(gap_h5s);
+		H5Aclose(gap_h5a);
+		H5Tclose(gap_h5t);
+	}
+
 	for (size_t i=0; i<dims[0]-1; i++)
 	{
 		// float x = xmin + i*spacing;
@@ -143,8 +162,23 @@ int map_isoline(hid_t fid, const char *dsetname, float *cvals, int cnum)
 
 			// 1 2
 			// 0 3
-			float corners[4] = {mem[(i+0)*dims[1]+(j+0)], mem[(i+0)*dims[1]+(j+1)],
-			                    mem[(i+1)*dims[1]+(j+1)], mem[(i+1)*dims[1]+(j+0)]};
+			float corners[5] = {mem[(i+0)*dims[1]+(j+0)], mem[(i+0)*dims[1]+(j+1)],
+			                    mem[(i+1)*dims[1]+(j+1)], mem[(i+1)*dims[1]+(j+0)],
+			                    mem[(i+0)*dims[1]+(j+0)]};
+
+			for (gap_t& gap: gap_list)
+			{
+				if (gap.yj != j)
+					continue;
+				if (gap.xi >= i)
+					corners[0] += gap.psi_gap;
+				if (gap.xi > i) {
+					corners[3] += gap.psi_gap;
+					corners[4] += gap.psi_gap;
+				}
+
+			}
+
 			for (int c=0; c<cnum; c++)
 				process_rect(i, j, corners, cvals[c]);
 		}
@@ -156,31 +190,16 @@ int map_isoline(hid_t fid, const char *dsetname, float *cvals, int cnum)
 		for (auto vec = l->begin(); vec!=l->end(); vec++)
 		{
 			float xy[2] = { static_cast<float>(xmin+vec->x*spacing), static_cast<float>(ymin+vec->y*spacing) };
-			// printf("%g %g\n", xy[0], xy[1]);
 			fwrite(xy, sizeof(float), 2, stdout);
 		}
 		float nans[2] = {NaN, NaN};
 		fwrite(nans, sizeof(float), 2, stdout);
-		// printf("\n");
 	}
 	fflush(stdout);
-	// assert(c == dims[0]*dims[1]);
-	// fwrite(dims, sizeof(hsize_t), 2, stdout);
-	// fwrite(&xmin, sizeof(double), 1, stdout);
 
 	delete isolines;
 	free(mem);
-	H5Sclose(dataspace);
-	H5Dclose(dataset);
-	// printf("%s\n", argv[0]);
+	H5Sclose(map_h5s);
+	H5Dclose(map_h5d);
 	return 0;
 }
-
-// int main(int argc, char **argv)
-// {
-// 	hid_t fid = H5Fopen(argv[1], H5F_ACC_RDONLY, H5P_DEFAULT);
-
-// 	float c[2] = {0, 1};
-// 	map_isoline(fid, argv[2], c, 2);
-// 	return 0;
-// }

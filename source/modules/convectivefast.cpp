@@ -35,6 +35,7 @@ TVec convectivefast::SpeedSumFast(TVec p)
     }
     res *= C_1_2PI;
     res += SpeedSum(*Node, p);
+    res += SrcSpeed(p);
     res += S->InfSpeed();
 
     return res;
@@ -58,6 +59,25 @@ TVec convectivefast::SpeedSum(const TSortedNode &Node, const TVec &p)
             if (!lobj->g) continue;
             res+= BioSavar(*lobj, p); 
         }
+    }
+
+    res *= C_1_2PI;
+    return res;
+}
+
+TVec convectivefast::SrcSpeed(const TVec &p)
+{
+    TVec res(0, 0);
+    // что бы избежать неустойчивости при использовании стока
+    // эпсилон динамически определяется из шага по времени
+    // условием устойчивости для точечного стока является V(r)*dt < r
+    // отсюда sqr(eps) > g*dt/2pi
+    // мы используем sqr(eps) = 2*g*dt/2pi = g*dt/pi
+    const double eps2_div_srcg = S->dt * C_1_PI;
+    for (const auto& src: S->SourceList)
+    {
+        TVec dr = p - src.r;
+        res += dr*(src.g / (dr.abs2() + eps2_div_srcg*abs(src.g)) );
     }
 
     res *= C_1_2PI;
@@ -106,9 +126,9 @@ void convectivefast::CalcConvectiveFast()
         {
             if (!lobj->g) {continue;}
             dr_local = lobj->r - nodeCenter;
-            lobj->v += TVec(Teilor1, Teilor2) + S->InfSpeed() + SpeedSum(*lbnode, lobj->r) +
-                TVec(TVec(Teilor3,  Teilor4)*dr_local,
-                        TVec(Teilor4, -Teilor3)*dr_local);
+            lobj->v += S->InfSpeed() + SrcSpeed(lobj->r) + SpeedSum(*lbnode, lobj->r) +
+                TVec(Teilor1, Teilor2) +
+                TVec(TVec(Teilor3,  Teilor4)*dr_local, TVec(Teilor4, -Teilor3)*dr_local);
         }
 
     	#pragma omp parallel for schedule(dynamic, 10)
@@ -116,18 +136,18 @@ void convectivefast::CalcConvectiveFast()
         {
             if (!lobj->g) {continue;}
             dr_local = lobj->r - nodeCenter;
-            lobj->v += TVec(Teilor1, Teilor2) + S->InfSpeed() + SpeedSum(*lbnode, lobj->r) +
-                TVec(TVec(Teilor3,  Teilor4)*dr_local,
-                        TVec(Teilor4, -Teilor3)*dr_local);
+            lobj->v += S->InfSpeed() + SrcSpeed(lobj->r) + SpeedSum(*lbnode, lobj->r) +
+                TVec(Teilor1, Teilor2) +
+                TVec(TVec(Teilor3,  Teilor4)*dr_local, TVec(Teilor4, -Teilor3)*dr_local);
         }
 
     	#pragma omp parallel for schedule(dynamic, 10)
         for (TObj *lobj = lbnode->sRange.first; lobj < lbnode->sRange.last; lobj++)
         {
             dr_local = lobj->r - nodeCenter;
-            lobj->v += TVec(Teilor1, Teilor2) + S->InfSpeed() + SpeedSum(*lbnode, lobj->r) +
-                TVec(TVec(Teilor3,  Teilor4)*dr_local,
-                        TVec(Teilor4, -Teilor3)*dr_local);
+            lobj->v += S->InfSpeed() + SrcSpeed(lobj->r) + SpeedSum(*lbnode, lobj->r) +
+                TVec(Teilor1, Teilor2) +
+                TVec(TVec(Teilor3,  Teilor4)*dr_local, TVec(Teilor4, -Teilor3)*dr_local);
         }
     }
 }
@@ -221,6 +241,7 @@ bool convectivefast::canUseInverse()
         if (lbody1->kspring.r.x >= 0) return false;
         if (lbody1->kspring.r.y >= 0) return false;
         if (lbody1->kspring.o >= 0) return false;
+        if (lbody1->collision_state) return false;
     }
 
     return true;
@@ -269,6 +290,13 @@ void convectivefast::CalcCirculationFast()
         FillMatrix(false);
 
     matrix.solveUsingInverseMatrix(use_inverse);
+    for (auto& libody: S->BodyList)
+    {
+        if (libody->collision_state)
+            matrix.spoilMatrix();
+        libody->collision_state = 0;
+    }
+
 }
 
 static inline double _2PI_Xi_g_near(TVec p, TVec pc, TVec dl, double rd)
@@ -460,6 +488,7 @@ void convectivefast::fillSlipEquationForSegment(TAtt* seg, TBody* ibody, bool ri
     //right column
     //influence of infinite speed
     *matrix.rightColAtIndex(seg_eq_no) = rotl(S->InfSpeed())*seg->dl;
+    *matrix.rightColAtIndex(seg_eq_no) += rotl(SrcSpeed(seg->r))*seg->dl;
     //influence of all free vortices
     TSortedNode* Node = S->Tree->findNode(seg->r);
     *matrix.rightColAtIndex(seg_eq_no) -= NodeInfluence(*Node, *seg);
@@ -786,6 +815,42 @@ void convectivefast::fillNewtonOEquation(TBody* ibody, bool rightColOnly)
     }
 }
 
+void convectivefast::fillCollisionOEquation(TBody* ibody)
+{
+    const int eq_no = ibody->eq_forces_no+8;
+
+    if (!ibody->collision_state)
+    {
+        fprintf(stderr, "Trying to fill collision equetion without the need\n");
+        exit(-2);
+    }
+    else if (ibody->collision_state>0)
+    {
+        *matrix.rightColAtIndex(eq_no) =
+            ibody->collision_max.o
+            -ibody->holder.o
+            -ibody->dpos.o;
+        *matrix.rightColAtIndex(eq_no) /= S->dt;
+    }
+    else if (ibody->collision_state<0)
+    {
+        *matrix.rightColAtIndex(eq_no) =
+            ibody->holder.o+
+            ibody->dpos.o
+            -ibody->collision_min.o;
+        *matrix.rightColAtIndex(eq_no) /= S->dt;
+    }
+
+    //place solution pointer
+    *matrix.solutionAtIndex(eq_no) = &ibody->speed_slae.o;
+
+    // self
+    {
+        // speed_slae
+        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+2) = 1;
+    }
+}
+
 /*
    888    888  .d88888b.   .d88888b.  888    d8P  8888888888
    888    888 d88P" "Y88b d88P" "Y88b 888   d8P   888
@@ -985,7 +1050,24 @@ void convectivefast::FillMatrix(bool rightColOnly)
 
         fillNewtonXEquation(libody.get(), rightColOnly);
         fillNewtonYEquation(libody.get(), rightColOnly);
-        fillNewtonOEquation(libody.get(), rightColOnly);		
+
+        if (!libody->collision_state)
+            fillNewtonOEquation(libody.get(), rightColOnly);
+        else if (abs(libody->collision_state) == 1)
+        {
+            fillNewtonOEquation(libody.get(), rightColOnly);
+            const int eq_no = libody->eq_forces_no+8;
+            *matrix.rightColAtIndex(eq_no) +=
+                (1+libody->bounce)
+                *libody->get_moi_c()
+                *libody->density
+                *libody->speed_slae.o/S->dt;
+        }
+        else if (abs(libody->collision_state) == 2)
+        {
+            fillCollisionOEquation(libody.get());
+            matrix.spoilInverseMatrix();
+        }
 
         if (libody->kspring.r.x >= 0 && S->Time>0)
             fillHookeXEquation(libody.get(), rightColOnly);

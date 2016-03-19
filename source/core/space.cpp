@@ -96,21 +96,25 @@ void Space::dataset_write_body(const char* name, const TBody& body)
 
     float heat_const = body.alist.front().heat_const;
     uint32_t general_slip = body.alist.front().slip;
-    bool can_simplify = true;
+    bool can_simplify_slip = true;
+    bool can_simplify_heat = true;
 
     hsize_t dims[2] = {body.size(), 4};
-    struct ATT *mem = (struct ATT*)malloc(sizeof(struct ATT)*dims[0]);
+    struct ATT *att_array = (struct ATT*)malloc(dims[0] * sizeof(struct ATT));
+    uint32_t *slip_array = (uint32_t*)malloc(dims[0] * sizeof(uint32_t));
+    float *heat_array = (float*)malloc(dims[0] * sizeof(float));
     for(hsize_t i=0; i<dims[0]; i++)
     {
         TAtt att = body.alist[i];
-        mem[i].x = att.corner.x;
-        mem[i].y = att.corner.y;
-        mem[i].g = att.g;
-        mem[i].gsum = att.gsum;
+        att_array[i].x = att.corner.x;
+        att_array[i].y = att.corner.y;
+        att_array[i].g = att.g;
+        att_array[i].gsum = att.gsum;
+        slip_array[i] = att.slip;
+        heat_array[i] = att.heat_const;
 
-        if (att.heat_const != heat_const ||
-                att.slip != general_slip)
-            can_simplify = false;
+        can_simplify_slip &= (att.slip == general_slip);
+        can_simplify_heat &= (att.heat_const == heat_const);
     }
 
     hsize_t chunkdims[2] = {std::min<hsize_t>(512, dims[0]), 4};
@@ -124,15 +128,32 @@ void Space::dataset_write_body(const char* name, const TBody& body)
     hid_t file_dataset = H5Dcreate2(fid, name, H5T_NATIVE_DOUBLE, file_dataspace, H5P_DEFAULT, prop, H5P_DEFAULT);
     H5ASSERT(file_dataset, "H5Dcreate");
 
-    if (!can_simplify)
+    if (!can_simplify_slip)
     {
-        fprintf(stderr, "Can not save simplified %s\n", get_body_name(&body).c_str());
+        hid_t slip_dataspace = H5Screate_simple(1, dims, dims);
+        H5ASSERT(slip_dataspace, "H5Screate_simple");
+
+        hid_t aid = H5Acreate(file_dataset, "slip", H5T_NATIVE_UINT32, slip_dataspace, H5P_DEFAULT, H5P_DEFAULT);
+        if (H5Awrite(aid, H5T_NATIVE_UINT32, slip_array)<0) return;
+        if (H5Aclose(aid)<0) return;
+    }
+    else
+    {
+        attribute_write(file_dataset, "general_slip", general_slip);
+    }
+
+    if (!can_simplify_heat)
+    {
+        fprintf(stderr, "Can not save simplified heat in %s\n", get_body_name(&body).c_str());
         exit(1);
     }
-    attribute_write(file_dataset, "simplified_dataset", uint32_t(2));
-    attribute_write(file_dataset, "general_slip", general_slip);
-    attribute_write(file_dataset, "heat_const", double(heat_const));
+    else
+    {
+        attribute_write(file_dataset, "general_heat_const", double(heat_const));
+    }
 
+    attribute_write(file_dataset, "simplified_dataset", uint32_t(2));
+        
     if (!body.root_body.expired())
     {
         auto root_body = body.root_body.lock();
@@ -154,6 +175,10 @@ void Space::dataset_write_body(const char* name, const TBody& body)
     attribute_write(file_dataset, "force_holder", body.force_holder);
     attribute_write(file_dataset, "friction_prev", body.friction_prev);
 
+    attribute_write(file_dataset, "collision_min", body.collision_min);
+    attribute_write(file_dataset, "collision_max", body.collision_max);
+    attribute_write(file_dataset, "bounce", body.bounce);
+
     attribute_write(file_dataset, "area", body.get_area());
     attribute_write(file_dataset, "com", body.get_com());
     attribute_write(file_dataset, "moi_c", body.get_moi_c());
@@ -162,9 +187,11 @@ void Space::dataset_write_body(const char* name, const TBody& body)
     attribute_write(file_dataset, "special_segment_no", body.special_segment_no);
     attribute_write(file_dataset, "heat_condition", body.heat_condition);
 
-    H5ASSERT(H5Dwrite(file_dataset, H5T_NATIVE_DOUBLE, H5S_ALL, file_dataspace, H5P_DEFAULT, mem), "H5Dwrite");
+    H5ASSERT(H5Dwrite(file_dataset, H5T_NATIVE_DOUBLE, H5S_ALL, file_dataspace, H5P_DEFAULT, att_array), "H5Dwrite");
     H5ASSERT(H5Dclose(file_dataset), "H5Dclose");
-    free(mem);
+    free(att_array);
+    free(slip_array);
+    free(heat_array);
 }
 
 void Space::Save(const char* format)
@@ -205,6 +232,7 @@ void Space::Save(const char* format)
     dataset_write_list("heat", HeatList);
     dataset_write_list("ink", StreakList);
     dataset_write_list("ink_source", StreakSourceList);
+    dataset_write_list("source", SourceList);
 
     for (auto& lbody: BodyList)
     {
@@ -296,6 +324,10 @@ herr_t dataset_read_body(hid_t g_id, const char* name, const H5L_info_t*, void *
     attribute_read(dataset, "force_holder", body->force_holder);
     attribute_read(dataset, "friction_prev", body->friction_prev);
 
+    attribute_read(dataset, "collision_min", body->collision_min);
+    attribute_read(dataset, "collision_max", body->collision_max);
+    attribute_read(dataset, "bounce", body->bounce);
+
     std::string root_body_name;
     int root_body_idx;
     attribute_read(dataset, "root_body", root_body_name);
@@ -304,15 +336,22 @@ herr_t dataset_read_body(hid_t g_id, const char* name, const H5L_info_t*, void *
     else
         body->root_body.reset();
 
+    struct ATT *att_array = (struct ATT*)malloc(dims[0] * sizeof(struct ATT));
+    uint32_t *slip_array = NULL;
+    H5ASSERT(H5Dread(dataset, H5T_NATIVE_DOUBLE, H5S_ALL, file_dataspace, H5P_DEFAULT, att_array), "H5Dread");
+
     uint32_t simplified_dataset;
     int32_t general_slip;
     double heat_const;
     attribute_read(dataset, "simplified_dataset", simplified_dataset);
 
+    // simplified_dataset по хорошему должен называться dataset_version,
+    // но исторически я теперь привязан именно к этому названию.
     // Предыдущая версия с HDF форматом использовала H5T_ENUM, который сейчас не читается
-    // Но т.к. simplified dataset == 0 я никогда не считал, то отныне 0 будет означать
-    // старую версию. Новая идет с номером 2.
-    // А нормальный неупрощенный датасет я тк и не сделал (пока)
+    // и в любом случае отвечает 0. К моему счастью я сохранял только один формат,
+    // поэтому отныне 0 будет означать старую версию.
+    // Новая версия упрощенного датасета имеет номер 2.
+    // Новая версия полноценного датасета имеет номер 3.
     if (simplified_dataset < 2)
     {
         attribute_read(dataset, "general_bc", general_slip);
@@ -340,25 +379,33 @@ herr_t dataset_read_body(hid_t g_id, const char* name, const H5L_info_t*, void *
     }
     else if (simplified_dataset == 2)
     {
-        attribute_read(dataset, "general_slip", general_slip);
-        attribute_read(dataset, "heat_const", heat_const);
+        if (H5Aexists(dataset, "slip"))
+        {
+            slip_array = (uint32_t*)malloc(dims[0] * sizeof(uint32_t));
+            hid_t aid = H5Aopen(dataset, "slip", H5P_DEFAULT);
+            H5Aread(aid, H5T_NATIVE_UINT32, slip_array);
+            H5Aclose(aid);
+        }
+        else
+        {
+            attribute_read(dataset, "general_slip", general_slip);
+        }
+        attribute_read(dataset, "general_heat_const", heat_const);
         attribute_read(dataset, "boundary_condition", body->boundary_condition);
         attribute_read(dataset, "special_segment_no", body->special_segment_no);
         attribute_read(dataset, "heat_condition", body->heat_condition);
     }
 
-    struct ATT *mem = (struct ATT*)malloc(sizeof(struct ATT)*dims[0]);
-    H5ASSERT(H5Dread(dataset, H5T_NATIVE_DOUBLE, H5S_ALL, file_dataspace, H5P_DEFAULT, mem), "H5Dread");
 
     for(hsize_t i=0; i<dims[0]; i++)
     {
         TAtt latt; // latt.body = body;
-        latt.corner.x = mem[i].x;
-        latt.corner.y = mem[i].y;
-        latt.g = mem[i].g;
-        latt.gsum = mem[i].gsum;
+        latt.corner.x = att_array[i].x;
+        latt.corner.y = att_array[i].y;
+        latt.g = att_array[i].g;
+        latt.gsum = att_array[i].gsum;
 
-        latt.slip = general_slip;
+        latt.slip = slip_array ? slip_array[i] : general_slip;
         latt.heat_const = heat_const;
         body->alist.push_back(latt);
     }
@@ -367,7 +414,8 @@ herr_t dataset_read_body(hid_t g_id, const char* name, const H5L_info_t*, void *
     body->doFillProperties();
 
     H5ASSERT(H5Dclose(dataset), "H5Dclose");
-    free(mem);
+    free(att_array);
+    free(slip_array);
     S->BodyList.push_back(body);
     return 0;
 }
@@ -431,6 +479,7 @@ void Space::Load(hid_t fid, std::string *info)
     dataset_read_list(fid, "heat", HeatList);
     dataset_read_list(fid, "ink", StreakList);
     dataset_read_list(fid, "ink_source", StreakSourceList);
+    dataset_read_list(fid, "source", SourceList);
 
     H5Literate(fid, H5_INDEX_NAME, H5_ITER_NATIVE, NULL, dataset_read_body, this);
     EnumerateBodies();
@@ -741,26 +790,49 @@ int Space::LoadStreakSource(const char* filename)
     return 0;
 }
 
-int Space::LoadBody(const char* filename)
+int Space::LoadSource(const char* filename)
 {
-    std::shared_ptr<TBody> body(new TBody());
-
     FILE *fin = fopen(filename, "r");
-    if (!fin) { cerr << "No file called " << filename << endl; return -1; }
+    if (!fin) { perror("Error opening source file"); return -1; }
 
-    TAtt att;
-    // FIXME
-    // att.body = body;
-    att.heat_const = 0;
-
-    //FIXME seek to end of line
-    while (fscanf(fin, "%lf %lf", &att.corner.x, &att.corner.y)==2)
+    TObj obj(0, 0, 0);
+    while ( fscanf(fin, "%lf %lf %lf", &obj.r.x, &obj.r.y, &obj.g)==3 )
     {
-        body->alist.push_back(att);
-        while ( fgetc(fin)!='\n' && !feof(fin) ) {}
+        SourceList.push_back(obj);
     }
 
     fclose(fin);
+    return 0;
+}
+
+
+int Space::LoadBody(const char* filename)
+{
+    int err = 0;
+    auto body = std::make_shared<TBody>();
+    TAtt att;
+
+    FILE *fin = fopen(filename, "r");
+    if (!fin) goto fail;
+
+    char str[128];
+    while (!err && !feof(fin) && !ferror(fin) && fgets(str, sizeof(str), fin))
+    {
+        err |= sscanf(str, "%lf %lf %u", &att.corner.x, &att.corner.y, &att.slip) < 2;
+        body->alist.push_back(att);
+    }
+
+    err |= ferror(fin);
+    fclose(fin);
+
+    if (err)
+    {
+fail:
+        errno = errno?:EINVAL;
+        perror("Error parsing body from file");
+        return -1;
+    }
+
     BodyList.push_back(body);
     body->doUpdateSegments();
     body->doFillProperties();

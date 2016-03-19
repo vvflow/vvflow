@@ -27,6 +27,7 @@ class Space
         vector<TObj> HeatList;
         vector<TObj> StreakSourceList;
         vector<TObj> StreakList;
+        vector<TObj> SourceList;
         TSortedTree *Tree;
 
         inline void FinishStep(); //update time and coord variables
@@ -55,6 +56,7 @@ class Space
         int LoadHeatFromFile(const char* filename);
         int LoadStreak(const char* filename);
         int LoadStreakSource(const char* filename);
+        int LoadSource(const char* filename);
         const char* getGitInfo();
         const char* getGitDiff();
 

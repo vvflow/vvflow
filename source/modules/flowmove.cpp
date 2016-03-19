@@ -55,6 +55,14 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
         deltaHolder[lbody.get()] = dHolder;
         deltaBody[lbody.get()] = dBody;
     }
+
+    // пробегаем в цикле все тела А
+    // если у тела скорость ноль - пропускаем
+    // пробегаем в цикле все отрезки
+    // пробегаем в цикле все тела Б
+    // если тело А == Б - пропускаем
+    // если вершина тела А после этого шага залезет внутрь тела Б - устраиваем соударение
+
     for (auto& lbody: S->BodyList) lbody->move(deltaHolder[lbody.get()], deltaBody[lbody.get()]);
     // Move vortexes, heat, ink
     for (auto& lobj: S->VortexList) lobj.r += lobj.v * dt;
@@ -157,6 +165,21 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
         lbody->force_dead.r /= dt;
         lbody->force_dead.o /= 2.*dt;
     }
+}
+
+bool flowmove::DetectCollision(uint8_t collision_iter)
+{
+    bool collision = false;
+    for (auto lbody: S->BodyList)
+    {
+        static_assert(std::is_same<decltype(lbody), shared_ptr<TBody>>::value, "lbody should be shared_ptr<TBody>");
+        TVec3D new_pos = lbody->holder + lbody->dpos + dt*lbody->speed_slae;
+        /**/ if (new_pos.o > lbody->collision_max.o) { lbody->collision_state = +1; collision = true; }
+        else if (new_pos.o < lbody->collision_min.o) { lbody->collision_state = -1; collision = true; }
+        else { lbody->collision_state = 0; }
+        lbody->collision_state *= collision_iter;
+    }
+    return collision;
 }
 
 void flowmove::VortexShed()

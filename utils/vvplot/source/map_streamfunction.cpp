@@ -8,66 +8,103 @@
 #include "core.h"
 #include "hdf5.h"
 
-static double Rd2;
+static double dl;
+static double rd2_global;
+static double EPS_MULT;
 static TVec RefFrame_Speed;
-inline static double atan(TVec p) {return atan(p.y/p.x);}
 
-double Psi(Space* S, TVec p)
+typedef struct {
+	uint16_t xi;
+	uint16_t yj;
+	float psi_gap;
+} gap_t;
+
+double eps2h(const TSortedNode &Node, TVec p);
+// eps2h is implemented in map_vorticity.cpp
+
+inline static
+double _4pi_psi_g(TVec dr, double rd2, double g)
 {
-	double psi1=0.0, psi2=0.0, psi3=0.0;
+	return -g * log(dr.abs2() + rd2);
+}
+
+inline static
+double _2pi_psi_q(TVec dr, double q)
+{
+	return q * atan2(dr.y, dr.x);
+}
+
+inline static
+double _2pi_psi_qatt(TVec p, TVec att, TVec com, double q)
+{
+	TVec v1 = com-p;
+	TVec v2 = att-p;
+	return q * atan2(rotl(v2)*v1, v2*v1);
+}
+
+double Psi(Space* S, TVec p, double spacing, double& psi_gap)
+{
+	double tmp_4pi_psi_g = 0.0;
+	double tmp_2pi_psi_q = 0.0;
+	psi_gap = 0.0;
 
 	for (auto& lbody: S->BodyList)
 	{
-		double psi_g_tmp=0, psi_q_tmp=0;
+		for (auto& latt: lbody->alist)
+		{
+			tmp_4pi_psi_g += _4pi_psi_g(p-latt.r, rd2_global, latt.g);
+		}
 
-		if (!lbody->speed_slae.iszero())
+		if (lbody->speed_slae.iszero()) continue;
+
 		for (TAtt& latt: lbody->alist)
 		{
 			TVec Vs = lbody->speed_slae.r + lbody->speed_slae.o * rotl(latt.r - lbody->get_axis());
 			double g = -Vs * latt.dl;
 			double q = -rotl(Vs) * latt.dl;
-			psi_g_tmp+= log((p-latt.r).abs2() + Rd2) * g;
-			psi_q_tmp+= atan(p-latt.r) * q;
-		}
-
-		for (auto& latt: lbody->alist)
-		{
-			psi2 += log((p-latt.r).abs2() + Rd2) * latt.g;
+			tmp_4pi_psi_g += _4pi_psi_g(p-latt.r, rd2_global, g);
+			tmp_2pi_psi_q += _2pi_psi_qatt(p, latt.r, lbody->get_com(), q);
 		}
 	}
-	psi2*= -0.5*C_1_2PI;
+
+	for (const auto& src: S->SourceList)
+	{
+		tmp_2pi_psi_q += _2pi_psi_q(p-src.r, src.g);
+
+		if (p.x < src.r.x && src.r.x <= p.x+spacing &&
+			p.y < src.r.y && src.r.y <= p.y+spacing)
+		{
+			psi_gap += src.g;
+		}
+	}
 
 	TSortedNode* Node = S->Tree->findNode(p);
 	if (!Node) return 0;
 	for (TSortedNode* lfnode: *Node->FarNodes)
 	{
-		TObj obj = lfnode->CMp;
-		psi3+= log((p-obj.r).abs2() + Rd2)*obj.g;
-		obj = lfnode->CMm;
-		psi3+= log((p-obj.r).abs2() + Rd2)*obj.g;
+		tmp_4pi_psi_g += _4pi_psi_g(p-lfnode->CMp.r, rd2_global, lfnode->CMp.g);
+		tmp_4pi_psi_g += _4pi_psi_g(p-lfnode->CMm.r, rd2_global, lfnode->CMm.g);
 	}
 	for (TSortedNode* lnnode: *Node->NearNodes)
 	{
 		for (TObj *lobj = lnnode->vRange.first; lobj < lnnode->vRange.last; lobj++)
 		{
-			psi3+= log((p-lobj->r).abs2() + Rd2) * lobj->g;
+			tmp_4pi_psi_g += _4pi_psi_g(p-lobj->r, lobj->v.x, lobj->g); // v.x stores eps^2
 		}
 	}
-	psi3*= -0.5*C_1_2PI;
 
-	return psi1 + psi2 + psi3 + p*rotl(S->InfSpeed() - RefFrame_Speed);
+	// printf("GAP %lf\n", psi_gap);
+	return tmp_4pi_psi_g*C_1_4PI + tmp_2pi_psi_q*C_1_2PI + p*rotl(S->InfSpeed() - RefFrame_Speed);
 }
 
 extern "C" {
 int map_streamfunction(hid_t fid, char RefFrame, double xmin, double xmax, double ymin, double ymax, double spacing)
 {
-	Space *S = new Space();
-	S->Load(fid);
-
-	double dl = S->AverageSegmentLength(); Rd2 = dl*dl/25;
-	S->Tree = new TSortedTree(S, 8, dl*20, 0.3);
+	char *mult_env = getenv("VV_EPS_MULT");
+	EPS_MULT = mult_env ? atof(mult_env) : 2;
 
 	/**************************** LOAD ARGUMENTS ******************************/
+	Space *S = new Space();
 	switch (RefFrame)
 	{
 		case 'o': RefFrame_Speed = TVec(0, 0); break;
@@ -81,13 +118,34 @@ int map_streamfunction(hid_t fid, char RefFrame, double xmin, double xmax, doubl
 		fprintf(stderr, " 'b' : body reference frame\n" );
 	}
 
+	S->Load(fid);
+	// что б не мешались
+	S->HeatList.clear();
+	S->StreakList.clear();
 
+	dl = S->AverageSegmentLength();
+	rd2_global = sqr(0.2*dl);
+	S->Tree = new TSortedTree(S, 8, dl*20, std::numeric_limits<double>::max());
 	S->Tree->build();
+
+	auto& bnodes = S->Tree->getBottomNodes();
+	#pragma omp parallel for
+	for (auto llbnode = bnodes.begin(); llbnode < bnodes.end(); llbnode++)
+	{
+		TSortedNode* lbnode = *llbnode;
+		for (TObj *lobj = lbnode->vRange.first; lobj < lbnode->vRange.last; lobj++)
+		{
+			lobj->v.x = sqr(EPS_MULT)*max(eps2h(*lbnode, lobj->r)*0.25, rd2_global);
+		}
+	}
+
+	// Calculate field ********************************************************
 	hsize_t dims[2] = {
 		static_cast<size_t>((xmax-xmin)/spacing) + 1,
 		static_cast<size_t>((ymax-ymin)/spacing) + 1
 	};
 	float *mem = (float*)malloc(sizeof(float)*dims[0]*dims[1]);
+	std::vector<gap_t> gap_list;
 
 	for (size_t xi=0; xi<dims[0]; xi++)
 	{
@@ -96,14 +154,59 @@ int map_streamfunction(hid_t fid, char RefFrame, double xmin, double xmax, doubl
 		for (size_t yj=0; yj<dims[1]; yj++)
 		{
 			double y = ymin + double(yj)*spacing;
-			mem[xi*dims[1]+yj] = Psi(S, TVec(x, y));
+			double psi_gap = 0;
+			mem[xi*dims[1]+yj] = Psi(S, TVec(x, y), spacing, psi_gap);
+			if (psi_gap)
+			{
+				gap_t gap = {0};
+				gap.xi = static_cast<uint16_t>(xi);
+				gap.yj = static_cast<uint16_t>(yj);
+				gap.psi_gap = static_cast<float>(psi_gap);
+				#pragma omp critical
+				gap_list.push_back(gap);
+			}
 		}
 	}
+
+	// мы переходим на атан2. разрыв будет уходить влево.
+	// перед сохранением мы будем считать разрывы
+	// для каждого источника находим ближний узел слева снизу
+	// сохранить индексы по Х и У этого узла
+	// и третьей колонкой сохраняем поправку в функцию тока (по факту это будет половина циркуляции)
+
+	// на построении линий тока сделать process rect приниающим 5 аргументов
+	// порядок такой: lb(0)->lt(1)->rt(2)->rb(3)->lb(4)
+	// (левый нижний угол будет иметь 2 варианта значения ф тока)
+	// для каждого квадрата пробегаем список разрывов
+	// если индекс разрыва соответствует левому нижнему узлу - инкрементим значение ф. тока в нем (в 0м узле)
+	// если разрыв правее - инкрементим lb(0), lb(4), rb(3)
+
+	// раньше мы искали нужные константы на отрезках 01, 12, 23, 30
+	// теперь будет 01, 12, 23, 34
 
 	char map_name[] = "map_streamfunction.?";
 	map_name[19] = RefFrame;
 	map_save(fid, map_name, mem, dims, xmin, xmax, ymin, ymax, spacing);
 	free(mem);
+	
+	if (!gap_list.size())
+		return 0;
 
+	hid_t map_h5d = H5Dopen2(fid, map_name, H5P_DEFAULT);
+	hid_t gap_h5t = H5Tcreate(H5T_COMPOUND, 8);
+	H5Tinsert(gap_h5t, "xi", 0, H5T_NATIVE_UINT16);
+	H5Tinsert(gap_h5t, "yj", 2, H5T_NATIVE_UINT16);
+	H5Tinsert(gap_h5t, "gap", 4, H5T_NATIVE_FLOAT);
+	H5Tcommit2(map_h5d, "gap_t", gap_h5t, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+
+	dims[0] = gap_list.size();
+	hid_t gaps_h5s = H5Screate_simple(1, dims, dims);
+	hid_t gaps_h5a = H5Acreate(map_h5d, "gaps", gap_h5t, gaps_h5s, H5P_DEFAULT, H5P_DEFAULT);
+	H5Awrite(gaps_h5a, gap_h5t, gap_list.data());
+
+	H5Aclose(gaps_h5a);
+	H5Sclose(gaps_h5s);
+	H5Tclose(gap_h5t);
+	H5Dclose(map_h5d);
 	return 0;
 }}
