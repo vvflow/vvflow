@@ -1,0 +1,95 @@
+#!/usr/bin/env python
+
+import sys
+import argparse
+
+parser = argparse.ArgumentParser(description='Generate body',
+	prog='vvgen', formatter_class=argparse.RawDescriptionHelpFormatter);
+subparsers = parser.add_subparsers(help='body shape', dest='geom')
+
+parser_cylinder = subparsers.add_parser('cylinder', help='circular cylinder', aliases=['cyl'])
+parser_cylinder.add_argument('R', type=float, help='radius of a cylinder')
+parser_cylinder.add_argument('N', type=int, help='total number of segments')
+
+parser_semicyl = subparsers.add_parser('semicyl', help='semi-cylinder')
+parser_semicyl.add_argument('R', type=float, help='radius')
+parser_semicyl.add_argument('N', type=int, help='total number of segments')
+
+parser_ellipse = subparsers.add_parser('ellipse', help='ellipse')
+parser_ellipse.add_argument('Rx', type=float, help='semi-major axis')
+parser_ellipse.add_argument('Ry', type=float, help='semi-minor axis')
+parser_ellipse.add_argument('N', type=int, help='total number of segments')
+
+parser_plate = subparsers.add_parser('plate', help='just a plate')
+parser_plate.add_argument('R1', type=float, help='radius of a leading edge')
+parser_plate.add_argument('R2', type=float, help='radius of a trailing edge')
+parser_plate.add_argument('L', type=float, help='lenght')
+parser_plate.add_argument('N', type=int, help='total number of segments')
+
+parser_foil = subparsers.add_parser('foil', help='symmetrical foil')
+parser_foil.add_argument('R', type=float, help='leading edge radius')
+parser_foil.add_argument('L', type=float, help='foil length')
+parser_foil.add_argument('N', type=int, help='total number of segments')
+
+args = parser.parse_args()
+# print(args)
+
+from math import pi, sin, cos, acos, sqrt
+from numpy import arange
+
+def gen_line(x0, y0, x1, y1, dl=None, N=None):
+	assert N or dl, "gen_line: either 'N' or 'dl' is required"
+	if dl:
+		l = sqrt((x1-x0)**2 + (y1-y0)**2)
+		N = int(l/dl+0.5)
+	for i in range(N):
+		xi = x0 + (x1-x0)*i/N
+		yi = y0 + (y1-y0)*i/N
+		print("{:+0.6e}\t {:+0.6e}".format(xi, yi))
+
+def gen_arc(R, a0, a1, center=(0, 0), dl=None, N=None):
+	assert N or dl, "gen_arc: either 'N' or 'dl' is required"
+	if dl:
+		l = abs(R*(a1-a0))
+		N = int(l/dl+0.5)
+	for i in range(N):
+		ai = a0 + (a1-a0)*i/N
+		xi = center[0]+R*cos(ai)
+		yi = center[1]+R*sin(ai)
+		print("{:+0.6e}\t {:+0.6e}".format(xi, yi))
+
+if args.geom == 'cylinder':
+	gen_arc(args.R, 0, -2*pi, N=int(args.N/2)*2)
+
+elif args.geom == 'semicyl':
+	# L = 2*R + pi*R
+	N_arc = args.N * pi/(2+pi)
+	N_line = args.N - N_arc
+	gen_arc(args.R, 0, -pi, N=N_arc)
+	gen_line(-args.R, 0, args.R, 0, N=N_line)
+
+elif args.geom == 'ellipse':
+	Rx = args.Rx
+	Ry = args.Ry
+	N = int(args.N/2)*2
+	L = 4*(pi*Rx*Ry+(Rx-Ry)**2)/(Rx+Ry)
+	dl = L / N
+
+	ai = 0
+	while ai > -pi:
+		xi = Rx*cos(ai)
+		yi = Ry*sin(ai)
+		print("{:+0.6e}\t {:+0.6e}".format(xi, yi))
+		da = dl / sqrt(Rx**2 * sin(ai)**2 + Ry**2 * cos(ai)**2)
+		ai = ai - da
+
+# def min(a, b):
+# 	return a if (a<b) else b
+# def max(a, b):
+# 	return a if (a>b) else b
+
+# alpha = acos(R/L)
+
+# gen_line(L, 0, R*cos(alpha), -R*sin(alpha), dl);
+# gen_arc(0, 0, R, 2*pi-alpha, alpha, dl);
+# gen_line(R*cos(alpha), R*sin(alpha), L, 0, dl);
