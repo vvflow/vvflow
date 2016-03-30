@@ -25,16 +25,13 @@ parser_plate.add_argument('R1', type=float, help='radius of a leading edge')
 parser_plate.add_argument('R2', type=float, help='radius of a trailing edge')
 parser_plate.add_argument('L', type=float, help='lenght')
 parser_plate.add_argument('N', type=int, help='total number of segments')
-
-parser_foil = subparsers.add_parser('foil', help='symmetrical foil')
-parser_foil.add_argument('R', type=float, help='leading edge radius')
-parser_foil.add_argument('L', type=float, help='foil length')
-parser_foil.add_argument('N', type=int, help='total number of segments')
+parser_plate.add_argument('--start', type=float, default=0, help='start of a section')
+parser_plate.add_argument('--stop', type=float, default=1, help='end of a section')
 
 args = parser.parse_args()
 # print(args)
 
-from math import pi, sin, cos, acos, sqrt
+from math import pi, sin, cos, asin, acos, sqrt
 from numpy import arange
 
 def gen_line(x0, y0, x1, y1, dl=None, N=None):
@@ -76,17 +73,43 @@ elif args.geom == 'ellipse':
 	dl = L / N
 
 	ai = 0
-	while ai > -pi:
+	while ai > -2*pi+dl:
 		xi = Rx*cos(ai)
 		yi = Ry*sin(ai)
 		print("{:+0.6e}\t {:+0.6e}".format(xi, yi))
 		da = dl / sqrt(Rx**2 * sin(ai)**2 + Ry**2 * cos(ai)**2)
 		ai = ai - da
 
-# def min(a, b):
-# 	return a if (a<b) else b
-# def max(a, b):
-# 	return a if (a>b) else b
+elif args.geom == 'plate':
+	assert 0 <= args.start and args.start < 1, \
+		"{} plate: invalid start: 0 <= {} < 1".format(parser.prog, args.start)
+	assert 0 < args.stop and args.stop <= 1, \
+		"{} plate: invalid stop: 0 < {} <= 1".format(parser.prog, args.stop)
+	assert args.start < args.stop, \
+		"{} plate: start must be less than stop".format(parser.prog)
+
+	# some calculations
+	alpha = asin((args.R2-args.R1)/args.L)
+	phi = pi/2+alpha
+	perimeter = 2 * ( (pi-phi)*args.R1 + (phi)*args.R2 + args.L*cos(alpha) )
+	dl = perimeter / args.N
+
+	r1 = args.R1 + args.start*(args.R2-args.R1)
+	r2 = args.R1 + args.stop*(args.R2-args.R1)
+	c1 = args.start*args.L
+	c2 = args.stop*args.L
+
+	if args.stop != 1:
+		gen_arc(r2, -pi, -phi, center=(c2, 0), dl=dl)
+	else:
+		gen_arc(r2, 0, -phi, center=(c2, 0), dl=dl)
+	gen_line(c2+r2*cos(phi), -r2*sin(phi), c1+r1*cos(phi), -r1*sin(phi), dl=dl)
+	gen_arc(r1, 2*pi-phi, phi, center=(c1, 0), dl=dl)
+	gen_line(c1+r1*cos(phi), r1*sin(phi), c2+r2*cos(phi), r2*sin(phi), dl=dl)
+	if args.stop != 1:
+		gen_arc(r2, phi, pi, center=(c2, 0), dl=dl)
+	else:
+		gen_arc(r2, phi, 0, center=(c2, 0), dl=dl)
 
 # alpha = acos(R/L)
 
