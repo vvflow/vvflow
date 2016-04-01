@@ -158,20 +158,21 @@ try:
 		c2 = args.stop
 		if args.gap==None: args.gap = dl
 
+		slip_start = '0' if args.start == 0 else '1'
+		slip_stop = '0' if args.stop == args.L else '1'
 		if args.stop == args.L:
-			gen_arc(r2, 0, -phi, center=(c2, 0), dl=dl)
-			gen_line(c2+r2*cos(phi), -r2*sin(phi), c1+r1*cos(phi), -r1*sin(phi), dl=dl)
-			gen_arc(r1, 2*pi-phi, phi, center=(c1, 0), dl=dl)
-			gen_line(c1+r1*cos(phi), r1*sin(phi), c2+r2*cos(phi), r2*sin(phi), dl=dl)
-			gen_arc(r2, phi, 0, center=(c2, 0), dl=dl)
+			phi1 = 0
+			phi2 = phi
 		else:
+			phi1 = pi
 			phi2 = phi+acos(r2/(r2+args.gap))
 			r2 = r2+args.gap
-			gen_arc(r2, -pi, -phi2, center=(c2, 0), dl=dl)
-			gen_line(c2+r2*cos(phi2), -r2*sin(phi2), c1+r1*cos(phi), -r1*sin(phi), dl=dl)
-			gen_arc(r1, 2*pi-phi, phi, center=(c1, 0), dl=dl)
-			gen_line(c1+r1*cos(phi), r1*sin(phi), c2+r2*cos(phi2), r2*sin(phi2), dl=dl)
-			gen_arc(r2, phi2, pi, center=(c2, 0), dl=dl)
+
+		gen_arc (r2, -phi1, -phi2,                             center=(c2, 0), dl=dl, slip=slip_stop)
+		gen_line(c2+r2*cos(phi2), -r2*sin(phi2), c1+r1*cos(phi), -r1*sin(phi), dl=dl, slip='0')
+		gen_arc (r1, 2*pi-phi, phi,                            center=(c1, 0), dl=dl, slip=slip_start)
+		gen_line(c1+r1*cos(phi), +r1*sin(phi), c2+r2*cos(phi2), +r2*sin(phi2), dl=dl, slip='0')
+		gen_arc (r2, +phi2, +phi1,                             center=(c2, 0), dl=dl, slip=slip_stop)
 
 	elif args.geom == 'gis':
 		def min(a, b):
@@ -199,13 +200,13 @@ try:
 		l2 = args.L/2
 		h2 = args.H/2
 		la = args.H/2/tan(args.d*pi/180)
-		gen_line(+l2+la, +h2, 
+		gen_line(+l2+la, +h2,
 				 +l2-la, -h2, dl=dl)
-		gen_line(+l2-la, -h2, 
+		gen_line(+l2-la, -h2,
 				 -l2-la, -h2, dl=dl)
-		gen_line(-l2-la, -h2, 
+		gen_line(-l2-la, -h2,
 				 -l2+la, +h2, dl=dl)
-		gen_line(-l2+la, +h2, 
+		gen_line(-l2+la, +h2,
 				 +l2+la, +h2, dl=dl)
 
 except Exception as e:
