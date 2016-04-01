@@ -58,13 +58,31 @@ parser_gis.add_argument('--y3', required=True, type=float)
 parser_gis.add_argument('--x4', required=True, type=float)
 parser_gis.add_argument('--y4', required=True, type=float)
 
+pgram_shape = """
+        _______________
+       /|            d /
+      / |    ^        /
+     /  |H   0 >     /
+    /   |           /
+   /____|__________/
+           L
+"""
+
+parser_parallelogram = subparsers.add_parser('parallelogram', help='parallelogram',
+	epilog=pgram_shape,
+	formatter_class=argparse.RawDescriptionHelpFormatter, aliases=['pgram'])
+parser_parallelogram.add_argument('L', type=float, help='length')
+parser_parallelogram.add_argument('H', type=float, help='height')
+parser_parallelogram.add_argument('d', type=float, help='angle in degrees')
+parser_parallelogram.add_argument('N', type=int, help='total number of segments')
+
 args = parser.parse_args()
 # print(args)
 
-from math import pi, sin, cos, asin, acos, sqrt
+from math import pi, sin, cos, tan, asin, acos, sqrt
 from numpy import arange
 
-def gen_line(x0, y0, x1, y1, dl=None, N=None, slip=None):
+def gen_line(x0, y0, x1, y1, dl=None, N=None, slip=''):
 	assert N or dl, "gen_line: either 'N' or 'dl' is required"
 	if slip:
 		slip = "\t "+slip
@@ -76,7 +94,7 @@ def gen_line(x0, y0, x1, y1, dl=None, N=None, slip=None):
 		yi = y0 + (y1-y0)*i/N
 		print("{:+0.6e}\t {:+0.6e}{}".format(xi, yi, slip))
 
-def gen_arc(R, a0, a1, center=(0, 0), dl=None, N=None, slip=None):
+def gen_arc(R, a0, a1, center=(0, 0), dl=None, N=None, slip=''):
 	assert N or dl, "gen_arc: either 'N' or 'dl' is required"
 	if slip:
 		slip = "\t "+slip
@@ -90,7 +108,8 @@ def gen_arc(R, a0, a1, center=(0, 0), dl=None, N=None, slip=None):
 		print("{:+0.6e}\t {:+0.6e}{}".format(xi, yi, slip))
 
 try:
-	if args.geom == 'cylinder':
+	if args.geom == 'cylinder' or \
+		args.geom == 'cyl':
 		gen_arc(args.R, 0, -2*pi, N=int(args.N/2)*2)
 
 	elif args.geom == 'semicyl':
@@ -172,6 +191,22 @@ try:
 		gen_line(     0.,  args.y4, args.x4,  args.y4, slip="1", dl=dl_slip1);
 		gen_line(args.x4,  args.y4, args.x4, -args.y4, slip="1", dl=dl_slip1);
 		gen_line(args.x4, -args.y4,      0., -args.y4, slip="1", dl=dl_slip1);
+
+	elif args.geom == 'parallelogram' or \
+		args.geom == 'pgram':
+		L = 2*args.L + 2*args.H/sin(args.d*pi/180)
+		dl = L/args.N
+		l2 = args.L/2
+		h2 = args.H/2
+		la = args.H/2/tan(args.d*pi/180)
+		gen_line(+l2+la, +h2, 
+				 +l2-la, -h2, dl=dl)
+		gen_line(+l2-la, -h2, 
+				 -l2-la, -h2, dl=dl)
+		gen_line(-l2-la, -h2, 
+				 -l2+la, +h2, dl=dl)
+		gen_line(-l2+la, +h2, 
+				 +l2+la, +h2, dl=dl)
 
 except Exception as e:
 	subparsers.choices[args.geom].print_usage(file=sys.stderr)
