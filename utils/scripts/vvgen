@@ -29,24 +29,57 @@ parser_plate.add_argument('--start', type=float, default=None, help='start of a 
 parser_plate.add_argument('--stop', type=float, default=None, help='end of a section')
 parser_plate.add_argument('--gap', type=float, default=None, help='size of gap between sections')
 
+gis_shape = """
+    ________________  Y4
+   |                |
+   |                |
+   |               /  Y3
+   |  R0 ___,_____/
+   |    /
+   |   /             ^
+   |   |             0 >
+   |   \\
+   |    \___,_____X2
+   |    X0  X1    \\
+   |               \\
+   |                |
+   |________________|
+  X4
+"""
+parser_gis = subparsers.add_parser('gis', help='gis channel', epilog=gis_shape,
+	formatter_class=argparse.RawDescriptionHelpFormatter)
+parser_gis.add_argument('--dl', required=True, type=float)
+parser_gis.add_argument('--dls', required=True, type=float)
+parser_gis.add_argument('--x0', required=True, type=float)
+parser_gis.add_argument('--r0', required=True, type=float)
+parser_gis.add_argument('--x1', required=True, type=float)
+parser_gis.add_argument('--x2', required=True, type=float)
+parser_gis.add_argument('--y3', required=True, type=float)
+parser_gis.add_argument('--x4', required=True, type=float)
+parser_gis.add_argument('--y4', required=True, type=float)
+
 args = parser.parse_args()
 # print(args)
 
 from math import pi, sin, cos, asin, acos, sqrt
 from numpy import arange
 
-def gen_line(x0, y0, x1, y1, dl=None, N=None):
+def gen_line(x0, y0, x1, y1, dl=None, N=None, slip=None):
 	assert N or dl, "gen_line: either 'N' or 'dl' is required"
+	if slip:
+		slip = "\t "+slip
 	if dl:
 		l = sqrt((x1-x0)**2 + (y1-y0)**2)
 		N = int(l/dl+0.5)
 	for i in range(N):
 		xi = x0 + (x1-x0)*i/N
 		yi = y0 + (y1-y0)*i/N
-		print("{:+0.6e}\t {:+0.6e}".format(xi, yi))
+		print("{:+0.6e}\t {:+0.6e}{}".format(xi, yi, slip))
 
-def gen_arc(R, a0, a1, center=(0, 0), dl=None, N=None):
+def gen_arc(R, a0, a1, center=(0, 0), dl=None, N=None, slip=None):
 	assert N or dl, "gen_arc: either 'N' or 'dl' is required"
+	if slip:
+		slip = "\t "+slip
 	if dl:
 		l = abs(R*(a1-a0))
 		N = int(l/dl+0.5)
@@ -54,7 +87,7 @@ def gen_arc(R, a0, a1, center=(0, 0), dl=None, N=None):
 		ai = a0 + (a1-a0)*i/N
 		xi = center[0]+R*cos(ai)
 		yi = center[1]+R*sin(ai)
-		print("{:+0.6e}\t {:+0.6e}".format(xi, yi))
+		print("{:+0.6e}\t {:+0.6e}{}".format(xi, yi, slip))
 
 try:
 	if args.geom == 'cylinder':
@@ -120,6 +153,26 @@ try:
 			gen_arc(r1, 2*pi-phi, phi, center=(c1, 0), dl=dl)
 			gen_line(c1+r1*cos(phi), r1*sin(phi), c2+r2*cos(phi2), r2*sin(phi2), dl=dl)
 			gen_arc(r2, phi2, pi, center=(c2, 0), dl=dl)
+
+	elif args.geom == 'gis':
+		def min(a, b):
+			return a if (a<b) else b
+		dl_nslip=args.dl
+		dl_slip1=args.dls
+		dl_slip2=min(dl_slip1, (args.y4-args.y3)/5)
+		gen_line(     0., -args.y4,      0., -args.y3, slip="0", dl=dl_slip2);
+		gen_line(     0., -args.y3, args.x2, -args.r0, slip="0", dl=dl_nslip);
+		gen_line(args.x2, -args.r0, args.x1, -args.r0, slip="0", dl=dl_nslip);
+		gen_line(args.x1, -args.r0, args.x0, -args.r0, slip="1", dl=dl_slip1);
+		gen_arc (args.r0,  3*pi/2,     pi/2,           slip="1", dl=dl_slip1, center=(args.x0, 0.),);
+		gen_line(args.x0,  args.r0, args.x1,  args.r0, slip="1", dl=dl_slip1);
+		gen_line(args.x1,  args.r0, args.x2,  args.r0, slip="0", dl=dl_nslip);
+		gen_line(args.x2,  args.r0,      0.,  args.y3, slip="0", dl=dl_nslip);
+		gen_line(     0.,  args.y3,      0.,  args.y4, slip="0", dl=dl_slip2);
+		gen_line(     0.,  args.y4, args.x4,  args.y4, slip="1", dl=dl_slip1);
+		gen_line(args.x4,  args.y4, args.x4, -args.y4, slip="1", dl=dl_slip1);
+		gen_line(args.x4, -args.y4,      0., -args.y4, slip="1", dl=dl_slip1);
+
 except Exception as e:
 	subparsers.choices[args.geom].print_usage(file=sys.stderr)
 	sys.stderr.write(str(e) + "\n")
