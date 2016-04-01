@@ -1,0 +1,215 @@
+#!/usr/bin/env python
+
+import sys
+import argparse
+
+parser = argparse.ArgumentParser(description='Generate body',
+	prog='vvgen', formatter_class=argparse.RawDescriptionHelpFormatter);
+subparsers = parser.add_subparsers(help='body shape', dest='geom')
+
+parser_cylinder = subparsers.add_parser('cylinder', help='circular cylinder', aliases=['cyl'])
+parser_cylinder.add_argument('R', type=float, help='radius of a cylinder')
+parser_cylinder.add_argument('N', type=int, help='total number of segments')
+
+parser_semicyl = subparsers.add_parser('semicyl', help='semi-cylinder')
+parser_semicyl.add_argument('R', type=float, help='radius')
+parser_semicyl.add_argument('N', type=int, help='total number of segments')
+
+parser_ellipse = subparsers.add_parser('ellipse', help='ellipse')
+parser_ellipse.add_argument('Rx', type=float, help='semi-major axis')
+parser_ellipse.add_argument('Ry', type=float, help='semi-minor axis')
+parser_ellipse.add_argument('N', type=int, help='total number of segments')
+
+parser_plate = subparsers.add_parser('plate', help='just a plate')
+parser_plate.add_argument('R1', type=float, help='radius of a leading edge')
+parser_plate.add_argument('R2', type=float, help='radius of a trailing edge')
+parser_plate.add_argument('L', type=float, help='lenght')
+parser_plate.add_argument('N', type=int, help='total number of segments')
+parser_plate.add_argument('--start', type=float, default=None, help='start of a section')
+parser_plate.add_argument('--stop', type=float, default=None, help='end of a section')
+parser_plate.add_argument('--gap', type=float, default=None, help='size of gap between sections')
+
+gis_shape = """
+    ________________  Y4
+   |                |
+   |                |
+   |               /  Y3
+   |  R0 ___,_____/
+   |    /
+   |   /             ^
+   |   |             0 >
+   |   \\
+   |    \___,_____X2
+   |    X0  X1    \\
+   |               \\
+   |                |
+   |________________|
+  X4
+"""
+parser_gis = subparsers.add_parser('gis', help='gis channel', epilog=gis_shape,
+	formatter_class=argparse.RawDescriptionHelpFormatter)
+parser_gis.add_argument('--dl', required=True, type=float)
+parser_gis.add_argument('--dls', required=True, type=float)
+parser_gis.add_argument('--x0', required=True, type=float)
+parser_gis.add_argument('--r0', required=True, type=float)
+parser_gis.add_argument('--x1', required=True, type=float)
+parser_gis.add_argument('--x2', required=True, type=float)
+parser_gis.add_argument('--y3', required=True, type=float)
+parser_gis.add_argument('--x4', required=True, type=float)
+parser_gis.add_argument('--y4', required=True, type=float)
+
+pgram_shape = """
+        _______________
+       /|            d /
+      / |    ^        /
+     /  |H   0 >     /
+    /   |           /
+   /____|__________/
+           L
+"""
+
+parser_parallelogram = subparsers.add_parser('parallelogram', help='parallelogram',
+	epilog=pgram_shape,
+	formatter_class=argparse.RawDescriptionHelpFormatter, aliases=['pgram'])
+parser_parallelogram.add_argument('L', type=float, help='length')
+parser_parallelogram.add_argument('H', type=float, help='height')
+parser_parallelogram.add_argument('d', type=float, help='angle in degrees')
+parser_parallelogram.add_argument('N', type=int, help='total number of segments')
+
+args = parser.parse_args()
+# print(args)
+
+from math import pi, sin, cos, tan, asin, acos, sqrt
+from numpy import arange
+
+def gen_line(x0, y0, x1, y1, dl=None, N=None, slip=''):
+	assert N or dl, "gen_line: either 'N' or 'dl' is required"
+	if slip:
+		slip = "\t "+slip
+	if dl:
+		l = sqrt((x1-x0)**2 + (y1-y0)**2)
+		N = int(l/dl+0.5)
+	for i in range(N):
+		xi = x0 + (x1-x0)*i/N
+		yi = y0 + (y1-y0)*i/N
+		print("{:+0.6e}\t {:+0.6e}{}".format(xi, yi, slip))
+
+def gen_arc(R, a0, a1, center=(0, 0), dl=None, N=None, slip=''):
+	assert N or dl, "gen_arc: either 'N' or 'dl' is required"
+	if slip:
+		slip = "\t "+slip
+	if dl:
+		l = abs(R*(a1-a0))
+		N = int(l/dl+0.5)
+	for i in range(N):
+		ai = a0 + (a1-a0)*i/N
+		xi = center[0]+R*cos(ai)
+		yi = center[1]+R*sin(ai)
+		print("{:+0.6e}\t {:+0.6e}{}".format(xi, yi, slip))
+
+try:
+	if args.geom == 'cylinder' or \
+		args.geom == 'cyl':
+		gen_arc(args.R, 0, -2*pi, N=int(args.N/2)*2)
+
+	elif args.geom == 'semicyl':
+		# L = 2*R + pi*R
+		N_arc = args.N * pi/(2+pi)
+		N_line = args.N - N_arc
+		gen_arc(args.R, 0, -pi, N=N_arc)
+		gen_line(-args.R, 0, args.R, 0, N=N_line)
+
+	elif args.geom == 'ellipse':
+		Rx = args.Rx
+		Ry = args.Ry
+		N = int(args.N/2)*2
+		L = 4*(pi*Rx*Ry+(Rx-Ry)**2)/(Rx+Ry)
+		dl = L / N
+
+		ai = 0
+		while ai > -2*pi+dl:
+			xi = Rx*cos(ai)
+			yi = Ry*sin(ai)
+			print("{:+0.6e}\t {:+0.6e}".format(xi, yi))
+			da = dl / sqrt(Rx**2 * sin(ai)**2 + Ry**2 * cos(ai)**2)
+			ai = ai - da
+
+	elif args.geom == 'plate':
+		if args.start==None: args.start = 0
+		if args.stop==None: args.stop = args.L
+		assert 0 <= args.start and args.start < args.L, \
+			"{} plate: error: argument --start: invalid start: 0 <= {} < L".format(parser.prog, args.start)
+		assert 0 < args.stop and args.stop <= args.L, \
+			"{} plate: error: argument --stop: invalid stop: 0 < {} <= L".format(parser.prog, args.stop)
+		assert args.start < args.stop, \
+			"{} plate: error: argument --stop: start must be less than stop".format(parser.prog)
+		assert args.gap==None or args.gap >= 0, \
+			"{} plate: error: argument --gap: gap must be non-negative".format(parser.prog)
+
+		# some calculations
+		alpha = asin((args.R2-args.R1)/args.L)
+		phi = pi/2+alpha
+		perimeter = 2 * ( (pi-phi)*args.R1 + (phi)*args.R2 + args.L*cos(alpha) )
+		dl = perimeter / args.N
+
+		r1 = args.R1 + (args.start/args.L)*(args.R2-args.R1)
+		r2 = args.R1 + (args.stop/args.L)*(args.R2-args.R1)
+		c1 = args.start
+		c2 = args.stop
+		if args.gap==None: args.gap = dl
+
+		slip_start = '0' if args.start == 0 else '1'
+		slip_stop = '0' if args.stop == args.L else '1'
+		if args.stop == args.L:
+			phi1 = 0
+			phi2 = phi
+		else:
+			phi1 = pi
+			phi2 = phi+acos(r2/(r2+args.gap))
+			r2 = r2+args.gap
+
+		gen_arc (r2, -phi1, -phi2,                             center=(c2, 0), dl=dl, slip=slip_stop)
+		gen_line(c2+r2*cos(phi2), -r2*sin(phi2), c1+r1*cos(phi), -r1*sin(phi), dl=dl, slip='0')
+		gen_arc (r1, 2*pi-phi, phi,                            center=(c1, 0), dl=dl, slip=slip_start)
+		gen_line(c1+r1*cos(phi), +r1*sin(phi), c2+r2*cos(phi2), +r2*sin(phi2), dl=dl, slip='0')
+		gen_arc (r2, +phi2, +phi1,                             center=(c2, 0), dl=dl, slip=slip_stop)
+
+	elif args.geom == 'gis':
+		def min(a, b):
+			return a if (a<b) else b
+		dl_nslip=args.dl
+		dl_slip1=args.dls
+		dl_slip2=min(dl_slip1, (args.y4-args.y3)/5)
+		gen_line(     0., -args.y4,      0., -args.y3, slip="0", dl=dl_slip2);
+		gen_line(     0., -args.y3, args.x2, -args.r0, slip="0", dl=dl_nslip);
+		gen_line(args.x2, -args.r0, args.x1, -args.r0, slip="0", dl=dl_nslip);
+		gen_line(args.x1, -args.r0, args.x0, -args.r0, slip="1", dl=dl_slip1);
+		gen_arc (args.r0,  3*pi/2,     pi/2,           slip="1", dl=dl_slip1, center=(args.x0, 0.),);
+		gen_line(args.x0,  args.r0, args.x1,  args.r0, slip="1", dl=dl_slip1);
+		gen_line(args.x1,  args.r0, args.x2,  args.r0, slip="0", dl=dl_nslip);
+		gen_line(args.x2,  args.r0,      0.,  args.y3, slip="0", dl=dl_nslip);
+		gen_line(     0.,  args.y3,      0.,  args.y4, slip="0", dl=dl_slip2);
+		gen_line(     0.,  args.y4, args.x4,  args.y4, slip="1", dl=dl_slip1);
+		gen_line(args.x4,  args.y4, args.x4, -args.y4, slip="1", dl=dl_slip1);
+		gen_line(args.x4, -args.y4,      0., -args.y4, slip="1", dl=dl_slip1);
+
+	elif args.geom == 'parallelogram' or \
+		args.geom == 'pgram':
+		L = 2*args.L + 2*args.H/sin(args.d*pi/180)
+		dl = L/args.N
+		l2 = args.L/2
+		h2 = args.H/2
+		la = args.H/2/tan(args.d*pi/180)
+		gen_line(+l2+la, +h2,
+				 +l2-la, -h2, dl=dl)
+		gen_line(+l2-la, -h2,
+				 -l2-la, -h2, dl=dl)
+		gen_line(-l2-la, -h2,
+				 -l2+la, +h2, dl=dl)
+		gen_line(-l2+la, +h2,
+				 +l2+la, +h2, dl=dl)
+
+except Exception as e:
+	subparsers.choices[args.geom].print_usage(file=sys.stderr)
+	sys.stderr.write(str(e) + "\n")
+	sys.exit(1)
