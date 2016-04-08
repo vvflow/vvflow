@@ -1,7 +1,8 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 from __future__ import print_function
-import os, sys
+import sys, os
+from subprocess import Popen, PIPE
 import argparse
 
 parser = argparse.ArgumentParser(description='Quickly plot some data from pipe',
@@ -34,9 +35,13 @@ if sys.stdout.isatty():
     print("Aborting.", file=sys.stderr)
     sys.exit(-1)
 
-gp = os.popen("gnuplot", "w")
+# os.dup2(0, 9)
+# os.close(0)
+(rpipe, wpipe) = os.pipe()
+gp = Popen(["gnuplot", "-c", "/dev/fd/"+str(rpipe)])
+import time
 def gpw(str, *args, **kwargs):
-    gp.write(str.format(*args, **kwargs))
+    os.write(wpipe, str.format(*args, **kwargs).encode())
 
 gpw("""set terminal pngcairo enhanced\n""")
 gpw("""unset key\n""")
@@ -47,10 +52,11 @@ if (args.plot_w_points):
     style = "lt 0 pt 7"
     if (args.plot_w_lines):
         style = "lt 1 pt 7"
-gpw("plot '-' {} w linespoints {} lc rgb 'black'\n", args.plot_usung or "", style)
-gpw(sys.stdin.read())
-gpw("e\n")
+if args.plot_usung:
+    args.plot_usung = 'u ' + args.plot_usung
+gpw("plot '/dev/stdin' {} w linespoints {} lc rgb 'black'\n", args.plot_usung or "", style)
 
-gpw("\n")
-gp.flush()
-gp.close()
+gpw("exit\n")
+os.close(wpipe)
+os.close(rpipe)
+gp.wait()
