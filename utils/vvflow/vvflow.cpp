@@ -48,6 +48,7 @@ int main(int argc, char** argv)
 	#define RAISE(STR) { cerr << "vvflow ERROR: " << STR << endl; return -1; }
 	if (S->Re <= 0) RAISE("invalid value re<=0");
 	#undef RAISE
+	bool is_viscous = (S->Re != std::numeric_limits<double>::infinity());
 
 	char f_stepdata[256]; snprintf(f_stepdata, 256, "stepdata_%s.h5", S->caption.c_str());
 	char f_results[256]; snprintf(f_results, 256, "results_%s", S->caption.c_str());
@@ -107,12 +108,15 @@ int main(int argc, char** argv)
 		S->ZeroForces();
 
 		dbg(tr.build());
-		dbg(eps.CalcEpsilonFast(true));
+		dbg(eps.CalcEpsilonFast(/*merge=*/is_viscous));
 		dbg(conv.CalcBoundaryConvective());
 		dbg(conv.CalcConvectiveFast());
 		dbg(sens.output());
-		dbg(diff.CalcVortexDiffusiveFast());
-		dbg(diff.CalcHeatDiffusiveFast());
+		if (is_viscous)
+		{
+			dbg(diff.CalcVortexDiffusiveFast());
+			dbg(diff.CalcHeatDiffusiveFast());
+		}
 		dbg(tr.destroy());
 
 		dbg(fm.MoveAndClean(true));

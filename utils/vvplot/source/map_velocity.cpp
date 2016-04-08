@@ -24,6 +24,7 @@ int velocity_print(hid_t fid, TVec* points, int count)
     Space *S = new Space();
     S->Load(fid);
 
+    bool is_viscous = (S->Re != std::numeric_limits<double>::infinity());
     double dl = S->AverageSegmentLength(); Rd2 = dl*dl/25;
     S->Tree = new TSortedTree(S, 8, dl*20, 0.3);
     convectivefast conv(S);
@@ -31,7 +32,7 @@ int velocity_print(hid_t fid, TVec* points, int count)
     epsfast eps(S);
     flow.VortexShed();
     S->Tree->build();
-    eps.CalcEpsilonFast(true);
+    eps.CalcEpsilonFast(/*merge=*/is_viscous);
 
     for (int i=0; i<count; i++)
     {

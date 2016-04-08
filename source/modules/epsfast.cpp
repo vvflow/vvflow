@@ -24,9 +24,22 @@ void epsfast::CalcEpsilonFast(bool merge)
         TVec bnode_center = TVec(lbnode->x, lbnode->y);
         TAtt *nearestAtt = nearestBodySegment(*lbnode, bnode_center);
 
-        double merge_criteria_sq = (merge && nearestAtt) ? 
-            0.16 * nearestAtt->dl.abs2() * (1. + (bnode_center - nearestAtt->r).abs())
-            : 0;
+        double merge_criteria_sq;
+        if (merge)
+        {
+            merge_criteria_sq = nearestAtt ?
+            // объединять слишком близкие вихри
+            // или вихри, у которого ближайшие два соседа имеют другой знак
+                0.16 * nearestAtt->dl.abs2() * (1. + (bnode_center - nearestAtt->r).abs())
+            // объединять только "свой среди чужих"
+                : 0;
+        }
+        else
+        {
+            // nan - не объединять вообще никогда
+            merge_criteria_sq = std::numeric_limits<double>::quiet_NaN();
+        }
+
         double eps_restriction = nearestAtt ?
             nearestAtt->dl.abs()*(1.0/3.0)
             : 0;
@@ -93,8 +106,12 @@ double epsfast::epsv(const TSortedNode &Node, TObj *lv, double merge_criteria_sq
         }
     }
 
-    if ( !lv1 ) return std::numeric_limits<double>::min();
-    if ( !lv2 ) return sqrt(res1);
+    if ( !lv1 )
+        return std::numeric_limits<double>::min();
+    if ( !lv2 )
+        return sqrt(res1);
+    if ( isnan(merge_criteria_sq) )
+        return sqrt(res2);
 
     if (
             (res1 < merge_criteria_sq)
@@ -103,7 +120,7 @@ double epsfast::epsv(const TSortedNode &Node, TObj *lv, double merge_criteria_sq
        )
     {
         MergeVortexes(lv, lv1);
-        return epsv(Node, lv, 0);
+        return epsv(Node, lv, std::numeric_limits<double>::quiet_NaN());
     }
 
     return sqrt(res2);
@@ -142,7 +159,7 @@ double epsfast::epsh(const TSortedNode &Node, TObj *lv, double merge_criteria_sq
     if (res1 < merge_criteria_sq)
     {
         MergeVortexes(lv, lv1);
-        return epsh(Node, lv, 0);
+        return epsh(Node, lv, std::numeric_limits<double>::quiet_NaN());
     }
 
     return sqrt(res2);

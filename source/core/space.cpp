@@ -44,7 +44,8 @@ Space::Space():
     InfCirculation = 0.;
     gravitation = TVec(0., 0.);
     Finish = std::numeric_limits<double>::max();
-    Re = Pr = 0.;
+    Re = std::numeric_limits<double>::infinity();
+    Pr = 0.;
     InfMarker = TVec(0., 0.);
 }
 
