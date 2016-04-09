@@ -126,13 +126,14 @@ try:
 		L = 4*(pi*Rx*Ry+(Rx-Ry)**2)/(Rx+Ry)
 		dl = L / N
 
-		ai = 0
-		while ai > -2*pi+dl:
-			xi = Rx*cos(ai)
-			yi = Ry*sin(ai)
+		ai, xp, yp = (0, None, None)
+		for n in range(N*5000):
+			xi = Rx*cos(2*pi*n/N/5000)
+			yi = Ry*sin(2*pi*n/N/5000)
+			if xp and yp and sqrt((xi-xp)**2+(yi-yp)**2) < dl:
+				continue
 			print("{:+0.6e}\t {:+0.6e}".format(xi, yi))
-			da = dl / sqrt(Rx**2 * sin(ai)**2 + Ry**2 * cos(ai)**2)
-			ai = ai - da
+			xp, yp = (xi, yi)
 
 	elif args.geom == 'plate':
 		if args.start==None: args.start = 0
