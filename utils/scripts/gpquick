@@ -38,7 +38,7 @@ if sys.stdout.isatty():
 # os.dup2(0, 9)
 # os.close(0)
 (rpipe, wpipe) = os.pipe()
-gp = Popen(["gnuplot", "-c", "/dev/fd/"+str(rpipe)])
+gp = Popen(["gnuplot", "/dev/fd/"+str(rpipe)])
 import time
 def gpw(str, *args, **kwargs):
     os.write(wpipe, str.format(*args, **kwargs).encode())

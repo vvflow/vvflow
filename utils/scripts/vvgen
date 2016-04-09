@@ -7,7 +7,7 @@ parser = argparse.ArgumentParser(description='Generate body',
 	prog='vvgen', formatter_class=argparse.RawDescriptionHelpFormatter);
 subparsers = parser.add_subparsers(help='body shape', dest='geom')
 
-parser_cylinder = subparsers.add_parser('cylinder', help='circular cylinder', aliases=['cyl'])
+parser_cylinder = subparsers.add_parser('cyl', help='circular cylinder')
 parser_cylinder.add_argument('R', type=float, help='radius of a cylinder')
 parser_cylinder.add_argument('N', type=int, help='total number of segments')
 
@@ -68,9 +68,9 @@ pgram_shape = """
            L
 """
 
-parser_parallelogram = subparsers.add_parser('parallelogram', help='parallelogram',
+parser_parallelogram = subparsers.add_parser('pgram', help='parallelogram',
 	epilog=pgram_shape,
-	formatter_class=argparse.RawDescriptionHelpFormatter, aliases=['pgram'])
+	formatter_class=argparse.RawDescriptionHelpFormatter)
 parser_parallelogram.add_argument('L', type=float, help='length')
 parser_parallelogram.add_argument('H', type=float, help='height')
 parser_parallelogram.add_argument('d', type=float, help='angle in degrees')
