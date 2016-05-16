@@ -129,7 +129,7 @@ try:
 		ai, xp, yp = (0, None, None)
 		for n in range(N*5000):
 			xi = Rx*cos(2*pi*n/N/5000)
-			yi = Ry*sin(2*pi*n/N/5000)
+			yi = -Ry*sin(2*pi*n/N/5000)
 			if xp and yp and sqrt((xi-xp)**2+(yi-yp)**2) < dl:
 				continue
 			print("{:+0.6e}\t {:+0.6e}".format(xi, yi))
