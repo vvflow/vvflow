@@ -116,8 +116,8 @@ try:
 		# L = 2*R + pi*R
 		N_arc = args.N * pi/(2+pi)
 		N_line = args.N - N_arc
-		gen_arc(args.R, 0, -pi, N=N_arc)
-		gen_line(-args.R, 0, args.R, 0, N=N_line)
+		gen_arc(args.R, 0, -pi, N=int(N_arc+0.5))
+		gen_line(-args.R, 0, args.R, 0, N=int(N_line+0.5))
 
 	elif args.geom == 'ellipse':
 		Rx = args.Rx
