@@ -29,6 +29,33 @@ parser.add_argument(
     help='plot using clause'
 )
 
+parser.add_argument(
+    '--square',
+    dest='plot_square',
+    action='store_true',
+    help='set size ratio square'
+)
+
+parser.add_argument(
+    '-x',
+    dest='xrange',
+    nargs=2,
+    type=float,
+    metavar=('XMIN', 'XMAX'),
+    default=(None, None),
+    help='set xrange'
+)
+
+parser.add_argument(
+    '-y',
+    dest='yrange',
+    nargs=2,
+    type=float,
+    metavar=('YMIN', 'YMAX'),
+    default=(None, None),
+    help='set yrange'
+)
+
 args = parser.parse_args()
 if sys.stdout.isatty():
     print("You are trying to write a png to stdout. It may be harmful.", file=sys.stderr)
@@ -45,7 +72,12 @@ def gpw(str, *args, **kwargs):
 
 gpw("""set terminal pngcairo enhanced\n""")
 gpw("""unset key\n""")
-gpw("""set size ratio -1\n""")
+if args.plot_square:
+    gpw("""set size ratio -1\n""")
+if args.xrange[0] and args.xrange[1]:
+    gpw("""set xrange [{}:{}]\n""".format(args.xrange[0], args.xrange[1]))
+if args.yrange[0] and args.yrange[1]:
+    gpw("""set yrange [{}:{}]\n""".format(args.yrange[0], args.yrange[1]))
 
 style = "lt 1 pt 0"
 if (args.plot_w_points):
