@@ -74,9 +74,9 @@ gpw("""set terminal pngcairo enhanced\n""")
 gpw("""unset key\n""")
 if args.plot_square:
     gpw("""set size ratio -1\n""")
-if args.xrange[0] and args.xrange[1]:
+if args.xrange[0] != None and args.xrange[1] != None:
     gpw("""set xrange [{}:{}]\n""".format(args.xrange[0], args.xrange[1]))
-if args.yrange[0] and args.yrange[1]:
+if args.yrange[0] != None and args.yrange[1] != None:
     gpw("""set yrange [{}:{}]\n""".format(args.yrange[0], args.yrange[1]))
 
 style = "lt 1 pt 0"
