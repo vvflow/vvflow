@@ -1,0 +1,30 @@
+#!/usr/bin/awk -f
+BEGIN{
+    if (ARGC<2) {
+        print "Usage: vvawk.drv [-v VAR=VALUE] FILE" > "/dev/stderr"
+        print "Calculate derivative: differencies of adjacent rows in a particular column" > "/dev/stderr"
+        print "Variables:" > "/dev/stderr"
+        print "\tcol -- column number to be processed (default: 2)" > "/dev/stderr"
+        print "\tdiv -- column divisor, like dt (default: 1)" > "/dev/stderr"
+        exit 0
+    }
+    col =  col ? col+0 : 2
+    div = div ? div+0. : 1
+}
+
+{
+    ycurr = $col
+    if (NR == 1) {
+        yprev = ycurr
+        next
+    }
+
+    for (i=1; i<col; i++)
+        printf "%s%s", $i, OFS
+    printf "%.6e%s", (ycurr-yprev)/div, OFS
+    for (i=col+1; i<=NF; i++)
+        printf "%s%s", $i, OFS
+    printf "%s", RS
+
+    yprev = ycurr
+}
