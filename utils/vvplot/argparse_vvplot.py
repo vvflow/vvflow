@@ -127,6 +127,13 @@ parser.add_argument(
 )
 
 parser.add_argument(
+	'--holder',
+	dest='plot_holder',
+	action='store_true',
+	help='draw body holder'
+)
+
+parser.add_argument(
 	'--spring',
 	dest='plot_spring',
 	action='store_true',

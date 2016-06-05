@@ -356,13 +356,23 @@ if args.plot_body:
         gpw("""{plot} '< libvvplot -L {fin_name} {}'""", b['name'])
         gpw(""" binary format='%2double%*2double'""")
         gpw(""" u 1:2 w @{}""", "body_clear" if (args.blankbody==idx+1) else "body_style")
+        if args.plot_holder:
+            p1 = b['holder_position']
+            gpw("""{plot} '< echo {} {} {}'""", p1[0], p1[1], p1[2])
+            gpw(""" u 1:2:(0.5*cos($3)):(0.5*sin($3))""")
+            gpw(""" w vectors nohead lc rgb 'black' lw 1.5""")
+            gpw("""{plot} '< echo {} {}'""", p1[0], p1[1])
+            gpw(""" u 1:2:(1.5*{}) w circles lc rgb 'black' fs solid noborder""", vv_prec_hi)
         if args.plot_spring:
             p1 = b['holder_position']
             dp = b['delta_position']
             p2 = (p1[0]+dp[0], p1[1]+dp[1], p1[2]+dp[2])
             gpw("""{plot} '< echo {} {} {} {}'""", p1[0], p1[1], dp[0], dp[1])
             gpw(""" w vectors nohead lc rgb 'black' lw 1.5""")
-            gpw("""{plot} '< echo -e {} {}\\\\n{} {}\\\\n'""", p1[0], p1[1], p2[0], p2[1])
+            gpw("""{plot} '< echo {} {} {}'""", p2[0], p2[1], p2[2])
+            gpw(""" u 1:2:(0.5*cos($3)):(0.5*sin($3))""")
+            gpw(""" w vectors nohead lc rgb 'black' lw 1.5""")
+            gpw("""{plot} '< echo {} {}'""", p2[0], p2[1])
             gpw(""" u 1:2:(1.5*{}) w circles lc rgb 'black' fs solid noborder""", vv_prec_hi)
 
 if args.tree:
