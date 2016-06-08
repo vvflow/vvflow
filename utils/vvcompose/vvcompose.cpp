@@ -45,7 +45,15 @@ template<> int parse(const char *val)
 }
 template<> TTime parse(const char *val)
 {
-	return TTime::makeWithSecondsDecimal(parse<double>(val));
+	TTime t;
+	//from core.h
+	if (!parse<TTime>(val, &t))
+	{
+		fprintf(stderr, "vvcompose ERROR: set: bad TTime value: %s\n", val);
+		exit(3);
+	}
+
+	return t;
 }
 
 void do_set(Space* S, const char *arg, const char *value)
