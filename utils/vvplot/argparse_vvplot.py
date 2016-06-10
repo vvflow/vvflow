@@ -192,7 +192,8 @@ parser.add_argument(
 	# dest='isopsi',
 	nargs=3,
 	type=decimal_value,
-	default=(-10, 10, 0.1),
+	action='append',
+	default=[],
 	metavar=('MIN', 'MAX', 'STEP'),
 	help='isolines values of streamfunction field (streamlines)'
 )
@@ -283,8 +284,14 @@ def drange(start, stop, step):
 		x+=step
 	return result
 
+if not len(args.isopsi):
+	args.isopsi += [[decimal('-10'), decimal('10'), decimal('0.1')]]
+
 try:
-	args.isopsi = " ".join(drange(*args.isopsi))
+	psi = []
+	for i in args.isopsi:
+		psi += drange(*i)
+	args.isopsi = " ".join(psi)
 except Exception as s:
 	parser.print_usage()
 	print('{}: error: argument --isopsi: {}'.format(parser.prog, str(s)))
