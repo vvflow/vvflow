@@ -8,19 +8,27 @@
 % scalable-cyrfonts-tex        % cyr times font
 % it all about 450 Mb 
 
-\documentclass[14pt]{extreport}
+\documentclass[a4paper,14pt]{extreport}
 \usepackage[paper=a4paper,top=2cm,left=2cm,right=2cm,
     footskip=1cm,bottom=2cm]{geometry}
+\usepackage{polyglossia}
+\setdefaultlanguage{russian}
+\setotherlanguage{english}
+\defaultfontfeatures{Ligatures=TeX,Mapping=tex-text}
+\setmainfont{Times New Roman}
+\newfontfamily\cyrillicfont{Times New Roman}
+\setsansfont{Arial}
+\newfontfamily\cyrillicfontsf{Arial}
+\setmonofont{Courier New}
+\newfontfamily\cyrillicfonttt{Courier New}
+% \setmainfont{Times}
 
-\usepackage[T2A]{fontenc}
-\usepackage[utf8]{inputenc}
-\usepackage[english,russian]{babel}
 \usepackage{amssymb,amsfonts,amsmath,mathtext,amsbsy}
 \usepackage{multirow}
 \usepackage{listings, color}
 \usepackage{graphicx}
 \usepackage{import}
-\usepackage{times,cyrtimes}
+% \usepackage{times}
 \usepackage{courier}
 \usepackage[makeroom]{cancel}
 \graphicspath{{images/}}
