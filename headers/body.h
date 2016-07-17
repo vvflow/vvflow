@@ -90,9 +90,10 @@ class TBody
         hc_t heat_condition;
 
         TVec3D friction, friction_prev; //computed by S->CalcForces
-        TVec3D force_born, force_dead; //computed by flowmove->MoveAndClean
         TVec3D force_hydro, force_holder; //computed by convectivefast->CalcCirculationFast
         double nusselt; //computed by S->CalcForces
+        TVec3D fdt_dead; //сила, индуцированная умирающими вихрями
+        // перед использованием силу надо поделить на dt, а момент - на 2*dt
         double g_dead;
 
     public:

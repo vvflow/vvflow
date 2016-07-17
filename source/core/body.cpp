@@ -15,8 +15,8 @@ TBody::TBody():
 {
     holder = dpos = TVec3D(0., 0., 0.);
     g_dead = 0;
+    fdt_dead = TVec3D(0,0,0);
     friction = friction_prev = TVec3D(0,0,0);
-    force_born = force_dead = TVec3D(0,0,0);
     force_hydro = force_holder = TVec3D(0,0,0);
     _surface = _area = 0;
     _com = TVec(0., 0.);

@@ -82,10 +82,8 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
         else lobj++;
     }
 
-
-
-
     if (remove)
+    {
         for (auto lobj = S->VortexList.begin(); lobj < S->VortexList.end(); )
         {
             TAtt* bad_segment = NULL;
@@ -97,13 +95,14 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
             }
             if (!bad_body) { lobj++; continue; }
 
-            bad_body->force_dead.r += rotl(lobj->r) * lobj->g;
-            bad_body->force_dead.o += (lobj->r - bad_body->get_axis()).abs2() * lobj->g;
+            bad_body->fdt_dead.r += rotl(lobj->r) * lobj->g;
+            bad_body->fdt_dead.o += (lobj->r - bad_body->get_axis()).abs2() * lobj->g;
             bad_segment->gsum -= lobj->g;
             bad_body->g_dead += lobj->g;
             CleanedV_++;
             S->VortexList.erase(lobj);
         }
+    }
 
     for (auto lobj = S->HeatList.begin(); lobj < S->HeatList.end(); )
     {
@@ -162,8 +161,17 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
 
     for (auto& lbody: S->BodyList)
     {
-        lbody->force_dead.r /= dt;
-        lbody->force_dead.o /= 2.*dt;
+        TVec axis = lbody->get_axis();
+        for (auto& latt: lbody->alist)
+        {
+            if (fabs(latt.g) < RemoveEps || latt.slip)
+            {
+                lbody->fdt_dead.r += rotl(latt.r) * latt.g;
+                lbody->fdt_dead.o += (latt.r - axis).abs2() * latt.g;
+                latt.gsum -= latt.g;
+                lbody->g_dead += latt.g;
+            }
+        }
     }
 }
 
@@ -186,26 +194,19 @@ void flowmove::VortexShed()
 {
     for (auto& lbody: S->BodyList)
     {
-        lbody->force_born = TVec3D(0., 0., 0.);
-
         for (auto& latt: lbody->alist)
         {
-            if (fabs(latt.g) < RemoveEps)
-            {
-                CleanedV_++;
-                lbody->g_dead+= latt.g;
-            }
-            else if ( !latt.slip )
+            // gsum инкрементится даже для отрезков со скольжением,
+            // хотя реальные вихри не рождаются
+            // декремент происходит на этапе MoveAndClean
+            // что бы правильно считались силы и распред давления.
+            latt.gsum+= latt.g;
+
+            if (fabs(latt.g) >= RemoveEps && !latt.slip)
             {
                 S->VortexList.push_back(TObj(latt.corner + rotl(latt.dl)*1e-4, latt.g));
-                lbody->force_born.r += rotl(latt.corner) * latt.g;
-                lbody->force_born.o += (latt.corner - lbody->get_axis()).abs2() * latt.g;
-                latt.gsum+= latt.g;
             }
         }
-
-        lbody->force_born.r /= dt;
-        lbody->force_born.o /= 2.*dt;
     }
 }
 

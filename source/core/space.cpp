@@ -176,6 +176,9 @@ void Space::dataset_write_body(const char* name, const TBody& body)
     attribute_write(file_dataset, "force_holder", body.force_holder);
     attribute_write(file_dataset, "friction_prev", body.friction_prev);
 
+    attribute_write(file_dataset, "fdt_dead", body.fdt_dead);
+    attribute_write(file_dataset, "g_dead", body.g_dead);
+
     attribute_write(file_dataset, "collision_min", body.collision_min);
     attribute_write(file_dataset, "collision_max", body.collision_max);
     attribute_write(file_dataset, "bounce", body.bounce);
@@ -324,6 +327,9 @@ herr_t dataset_read_body(hid_t g_id, const char* name, const H5L_info_t*, void *
     attribute_read(dataset, "force_hydro", body->force_hydro);
     attribute_read(dataset, "force_holder", body->force_holder);
     attribute_read(dataset, "friction_prev", body->friction_prev);
+
+    attribute_write(dataset, "fdt_dead", body->fdt_dead);
+    attribute_write(dataset, "g_dead", body->g_dead);
 
     attribute_read(dataset, "collision_min", body->collision_min);
     attribute_read(dataset, "collision_max", body->collision_max);
@@ -594,7 +600,7 @@ void Space::Load_v1_3(const char* fname)
             fread(&body->density, 8, 1, fin);
 
             fread(&body->force_hydro, 24, 1, fin);
-            fread(&body->force_dead, 24, 1, fin);
+            fread(&body->fdt_dead, 24, 1, fin);
             fread(&body->friction_prev, 24, 1, fin);
 
             BodyList.push_back(body);
@@ -699,9 +705,10 @@ void Space::ZeroForces()
 
         lbody->force_hydro = TVec3D();
         lbody->force_holder = TVec3D();
-        lbody->force_dead = TVec3D();
-        lbody->force_born = TVec3D();
         lbody->friction = TVec3D();
+        lbody->fdt_dead = TVec3D();
+        lbody->g_dead = 0;
+
         lbody->nusselt = 0.;
     }
 }

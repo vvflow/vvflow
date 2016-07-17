@@ -535,7 +535,6 @@ void convectivefast::fillSteadyEquationForSegment(TAtt* seg, TBody* ibody, bool 
 
     //right column
     *matrix.rightColAtIndex(seg_eq_no) = ibody->g_dead + 2*ibody->get_area()*ibody->speed_slae_prev.o;
-    ibody->g_dead = 0;
     if (rightColOnly) return;
 
     //place solution pointer
@@ -594,7 +593,7 @@ void convectivefast::fillHydroXEquation(TBody* ibody, bool rightColOnly)
         + ibody->get_area()*_1_dt*rotl(2*ibody->get_com()+r_c_com).x * ibody->speed_slae_prev.o
         // - (-ibody->speed_slae_prev.r.y) * ibody->speed_slae_prev.o * ibody->get_area()
         + sqr(ibody->speed_slae_prev.o) * ibody->get_area() * r_c_com.x
-        + ibody->force_dead.r.x;
+        + ibody->fdt_dead.r.x*_1_dt;
 
     if (rightColOnly) return;
 
@@ -628,7 +627,7 @@ void convectivefast::fillHydroYEquation(TBody* ibody, bool rightColOnly)
         + ibody->get_area()*_1_dt*rotl(2*ibody->get_com()+r_c_com).y * ibody->speed_slae_prev.o
         // - (ibody->speed_slae_prev.r.x) * ibody->speed_slae_prev.o * ibody->get_area()
         + sqr(ibody->speed_slae_prev.o) * ibody->get_area() * r_c_com.y
-        + ibody->force_dead.r.y;
+        + ibody->fdt_dead.r.y*_1_dt;
     if (rightColOnly) return;
 
     //place solution pointer
@@ -661,7 +660,7 @@ void convectivefast::fillHydroOEquation(TBody* ibody, bool rightColOnly)
         + ibody->get_area()*_1_dt * rotl(r_c_com) * ibody->speed_slae_prev.r
         + 2*ibody->get_moi_c()*_1_dt * ibody->speed_slae_prev.o
         // - (r_c_com * ibody->speed_slae_prev.r) * ibody->speed_slae_prev.o * ibody->get_area()
-        + ibody->force_dead.o;
+        + ibody->fdt_dead.o*_1_2dt;
     if (rightColOnly) return;
 
     //place solution pointer
