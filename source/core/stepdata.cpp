@@ -19,7 +19,6 @@ Stepdata::Stepdata(Space* s_, const char *fname, bool b_save_profile)
     H5Tset_size(string_h5t, H5T_VARIABLE);
 
     time_h5d = -1;
-    force_born_h5d.resize(blsize, -1);
     force_hydro_h5d.resize(blsize, -1);
     force_holder_h5d.resize(blsize, -1);
     force_friction_h5d.resize(blsize, -1);
@@ -79,7 +78,6 @@ Stepdata::Stepdata(Space* s_, const char *fname, bool b_save_profile)
             H5ASSERT(body_h5g, "H5Gopen");
         }
 
-        force_born_h5d[body_n]     = h5d_init(body_h5g, "force_born", rows, 3);
         force_hydro_h5d[body_n]    = h5d_init(body_h5g, "force_hydro", rows, 3);
         force_holder_h5d[body_n]   = h5d_init(body_h5g, "force_holder", rows, 3);
         force_friction_h5d[body_n] = h5d_init(body_h5g, "force_friction", rows, 3);
@@ -115,7 +113,6 @@ Stepdata::~Stepdata()
     H5Dclose(time_h5d);
     for (int i=0; i<blsize; i++)
     {
-        if (force_born_h5d[i]     >= 0) H5Dclose(force_born_h5d[i]);
         if (force_hydro_h5d[i]    >= 0) H5Dclose(force_hydro_h5d[i]);
         if (force_holder_h5d[i]   >= 0) H5Dclose(force_holder_h5d[i]);
         if (force_friction_h5d[i] >= 0) H5Dclose(force_friction_h5d[i]);
@@ -145,7 +142,6 @@ void Stepdata::write()
     {
         int body_n = S->get_body_index(lbody.get());
         if (body_n > blsize) continue;
-        append(force_born_h5d[body_n], lbody->force_born - lbody->force_dead);
         append(force_hydro_h5d[body_n], lbody->force_hydro);
         append(force_holder_h5d[body_n], lbody->force_holder);
         append(force_friction_h5d[body_n], lbody->friction);

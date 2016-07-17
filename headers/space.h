@@ -45,7 +45,7 @@ class Space
 
         void Save(const char* format);
         void Load(const char* filename, std::string *info = NULL);
-        void Load(int fid, std::string *info = NULL);
+        void Load(hid_t fid, std::string *info = NULL);
         FILE* OpenFile(const char* format);
         void CalcForces();
         void ZeroForces(); //zero all att-> Cp, Fr, Nu, gsum, fric, hsum variables.
