@@ -166,8 +166,8 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
         {
             if (fabs(latt.g) < RemoveEps || latt.slip)
             {
-                lbody->fdt_dead.r += rotl(latt.r) * latt.g;
-                lbody->fdt_dead.o += (latt.r - axis).abs2() * latt.g;
+                lbody->fdt_dead.r += rotl(latt.corner) * latt.g;
+                lbody->fdt_dead.o += (latt.corner - axis).abs2() * latt.g;
                 latt.gsum -= latt.g;
                 lbody->g_dead += latt.g;
             }
