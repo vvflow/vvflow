@@ -328,8 +328,8 @@ herr_t dataset_read_body(hid_t g_id, const char* name, const H5L_info_t*, void *
     attribute_read(dataset, "force_holder", body->force_holder);
     attribute_read(dataset, "friction_prev", body->friction_prev);
 
-    attribute_write(dataset, "fdt_dead", body->fdt_dead);
-    attribute_write(dataset, "g_dead", body->g_dead);
+    attribute_read(dataset, "fdt_dead", body->fdt_dead);
+    attribute_read(dataset, "g_dead", body->g_dead);
 
     attribute_read(dataset, "collision_min", body->collision_min);
     attribute_read(dataset, "collision_max", body->collision_max);
