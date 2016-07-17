@@ -16,6 +16,7 @@ all_images += $(call pdf, VortexDiff BodyDiff)
 
 all: $(all_images)
 	xelatex documentation.tex
+	xelatex documentation.tex
 	rm -f *.aux *.log *.out *.toc
 
 clean:
