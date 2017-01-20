@@ -12,6 +12,7 @@ ifeq ($(CXX),icpc)
 else
 	CXXFLAGS += -O3 -g -Wall -fopenmp
 	CXXFLAGS += $(shell pkg-config --silence-errors --cflags lapack)
+	LDLIBS += $(shell pkg-config --silence-errors --libs cblas)
 	LDLIBS += $(shell pkg-config --silence-errors --libs lapack || echo -llapack)
 endif
 

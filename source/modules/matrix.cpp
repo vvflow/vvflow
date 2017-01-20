@@ -4,9 +4,10 @@
 #include "stdlib.h"
 #include "matrix.h"
 
-#ifdef HAVE_MKL
+#ifdef __INTEL_COMPILER
 #include "mkl.h"
 #else
+#include "cblas.h"
 extern "C" {
     void dgesv_(int* n, const int* nrhs, double* a, int* lda, int* ipiv, double *x, int *incx, int *info);
     void dgetrf_(int* M, int *N, double* A, int* lda, int* IPIV, int* INFO);
@@ -82,23 +83,33 @@ void Matrix::solveUsingInverseMatrix(bool useInverseMatrix)
             FillInverseMatrix();
         }
 
+        double *y = new double[N];
+        cblas_dgemv(
+            CblasRowMajor, // layout; Specifies whether two-dimensional array storage is row-major or column-major.
+            CblasNoTrans, // operation; y = alpha*A*x + beta*y,
+            N, // m; Specifies the number of rows of the matrix A.
+            N, // m; Specifies the number of columns of the matrix A.
+            1, // alpha; Specifies the scalar alpha.
+            InverseMatrix, // A; size lda*m.
+            N, // lda; Specifies the leading dimension of A.
+            RightCol, // x; size at least (1+(n-1)*abs(incx))
+            1, // incx; Specifies the increment for the elements of x.
+            0, // beta; Specifies the scalar beta. When beta is set to zero, then y need not be set on input.
+            y, // y; size at least (1 +(m - 1)*abs(incy))
+            1 // incy; Specifies the increment for the elements of y.
+        );
+
 #pragma omp parallel for
         for (unsigned i=0; i<N; i++)
         {
-            double *RowI = InverseMatrix + N*i;
-
             if (!solution[i])
             {
                 fprintf(stderr, "Warning: solution[%u] = NULL\n", i);
                 continue;
             }
-
-            *solution[i] = 0;
-            for (unsigned j=0; j<N; j++)
-            {
-                *solution[i] += RowI[j]*RightCol[j];
-            }
+            *solution[i] = y[i];
         }
+        delete[] y;
     } else
     {
         if (!bodyMatrixIsOk_)
