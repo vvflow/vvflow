@@ -15,7 +15,7 @@ void print_version()
 
 void print_help()
 {
-    fprintf(stderr, "Usage: libvvplot {-h,-v,-p,-M,-m,-V,-L,-I} FILE DATASET [ARGS]\n");
+    fprintf(stderr, "Usage: libvvplot {-h,-v,-p,-L,-m,-M,-V,-I} FILE DATASET [ARGS]\n");
     fprintf(stderr, "Options:\n");
     fprintf(stderr, " -h : show this message\n");
     fprintf(stderr, " -v : show version info\n");
@@ -40,9 +40,12 @@ int main(int argc, char **argv)
     else if (!strcmp(argv[1], "-h")) { print_help(); exit(0); }
     else if (!strcmp(argv[1], "-v")) { print_version(); exit(0); }
     else if (argc < 4) { print_help(); exit(1); }
-    else if (!strcmp(argv[1], "-I") || !strcmp(argv[1], "-p") ||
-             !strcmp(argv[1], "-M") || !strcmp(argv[1], "-L") ||
-             !strcmp(argv[1], "-m") || !strcmp(argv[1], "-V") ||
+    else if (!strcmp(argv[1], "-p") ||
+             !strcmp(argv[1], "-L") ||
+             !strcmp(argv[1], "-m") ||
+             !strcmp(argv[1], "-M") ||
+             !strcmp(argv[1], "-V") ||
+             !strcmp(argv[1], "-I") ||
              !strcmp(argv[1], "--vorticity")
              ) {;}
     else {fprintf(stderr, "Bad option '%s'. See '-h' for help.\n", argv[1]); exit(-1); }
@@ -61,14 +64,19 @@ int main(int argc, char **argv)
     {
         dset_print(fid, argv[3]);
     }
-    else if (!strcmp(argv[1], "-M"))
+    else if (!strcmp(argv[1], "-L"))
     {
-        map_extract(fid, argv[3], binary_mode::xyvalue);
+        list_extract(fid, argv[3]);
     }
     else if (!strcmp(argv[1], "-m"))
     {
         map_extract(fid, argv[3], binary_mode::matrix);
     }
+    else if (!strcmp(argv[1], "-M"))
+    {
+        map_extract(fid, argv[3], binary_mode::xyvalue);
+    }
+
     else if (!strcmp(argv[1], "-V"))
     {
         TVec* points = (TVec*)malloc((argc-4)*sizeof(TVec));
@@ -77,16 +85,12 @@ int main(int argc, char **argv)
             int len;
             if (sscanf(argv[i], "%lf,%lf%n", &points[i-4].x, &points[i-4].y, &len)!=2 || argv[i][len])
             {
-                fprintf(stderr, "error: bad point %s: the format is 'px,py'\n", argv[i]);
+                fprintf(stderr, "error: argument ARGS: bad point '%s': must be 'px,py'\n", argv[i]);
                 exit(-1);
             }
         }
         velocity_print(fid, points, argc-4);
         free(points);
-    }
-    else if (!strcmp(argv[1], "-L"))
-    {
-        list_extract(fid, argv[3]);
     }
     else if (!strcmp(argv[1], "-I"))
     {
@@ -103,6 +107,7 @@ int main(int argc, char **argv)
         map_isoline(fid, argv[3], vals, argc-4);
         free(vals);
     }
+
     else if (!strcmp(argv[1], "--vorticity"))
     {
         if (argc != 9)
