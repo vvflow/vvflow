@@ -837,7 +837,7 @@ void convectivefast::fillCollisionOEquation(TBody* ibody)
     }
 
     //place solution pointer
-    *matrix.solutionAtIndex(eq_no) = &ibody->speed_slae.o;
+    *matrix.solutionAtIndex(eq_no) = &ibody->force_holder.o;
 
     // self
     {
