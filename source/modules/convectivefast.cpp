@@ -11,6 +11,16 @@ using namespace std;
 //#define dbg(func) cout << "Doing " << #func << "... " << flush; func; cout << "done\n";
 #define dbg(func) func;
 
+#define VAR_U_x 0
+#define VAR_U_y 1
+#define VAR_U_o 2
+#define VAR_FH_x 3
+#define VAR_FH_y 4
+#define VAR_FH_o 5
+#define VAR_FP_x 6
+#define VAR_FP_y 7
+#define VAR_FP_o 8
+
 /****************************** MAIN FUNCTIONS ********************************/
 
 convectivefast::convectivefast(Space *sS)
@@ -506,9 +516,9 @@ void convectivefast::fillSlipEquationForSegment(TAtt* seg, TBody* ibody, bool ri
 
         double _2PI_A1, _2PI_A2, _2PI_A3;
         _2PI_A123(*seg, ibody, *ljbody, &_2PI_A1, &_2PI_A2, &_2PI_A3);
-        *matrix.objectAtIndex(seg_eq_no, ljbody->eq_forces_no+0) = _2PI_A1*C_1_2PI;
-        *matrix.objectAtIndex(seg_eq_no, ljbody->eq_forces_no+1) = _2PI_A2*C_1_2PI;
-        *matrix.objectAtIndex(seg_eq_no, ljbody->eq_forces_no+2) = _2PI_A3*C_1_2PI;
+        *matrix.objectAtIndex(seg_eq_no, ljbody->eq_forces_no+VAR_U_x) = _2PI_A1*C_1_2PI;
+        *matrix.objectAtIndex(seg_eq_no, ljbody->eq_forces_no+VAR_U_y) = _2PI_A2*C_1_2PI;
+        *matrix.objectAtIndex(seg_eq_no, ljbody->eq_forces_no+VAR_U_o) = _2PI_A3*C_1_2PI;
 
 #undef jbody
     }
@@ -544,7 +554,7 @@ void convectivefast::fillSteadyEquationForSegment(TAtt* seg, TBody* ibody, bool 
     {
         for (auto& latt: ibody->alist)
             *matrix.objectAtIndex(seg_eq_no, latt.eq_no) = 1;
-        *matrix.objectAtIndex(seg_eq_no, ibody->eq_forces_no+2) = 2*ibody->get_area();
+        *matrix.objectAtIndex(seg_eq_no, ibody->eq_forces_no+VAR_U_o) = 2*ibody->get_area();
     }
 }
 
@@ -565,7 +575,7 @@ void convectivefast::fillInfSteadyEquationForSegment(TAtt* seg, TBody* ibody, bo
     {
         for (auto& latt: ljbody->alist)
             *matrix.objectAtIndex(seg_eq_no, latt.eq_no) = 1;
-        *matrix.objectAtIndex(seg_eq_no, ljbody->eq_forces_no+2) = 2*ljbody->get_area();
+        *matrix.objectAtIndex(seg_eq_no, ljbody->eq_forces_no+VAR_U_o) = 2*ljbody->get_area();
     }
 
 }
@@ -581,7 +591,7 @@ void convectivefast::fillInfSteadyEquationForSegment(TAtt* seg, TBody* ibody, bo
 
 void convectivefast::fillHydroXEquation(TBody* ibody, bool rightColOnly)
 {
-    const int eq_no = ibody->eq_forces_no+3;
+    const int eq_no = ibody->eq_forces_no+VAR_FH_x;
     const double _1_dt = 1/S->dt;
     const TVec r_c_com = ibody->get_com() - ibody->get_axis();
 
@@ -604,18 +614,18 @@ void convectivefast::fillHydroXEquation(TBody* ibody, bool rightColOnly)
             *matrix.objectAtIndex(eq_no, latt.eq_no) = _1_dt * (-latt.corner.y);
 
         // speed_slae
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+0) = ibody->get_area()*_1_dt;
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+1) = 0;
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+2) = ibody->get_area()*_1_dt * (-2*ibody->get_com().y - r_c_com.y);
+        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+VAR_U_x) = ibody->get_area()*_1_dt;
+        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+VAR_U_y) = 0;
+        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+VAR_U_o) = ibody->get_area()*_1_dt * (-2*ibody->get_com().y - r_c_com.y);
 
         // force_hydro
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+3) = -1;
+        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+VAR_FH_x) = -1;
     }
 }
 
 void convectivefast::fillHydroYEquation(TBody* ibody, bool rightColOnly)
 {
-    const int eq_no = ibody->eq_forces_no+4;
+    const int eq_no = ibody->eq_forces_no+VAR_FH_y;
     const double _1_dt = 1/S->dt;
     const TVec r_c_com = ibody->get_com() - ibody->get_axis();
 
@@ -637,18 +647,18 @@ void convectivefast::fillHydroYEquation(TBody* ibody, bool rightColOnly)
             *matrix.objectAtIndex(eq_no, latt.eq_no) = _1_dt * (latt.corner.x);
 
         // Speed_slae
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+0) = 0;
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+1) = ibody->get_area()*_1_dt;
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+2) = ibody->get_area()*_1_dt * (2*ibody->get_com().x + r_c_com.x);
+        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+VAR_U_x) = 0;
+        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+VAR_U_y) = ibody->get_area()*_1_dt;
+        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+VAR_U_o) = ibody->get_area()*_1_dt * (2*ibody->get_com().x + r_c_com.x);
 
         // force_hydro
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+4) = -1;
+        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+VAR_FH_y) = -1;
     }
 }
 
 void convectivefast::fillHydroOEquation(TBody* ibody, bool rightColOnly)
 {
-    const int eq_no = ibody->eq_forces_no+5;
+    const int eq_no = ibody->eq_forces_no+VAR_FH_o;
     const double _1_dt = 1/S->dt;
     const double _1_2dt = 0.5/S->dt;
     const TVec r_c_com = ibody->get_com() - ibody->get_axis();
@@ -670,12 +680,12 @@ void convectivefast::fillHydroOEquation(TBody* ibody, bool rightColOnly)
             *matrix.objectAtIndex(eq_no, latt.eq_no) = _1_2dt * (latt.corner - ibody->get_axis()).abs2();
 
         // Speed_slae
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+0) = ibody->get_area()*_1_dt * (-r_c_com.y);
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+1) = ibody->get_area()*_1_dt * (r_c_com.x);
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+2) = 2*ibody->get_moi_c()*_1_dt;
+        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+VAR_U_x) = ibody->get_area()*_1_dt * (-r_c_com.y);
+        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+VAR_U_y) = ibody->get_area()*_1_dt * (r_c_com.x);
+        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+VAR_U_o) = 2*ibody->get_moi_c()*_1_dt;
 
         // force_hydro
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+5) = -1;
+        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+VAR_FH_o) = -1;
     }
 }
 
@@ -690,7 +700,7 @@ void convectivefast::fillHydroOEquation(TBody* ibody, bool rightColOnly)
 
 void convectivefast::fillNewtonXEquation(TBody* ibody, bool rightColOnly)
 {
-    const int eq_no = ibody->eq_forces_no+6;
+    const int eq_no = ibody->eq_forces_no+VAR_FP_x;
     const double _1_dt = 1/S->dt;
     const TVec r_c_com = ibody->get_com() - ibody->get_axis();
 
@@ -709,13 +719,13 @@ void convectivefast::fillNewtonXEquation(TBody* ibody, bool rightColOnly)
     // self
     {
         // Speed_slae
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+0) = -ibody->get_area()*_1_dt*ibody->density;
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+1) = 0;
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+2) = ibody->get_area()*_1_dt*ibody->density*r_c_com.y;
+        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+VAR_U_x) = -ibody->get_area()*_1_dt*ibody->density;
+        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+VAR_U_y) = 0;
+        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+VAR_U_o) = ibody->get_area()*_1_dt*ibody->density*r_c_com.y;
         // force_hydro
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+3) = 1;
+        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+VAR_FH_x) = 1;
         // force_holder
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+6) = -1;
+        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+VAR_FP_x) = -1;
     }
 
     // children
@@ -724,13 +734,13 @@ void convectivefast::fillNewtonXEquation(TBody* ibody, bool rightColOnly)
         if (ljbody->root_body.lock().get() != ibody) continue;
 
         // force_holder
-        *matrix.objectAtIndex(eq_no, ljbody->eq_forces_no+6) = 1;
+        *matrix.objectAtIndex(eq_no, ljbody->eq_forces_no+VAR_FP_x) = 1;
     }
 }
 
 void convectivefast::fillNewtonYEquation(TBody* ibody, bool rightColOnly)
 {
-    const int eq_no = ibody->eq_forces_no+7;
+    const int eq_no = ibody->eq_forces_no+VAR_FP_y;
     const double _1_dt = 1/S->dt;
     const TVec r_c_com = ibody->get_com() - ibody->get_axis();
 
@@ -749,13 +759,13 @@ void convectivefast::fillNewtonYEquation(TBody* ibody, bool rightColOnly)
     // self
     {
         // Speed_slae
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+0) = 0;
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+1) = -ibody->get_area()*_1_dt*ibody->density;
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+2) = -ibody->get_area()*_1_dt*ibody->density*r_c_com.x;
+        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+VAR_U_x) = 0;
+        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+VAR_U_y) = -ibody->get_area()*_1_dt*ibody->density;
+        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+VAR_U_o) = -ibody->get_area()*_1_dt*ibody->density*r_c_com.x;
         // force_hydro
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+4) = 1;
+        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+VAR_FH_y) = 1;
         // force_holder
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+7) = -1;
+        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+VAR_FP_y) = -1;
     }
 
     // children
@@ -764,13 +774,13 @@ void convectivefast::fillNewtonYEquation(TBody* ibody, bool rightColOnly)
         if (ljbody->root_body.lock().get() != ibody) continue;
 
         // force_holder
-        *matrix.objectAtIndex(eq_no, ljbody->eq_forces_no+7) = 1;
+        *matrix.objectAtIndex(eq_no, ljbody->eq_forces_no+VAR_FP_y) = 1;
     }
 }
 
 void convectivefast::fillNewtonOEquation(TBody* ibody, bool rightColOnly)
 {
-    const int eq_no = ibody->eq_forces_no+8;
+    const int eq_no = ibody->eq_forces_no+VAR_FP_o;
     const double _1_dt = 1/S->dt;
     const TVec r_c_com = ibody->get_com() - ibody->get_axis();
 
@@ -788,13 +798,13 @@ void convectivefast::fillNewtonOEquation(TBody* ibody, bool rightColOnly)
     // self
     {
         // Speed_slae
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+0) = ibody->get_area()*_1_dt*ibody->density * r_c_com.y;
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+1) = -ibody->get_area()*_1_dt*ibody->density * r_c_com.x;
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+2) = -ibody->get_moi_c()*_1_dt*ibody->density;
+        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+VAR_U_x) = ibody->get_area()*_1_dt*ibody->density * r_c_com.y;
+        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+VAR_U_y) = -ibody->get_area()*_1_dt*ibody->density * r_c_com.x;
+        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+VAR_U_o) = -ibody->get_moi_c()*_1_dt*ibody->density;
         // force_hydro
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+5) = 1;
+        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+VAR_FH_o) = 1;
         // force_holder
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+8) = -1;
+        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+VAR_FP_o) = -1;
     }
 
     // children
@@ -804,15 +814,15 @@ void convectivefast::fillNewtonOEquation(TBody* ibody, bool rightColOnly)
 
         // force_holder
         TVec r_child_c = ljbody->get_axis() - ibody->get_axis();
-        *matrix.objectAtIndex(eq_no, ljbody->eq_forces_no+6) = -r_child_c.y;
-        *matrix.objectAtIndex(eq_no, ljbody->eq_forces_no+7) = r_child_c.x;
-        *matrix.objectAtIndex(eq_no, ljbody->eq_forces_no+8) = 1;
+        *matrix.objectAtIndex(eq_no, ljbody->eq_forces_no+VAR_FP_x) = -r_child_c.y;
+        *matrix.objectAtIndex(eq_no, ljbody->eq_forces_no+VAR_FP_y) = r_child_c.x;
+        *matrix.objectAtIndex(eq_no, ljbody->eq_forces_no+VAR_FP_o) = 1;
     }
 }
 
 void convectivefast::fillCollisionOEquation(TBody* ibody)
 {
-    const int eq_no = ibody->eq_forces_no+8;
+    const int eq_no = ibody->eq_forces_no+VAR_FP_o;
 
     if (!ibody->collision_state)
     {
@@ -842,7 +852,7 @@ void convectivefast::fillCollisionOEquation(TBody* ibody)
     // self
     {
         // speed_slae
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+2) = 1;
+        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+VAR_U_o) = 1;
     }
 }
 
@@ -857,7 +867,7 @@ void convectivefast::fillCollisionOEquation(TBody* ibody)
 
 void convectivefast::fillHookeXEquation(TBody* ibody, bool rightColOnly)
 {
-    const int eq_no = ibody->eq_forces_no+0;
+    const int eq_no = ibody->eq_forces_no+VAR_U_x;
 
     *matrix.rightColAtIndex(eq_no) = ibody->kspring.r.x * ibody->dpos.r.x;
     if (rightColOnly) return;
@@ -868,15 +878,15 @@ void convectivefast::fillHookeXEquation(TBody* ibody, bool rightColOnly)
     // self
     {
         // speed_slae
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+0) = ibody->damping.r.x;
+        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+VAR_U_x) = ibody->damping.r.x;
         // force_holder
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+6) = 1;
+        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+VAR_FP_x) = 1;
     }
 }
 
 void convectivefast::fillHookeYEquation(TBody* ibody, bool rightColOnly)
 {
-    const int eq_no = ibody->eq_forces_no+1;
+    const int eq_no = ibody->eq_forces_no+VAR_U_y;
 
     *matrix.rightColAtIndex(eq_no) = ibody->kspring.r.y * ibody->dpos.r.y;
     if (rightColOnly) return;
@@ -887,15 +897,15 @@ void convectivefast::fillHookeYEquation(TBody* ibody, bool rightColOnly)
     // self
     {
         // speed_slae
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+1) = ibody->damping.r.y;
+        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+VAR_U_y) = ibody->damping.r.y;
         // force_holder
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+7) = 1;
+        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+VAR_FP_y) = 1;
     }
 }
 
 void convectivefast::fillHookeOEquation(TBody* ibody, bool rightColOnly)
 {
-    const int eq_no = ibody->eq_forces_no+2;
+    const int eq_no = ibody->eq_forces_no+VAR_U_o;
 
     *matrix.rightColAtIndex(eq_no) = ibody->kspring.o * ibody->dpos.o;
     if (rightColOnly) return;
@@ -906,9 +916,9 @@ void convectivefast::fillHookeOEquation(TBody* ibody, bool rightColOnly)
     // self
     {
         // speed_slae
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+2) = ibody->damping.o;
+        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+VAR_U_o) = ibody->damping.o;
         // force_holder
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+8) = 1;
+        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+VAR_FP_o) = 1;
     }
 }
 
@@ -923,7 +933,7 @@ void convectivefast::fillHookeOEquation(TBody* ibody, bool rightColOnly)
 
 void convectivefast::fillSpeedXEquation(TBody* ibody, bool rightColOnly)
 {
-    const int eq_no = ibody->eq_forces_no+0;
+    const int eq_no = ibody->eq_forces_no+VAR_U_x;
 
     *matrix.rightColAtIndex(eq_no) = ibody->speed_x.getValue(S->Time);
     if (rightColOnly) return;
@@ -934,22 +944,22 @@ void convectivefast::fillSpeedXEquation(TBody* ibody, bool rightColOnly)
     // self
     {
         // speed_slae
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+0) = 1;
+        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+VAR_U_x) = 1;
     }
 
     // root
     auto root_body = ibody->root_body.lock();
     if (root_body)
     {
-        *matrix.objectAtIndex(eq_no, root_body->eq_forces_no+0) = -1;
-        *matrix.objectAtIndex(eq_no, root_body->eq_forces_no+1) = 0;
-        *matrix.objectAtIndex(eq_no, root_body->eq_forces_no+2) = (ibody->holder.r - root_body->get_axis()).y;
+        *matrix.objectAtIndex(eq_no, root_body->eq_forces_no+VAR_U_x) = -1;
+        *matrix.objectAtIndex(eq_no, root_body->eq_forces_no+VAR_U_y) = 0;
+        *matrix.objectAtIndex(eq_no, root_body->eq_forces_no+VAR_U_o) = (ibody->holder.r - root_body->get_axis()).y;
     }
 }
 
 void convectivefast::fillSpeedYEquation(TBody* ibody, bool rightColOnly)
 {
-    const int eq_no = ibody->eq_forces_no+1;
+    const int eq_no = ibody->eq_forces_no+VAR_U_y;
 
     *matrix.rightColAtIndex(eq_no) = ibody->speed_y.getValue(S->Time);
     if (rightColOnly) return;
@@ -960,22 +970,22 @@ void convectivefast::fillSpeedYEquation(TBody* ibody, bool rightColOnly)
     // self
     {
         // speed_slae
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+1) = 1;
+        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+VAR_U_y) = 1;
     }
 
     // root
     auto root_body = ibody->root_body.lock();
     if (root_body)
     {
-        *matrix.objectAtIndex(eq_no, root_body->eq_forces_no+0) = 0;
-        *matrix.objectAtIndex(eq_no, root_body->eq_forces_no+1) = -1;
-        *matrix.objectAtIndex(eq_no, root_body->eq_forces_no+2) = -(ibody->get_axis() - root_body->get_axis()).x;
+        *matrix.objectAtIndex(eq_no, root_body->eq_forces_no+VAR_U_x) = 0;
+        *matrix.objectAtIndex(eq_no, root_body->eq_forces_no+VAR_U_y) = -1;
+        *matrix.objectAtIndex(eq_no, root_body->eq_forces_no+VAR_U_o) = -(ibody->get_axis() - root_body->get_axis()).x;
     }
 }
 
 void convectivefast::fillSpeedOEquation(TBody* ibody, bool rightColOnly)
 {
-    const int eq_no = ibody->eq_forces_no+2;
+    const int eq_no = ibody->eq_forces_no+VAR_U_o;
 
     *matrix.rightColAtIndex(eq_no) = ibody->speed_o.getValue(S->Time);
     if (rightColOnly) return;
@@ -986,14 +996,14 @@ void convectivefast::fillSpeedOEquation(TBody* ibody, bool rightColOnly)
     // self
     {
         // speed_slae
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+2) = 1;
+        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+VAR_U_o) = 1;
     }
 
     // root
     auto root_body = ibody->root_body.lock();
     if (root_body)
     {
-        *matrix.objectAtIndex(eq_no, root_body->eq_forces_no+2) = -1;
+        *matrix.objectAtIndex(eq_no, root_body->eq_forces_no+VAR_U_o) = -1;
     }
 }
 
@@ -1045,7 +1055,7 @@ void convectivefast::FillMatrix(bool rightColOnly)
         else if (abs(libody->collision_state) == 1)
         {
             fillNewtonOEquation(libody.get(), rightColOnly);
-            const int eq_no = libody->eq_forces_no+8;
+            const int eq_no = libody->eq_forces_no+VAR_FP_o;
             *matrix.rightColAtIndex(eq_no) +=
                 (1+libody->bounce)
                 *libody->get_moi_c()
