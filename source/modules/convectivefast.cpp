@@ -1016,72 +1016,153 @@ void convectivefast::fillSpeedOEquation(TBody* ibody, bool rightColOnly)
 //   888   "   888  d8888888888     888     888  T88b    888    d88P Y88b
 //   888       888 d88P     888     888     888   T88b 8888888 d88P   Y88b
 
+typedef void (convectivefast::*fptr)(); 
+typedef struct {
+    fptr eq_type;
+    int eq_no;
+    TAtt* seg;
+    TBody* ibody;
+} equationJob;
+
+
 void convectivefast::FillMatrix(bool rightColOnly)
 {
     if (!rightColOnly) matrix.fillWithZeros();
 
-    bool special_body = true;
+    std::vector<equationJob> jobs;
+#define addJob(TYPE, EQNO, SEG, IBODY) \
+    jobs.push_back( \
+        (equationJob){(fptr)&convectivefast::fill##TYPE, EQNO, SEG, IBODY} \
+    )
+
+    int eq_no = 0;
+    int once = 0;
     for (auto& libody: S->BodyList)
     {
         TAtt *special_segment = &libody->alist[libody->special_segment_no];
-#pragma omp parallel for
         for (auto latt = libody->alist.begin(); latt < libody->alist.end(); latt++)
         {
             if (&*latt != special_segment)
-                fillSlipEquationForSegment(&*latt, libody.get(), rightColOnly);
+                addJob(SlipEquationForSegment, eq_no++, &*latt, libody.get());
             else
             {
                 if (libody->boundary_condition == bc_t::kutta)
-                    fillZeroEquationForSegment(&*latt, libody.get(), rightColOnly);
-                else if (!special_body)
-                    fillSteadyEquationForSegment(&*latt, libody.get(), rightColOnly);
+                    addJob(ZeroEquationForSegment, eq_no++, &*latt, libody.get());
+                else if (!once++)
+                    addJob(InfSteadyEquationForSegment, eq_no++, &*latt, libody.get());
                 else
-                {
-                    fillInfSteadyEquationForSegment(&*latt, libody.get(), rightColOnly);
-                    special_body = false;
-                }
+                    addJob(SteadyEquationForSegment, eq_no++, &*latt, libody.get());
             }
         }
 
-        fillHydroXEquation(libody.get(), rightColOnly);
-        fillHydroYEquation(libody.get(), rightColOnly);
-        fillHydroOEquation(libody.get(), rightColOnly);
+        addJob(HydroXEquation, eq_no++, NULL, libody.get());
+        addJob(HydroYEquation, eq_no++, NULL, libody.get());
+        addJob(HydroOEquation, eq_no++, NULL, libody.get());
 
-        fillNewtonXEquation(libody.get(), rightColOnly);
-        fillNewtonYEquation(libody.get(), rightColOnly);
+        addJob(NewtonXEquation, eq_no++, NULL, libody.get());
+        addJob(NewtonYEquation, eq_no++, NULL, libody.get());
+        addJob(NewtonOEquation, eq_no++, NULL, libody.get());
 
-        if (!libody->collision_state)
-            fillNewtonOEquation(libody.get(), rightColOnly);
-        else if (abs(libody->collision_state) == 1)
-        {
-            fillNewtonOEquation(libody.get(), rightColOnly);
-            const int eq_no = libody->eq_forces_no+VAR_FP_o;
-            *matrix.rightColAtIndex(eq_no) +=
-                (1+libody->bounce)
-                *libody->get_moi_c()
-                *libody->density
-                *libody->speed_slae.o/S->dt;
-        }
-        else if (abs(libody->collision_state) == 2)
-        {
-            fillCollisionOEquation(libody.get());
-            matrix.spoilInverseMatrix();
-        }
+        // if (!libody->collision_state)
+        // {
+        // }
+        
 
         if (libody->kspring.r.x >= 0 && S->Time>0)
-            fillHookeXEquation(libody.get(), rightColOnly);
+            addJob(HookeXEquation, eq_no++, NULL, libody.get());
         else
-            fillSpeedXEquation(libody.get(), rightColOnly);
+            addJob(SpeedXEquation, eq_no++, NULL, libody.get());
 
         if (libody->kspring.r.y >= 0 && S->Time>0)
-            fillHookeYEquation(libody.get(), rightColOnly);
+            addJob(HookeYEquation, eq_no++, NULL, libody.get());
         else
-            fillSpeedYEquation(libody.get(), rightColOnly);
+            addJob(SpeedYEquation, eq_no++, NULL, libody.get());
 
         if (libody->kspring.o >= 0 && S->Time>0)
-            fillHookeOEquation(libody.get(), rightColOnly);
+            addJob(HookeOEquation, eq_no++, NULL, libody.get());
         else
-            fillSpeedOEquation(libody.get(), rightColOnly);
+            addJob(SpeedOEquation, eq_no++, NULL, libody.get());
+    }
+#undef addJob
+
+    #pragma omp parallel
+    #pragma omp single
+    for (auto job: jobs)
+    {
+        if (0) {}
+#define CASE(TYPE) \
+        else if (job.eq_type == (fptr)&convectivefast::fill##TYPE)
+#define FILL_EQ_FOR_SEG(TYPE)  fill##TYPE(job.seg, job.ibody, rightColOnly)
+#define FILL_EQ_FOR_BODY(TYPE) fill##TYPE(job.ibody, rightColOnly)
+
+        CASE(SlipEquationForSegment)
+        #pragma omp task
+            FILL_EQ_FOR_SEG(SlipEquationForSegment);
+        CASE(ZeroEquationForSegment)
+        #pragma omp task
+            FILL_EQ_FOR_SEG(ZeroEquationForSegment);
+        CASE(InfSteadyEquationForSegment)
+        #pragma omp task
+            FILL_EQ_FOR_SEG(InfSteadyEquationForSegment);
+        CASE(SteadyEquationForSegment)
+        #pragma omp task
+            FILL_EQ_FOR_SEG(SteadyEquationForSegment);
+
+        CASE(HydroXEquation)
+        #pragma omp task
+            FILL_EQ_FOR_BODY(HydroXEquation);
+        CASE(HydroYEquation)
+        #pragma omp task
+            FILL_EQ_FOR_BODY(HydroYEquation);
+        CASE(HydroOEquation)
+        #pragma omp task
+            FILL_EQ_FOR_BODY(HydroOEquation);
+        CASE(NewtonXEquation)
+        #pragma omp task
+            FILL_EQ_FOR_BODY(NewtonXEquation);
+        CASE(NewtonYEquation)
+        #pragma omp task
+            FILL_EQ_FOR_BODY(NewtonYEquation);
+        CASE(NewtonOEquation)
+        #pragma omp task
+            FILL_EQ_FOR_BODY(NewtonOEquation);
+        CASE(HookeXEquation)
+        #pragma omp task
+            FILL_EQ_FOR_BODY(HookeXEquation);
+        CASE(SpeedXEquation)
+        #pragma omp task
+            FILL_EQ_FOR_BODY(SpeedXEquation);
+        CASE(HookeYEquation)
+        #pragma omp task
+            FILL_EQ_FOR_BODY(HookeYEquation);
+        CASE(SpeedYEquation)
+        #pragma omp task
+            FILL_EQ_FOR_BODY(SpeedYEquation);
+        CASE(HookeOEquation)
+        #pragma omp task
+        {
+            if (job.ibody->collision_state == 0) {
+                FILL_EQ_FOR_BODY(HookeOEquation);
+            } else if (abs(job.ibody->collision_state) == 1) {
+                FILL_EQ_FOR_BODY(HookeOEquation);
+                *matrix.rightColAtIndex(job.eq_no) +=
+                    (1+job.ibody->bounce)
+                    * job.ibody->get_moi_c()
+                    * job.ibody->density
+                    * job.ibody->speed_slae.o/S->dt;
+            } else if (abs(job.ibody->collision_state) == 2) {
+                fillCollisionOEquation(job.ibody);
+                matrix.spoilInverseMatrix();
+            }
+        }
+        CASE(SpeedOEquation)
+        #pragma omp task
+            FILL_EQ_FOR_BODY(SpeedOEquation);
+#undef CASE
+#undef FILL_EQ_FOR_SEG
+#undef FILL_EQ_FOR_BODY
+
+        #pragma omp taskwait
     }
 
     if (!rightColOnly)
