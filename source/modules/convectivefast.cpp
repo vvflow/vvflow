@@ -1040,18 +1040,18 @@ void convectivefast::FillMatrix(bool rightColOnly)
     for (auto& libody: S->BodyList)
     {
         TAtt *special_segment = &libody->alist[libody->special_segment_no];
-        for (auto latt = libody->alist.begin(); latt < libody->alist.end(); latt++)
+        for (auto& latt: libody->alist)
         {
-            if (&*latt != special_segment)
-                addJob(SlipEquationForSegment, eq_no++, &*latt, libody.get());
+            if (&latt != special_segment)
+                addJob(SlipEquationForSegment, eq_no++, &latt, libody.get());
             else
             {
                 if (libody->boundary_condition == bc_t::kutta)
-                    addJob(ZeroEquationForSegment, eq_no++, &*latt, libody.get());
+                    addJob(ZeroEquationForSegment, eq_no++, &latt, libody.get());
                 else if (!once++)
-                    addJob(InfSteadyEquationForSegment, eq_no++, &*latt, libody.get());
+                    addJob(InfSteadyEquationForSegment, eq_no++, &latt, libody.get());
                 else
-                    addJob(SteadyEquationForSegment, eq_no++, &*latt, libody.get());
+                    addJob(SteadyEquationForSegment, eq_no++, &latt, libody.get());
             }
         }
 
@@ -1085,84 +1085,50 @@ void convectivefast::FillMatrix(bool rightColOnly)
     }
 #undef addJob
 
-    #pragma omp parallel
-    #pragma omp single
-    for (auto job: jobs)
+    #pragma omp parallel for
+    for (auto job = jobs.begin(); job < jobs.end(); job++)
     {
         if (0) {}
 #define CASE(TYPE) \
-        else if (job.eq_type == (fptr)&convectivefast::fill##TYPE)
-#define FILL_EQ_FOR_SEG(TYPE)  fill##TYPE(job.seg, job.ibody, rightColOnly)
-#define FILL_EQ_FOR_BODY(TYPE) fill##TYPE(job.ibody, rightColOnly)
+        else if (job->eq_type == (fptr)&convectivefast::fill##TYPE)
+#define FILL_EQ_FOR_SEG(TYPE)  fill##TYPE(job->seg, job->ibody, rightColOnly)
+#define FILL_EQ_FOR_BODY(TYPE) fill##TYPE(job->ibody, rightColOnly)
 
-        CASE(SlipEquationForSegment)
-        #pragma omp task
-            FILL_EQ_FOR_SEG(SlipEquationForSegment);
-        CASE(ZeroEquationForSegment)
-        #pragma omp task
-            FILL_EQ_FOR_SEG(ZeroEquationForSegment);
-        CASE(InfSteadyEquationForSegment)
-        #pragma omp task
-            FILL_EQ_FOR_SEG(InfSteadyEquationForSegment);
-        CASE(SteadyEquationForSegment)
-        #pragma omp task
-            FILL_EQ_FOR_SEG(SteadyEquationForSegment);
+        CASE(SlipEquationForSegment) FILL_EQ_FOR_SEG(SlipEquationForSegment);
+        CASE(ZeroEquationForSegment) FILL_EQ_FOR_SEG(ZeroEquationForSegment);
+        CASE(InfSteadyEquationForSegment) FILL_EQ_FOR_SEG(InfSteadyEquationForSegment);
+        CASE(SteadyEquationForSegment) FILL_EQ_FOR_SEG(SteadyEquationForSegment);
 
-        CASE(HydroXEquation)
-        #pragma omp task
-            FILL_EQ_FOR_BODY(HydroXEquation);
-        CASE(HydroYEquation)
-        #pragma omp task
-            FILL_EQ_FOR_BODY(HydroYEquation);
-        CASE(HydroOEquation)
-        #pragma omp task
-            FILL_EQ_FOR_BODY(HydroOEquation);
-        CASE(NewtonXEquation)
-        #pragma omp task
-            FILL_EQ_FOR_BODY(NewtonXEquation);
-        CASE(NewtonYEquation)
-        #pragma omp task
-            FILL_EQ_FOR_BODY(NewtonYEquation);
-        CASE(NewtonOEquation)
-        #pragma omp task
-            FILL_EQ_FOR_BODY(NewtonOEquation);
-        CASE(HookeXEquation)
-        #pragma omp task
-            FILL_EQ_FOR_BODY(HookeXEquation);
-        CASE(SpeedXEquation)
-        #pragma omp task
-            FILL_EQ_FOR_BODY(SpeedXEquation);
-        CASE(HookeYEquation)
-        #pragma omp task
-            FILL_EQ_FOR_BODY(HookeYEquation);
-        CASE(SpeedYEquation)
-        #pragma omp task
-            FILL_EQ_FOR_BODY(SpeedYEquation);
+        CASE(HydroXEquation) FILL_EQ_FOR_BODY(HydroXEquation);
+        CASE(HydroYEquation) FILL_EQ_FOR_BODY(HydroYEquation);
+        CASE(HydroOEquation) FILL_EQ_FOR_BODY(HydroOEquation);
+        CASE(NewtonXEquation) FILL_EQ_FOR_BODY(NewtonXEquation);
+        CASE(NewtonYEquation) FILL_EQ_FOR_BODY(NewtonYEquation);
+        CASE(NewtonOEquation) FILL_EQ_FOR_BODY(NewtonOEquation);
+        CASE(SpeedXEquation) FILL_EQ_FOR_BODY(SpeedXEquation);
+        CASE(SpeedYEquation) FILL_EQ_FOR_BODY(SpeedYEquation);
+        CASE(SpeedOEquation) FILL_EQ_FOR_BODY(SpeedOEquation);
+        CASE(HookeXEquation) FILL_EQ_FOR_BODY(HookeXEquation);
+        CASE(HookeYEquation) FILL_EQ_FOR_BODY(HookeYEquation);
         CASE(HookeOEquation)
-        #pragma omp task
         {
-            if (job.ibody->collision_state == 0) {
+            if (job->ibody->collision_state == 0) {
                 FILL_EQ_FOR_BODY(HookeOEquation);
-            } else if (abs(job.ibody->collision_state) == 1) {
+            } else if (abs(job->ibody->collision_state) == 1) {
                 FILL_EQ_FOR_BODY(HookeOEquation);
-                *matrix.rightColAtIndex(job.eq_no) +=
-                    (1+job.ibody->bounce)
-                    * job.ibody->get_moi_c()
-                    * job.ibody->density
-                    * job.ibody->speed_slae.o/S->dt;
-            } else if (abs(job.ibody->collision_state) == 2) {
-                fillCollisionOEquation(job.ibody);
+                *matrix.rightColAtIndex(job->eq_no) +=
+                    (1+job->ibody->bounce)
+                    * job->ibody->get_moi_c()
+                    * job->ibody->density
+                    * job->ibody->speed_slae.o/S->dt;
+            } else if (abs(job->ibody->collision_state) == 2) {
+                fillCollisionOEquation(job->ibody);
                 matrix.spoilInverseMatrix();
             }
         }
-        CASE(SpeedOEquation)
-        #pragma omp task
-            FILL_EQ_FOR_BODY(SpeedOEquation);
 #undef CASE
 #undef FILL_EQ_FOR_SEG
 #undef FILL_EQ_FOR_BODY
-
-        #pragma omp taskwait
     }
 
     if (!rightColOnly)
