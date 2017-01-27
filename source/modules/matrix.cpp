@@ -25,7 +25,6 @@ Matrix::Matrix()
     N = 0;
 
     BodyMatrix = InverseMatrix = RightCol = NULL;
-    solution = NULL;
     ipvt = NULL;
     bodyMatrixIsOk_ = false;
     inverseMatrixIsOk_ = false;
@@ -36,7 +35,6 @@ Matrix::~Matrix()
     free(BodyMatrix);
     free(InverseMatrix);
     free(RightCol);
-    free(solution);
     free(ipvt);
 }
 
@@ -48,29 +46,43 @@ void Matrix::resize(unsigned newsize)
     BodyMatrix =    (double*)realloc(BodyMatrix,    sqr(N)*sizeof(double));
     InverseMatrix = (double*)realloc(InverseMatrix, sqr(N)*sizeof(double));
     RightCol =      (double*)realloc(RightCol,      N*sizeof(double));
-    solution =     (double**)realloc(solution,      N*sizeof(double));
     ipvt =             (int*)realloc(ipvt,          (N+1)*sizeof(int));
+
+    solution_ptr.resize(N);
 
     bodyMatrixIsOk_ = false;
     inverseMatrixIsOk_ = false;
 }
 
-double* Matrix::objectAtIndex(unsigned i, unsigned j)
+double *Matrix::getCell(unsigned row, const double *solution)
 {
-    if ( (i>=N) || (j>=N) ) return NULL;
-    return BodyMatrix + i*N + j;
+    unsigned col = getColForSolution(solution);
+    if ( (row>=N) || (col>=N) ) return NULL;
+    return BodyMatrix + row*N + col;
 }
 
-double** Matrix::solutionAtIndex(unsigned i)
+double *Matrix::getRightCol(unsigned eq)
 {
-    if ( i>=N ) return NULL;
-    return solution + i;
+    if ( eq>=N ) return NULL;
+    return RightCol + eq;
 }
 
-double* Matrix::rightColAtIndex(unsigned i)
+void Matrix::setSolutionForCol(unsigned col, double *ptr)
 {
-    if ( i>=N ) return NULL;
-    return RightCol + i;
+    solution_idx.erase(solution_ptr[col]);
+    solution_ptr[col] = ptr;
+    solution_idx[ptr] = col;
+}
+
+double *Matrix::getSolutionForCol(unsigned col)
+{
+    return solution_ptr.at(col);
+}
+
+unsigned Matrix::getColForSolution(const double *ptr)
+{
+    auto res = solution_idx.find(ptr);
+    return res!=solution_idx.end()?res->second:-1;
 }
 
 void Matrix::solveUsingInverseMatrix(bool useInverseMatrix)
@@ -102,12 +114,12 @@ void Matrix::solveUsingInverseMatrix(bool useInverseMatrix)
 #pragma omp parallel for
         for (unsigned i=0; i<N; i++)
         {
-            if (!solution[i])
+            if (!solution_ptr[i])
             {
                 fprintf(stderr, "Warning: solution[%u] = NULL\n", i);
                 continue;
             }
-            *solution[i] = y[i];
+            *solution_ptr[i] = y[i];
         }
         delete[] y;
     } else
@@ -128,15 +140,16 @@ void Matrix::solveUsingInverseMatrix(bool useInverseMatrix)
             exit(-2);
         }
 
-        for (size_t i=0; i<N; i++)
+#pragma omp parallel for
+        for (unsigned i=0; i<N; i++)
         {
-            if (!solution[i])
+            if (!solution_ptr[i])
             {
-                fprintf(stderr, "Warning: solution[%ld] = NULL\n", i);
+                fprintf(stderr, "Warning: solution[%u] = NULL\n", i);
                 continue;
             }
 
-            *solution[i] = RightCol[i];
+            *solution_ptr[i] = RightCol[i];
         }
 
         bodyMatrixIsOk_ = false;

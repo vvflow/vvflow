@@ -2,6 +2,8 @@
 #define matrix_h
 
 #include "stdint.h"
+#include "vector"
+#include "map"
 
 class Matrix
 {
@@ -16,9 +18,15 @@ class Matrix
         void resize(unsigned size);
         unsigned size() { return N; }
 
-        double *objectAtIndex(unsigned eq, unsigned j);
-        double **solutionAtIndex(unsigned i);
-        double *rightColAtIndex(unsigned i);
+        double *getCell(unsigned eq, const double *solution);
+        double *getRightCol(unsigned eq);
+        void setSolutionForCol(unsigned col, double *ptr);
+        double *getSolutionForCol(unsigned col);
+        unsigned getColForSolution(const double *ptr);
+
+        // double *objectAtIndex(unsigned eq, unsigned j);
+        // double **solutionAtIndex(unsigned i);
+        // double *rightColAtIndex(unsigned i);
         void markBodyMatrixAsFilled() {bodyMatrixIsOk_ = true;}
         void spoilMatrix() {bodyMatrixIsOk_ = inverseMatrixIsOk_ = false;}
         void spoilInverseMatrix() {inverseMatrixIsOk_ = false;}
@@ -33,8 +41,11 @@ class Matrix
         double* BodyMatrix;
         double* InverseMatrix;
         double* RightCol;
-        double** solution;
         int *ipvt; //technical variable for lapack
+
+        std::map<const double*, unsigned> solution_idx;
+        std::vector<double*> solution_ptr;
+        // const double** solution_pointer;
 
         bool bodyMatrixIsOk_;
         bool inverseMatrixIsOk_;
