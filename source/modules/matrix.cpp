@@ -57,13 +57,21 @@ void Matrix::resize(unsigned newsize)
 double *Matrix::getCell(unsigned row, const double *solution)
 {
     unsigned col = getColForSolution(solution);
-    if ( (row>=N) || (col>=N) ) return NULL;
+    if ( (row>=N) || (col>=N) )
+    {
+        fprintf(stderr, "Error: Matrix::getCell(%d, %d) beyond limit\n", row, col);
+        exit(3);
+    }
     return BodyMatrix + row*N + col;
 }
 
 double *Matrix::getRightCol(unsigned eq)
 {
-    if ( eq>=N ) return NULL;
+    if ( eq>=N )
+    {
+        fprintf(stderr, "Error: Matrix::getRightCol(%d) beyond limit\n", eq);
+        exit(3);
+    }
     return RightCol + eq;
 }
 
@@ -85,9 +93,24 @@ unsigned Matrix::getColForSolution(const double *ptr)
     return res!=solution_idx.end()?res->second:-1;
 }
 
+void Matrix::selfTest()
+{
+    for (auto& ii: solution_idx)
+    {
+        const double *ptr = ii.first;
+        unsigned idx = ii.second;
+        if ( idx>=N || solution_ptr[idx]!=ptr )
+        {
+            fprintf(stderr, "Error: Matrix::selftest() failed\n");
+            exit(4);
+        }
+    }
+}
+
 void Matrix::solveUsingInverseMatrix(bool useInverseMatrix)
 {
-    assert(!testNan());
+    selfTest();
+
     if (useInverseMatrix)
     {
         if (!inverseMatrixIsOk_)

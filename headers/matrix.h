@@ -33,6 +33,7 @@ class Matrix
         void solveUsingInverseMatrix(bool useInverseMatrix);
 
     private:
+        void selfTest();
         void transpose(double* A, unsigned N);
         void FillInverseMatrix();
 
