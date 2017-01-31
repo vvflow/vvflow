@@ -996,14 +996,6 @@ void convectivefast::FillMatrix(bool rightColOnly)
             }
         }
 
-        addJob(HydroXEquation, eq_no++, NULL, libody.get());
-        addJob(HydroYEquation, eq_no++, NULL, libody.get());
-        addJob(HydroOEquation, eq_no++, NULL, libody.get());
-
-        addJob(NewtonXEquation, eq_no++, NULL, libody.get());
-        addJob(NewtonYEquation, eq_no++, NULL, libody.get());
-        addJob(NewtonOEquation, eq_no++, NULL, libody.get());
-
         if (libody->kspring.r.x >= 0 && S->Time>0)
             addJob(HookeXEquation, eq_no++, NULL, libody.get());
         else
@@ -1018,6 +1010,14 @@ void convectivefast::FillMatrix(bool rightColOnly)
             addJob(HookeOEquation, eq_no++, NULL, libody.get());
         else
             addJob(SpeedOEquation, eq_no++, NULL, libody.get());
+
+        addJob(HydroXEquation, eq_no++, NULL, libody.get());
+        addJob(HydroYEquation, eq_no++, NULL, libody.get());
+        addJob(HydroOEquation, eq_no++, NULL, libody.get());
+
+        addJob(NewtonXEquation, eq_no++, NULL, libody.get());
+        addJob(NewtonYEquation, eq_no++, NULL, libody.get());
+        addJob(NewtonOEquation, eq_no++, NULL, libody.get());
     }
 #undef addJob
 
@@ -1070,6 +1070,7 @@ void convectivefast::FillMatrix(bool rightColOnly)
     if (!rightColOnly)
         matrix.markBodyMatrixAsFilled();
 
-    // matrix->save("matrix");
+    // matrix.save("matrix");
+    // exit(0);
 }
 
