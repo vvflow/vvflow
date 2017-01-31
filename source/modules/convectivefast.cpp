@@ -323,13 +323,6 @@ void convectivefast::CalcCirculationFast()
     }
 
     matrix.solveUsingInverseMatrix(use_inverse);
-    for (auto& libody: S->BodyList)
-    {
-        if (libody->collision_state)
-            matrix.spoilMatrix();
-        libody->collision_state = 0;
-    }
-
 }
 
 static inline double _2PI_Xi_g_near(TVec p, TVec pc, TVec dl, double rd)
@@ -1059,8 +1052,8 @@ void convectivefast::FillMatrix(bool rightColOnly)
                     * job->ibody->speed_slae.o/S->dt;
             } else if (abs(job->ibody->collision_state) == 2) {
                 fillCollisionOEquation(job->eq_no, job->ibody);
-                matrix.spoilInverseMatrix();
             }
+            job->ibody->collision_state = 0;
         }
 #undef CASE
 #undef FILL_EQ_FOR_SEG

@@ -27,9 +27,7 @@ class Matrix
         // double *objectAtIndex(unsigned eq, unsigned j);
         // double **solutionAtIndex(unsigned i);
         // double *rightColAtIndex(unsigned i);
-        void markBodyMatrixAsFilled() {bodyMatrixIsOk_ = true;}
-        void spoilMatrix() {bodyMatrixIsOk_ = inverseMatrixIsOk_ = false;}
-        void spoilInverseMatrix() {inverseMatrixIsOk_ = false;}
+        // void spoilMatrix() {bodyMatrixIsOk_ = false;}
         void solveUsingInverseMatrix(bool useInverseMatrix);
 
     private:
@@ -48,12 +46,13 @@ class Matrix
         std::vector<double*> solution_ptr;
         // const double** solution_pointer;
 
+        uint32_t bodyMatrixHash_;
         bool bodyMatrixIsOk_;
-        bool inverseMatrixIsOk_;
 
     public:
+        uint32_t SuperFastHash (const char * data, int len);
+        void markBodyMatrixAsFilled() {bodyMatrixIsOk_ = true;}
         bool bodyMatrixIsOk() {return bodyMatrixIsOk_;}
-        bool inverseMatrixIsOk() {return inverseMatrixIsOk_;}
         void save(const char* filename);
         void fillWithZeros();
         bool testNan();
