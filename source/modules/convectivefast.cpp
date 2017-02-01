@@ -8,8 +8,6 @@
 using namespace std;
 
 #include "convectivefast.h"
-//#define dbg(func) cout << "Doing " << #func << "... " << flush; func; cout << "done\n";
-#define dbg(func) func;
 
 /****************************** MAIN FUNCTIONS ********************************/
 
