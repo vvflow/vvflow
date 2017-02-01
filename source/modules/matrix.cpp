@@ -234,7 +234,6 @@ void Matrix::FillInverseMatrix()
     if (hash == bodyMatrixHash_)
         return;
 
-    fprintf(stderr, "Filling inverse\n");
     memcpy(InverseMatrix, BodyMatrix, sqr(N)*sizeof(double));
 
     int size_int = N;

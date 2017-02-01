@@ -24,10 +24,6 @@ class Matrix
         double *getSolutionForCol(unsigned col);
         unsigned getColForSolution(const double *ptr);
 
-        // double *objectAtIndex(unsigned eq, unsigned j);
-        // double **solutionAtIndex(unsigned i);
-        // double *rightColAtIndex(unsigned i);
-        // void spoilMatrix() {bodyMatrixIsOk_ = false;}
         void solveUsingInverseMatrix(bool useInverseMatrix);
 
     private:
@@ -44,7 +40,6 @@ class Matrix
 
         std::map<const double*, unsigned> solution_idx;
         std::vector<double*> solution_ptr;
-        // const double** solution_pointer;
 
         uint32_t bodyMatrixHash_;
         bool bodyMatrixIsOk_;

@@ -8,18 +8,6 @@
 using namespace std;
 
 #include "convectivefast.h"
-//#define dbg(func) cout << "Doing " << #func << "... " << flush; func; cout << "done\n";
-#define dbg(func) func;
-
-#define VAR_U_x 0
-#define VAR_U_y 1
-#define VAR_U_o 2
-#define VAR_FH_x 3
-#define VAR_FH_y 4
-#define VAR_FH_o 5
-#define VAR_FP_x 6
-#define VAR_FP_y 7
-#define VAR_FP_o 8
 
 /****************************** MAIN FUNCTIONS ********************************/
 
@@ -430,7 +418,7 @@ void convectivefast::_2PI_A123(const TAtt &seg, const TBody* ibody, const TBody 
     *_2PI_A1 = (ibody == &b)?  C_2PI * seg.dl.y : 0;
     *_2PI_A2 = (ibody == &b)? -C_2PI * seg.dl.x : 0;
     *_2PI_A3 = 0;
-    if ((b.kspring.o<0) && (!b.speed_o.getValue(S->Time))) 
+    if ((b.kspring.o<0) && (!b.speed_o.getValue(S->Time)) && !b.root_body.lock())
     {
         //FIXME econome time. uncomment return
         //fprintf(stderr, "ret:\t%lf\t%lf\n", seg.corner.rx, seg.corner.ry);
