@@ -2,6 +2,8 @@
 #define matrix_h
 
 #include "stdint.h"
+#include "vector"
+#include "map"
 
 class Matrix
 {
@@ -16,15 +18,20 @@ class Matrix
         void resize(unsigned size);
         unsigned size() { return N; }
 
-        double *objectAtIndex(unsigned eq, unsigned j);
-        double **solutionAtIndex(unsigned i);
-        double *rightColAtIndex(unsigned i);
-        void markBodyMatrixAsFilled() {bodyMatrixIsOk_ = true;}
-        void spoilMatrix() {bodyMatrixIsOk_ = inverseMatrixIsOk_ = false;}
-        void spoilInverseMatrix() {inverseMatrixIsOk_ = false;}
+        double *getCell(unsigned eq, const double *solution);
+        double *getRightCol(unsigned eq);
+        void setSolutionForCol(unsigned col, double *ptr);
+        double *getSolutionForCol(unsigned col);
+        unsigned getColForSolution(const double *ptr);
+
+        // double *objectAtIndex(unsigned eq, unsigned j);
+        // double **solutionAtIndex(unsigned i);
+        // double *rightColAtIndex(unsigned i);
+        // void spoilMatrix() {bodyMatrixIsOk_ = false;}
         void solveUsingInverseMatrix(bool useInverseMatrix);
 
     private:
+        void selfTest();
         void transpose(double* A, unsigned N);
         void FillInverseMatrix();
 
@@ -33,15 +40,19 @@ class Matrix
         double* BodyMatrix;
         double* InverseMatrix;
         double* RightCol;
-        double** solution;
         int *ipvt; //technical variable for lapack
 
+        std::map<const double*, unsigned> solution_idx;
+        std::vector<double*> solution_ptr;
+        // const double** solution_pointer;
+
+        uint32_t bodyMatrixHash_;
         bool bodyMatrixIsOk_;
-        bool inverseMatrixIsOk_;
 
     public:
+        uint32_t SuperFastHash (const char * data, int len);
+        void markBodyMatrixAsFilled() {bodyMatrixIsOk_ = true;}
         bool bodyMatrixIsOk() {return bodyMatrixIsOk_;}
-        bool inverseMatrixIsOk() {return inverseMatrixIsOk_;}
         void save(const char* filename);
         void fillWithZeros();
         bool testNan();

@@ -11,6 +11,16 @@ using namespace std;
 //#define dbg(func) cout << "Doing " << #func << "... " << flush; func; cout << "done\n";
 #define dbg(func) func;
 
+#define VAR_U_x 0
+#define VAR_U_y 1
+#define VAR_U_o 2
+#define VAR_FH_x 3
+#define VAR_FH_y 4
+#define VAR_FH_o 5
+#define VAR_FP_x 6
+#define VAR_FP_y 7
+#define VAR_FP_o 8
+
 /****************************** MAIN FUNCTIONS ********************************/
 
 convectivefast::convectivefast(Space *sS)
@@ -284,19 +294,35 @@ void convectivefast::CalcCirculationFast()
     bool use_inverse = canUseInverse() && S->Time>0;
 
     matrix.resize(S->TotalSegmentsCount()+S->BodyList.size()*9);
-    if (matrix.bodyMatrixIsOk())
-        FillMatrix(true);
-    else
-        FillMatrix(false);
 
-    matrix.solveUsingInverseMatrix(use_inverse);
-    for (auto& libody: S->BodyList)
+    if (matrix.bodyMatrixIsOk())
+        FillMatrix(/*rightColOnly=*/true);
+    else
     {
-        if (libody->collision_state)
-            matrix.spoilMatrix();
-        libody->collision_state = 0;
+        unsigned eq_no = 0;
+        for (auto& libody: S->BodyList)
+        {
+            for (auto& latt: libody->alist)
+            {
+                matrix.setSolutionForCol(eq_no++, &latt.g);
+            }
+
+            matrix.setSolutionForCol(eq_no++, &libody->speed_slae.r.x);
+            matrix.setSolutionForCol(eq_no++, &libody->speed_slae.r.y);
+            matrix.setSolutionForCol(eq_no++, &libody->speed_slae.o);
+
+            matrix.setSolutionForCol(eq_no++, &libody->force_hydro.r.x);
+            matrix.setSolutionForCol(eq_no++, &libody->force_hydro.r.y);
+            matrix.setSolutionForCol(eq_no++, &libody->force_hydro.o);
+
+            matrix.setSolutionForCol(eq_no++, &libody->force_holder.r.x);
+            matrix.setSolutionForCol(eq_no++, &libody->force_holder.r.y);
+            matrix.setSolutionForCol(eq_no++, &libody->force_holder.o);
+        }
+        FillMatrix(/*rightColOnly=*/false);
     }
 
+    matrix.solveUsingInverseMatrix(use_inverse);
 }
 
 static inline double _2PI_Xi_g_near(TVec p, TVec pc, TVec dl, double rd)
@@ -481,114 +507,87 @@ TVec convectivefast::SegmentInfluence_linear_source(TVec p, const TAtt &seg, dou
     return TVec(zV.real(), zV.imag());
 }
 
-void convectivefast::fillSlipEquationForSegment(TAtt* seg, TBody* ibody, bool rightColOnly)
+void convectivefast::fillSlipEquationForSegment(unsigned eq_no, TAtt* seg, TBody* ibody, bool rightColOnly)
 {
-    const int seg_eq_no = seg->eq_no; //equation number for current segment
-
-    //right column
     //influence of infinite speed
-    *matrix.rightColAtIndex(seg_eq_no) = rotl(S->InfSpeed())*seg->dl;
-    *matrix.rightColAtIndex(seg_eq_no) += rotl(SrcSpeed(seg->r))*seg->dl;
+    *matrix.getRightCol(eq_no) = rotl(S->InfSpeed())*seg->dl;
+    *matrix.getRightCol(eq_no) += rotl(SrcSpeed(seg->r))*seg->dl;
     //influence of all free vortices
     TSortedNode* Node = S->Tree->findNode(seg->r);
-    *matrix.rightColAtIndex(seg_eq_no) -= NodeInfluence(*Node, *seg);
+    *matrix.getRightCol(eq_no) -= NodeInfluence(*Node, *seg);
     if (rightColOnly) return;
-
-    //place solution pointer
-    *matrix.solutionAtIndex(seg_eq_no) = &seg->g;
 
     for (auto& ljbody: S->BodyList)
     {
         for (auto& latt: ljbody->alist)
         {
-            *matrix.objectAtIndex(seg_eq_no, latt.eq_no) = _2PI_Xi_g(latt.corner, *seg, latt.dl.abs()*0.25)*C_1_2PI;
+            *matrix.getCell(eq_no, &latt.g) = _2PI_Xi_g(latt.corner, *seg, latt.dl.abs()*0.25)*C_1_2PI;
         }
 
         double _2PI_A1, _2PI_A2, _2PI_A3;
         _2PI_A123(*seg, ibody, *ljbody, &_2PI_A1, &_2PI_A2, &_2PI_A3);
-        *matrix.objectAtIndex(seg_eq_no, ljbody->eq_forces_no+0) = _2PI_A1*C_1_2PI;
-        *matrix.objectAtIndex(seg_eq_no, ljbody->eq_forces_no+1) = _2PI_A2*C_1_2PI;
-        *matrix.objectAtIndex(seg_eq_no, ljbody->eq_forces_no+2) = _2PI_A3*C_1_2PI;
-
-#undef jbody
+        *matrix.getCell(eq_no, &ljbody->speed_slae.r.x) = _2PI_A1*C_1_2PI;
+        *matrix.getCell(eq_no, &ljbody->speed_slae.r.y) = _2PI_A2*C_1_2PI;
+        *matrix.getCell(eq_no, &ljbody->speed_slae.o) = _2PI_A3*C_1_2PI;
     }
 }
 
-void convectivefast::fillZeroEquationForSegment(TAtt* seg, TBody* ibody, bool rightColOnly)
+void convectivefast::fillZeroEquationForSegment(unsigned eq_no, TAtt* seg, TBody* ibody, bool rightColOnly)
 {
-    const int seg_eq_no = seg->eq_no; //equation number for current segment
-
     //right column
-    *matrix.rightColAtIndex(seg_eq_no) = 0;
+    *matrix.getRightCol(eq_no) = 0;
     if (rightColOnly) return;
-
-    //place solution pointer
-    *matrix.solutionAtIndex(seg_eq_no) = &seg->g;
 
     //the only non-zero value
-    *matrix.objectAtIndex(seg_eq_no, seg_eq_no) = 1;
+    *matrix.getCell(eq_no, &seg->g) = 1;
 }
 
-void convectivefast::fillSteadyEquationForSegment(TAtt* seg, TBody* ibody, bool rightColOnly)
+void convectivefast::fillSteadyEquationForSegment(unsigned eq_no, TAtt* seg, TBody* ibody, bool rightColOnly)
 {
-    const int seg_eq_no = seg->eq_no; //equation number for current segment
-
     //right column
-    *matrix.rightColAtIndex(seg_eq_no) = ibody->g_dead + 2*ibody->get_area()*ibody->speed_slae_prev.o;
+    *matrix.getRightCol(eq_no) = ibody->g_dead + 2*ibody->get_area()*ibody->speed_slae_prev.o;
     if (rightColOnly) return;
-
-    //place solution pointer
-    *matrix.solutionAtIndex(seg_eq_no) = &seg->g;
 
     // self
     {
         for (auto& latt: ibody->alist)
-            *matrix.objectAtIndex(seg_eq_no, latt.eq_no) = 1;
-        *matrix.objectAtIndex(seg_eq_no, ibody->eq_forces_no+2) = 2*ibody->get_area();
+            *matrix.getCell(eq_no, &latt.g) = 1;
+        *matrix.getCell(eq_no, &ibody->speed_slae.o) = 2*ibody->get_area();
     }
 }
 
-void convectivefast::fillInfSteadyEquationForSegment(TAtt* seg, TBody* ibody, bool rightColOnly)
+void convectivefast::fillInfSteadyEquationForSegment(unsigned eq_no, TAtt* seg, TBody* ibody, bool rightColOnly)
 {
-    const int seg_eq_no = seg->eq_no; //equation number for current segment
-
     //right column
-    *matrix.rightColAtIndex(seg_eq_no) = -S->gsum() - S->InfCirculation;
+    *matrix.getRightCol(eq_no) = -S->gsum() - S->InfCirculation;
     if (rightColOnly) return;
 
-    //place solution pointer
-    *matrix.solutionAtIndex(seg_eq_no) = &seg->g;
-
-    // all
     // FIXME везде, где используется auto напихать статик асертов
     for (auto& ljbody: S->BodyList)
     {
         for (auto& latt: ljbody->alist)
-            *matrix.objectAtIndex(seg_eq_no, latt.eq_no) = 1;
-        *matrix.objectAtIndex(seg_eq_no, ljbody->eq_forces_no+2) = 2*ljbody->get_area();
+            *matrix.getCell(eq_no, &latt.g) = 1;
+        *matrix.getCell(eq_no, &ljbody->speed_slae.o) = 2*ljbody->get_area();
     }
 
 }
 
-/*
-   888    888 Y88b   d88P 8888888b.  8888888b.   .d88888b.
-   888    888  Y88b d88P  888  "Y88b 888   Y88b d88P" "Y88b
-   888    888   Y88o88P   888    888 888    888 888     888
-   8888888888    Y888P    888    888 888   d88P 888     888
-   888    888     888     888    888 8888888P"  888     888
-   888    888     888     888    888 888 T88b   888     888
-   888    888     888     888  .d88P 888  T88b  Y88b. .d88P
-   888    888     888     8888888P"  888   T88b  "Y88888P"
-   */
+//   888    888 Y88b   d88P 8888888b.  8888888b.   .d88888b.
+//   888    888  Y88b d88P  888  "Y88b 888   Y88b d88P" "Y88b
+//   888    888   Y88o88P   888    888 888    888 888     888
+//   8888888888    Y888P    888    888 888   d88P 888     888
+//   888    888     888     888    888 8888888P"  888     888
+//   888    888     888     888    888 888 T88b   888     888
+//   888    888     888     888  .d88P 888  T88b  Y88b. .d88P
+//   888    888     888     8888888P"  888   T88b  "Y88888P"
 
-void convectivefast::fillHydroXEquation(TBody* ibody, bool rightColOnly)
+void convectivefast::fillHydroXEquation(unsigned eq_no, TBody* ibody, bool rightColOnly)
 {
-    const int eq_no = ibody->eq_forces_no+3;
     const double _1_dt = 1/S->dt;
     const TVec r_c_com = ibody->get_com() - ibody->get_axis();
 
     //right column
-    *matrix.rightColAtIndex(eq_no) =
+    *matrix.getRightCol(eq_no) =
         + ibody->get_area()*_1_dt*ibody->speed_slae_prev.r.x
         + ibody->get_area()*_1_dt*rotl(2*ibody->get_com()+r_c_com).x * ibody->speed_slae_prev.o
         // - (-ibody->speed_slae_prev.r.y) * ibody->speed_slae_prev.o * ibody->get_area()
@@ -597,32 +596,28 @@ void convectivefast::fillHydroXEquation(TBody* ibody, bool rightColOnly)
 
     if (rightColOnly) return;
 
-    //place solution pointer
-    *matrix.solutionAtIndex(eq_no) = &ibody->force_hydro.r.x;
-
     // self
     {
         for (auto& latt: ibody->alist)
-            *matrix.objectAtIndex(eq_no, latt.eq_no) = _1_dt * (-latt.corner.y);
+            *matrix.getCell(eq_no, &latt.g) = _1_dt * (-latt.corner.y);
 
         // speed_slae
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+0) = ibody->get_area()*_1_dt;
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+1) = 0;
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+2) = ibody->get_area()*_1_dt * (-2*ibody->get_com().y - r_c_com.y);
+        *matrix.getCell(eq_no, &ibody->speed_slae.r.x) = ibody->get_area()*_1_dt;
+        *matrix.getCell(eq_no, &ibody->speed_slae.r.y) = 0;
+        *matrix.getCell(eq_no, &ibody->speed_slae.o)   = ibody->get_area()*_1_dt * (-2*ibody->get_com().y - r_c_com.y);
 
         // force_hydro
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+3) = -1;
+        *matrix.getCell(eq_no, &ibody->force_hydro.r.x) = -1;
     }
 }
 
-void convectivefast::fillHydroYEquation(TBody* ibody, bool rightColOnly)
+void convectivefast::fillHydroYEquation(unsigned eq_no, TBody* ibody, bool rightColOnly)
 {
-    const int eq_no = ibody->eq_forces_no+4;
     const double _1_dt = 1/S->dt;
     const TVec r_c_com = ibody->get_com() - ibody->get_axis();
 
     //right column
-    *matrix.rightColAtIndex(eq_no) =
+    *matrix.getRightCol(eq_no) =
         + ibody->get_area()*_1_dt*ibody->speed_slae_prev.r.y
         + ibody->get_area()*_1_dt*rotl(2*ibody->get_com()+r_c_com).y * ibody->speed_slae_prev.o
         // - (ibody->speed_slae_prev.r.x) * ibody->speed_slae_prev.o * ibody->get_area()
@@ -630,76 +625,66 @@ void convectivefast::fillHydroYEquation(TBody* ibody, bool rightColOnly)
         + ibody->fdt_dead.r.y*_1_dt;
     if (rightColOnly) return;
 
-    //place solution pointer
-    *matrix.solutionAtIndex(eq_no) = &ibody->force_hydro.r.y;
-
     // self
     {
         for (auto& latt: ibody->alist)
-            *matrix.objectAtIndex(eq_no, latt.eq_no) = _1_dt * (latt.corner.x);
+            *matrix.getCell(eq_no, &latt.g) = _1_dt * (latt.corner.x);
 
         // Speed_slae
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+0) = 0;
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+1) = ibody->get_area()*_1_dt;
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+2) = ibody->get_area()*_1_dt * (2*ibody->get_com().x + r_c_com.x);
+        *matrix.getCell(eq_no, &ibody->speed_slae.r.x) = 0;
+        *matrix.getCell(eq_no, &ibody->speed_slae.r.y) = ibody->get_area()*_1_dt;
+        *matrix.getCell(eq_no, &ibody->speed_slae.o)   = ibody->get_area()*_1_dt * (2*ibody->get_com().x + r_c_com.x);
 
         // force_hydro
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+4) = -1;
+        *matrix.getCell(eq_no, &ibody->force_hydro.r.y) = -1;
     }
 }
 
-void convectivefast::fillHydroOEquation(TBody* ibody, bool rightColOnly)
+void convectivefast::fillHydroOEquation(unsigned eq_no, TBody* ibody, bool rightColOnly)
 {
-    const int eq_no = ibody->eq_forces_no+5;
     const double _1_dt = 1/S->dt;
     const double _1_2dt = 0.5/S->dt;
     const TVec r_c_com = ibody->get_com() - ibody->get_axis();
 
     //right column
-    *matrix.rightColAtIndex(eq_no) =
+    *matrix.getRightCol(eq_no) =
         + ibody->get_area()*_1_dt * rotl(r_c_com) * ibody->speed_slae_prev.r
         + 2*ibody->get_moi_c()*_1_dt * ibody->speed_slae_prev.o
         // - (r_c_com * ibody->speed_slae_prev.r) * ibody->speed_slae_prev.o * ibody->get_area()
         + ibody->fdt_dead.o*_1_2dt;
     if (rightColOnly) return;
 
-    //place solution pointer
-    *matrix.solutionAtIndex(eq_no) = &ibody->force_hydro.o;
-
     // self
     {
         for (auto& latt: ibody->alist)
-            *matrix.objectAtIndex(eq_no, latt.eq_no) = _1_2dt * (latt.corner - ibody->get_axis()).abs2();
+            *matrix.getCell(eq_no, &latt.g) = _1_2dt * (latt.corner - ibody->get_axis()).abs2();
 
         // Speed_slae
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+0) = ibody->get_area()*_1_dt * (-r_c_com.y);
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+1) = ibody->get_area()*_1_dt * (r_c_com.x);
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+2) = 2*ibody->get_moi_c()*_1_dt;
+        *matrix.getCell(eq_no, &ibody->speed_slae.r.x) = ibody->get_area()*_1_dt * (-r_c_com.y);
+        *matrix.getCell(eq_no, &ibody->speed_slae.r.y) = ibody->get_area()*_1_dt * (r_c_com.x);
+        *matrix.getCell(eq_no, &ibody->speed_slae.o)   = 2*ibody->get_moi_c()*_1_dt;
 
         // force_hydro
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+5) = -1;
+        *matrix.getCell(eq_no, &ibody->force_hydro.o) = -1;
     }
 }
 
-/*
-   888b    888 8888888888 888       888 88888888888  .d88888b.  888b    888
-   8888b   888 888        888   o   888     888     d88P" "Y88b 8888b   888
-   88888b  888 888        888  d8b  888     888     888     888 88888b  888
-   888Y88b 888 8888888    888 d888b 888     888     888     888 888Y88b 888
-   888 Y88b888 888        888d88888b888     888     888     888 888 Y88b888
-   888  Y88888 888        88888P Y88888     888     888     888 888  Y88888
-   888   Y8888 888        8888P   Y8888     888     Y88b. .d88P 888   Y8888
-   888    Y888 8888888888 888P     Y888     888      "Y88888P"  888    Y888
-   */
+//   888b    888 8888888888 888       888 88888888888  .d88888b.  888b    888
+//   8888b   888 888        888   o   888     888     d88P" "Y88b 8888b   888
+//   88888b  888 888        888  d8b  888     888     888     888 88888b  888
+//   888Y88b 888 8888888    888 d888b 888     888     888     888 888Y88b 888
+//   888 Y88b888 888        888d88888b888     888     888     888 888 Y88b888
+//   888  Y88888 888        88888P Y88888     888     888     888 888  Y88888
+//   888   Y8888 888        8888P   Y8888     888     Y88b. .d88P 888   Y8888
+//   888    Y888 8888888888 888P     Y888     888      "Y88888P"  888    Y888
 
-void convectivefast::fillNewtonXEquation(TBody* ibody, bool rightColOnly)
+void convectivefast::fillNewtonXEquation(unsigned eq_no, TBody* ibody, bool rightColOnly)
 {
-    const int eq_no = ibody->eq_forces_no+6;
     const double _1_dt = 1/S->dt;
     const TVec r_c_com = ibody->get_com() - ibody->get_axis();
 
     //right column
-    *matrix.rightColAtIndex(eq_no) =
+    *matrix.getRightCol(eq_no) =
         - ibody->get_area()*_1_dt*ibody->density * ibody->speed_slae_prev.r.x
         + ibody->get_area()*_1_dt*ibody->density * r_c_com.y * ibody->speed_slae_prev.o
         + ibody->get_area()*ibody->density * r_c_com.x * sqr(ibody->speed_slae_prev.o)
@@ -707,19 +692,16 @@ void convectivefast::fillNewtonXEquation(TBody* ibody, bool rightColOnly)
         - ibody->friction_prev.r.x;
     if (rightColOnly) return;
 
-    //place solution pointer
-    *matrix.solutionAtIndex(eq_no) = &ibody->force_holder.r.x;
-
     // self
     {
         // Speed_slae
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+0) = -ibody->get_area()*_1_dt*ibody->density;
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+1) = 0;
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+2) = ibody->get_area()*_1_dt*ibody->density*r_c_com.y;
+        *matrix.getCell(eq_no, &ibody->speed_slae.r.x) = -ibody->get_area()*_1_dt*ibody->density;
+        *matrix.getCell(eq_no, &ibody->speed_slae.r.y) = 0;
+        *matrix.getCell(eq_no, &ibody->speed_slae.o)   = ibody->get_area()*_1_dt*ibody->density*r_c_com.y;
         // force_hydro
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+3) = 1;
+        *matrix.getCell(eq_no, &ibody->force_hydro.r.x) = 1;
         // force_holder
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+6) = -1;
+        *matrix.getCell(eq_no, &ibody->force_holder.r.x) = -1;
     }
 
     // children
@@ -728,18 +710,17 @@ void convectivefast::fillNewtonXEquation(TBody* ibody, bool rightColOnly)
         if (ljbody->root_body.lock().get() != ibody) continue;
 
         // force_holder
-        *matrix.objectAtIndex(eq_no, ljbody->eq_forces_no+6) = 1;
+        *matrix.getCell(eq_no, &ljbody->force_holder.r.x) = 1;
     }
 }
 
-void convectivefast::fillNewtonYEquation(TBody* ibody, bool rightColOnly)
+void convectivefast::fillNewtonYEquation(unsigned eq_no, TBody* ibody, bool rightColOnly)
 {
-    const int eq_no = ibody->eq_forces_no+7;
     const double _1_dt = 1/S->dt;
     const TVec r_c_com = ibody->get_com() - ibody->get_axis();
 
     //right column
-    *matrix.rightColAtIndex(eq_no) =
+    *matrix.getRightCol(eq_no) =
         - ibody->get_area()*_1_dt*ibody->density * ibody->speed_slae_prev.r.y
         - ibody->get_area()*_1_dt*ibody->density * r_c_com.x * ibody->speed_slae_prev.o
         + ibody->get_area()*ibody->density * r_c_com.y * sqr(ibody->speed_slae_prev.o)
@@ -747,19 +728,16 @@ void convectivefast::fillNewtonYEquation(TBody* ibody, bool rightColOnly)
         - ibody->friction_prev.r.y;
     if (rightColOnly) return;
 
-    //place solution pointer
-    *matrix.solutionAtIndex(eq_no) = &ibody->force_holder.r.y;
-
     // self
     {
         // Speed_slae
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+0) = 0;
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+1) = -ibody->get_area()*_1_dt*ibody->density;
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+2) = -ibody->get_area()*_1_dt*ibody->density*r_c_com.x;
+        *matrix.getCell(eq_no, &ibody->speed_slae.r.x) = 0;
+        *matrix.getCell(eq_no, &ibody->speed_slae.r.y) = -ibody->get_area()*_1_dt*ibody->density;
+        *matrix.getCell(eq_no, &ibody->speed_slae.o)   = -ibody->get_area()*_1_dt*ibody->density*r_c_com.x;
         // force_hydro
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+4) = 1;
+        *matrix.getCell(eq_no, &ibody->force_hydro.r.y) = 1;
         // force_holder
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+7) = -1;
+        *matrix.getCell(eq_no, &ibody->force_holder.r.y) = -1;
     }
 
     // children
@@ -768,37 +746,33 @@ void convectivefast::fillNewtonYEquation(TBody* ibody, bool rightColOnly)
         if (ljbody->root_body.lock().get() != ibody) continue;
 
         // force_holder
-        *matrix.objectAtIndex(eq_no, ljbody->eq_forces_no+7) = 1;
+        *matrix.getCell(eq_no, &ljbody->force_holder.r.y) = 1;
     }
 }
 
-void convectivefast::fillNewtonOEquation(TBody* ibody, bool rightColOnly)
+void convectivefast::fillNewtonOEquation(unsigned eq_no, TBody* ibody, bool rightColOnly)
 {
-    const int eq_no = ibody->eq_forces_no+8;
     const double _1_dt = 1/S->dt;
     const TVec r_c_com = ibody->get_com() - ibody->get_axis();
 
     //right column
-    *matrix.rightColAtIndex(eq_no) =
+    *matrix.getRightCol(eq_no) =
         - ibody->get_area()*_1_dt*ibody->density * (rotl(r_c_com)*ibody->speed_slae_prev.r)
         - ibody->get_moi_c()*_1_dt*ibody->density * ibody->speed_slae_prev.o
         - (ibody->density-1.0) * (rotl(r_c_com)*S->gravitation) * ibody->get_area()
         - ibody->friction_prev.o;
     if (rightColOnly) return;
 
-    //place solution pointer
-    *matrix.solutionAtIndex(eq_no) = &ibody->force_holder.o;
-
     // self
     {
         // Speed_slae
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+0) = ibody->get_area()*_1_dt*ibody->density * r_c_com.y;
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+1) = -ibody->get_area()*_1_dt*ibody->density * r_c_com.x;
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+2) = -ibody->get_moi_c()*_1_dt*ibody->density;
+        *matrix.getCell(eq_no, &ibody->speed_slae.r.x) = ibody->get_area()*_1_dt*ibody->density * r_c_com.y;
+        *matrix.getCell(eq_no, &ibody->speed_slae.r.y) = -ibody->get_area()*_1_dt*ibody->density * r_c_com.x;
+        *matrix.getCell(eq_no, &ibody->speed_slae.o)   = -ibody->get_moi_c()*_1_dt*ibody->density;
         // force_hydro
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+5) = 1;
+        *matrix.getCell(eq_no, &ibody->force_hydro.o) = 1;
         // force_holder
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+8) = -1;
+        *matrix.getCell(eq_no, &ibody->force_holder.o) = -1;
     }
 
     // children
@@ -808,15 +782,14 @@ void convectivefast::fillNewtonOEquation(TBody* ibody, bool rightColOnly)
 
         // force_holder
         TVec r_child_c = ljbody->get_axis() - ibody->get_axis();
-        *matrix.objectAtIndex(eq_no, ljbody->eq_forces_no+6) = -r_child_c.y;
-        *matrix.objectAtIndex(eq_no, ljbody->eq_forces_no+7) = r_child_c.x;
-        *matrix.objectAtIndex(eq_no, ljbody->eq_forces_no+8) = 1;
+        *matrix.getCell(eq_no, &ljbody->force_holder.r.x) = -r_child_c.y;
+        *matrix.getCell(eq_no, &ljbody->force_holder.r.y) = r_child_c.x;
+        *matrix.getCell(eq_no, &ljbody->force_holder.o) = 1;
     }
 }
 
-void convectivefast::fillCollisionOEquation(TBody* ibody)
+void convectivefast::fillCollisionOEquation(unsigned eq_no, TBody* ibody)
 {
-    const int eq_no = ibody->eq_forces_no+8;
 
     if (!ibody->collision_state)
     {
@@ -825,268 +798,272 @@ void convectivefast::fillCollisionOEquation(TBody* ibody)
     }
     else if (ibody->collision_state>0)
     {
-        *matrix.rightColAtIndex(eq_no) =
+        *matrix.getRightCol(eq_no) =
             ibody->collision_max.o
             -ibody->holder.o
             -ibody->dpos.o;
-        *matrix.rightColAtIndex(eq_no) /= S->dt;
+        *matrix.getRightCol(eq_no) /= S->dt;
     }
     else if (ibody->collision_state<0)
     {
-        *matrix.rightColAtIndex(eq_no) =
+        *matrix.getRightCol(eq_no) =
             ibody->holder.o+
             ibody->dpos.o
             -ibody->collision_min.o;
-        *matrix.rightColAtIndex(eq_no) /= S->dt;
+        *matrix.getRightCol(eq_no) /= S->dt;
     }
-
-    //place solution pointer
-    *matrix.solutionAtIndex(eq_no) = &ibody->speed_slae.o;
 
     // self
     {
         // speed_slae
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+2) = 1;
+        *matrix.getCell(eq_no, &ibody->speed_slae.o)   = 1;
     }
 }
 
-/*
-   888    888  .d88888b.   .d88888b.  888    d8P  8888888888
-   888    888 d88P" "Y88b d88P" "Y88b 888   d8P   888
-   888    888 888     888 888     888 888  d8P    888
-   8888888888 888     888 888     888 888d88K     8888888
-   888    888 888     888 888     888 8888888b    888
-   888    888 888     888 888     888 888  Y88b   888
-   888    888 Y88b. .d88P Y88b. .d88P 888   Y88b  888
-   888    888  "Y88888P"   "Y88888P"  888    Y88b 8888888888
-   */
+//   888    888  .d88888b.   .d88888b.  888    d8P  8888888888
+//   888    888 d88P" "Y88b d88P" "Y88b 888   d8P   888
+//   888    888 888     888 888     888 888  d8P    888
+//   8888888888 888     888 888     888 888d88K     8888888
+//   888    888 888     888 888     888 8888888b    888
+//   888    888 888     888 888     888 888  Y88b   888
+//   888    888 Y88b. .d88P Y88b. .d88P 888   Y88b  888
+//   888    888  "Y88888P"   "Y88888P"  888    Y88b 8888888888
 
-void convectivefast::fillHookeXEquation(TBody* ibody, bool rightColOnly)
+void convectivefast::fillHookeXEquation(unsigned eq_no, TBody* ibody, bool rightColOnly)
 {
-    const int eq_no = ibody->eq_forces_no+0;
-
-    *matrix.rightColAtIndex(eq_no) = ibody->kspring.r.x * ibody->dpos.r.x;
+    *matrix.getRightCol(eq_no) = ibody->kspring.r.x * ibody->dpos.r.x;
     if (rightColOnly) return;
-
-    //place solution pointer
-    *matrix.solutionAtIndex(eq_no) = &ibody->speed_slae.r.x;
 
     // self
     {
         // speed_slae
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+0) = ibody->damping.r.x;
+        *matrix.getCell(eq_no, &ibody->speed_slae.r.x) = ibody->damping.r.x;
         // force_holder
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+6) = 1;
+        *matrix.getCell(eq_no, &ibody->force_holder.r.x) = 1;
     }
 }
 
-void convectivefast::fillHookeYEquation(TBody* ibody, bool rightColOnly)
+void convectivefast::fillHookeYEquation(unsigned eq_no, TBody* ibody, bool rightColOnly)
 {
-    const int eq_no = ibody->eq_forces_no+1;
-
-    *matrix.rightColAtIndex(eq_no) = ibody->kspring.r.y * ibody->dpos.r.y;
+    *matrix.getRightCol(eq_no) = ibody->kspring.r.y * ibody->dpos.r.y;
     if (rightColOnly) return;
-
-    //place solution pointer
-    *matrix.solutionAtIndex(eq_no) = &ibody->speed_slae.r.y;
 
     // self
     {
         // speed_slae
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+1) = ibody->damping.r.y;
+        *matrix.getCell(eq_no, &ibody->speed_slae.r.y) = ibody->damping.r.y;
         // force_holder
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+7) = 1;
+        *matrix.getCell(eq_no, &ibody->force_holder.r.y) = 1;
     }
 }
 
-void convectivefast::fillHookeOEquation(TBody* ibody, bool rightColOnly)
+void convectivefast::fillHookeOEquation(unsigned eq_no, TBody* ibody, bool rightColOnly)
 {
-    const int eq_no = ibody->eq_forces_no+2;
-
-    *matrix.rightColAtIndex(eq_no) = ibody->kspring.o * ibody->dpos.o;
+    *matrix.getRightCol(eq_no) = ibody->kspring.o * ibody->dpos.o;
     if (rightColOnly) return;
-
-    //place solution pointer
-    *matrix.solutionAtIndex(eq_no) = &ibody->speed_slae.o;
 
     // self
     {
         // speed_slae
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+2) = ibody->damping.o;
+        *matrix.getCell(eq_no, &ibody->speed_slae.o)   = ibody->damping.o;
         // force_holder
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+8) = 1;
+        *matrix.getCell(eq_no, &ibody->force_holder.o) = 1;
     }
 }
 
-/*
-   .d8888b.  8888888b.  8888888888 8888888888 8888888b.
-   d88P  Y88b 888   Y88b 888        888        888  "Y88b
-   Y88b.      888    888 888        888        888    888
-   "Y888b.   888   d88P 8888888    8888888    888    888
-   "Y88b. 8888888P"  888        888        888    888
-   "888 888        888        888        888    888
-   Y88b  d88P 888        888        888        888  .d88P
-   "Y8888P"  888        8888888888 8888888888 8888888P"
-   */
+//    .d8888b.  8888888b.  8888888888 8888888888 8888888b.
+//   d88P  Y88b 888   Y88b 888        888        888  "Y88b
+//   Y88b.      888    888 888        888        888    888
+//    "Y888b.   888   d88P 8888888    8888888    888    888
+//       "Y88b. 8888888P"  888        888        888    888
+//         "888 888        888        888        888    888
+//   Y88b  d88P 888        888        888        888  .d88P
+//    "Y8888P"  888        8888888888 8888888888 8888888P"
 
-void convectivefast::fillSpeedXEquation(TBody* ibody, bool rightColOnly)
+void convectivefast::fillSpeedXEquation(unsigned eq_no, TBody* ibody, bool rightColOnly)
 {
-    const int eq_no = ibody->eq_forces_no+0;
-
-    *matrix.rightColAtIndex(eq_no) = ibody->speed_x.getValue(S->Time);
+    *matrix.getRightCol(eq_no) = ibody->speed_x.getValue(S->Time);
     if (rightColOnly) return;
-
-    //place solution pointer
-    *matrix.solutionAtIndex(eq_no) = &ibody->speed_slae.r.x;
 
     // self
     {
         // speed_slae
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+0) = 1;
+        *matrix.getCell(eq_no, &ibody->speed_slae.r.x) = 1;
     }
 
     // root
     auto root_body = ibody->root_body.lock();
     if (root_body)
     {
-        *matrix.objectAtIndex(eq_no, root_body->eq_forces_no+0) = -1;
-        *matrix.objectAtIndex(eq_no, root_body->eq_forces_no+1) = 0;
-        *matrix.objectAtIndex(eq_no, root_body->eq_forces_no+2) = (ibody->holder.r - root_body->get_axis()).y;
+        *matrix.getCell(eq_no, &root_body->speed_slae.r.x) = -1;
+        *matrix.getCell(eq_no, &root_body->speed_slae.r.y) = 0;
+        *matrix.getCell(eq_no, &root_body->speed_slae.o)   = (ibody->holder.r - root_body->get_axis()).y;
     }
 }
 
-void convectivefast::fillSpeedYEquation(TBody* ibody, bool rightColOnly)
+void convectivefast::fillSpeedYEquation(unsigned eq_no, TBody* ibody, bool rightColOnly)
 {
-    const int eq_no = ibody->eq_forces_no+1;
-
-    *matrix.rightColAtIndex(eq_no) = ibody->speed_y.getValue(S->Time);
+    *matrix.getRightCol(eq_no) = ibody->speed_y.getValue(S->Time);
     if (rightColOnly) return;
-
-    //place solution pointer
-    *matrix.solutionAtIndex(eq_no) = &ibody->speed_slae.r.y;
 
     // self
     {
         // speed_slae
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+1) = 1;
+        *matrix.getCell(eq_no, &ibody->speed_slae.r.y) = 1;
     }
 
     // root
     auto root_body = ibody->root_body.lock();
     if (root_body)
     {
-        *matrix.objectAtIndex(eq_no, root_body->eq_forces_no+0) = 0;
-        *matrix.objectAtIndex(eq_no, root_body->eq_forces_no+1) = -1;
-        *matrix.objectAtIndex(eq_no, root_body->eq_forces_no+2) = -(ibody->get_axis() - root_body->get_axis()).x;
+        *matrix.getCell(eq_no, &root_body->speed_slae.r.x) = 0;
+        *matrix.getCell(eq_no, &root_body->speed_slae.r.y) = -1;
+        *matrix.getCell(eq_no, &root_body->speed_slae.o)   = -(ibody->get_axis() - root_body->get_axis()).x;
     }
 }
 
-void convectivefast::fillSpeedOEquation(TBody* ibody, bool rightColOnly)
+void convectivefast::fillSpeedOEquation(unsigned eq_no, TBody* ibody, bool rightColOnly)
 {
-    const int eq_no = ibody->eq_forces_no+2;
-
-    *matrix.rightColAtIndex(eq_no) = ibody->speed_o.getValue(S->Time);
+    *matrix.getRightCol(eq_no) = ibody->speed_o.getValue(S->Time);
     if (rightColOnly) return;
-
-    //place solution pointer
-    *matrix.solutionAtIndex(eq_no) = &ibody->speed_slae.o;
 
     // self
     {
         // speed_slae
-        *matrix.objectAtIndex(eq_no, ibody->eq_forces_no+2) = 1;
+        *matrix.getCell(eq_no, &ibody->speed_slae.o)   = 1;
     }
 
     // root
     auto root_body = ibody->root_body.lock();
     if (root_body)
     {
-        *matrix.objectAtIndex(eq_no, root_body->eq_forces_no+2) = -1;
+        *matrix.getCell(eq_no, &root_body->speed_slae.o) = -1;
     }
 }
 
-/*
-   888b     d888        d8888 88888888888 8888888b.  8888888 Y88b   d88P
-   8888b   d8888       d88888     888     888   Y88b   888    Y88b d88P
-   88888b.d88888      d88P888     888     888    888   888     Y88o88P
-   888Y88888P888     d88P 888     888     888   d88P   888      Y888P
-   888 Y888P 888    d88P  888     888     8888888P"    888      d888b
-   888  Y8P  888   d88P   888     888     888 T88b     888     d88888b
-   888   "   888  d8888888888     888     888  T88b    888    d88P Y88b
-   888       888 d88P     888     888     888   T88b 8888888 d88P   Y88b
-   */
+//   888b     d888        d8888 88888888888 8888888b.  8888888 Y88b   d88P
+//   8888b   d8888       d88888     888     888   Y88b   888    Y88b d88P
+//   88888b.d88888      d88P888     888     888    888   888     Y88o88P
+//   888Y88888P888     d88P 888     888     888   d88P   888      Y888P
+//   888 Y888P 888    d88P  888     888     8888888P"    888      d888b
+//   888  Y8P  888   d88P   888     888     888 T88b     888     d88888b
+//   888   "   888  d8888888888     888     888  T88b    888    d88P Y88b
+//   888       888 d88P     888     888     888   T88b 8888888 d88P   Y88b
+
+typedef void (convectivefast::*fptr)(); 
+typedef struct {
+    fptr eq_type;
+    int eq_no;
+    TAtt* seg;
+    TBody* ibody;
+} equationJob;
+
 
 void convectivefast::FillMatrix(bool rightColOnly)
 {
     if (!rightColOnly) matrix.fillWithZeros();
 
-    bool special_body = true;
+    std::vector<equationJob> jobs;
+#define addJob(TYPE, EQNO, SEG, IBODY) \
+    jobs.push_back( \
+        (equationJob){(fptr)&convectivefast::fill##TYPE, EQNO, SEG, IBODY} \
+    )
+
+    int eq_no = 0;
+    int once = 0;
     for (auto& libody: S->BodyList)
     {
         TAtt *special_segment = &libody->alist[libody->special_segment_no];
-#pragma omp parallel for
-        for (auto latt = libody->alist.begin(); latt < libody->alist.end(); latt++)
+        for (auto& latt: libody->alist)
         {
-            if (&*latt != special_segment)
-                fillSlipEquationForSegment(&*latt, libody.get(), rightColOnly);
+            if (&latt != special_segment)
+                addJob(SlipEquationForSegment, eq_no++, &latt, libody.get());
             else
             {
                 if (libody->boundary_condition == bc_t::kutta)
-                    fillZeroEquationForSegment(&*latt, libody.get(), rightColOnly);
-                else if (!special_body)
-                    fillSteadyEquationForSegment(&*latt, libody.get(), rightColOnly);
+                    addJob(ZeroEquationForSegment, eq_no++, &latt, libody.get());
+                else if (!once++)
+                    addJob(InfSteadyEquationForSegment, eq_no++, &latt, libody.get());
                 else
-                {
-                    fillInfSteadyEquationForSegment(&*latt, libody.get(), rightColOnly);
-                    special_body = false;
-                }
+                    addJob(SteadyEquationForSegment, eq_no++, &latt, libody.get());
             }
         }
 
-        fillHydroXEquation(libody.get(), rightColOnly);
-        fillHydroYEquation(libody.get(), rightColOnly);
-        fillHydroOEquation(libody.get(), rightColOnly);
-
-        fillNewtonXEquation(libody.get(), rightColOnly);
-        fillNewtonYEquation(libody.get(), rightColOnly);
-
-        if (!libody->collision_state)
-            fillNewtonOEquation(libody.get(), rightColOnly);
-        else if (abs(libody->collision_state) == 1)
-        {
-            fillNewtonOEquation(libody.get(), rightColOnly);
-            const int eq_no = libody->eq_forces_no+8;
-            *matrix.rightColAtIndex(eq_no) +=
-                (1+libody->bounce)
-                *libody->get_moi_c()
-                *libody->density
-                *libody->speed_slae.o/S->dt;
-        }
-        else if (abs(libody->collision_state) == 2)
-        {
-            fillCollisionOEquation(libody.get());
-            matrix.spoilInverseMatrix();
-        }
-
         if (libody->kspring.r.x >= 0 && S->Time>0)
-            fillHookeXEquation(libody.get(), rightColOnly);
+            addJob(HookeXEquation, eq_no++, NULL, libody.get());
         else
-            fillSpeedXEquation(libody.get(), rightColOnly);
+            addJob(SpeedXEquation, eq_no++, NULL, libody.get());
 
         if (libody->kspring.r.y >= 0 && S->Time>0)
-            fillHookeYEquation(libody.get(), rightColOnly);
+            addJob(HookeYEquation, eq_no++, NULL, libody.get());
         else
-            fillSpeedYEquation(libody.get(), rightColOnly);
+            addJob(SpeedYEquation, eq_no++, NULL, libody.get());
 
         if (libody->kspring.o >= 0 && S->Time>0)
-            fillHookeOEquation(libody.get(), rightColOnly);
+            addJob(HookeOEquation, eq_no++, NULL, libody.get());
         else
-            fillSpeedOEquation(libody.get(), rightColOnly);
+            addJob(SpeedOEquation, eq_no++, NULL, libody.get());
+
+        addJob(HydroXEquation, eq_no++, NULL, libody.get());
+        addJob(HydroYEquation, eq_no++, NULL, libody.get());
+        addJob(HydroOEquation, eq_no++, NULL, libody.get());
+
+        addJob(NewtonXEquation, eq_no++, NULL, libody.get());
+        addJob(NewtonYEquation, eq_no++, NULL, libody.get());
+        addJob(NewtonOEquation, eq_no++, NULL, libody.get());
+    }
+#undef addJob
+
+    #pragma omp parallel for
+    for (auto job = jobs.begin(); job < jobs.end(); job++)
+    {
+        if (0) {}
+#define CASE(TYPE) \
+        else if (job->eq_type == (fptr)&convectivefast::fill##TYPE)
+#define FILL_EQ_FOR_SEG(TYPE)  fill##TYPE(job->eq_no, job->seg, job->ibody, rightColOnly)
+#define FILL_EQ_FOR_BODY(TYPE) fill##TYPE(job->eq_no, job->ibody, rightColOnly)
+
+        CASE(SlipEquationForSegment) FILL_EQ_FOR_SEG(SlipEquationForSegment);
+        CASE(ZeroEquationForSegment) FILL_EQ_FOR_SEG(ZeroEquationForSegment);
+        CASE(InfSteadyEquationForSegment) FILL_EQ_FOR_SEG(InfSteadyEquationForSegment);
+        CASE(SteadyEquationForSegment) FILL_EQ_FOR_SEG(SteadyEquationForSegment);
+
+        CASE(HydroXEquation) FILL_EQ_FOR_BODY(HydroXEquation);
+        CASE(HydroYEquation) FILL_EQ_FOR_BODY(HydroYEquation);
+        CASE(HydroOEquation) FILL_EQ_FOR_BODY(HydroOEquation);
+        CASE(NewtonXEquation) FILL_EQ_FOR_BODY(NewtonXEquation);
+        CASE(NewtonYEquation) FILL_EQ_FOR_BODY(NewtonYEquation);
+        CASE(NewtonOEquation) FILL_EQ_FOR_BODY(NewtonOEquation);
+        CASE(SpeedXEquation) FILL_EQ_FOR_BODY(SpeedXEquation);
+        CASE(SpeedYEquation) FILL_EQ_FOR_BODY(SpeedYEquation);
+        CASE(SpeedOEquation) FILL_EQ_FOR_BODY(SpeedOEquation);
+        CASE(HookeXEquation) FILL_EQ_FOR_BODY(HookeXEquation);
+        CASE(HookeYEquation) FILL_EQ_FOR_BODY(HookeYEquation);
+        CASE(HookeOEquation)
+        {
+            if (job->ibody->collision_state == 0) {
+                FILL_EQ_FOR_BODY(HookeOEquation);
+            } else if (abs(job->ibody->collision_state) == 1) {
+                FILL_EQ_FOR_BODY(HookeOEquation);
+                *matrix.getRightCol(job->eq_no) +=
+                    (1+job->ibody->bounce)
+                    * job->ibody->get_moi_c()
+                    * job->ibody->density
+                    * job->ibody->speed_slae.o/S->dt;
+            } else if (abs(job->ibody->collision_state) == 2) {
+                fillCollisionOEquation(job->eq_no, job->ibody);
+            }
+            job->ibody->collision_state = 0;
+        }
+#undef CASE
+#undef FILL_EQ_FOR_SEG
+#undef FILL_EQ_FOR_BODY
     }
 
     if (!rightColOnly)
         matrix.markBodyMatrixAsFilled();
 
-    // matrix->save("matrix");
+    // matrix.save("matrix");
+    // exit(0);
 }
 

@@ -46,27 +46,27 @@ class convectivefast
         TVec SegmentInfluence_linear_source(TVec p, const TAtt &seg, double q1, double q2);
 
     private:
-        void fillSlipEquationForSegment(TAtt* seg, TBody* ibody, bool rightColOnly);
-        void fillZeroEquationForSegment(TAtt* seg, TBody* ibody, bool rightColOnly);
-        void fillSteadyEquationForSegment(TAtt* seg, TBody* ibody, bool rightColOnly);
-        void fillInfSteadyEquationForSegment(TAtt* seg, TBody* ibody, bool rightColOnly);
+        void fillSlipEquationForSegment(unsigned eq_no, TAtt* seg, TBody* ibody, bool rightColOnly);
+        void fillZeroEquationForSegment(unsigned eq_no, TAtt* seg, TBody* ibody, bool rightColOnly);
+        void fillSteadyEquationForSegment(unsigned eq_no, TAtt* seg, TBody* ibody, bool rightColOnly);
+        void fillInfSteadyEquationForSegment(unsigned eq_no, TAtt* seg, TBody* ibody, bool rightColOnly);
 
-        void fillHydroXEquation(TBody* ibody, bool rightColOnly);
-        void fillHydroYEquation(TBody* ibody, bool rightColOnly);
-        void fillHydroOEquation(TBody* ibody, bool rightColOnly);
+        void fillHydroXEquation(unsigned eq_no, TBody* ibody, bool rightColOnly);
+        void fillHydroYEquation(unsigned eq_no, TBody* ibody, bool rightColOnly);
+        void fillHydroOEquation(unsigned eq_no, TBody* ibody, bool rightColOnly);
 
-        void fillNewtonXEquation(TBody* ibody, bool rightColOnly);
-        void fillNewtonYEquation(TBody* ibody, bool rightColOnly);
-        void fillNewtonOEquation(TBody* ibody, bool rightColOnly);
-        void fillCollisionOEquation(TBody* ibody);
+        void fillNewtonXEquation(unsigned eq_no, TBody* ibody, bool rightColOnly);
+        void fillNewtonYEquation(unsigned eq_no, TBody* ibody, bool rightColOnly);
+        void fillNewtonOEquation(unsigned eq_no, TBody* ibody, bool rightColOnly);
+        void fillCollisionOEquation(unsigned eq_no, TBody* ibody);
 
-        void fillHookeXEquation(TBody* ibody, bool rightColOnly);
-        void fillHookeYEquation(TBody* ibody, bool rightColOnly);
-        void fillHookeOEquation(TBody* ibody, bool rightColOnly);
+        void fillHookeXEquation(unsigned eq_no, TBody* ibody, bool rightColOnly);
+        void fillHookeYEquation(unsigned eq_no, TBody* ibody, bool rightColOnly);
+        void fillHookeOEquation(unsigned eq_no, TBody* ibody, bool rightColOnly);
 
-        void fillSpeedXEquation(TBody* ibody, bool rightColOnly);
-        void fillSpeedYEquation(TBody* ibody, bool rightColOnly);
-        void fillSpeedOEquation(TBody* ibody, bool rightColOnly);
+        void fillSpeedXEquation(unsigned eq_no, TBody* ibody, bool rightColOnly);
+        void fillSpeedYEquation(unsigned eq_no, TBody* ibody, bool rightColOnly);
+        void fillSpeedOEquation(unsigned eq_no, TBody* ibody, bool rightColOnly);
 };
 
 

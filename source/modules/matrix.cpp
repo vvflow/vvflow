@@ -25,10 +25,8 @@ Matrix::Matrix()
     N = 0;
 
     BodyMatrix = InverseMatrix = RightCol = NULL;
-    solution = NULL;
     ipvt = NULL;
     bodyMatrixIsOk_ = false;
-    inverseMatrixIsOk_ = false;
 }
 
 Matrix::~Matrix()
@@ -36,7 +34,6 @@ Matrix::~Matrix()
     free(BodyMatrix);
     free(InverseMatrix);
     free(RightCol);
-    free(solution);
     free(ipvt);
 }
 
@@ -48,40 +45,132 @@ void Matrix::resize(unsigned newsize)
     BodyMatrix =    (double*)realloc(BodyMatrix,    sqr(N)*sizeof(double));
     InverseMatrix = (double*)realloc(InverseMatrix, sqr(N)*sizeof(double));
     RightCol =      (double*)realloc(RightCol,      N*sizeof(double));
-    solution =     (double**)realloc(solution,      N*sizeof(double));
     ipvt =             (int*)realloc(ipvt,          (N+1)*sizeof(int));
 
+    solution_ptr.resize(N);
+
     bodyMatrixIsOk_ = false;
-    inverseMatrixIsOk_ = false;
 }
 
-double* Matrix::objectAtIndex(unsigned i, unsigned j)
+double *Matrix::getCell(unsigned row, const double *solution)
 {
-    if ( (i>=N) || (j>=N) ) return NULL;
-    return BodyMatrix + i*N + j;
+    unsigned col = getColForSolution(solution);
+    if ( (row>=N) || (col>=N) )
+    {
+        fprintf(stderr, "Error: Matrix::getCell(%d, %d) beyond limit\n", row, col);
+        exit(3);
+    }
+    return BodyMatrix + row*N + col;
 }
 
-double** Matrix::solutionAtIndex(unsigned i)
+double *Matrix::getRightCol(unsigned eq)
 {
-    if ( i>=N ) return NULL;
-    return solution + i;
+    if ( eq>=N )
+    {
+        fprintf(stderr, "Error: Matrix::getRightCol(%d) beyond limit\n", eq);
+        exit(3);
+    }
+    return RightCol + eq;
 }
 
-double* Matrix::rightColAtIndex(unsigned i)
+void Matrix::setSolutionForCol(unsigned col, double *ptr)
 {
-    if ( i>=N ) return NULL;
-    return RightCol + i;
+    solution_idx.erase(solution_ptr[col]);
+    solution_ptr[col] = ptr;
+    solution_idx[ptr] = col;
+}
+
+double *Matrix::getSolutionForCol(unsigned col)
+{
+    return solution_ptr.at(col);
+}
+
+unsigned Matrix::getColForSolution(const double *ptr)
+{
+    auto res = solution_idx.find(ptr);
+    return res!=solution_idx.end()?res->second:-1;
+}
+
+void Matrix::selfTest()
+{
+    for (auto& ii: solution_idx)
+    {
+        const double *ptr = ii.first;
+        unsigned idx = ii.second;
+        if ( idx>=N || solution_ptr[idx]!=ptr )
+        {
+            fprintf(stderr, "Error: Matrix::selftest() failed\n");
+            exit(4);
+        }
+    }
+}
+
+
+uint32_t Matrix::SuperFastHash (const char * data, int len) {
+// http://www.azillionmonkeys.com/qed/hash.html
+
+#if (defined(__GNUC__) && defined(__i386__)) || defined(__WATCOMC__) \
+  || defined(_MSC_VER) || defined (__BORLANDC__) || defined (__TURBOC__)
+#define get16bits(d) (*((const uint16_t *) (d)))
+#else
+#define get16bits(d) ((((uint32_t)(((const uint8_t *)(d))[1])) << 8)\
+                       +(uint32_t)(((const uint8_t *)(d))[0]) )
+#endif
+
+    uint32_t hash = len, tmp;
+    int rem;
+
+    if (len <= 0 || data == NULL) return 0;
+
+    rem = len & 3;
+    len >>= 2;
+
+    /* Main loop */
+    for (;len > 0; len--) {
+        hash  += get16bits (data);
+        tmp    = (get16bits (data+2) << 11) ^ hash;
+        hash   = (hash << 16) ^ tmp;
+        data  += 2*sizeof (uint16_t);
+        hash  += hash >> 11;
+    }
+
+    /* Handle end cases */
+    switch (rem) {
+        case 3: hash += get16bits (data);
+                hash ^= hash << 16;
+                hash ^= ((signed char)data[sizeof (uint16_t)]) << 18;
+                hash += hash >> 11;
+                break;
+        case 2: hash += get16bits (data);
+                hash ^= hash << 11;
+                hash += hash >> 17;
+                break;
+        case 1: hash += (signed char)*data;
+                hash ^= hash << 10;
+                hash += hash >> 1;
+    }
+
+    /* Force "avalanching" of final 127 bits */
+    hash ^= hash << 3;
+    hash += hash >> 5;
+    hash ^= hash << 4;
+    hash += hash >> 17;
+    hash ^= hash << 25;
+    hash += hash >> 6;
+
+#undef get16bits
+
+    return hash;
 }
 
 void Matrix::solveUsingInverseMatrix(bool useInverseMatrix)
 {
+    selfTest();
     assert(!testNan());
+
     if (useInverseMatrix)
     {
-        if (!inverseMatrixIsOk_)
-        {
-            FillInverseMatrix();
-        }
+        FillInverseMatrix();
 
         double *y = new double[N];
         cblas_dgemv(
@@ -102,12 +191,7 @@ void Matrix::solveUsingInverseMatrix(bool useInverseMatrix)
 #pragma omp parallel for
         for (unsigned i=0; i<N; i++)
         {
-            if (!solution[i])
-            {
-                fprintf(stderr, "Warning: solution[%u] = NULL\n", i);
-                continue;
-            }
-            *solution[i] = y[i];
+            *solution_ptr[i] = y[i];
         }
         delete[] y;
     } else
@@ -128,15 +212,10 @@ void Matrix::solveUsingInverseMatrix(bool useInverseMatrix)
             exit(-2);
         }
 
-        for (size_t i=0; i<N; i++)
+#pragma omp parallel for
+        for (unsigned i=0; i<N; i++)
         {
-            if (!solution[i])
-            {
-                fprintf(stderr, "Warning: solution[%ld] = NULL\n", i);
-                continue;
-            }
-
-            *solution[i] = RightCol[i];
+            *solution_ptr[i] = RightCol[i];
         }
 
         bodyMatrixIsOk_ = false;
@@ -151,6 +230,11 @@ void Matrix::FillInverseMatrix()
         exit(-2);
     }
 
+    uint32_t hash = SuperFastHash((char*)BodyMatrix, sqr(N)*sizeof(double));
+    if (hash == bodyMatrixHash_)
+        return;
+
+    fprintf(stderr, "Filling inverse\n");
     memcpy(InverseMatrix, BodyMatrix, sqr(N)*sizeof(double));
 
     int size_int = N;
@@ -171,7 +255,7 @@ void Matrix::FillInverseMatrix()
         exit(-2);
     }
 
-    inverseMatrixIsOk_ = true;
+    bodyMatrixHash_ = hash;
     bodyMatrixIsOk_ = false;
 }
 
