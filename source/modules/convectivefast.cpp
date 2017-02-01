@@ -420,14 +420,16 @@ void convectivefast::_2PI_A123(const TAtt &seg, const TBody* ibody, const TBody 
     *_2PI_A3 = 0;
     if ((b.kspring.o<0) && (!b.speed_o.getValue(S->Time)) && !b.root_body.lock())
     {
-        //FIXME econome time. uncomment return
-        //fprintf(stderr, "ret:\t%lf\t%lf\n", seg.corner.rx, seg.corner.ry);
+        // в этом случае угловая скорость и так обратится в ноль
+        // поэтому ради экономии времени коэффициент при ней не вычисляем
         return;
     }
     for (auto& latt: b.alist)
     {
         TVec Xi = _2PI_Xi(latt.r, seg, latt.dl.abs()*0.25);
         TVec r0 = latt.r - b.get_axis();
+        // A1 и A2 в сумме тождественно (аналитически) равны нулю
+        // не знаю почему, но если вкопаться в документацию - можно проверить
         //		*A1 -= Xi*latt.dl;
         //		*A2 -= rotl(Xi)*latt.dl;
         *_2PI_A3 -= Xi * TVec(rotl(r0) * latt.dl, -latt.dl*r0);
