@@ -76,18 +76,18 @@ int main(int argc, char** argv)
 		if (S->BodyList.size())
 		{
 			dbg(tr.build());
-			for (int iter=1;; iter++)
+			
+			// решаем слау
+			conv.CalcCirculationFast();
+			if (fm.DetectCollision(2))
 			{
-				// решаем СЛАУ
-				conv.CalcCirculationFast();
-				if (!fm.DetectCollision(iter))
-					break;
-				else if (iter>2)
-				{
-					fprintf(stderr, "Collition is not resolved in 2 iterations\n");
-					break;
-				}
+				// если обнаружили соударение
+				conv.CalcCirculationFast(); // перерешиваем для остановки
+				for (auto lbody: S->BodyList) lbody->collision_state /= 2;
+				conv.CalcCirculationFast(); // подправляем импульс и перерешиваем для отскока
+				for (auto lbody: S->BodyList) lbody->collision_state = 0;
 			}
+
 			dbg(tr.destroy());
 		}
 

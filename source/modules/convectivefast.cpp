@@ -1037,9 +1037,10 @@ void convectivefast::FillMatrix(bool rightColOnly)
                 FILL_EQ_FOR_BODY(HookeOEquation);
                 *matrix.getRightCol(job->eq_no) +=
                     (1+job->ibody->bounce)
-                    * job->ibody->get_moi_c()
-                    * job->ibody->density
-                    * job->ibody->speed_slae.o/S->dt;
+                    * job->ibody->force_holder.o;
+                    // * job->ibody->get_moi_c()
+                    // * job->ibody->density
+                    // * job->ibody->speed_slae.o/S->dt;
             } else if (abs(job->ibody->collision_state) == 2) {
                 fillCollisionOEquation(job->eq_no, job->ibody);
             }
