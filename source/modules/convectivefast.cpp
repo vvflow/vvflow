@@ -418,7 +418,7 @@ void convectivefast::_2PI_A123(const TAtt &seg, const TBody* ibody, const TBody 
     *_2PI_A1 = (ibody == &b)?  C_2PI * seg.dl.y : 0;
     *_2PI_A2 = (ibody == &b)? -C_2PI * seg.dl.x : 0;
     *_2PI_A3 = 0;
-    if ((b.kspring.o<0) && (!b.speed_o.getValue(S->Time))) 
+    if ((b.kspring.o<0) && (!b.speed_o.getValue(S->Time)) && !b.root_body.lock())
     {
         //FIXME econome time. uncomment return
         //fprintf(stderr, "ret:\t%lf\t%lf\n", seg.corner.rx, seg.corner.ry);
