@@ -780,7 +780,6 @@ void convectivefast::fillNewtonOEquation(unsigned eq_no, TBody* ibody, bool righ
 
 void convectivefast::fillCollisionOEquation(unsigned eq_no, TBody* ibody)
 {
-
     if (!ibody->collision_state)
     {
         fprintf(stderr, "Trying to fill collision equetion without the need\n");
@@ -1044,7 +1043,7 @@ void convectivefast::FillMatrix(bool rightColOnly)
             } else if (abs(job->ibody->collision_state) == 2) {
                 fillCollisionOEquation(job->eq_no, job->ibody);
             }
-            job->ibody->collision_state = 0;
+            // job->ibody->collision_state = 0;
         }
 #undef CASE
 #undef FILL_EQ_FOR_SEG
