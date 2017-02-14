@@ -72,12 +72,7 @@ class TBody
         TVec3D speed_slae;
         TVec3D speed_slae_prev;
 
-        // 0 - no collision detected;
-        // 1 - collision detected, trying to bounce
-        // 2 - collision detected, trying to lean
-        // >0 - collision at max
-        // <0 - collision at min
-        int8_t collision_state;
+        bool collision_detected;
         // coordinates of collision
         TVec3D collision_min;
         TVec3D collision_max;

@@ -79,13 +79,11 @@ int main(int argc, char** argv)
 			
 			// решаем слау
 			conv.CalcCirculationFast();
-			if (fm.DetectCollision(2))
+			shared_ptr<TBody> cbody = S->collision_detected();
+			if (cbody.get() != nullptr)
 			{
-				// если обнаружили соударение
-				conv.CalcCirculationFast(); // перерешиваем для остановки
-				for (auto lbody: S->BodyList) lbody->collision_state /= 2;
-				conv.CalcCirculationFast(); // подправляем импульс и перерешиваем для отскока
-				for (auto lbody: S->BodyList) lbody->collision_state = 0;
+				cbody->collision_detected = false;
+				conv.CalcCirculationFast();
 			}
 
 			dbg(tr.destroy());
