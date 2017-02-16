@@ -71,7 +71,7 @@ void print_body(TBody *body)
 	attribute_print("moi_c", body->get_moi_c());
 }
 
-static std::string info[3];
+static std::string info[4];
 void print_general(Space* S)
 {
 	printf("General:\n");
@@ -105,9 +105,10 @@ void print_general(Space* S)
 	}
 
 	printf("\nNotes:\n");
-	attribute_print("Local time:", info[2]);
-	attribute_print("Git info:", info[0]);
-	attribute_print("Git diff:", info[1]);
+	attribute_print("Local time:", info[3]);
+	attribute_print("Git rev:", info[0]);
+	attribute_print("Git info:", info[1]);
+	attribute_print("Git diff:", info[2]);
 }
 
 template <typename T> void print_list(vector<T> &list);

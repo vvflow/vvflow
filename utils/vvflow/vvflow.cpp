@@ -30,6 +30,13 @@ int main(int argc, char** argv)
     {
         /**/ if (!strcmp(argv[1], "--progress")) b_progress = true;
         else if (!strcmp(argv[1], "--profile")) b_save_profile = true;
+        else if (!strcmp(argv[1], "--version"))
+        {
+            cerr << "Git rev: " << Space::getGitRev() << std::endl;
+            cerr << "Git info: " << Space::getGitInfo() << std::endl;
+            cerr << "Git diff: " << Space::getGitDiff() << std::endl;
+            return 0;
+        }
         else break;
         argv++;
         argc--;

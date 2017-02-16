@@ -23,8 +23,6 @@ modules_objects := flowmove epsfast diffusivefast matrix convectivefast
 
 CPATH           := headers/:$(CPATH)
 LIBRARY_PATH    := bin/:$(LIBRARY_PATH)
-GITINFO         := -DDEF_GITINFO="\"$(shell git log -1 | head -n1 | cut -d" " -f2)\""
-GITDIFF         := -DDEF_GITDIFF="\"$(shell git diff --name-only)\""
 export CPATH
 export LIBRARY_PATH
 
@@ -88,14 +86,15 @@ vpath %.cpp source/core:source/modules
 bin/%.o: %.cpp $(wildcard headers/*.h) | bin/
 	$(CXX) $(CXXFLAGS) -fPIC -c $< -o ./$@
 
-bin/space.o: space.cpp headers/space.h headers/elementary.h | bin/
-	$(CXX) $(CXXFLAGS) -fPIC -c $< -o ./$@ \
-	$(GITINFO) \
-	$(GITDIFF)
-
-bin/libvvhd.a: $(patsubst %, bin/%.o, $(core_objects) $(modules_objects))
+bin/libvvhd.a: $(patsubst %, bin/%.o, gitinfo $(core_objects) $(modules_objects))
 	$(AR) Drc ./$@ $^
 	ranlib ./$@
 
-bin/libvvhd.so: $(patsubst %, bin/%.o, $(core_objects) $(modules_objects))
+bin/libvvhd.so: $(patsubst %, bin/%.o, gitinfo $(core_objects) $(modules_objects))
 	$(CXX) $(LDFLAGS) -shared -fPIC $^ -Wl,-soname,libvvhd.so $(LDLIBS) -o ./$@
+
+.PHONY: gitinfo.cpp
+gitinfo.cpp:
+	echo "const char* gitrev = \"$(shell git rev-parse HEAD)\";" > $@
+	echo "const char* gitinfo = \"$(shell git describe --tags --always)\";" >> $@
+	echo "const char* gitdiff = \"$(shell git diff --name-only)\";" >> $@

@@ -12,16 +12,12 @@
 #include "body.h"
 #include "space_hdf.cpp"
 
-#ifndef DEF_GITINFO
-#define DEF_GITINFO "not available"
-#endif
-#ifndef DEF_GITDIFF
-#define DEF_GITDIFF "not available"
-#endif
-static const char* gitInfo = DEF_GITINFO;
-static const char* gitDiff = DEF_GITDIFF;
-const char* Space::getGitInfo() {return gitInfo;}
-const char* Space::getGitDiff() {return gitDiff;}
+extern const char* gitrev;
+extern const char* gitinfo;
+extern const char* gitdiff;
+const char* Space::getGitRev() {return gitrev;}
+const char* Space::getGitInfo() {return gitinfo;}
+const char* Space::getGitDiff() {return gitdiff;}
 
 using std::cout;
 using std::cerr;
@@ -225,8 +221,9 @@ void Space::Save(const char* format)
     attribute_write(fid, "inf_circulation", InfCirculation);
     attribute_write(fid, "gravity", gravitation);
     attribute_write(fid, "time_to_finish", Finish);
-    attribute_write(fid, "git_info", std::string(gitInfo));
-    attribute_write(fid, "git_diff", std::string(gitDiff));
+    attribute_write(fid, "git_rev", std::string(gitrev));
+    attribute_write(fid, "git_info", std::string(gitinfo));
+    attribute_write(fid, "git_diff", std::string(gitdiff));
 
     time_t rt; time(&rt);
     char *timestr = ctime(&rt); timestr[strlen(timestr)-1] = 0;
@@ -477,9 +474,10 @@ void Space::Load(hid_t fid, std::string *info)
 
     if (info)
     {
-        attribute_read(fid, "git_info", info[0]);
-        attribute_read(fid, "git_diff", info[1]);
-        attribute_read(fid, "time_local", info[2]);
+        attribute_read(fid, "git_rev", info[0]);
+        attribute_read(fid, "git_info", info[1]);
+        attribute_read(fid, "git_diff", info[2]);
+        attribute_read(fid, "time_local", info[3]);
     }
 
     dataset_read_list(fid, "vort", VortexList);
