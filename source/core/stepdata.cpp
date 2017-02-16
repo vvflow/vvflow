@@ -37,6 +37,7 @@ Stepdata::Stepdata(Space* s_, const char *fname, bool b_save_profile)
         H5Tcommit(h5f, "string_t", string_h5t, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
         attribute_write("caption", S->caption.c_str());
+        attribute_write("git_rev", S->getGitRev());
         attribute_write("git_info", S->getGitInfo());
         attribute_write("git_diff", S->getGitDiff());
     } else {
