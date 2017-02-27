@@ -30,7 +30,7 @@ TBody::TBody():
 
     double nan = std::numeric_limits<double>::quiet_NaN();
     collision_min = collision_max = TVec3D(nan, nan, nan);
-    collision_state = 0;
+    collision_detected = false;
     bounce = 0;
 }
 

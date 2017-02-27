@@ -239,7 +239,7 @@ bool convectivefast::canUseInverse()
         if (lbody1->kspring.r.x >= 0) return false;
         if (lbody1->kspring.r.y >= 0) return false;
         if (lbody1->kspring.o >= 0) return false;
-        if (lbody1->collision_state) return false;
+        if (lbody1->collision_detected) return false;
     }
 
     return true;
@@ -780,28 +780,14 @@ void convectivefast::fillNewtonOEquation(unsigned eq_no, TBody* ibody, bool righ
 
 void convectivefast::fillCollisionOEquation(unsigned eq_no, TBody* ibody)
 {
-
-    if (!ibody->collision_state)
+    if (!ibody->collision_detected)
     {
         fprintf(stderr, "Trying to fill collision equetion without the need\n");
         exit(-2);
     }
-    else if (ibody->collision_state>0)
-    {
-        *matrix.getRightCol(eq_no) =
-            ibody->collision_max.o
-            -ibody->holder.o
-            -ibody->dpos.o;
-        *matrix.getRightCol(eq_no) /= S->dt;
-    }
-    else if (ibody->collision_state<0)
-    {
-        *matrix.getRightCol(eq_no) =
-            ibody->holder.o+
-            ibody->dpos.o
-            -ibody->collision_min.o;
-        *matrix.getRightCol(eq_no) /= S->dt;
-    }
+
+    //right column
+    *matrix.getRightCol(eq_no) = 0;
 
     // self
     {
@@ -1031,19 +1017,14 @@ void convectivefast::FillMatrix(bool rightColOnly)
         CASE(HookeYEquation) FILL_EQ_FOR_BODY(HookeYEquation);
         CASE(HookeOEquation)
         {
-            if (job->ibody->collision_state == 0) {
-                FILL_EQ_FOR_BODY(HookeOEquation);
-            } else if (abs(job->ibody->collision_state) == 1) {
+            if (!job->ibody->collision_detected) {
                 FILL_EQ_FOR_BODY(HookeOEquation);
                 *matrix.getRightCol(job->eq_no) +=
                     (1+job->ibody->bounce)
-                    * job->ibody->get_moi_c()
-                    * job->ibody->density
-                    * job->ibody->speed_slae.o/S->dt;
-            } else if (abs(job->ibody->collision_state) == 2) {
+                    * job->ibody->force_holder.o;
+            } else {
                 fillCollisionOEquation(job->eq_no, job->ibody);
             }
-            job->ibody->collision_state = 0;
         }
 #undef CASE
 #undef FILL_EQ_FOR_SEG
