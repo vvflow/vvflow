@@ -17,7 +17,33 @@ flowmove::flowmove(Space *sS, double sRemoveEps)
 void flowmove::MoveAndClean(bool remove, bool zero_speed)
 {
     CleanedV_ = 0;
-    S->InfMarker+= S->InfSpeed()*S->dt;
+    double current_dt = dt;
+
+    // Detect collision
+    // If required, shorten dt and set collision state
+    TBody* collision_body = NULL;
+    for (auto& lbody: S->BodyList)
+    {
+        static_assert(std::is_same<decltype(lbody), shared_ptr<TBody>&>::value, "lbody should be shared_ptr<TBody>");
+
+        TVec3D new_pos = lbody->holder + lbody->dpos + current_dt*lbody->speed_slae;
+        /**/ if (new_pos.o > lbody->collision_max.o /* may be nan*/)
+        {
+            current_dt = (lbody->collision_max.o - lbody->holder.o - lbody->dpos.o) / lbody->speed_slae.o;
+            collision_body = lbody.get();
+        }
+        else if (new_pos.o < lbody->collision_min.o /* may be nan*/)
+        {
+            current_dt = (lbody->collision_min.o - lbody->holder.o - lbody->dpos.o) / lbody->speed_slae.o;
+            collision_body = lbody.get();
+        }
+    }
+    if (collision_body)
+    {
+        collision_body->collision_detected = true;
+    }
+
+    S->InfMarker+= S->InfSpeed()*current_dt;
 
     // Move bodies
     std::map<TBody*,TVec3D> deltaHolder;
@@ -25,6 +51,8 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
     // to prevent bodies from separating, fix tangential velocities
     for (auto& lbody: S->BodyList)
     {
+        static_assert(std::is_same<decltype(lbody), shared_ptr<TBody>&>::value, "lbody should be shared_ptr<TBody>");
+
         TVec3D dHolder = lbody->speed(S->Time);
         TVec3D dBody = lbody->speed_slae;
 
@@ -35,15 +63,15 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
             dHolder.o += root->speed_slae.o;
         }
 
-        dHolder.r *= dt;
-        dHolder.o *= dt;
-        dBody.r *= dt;
-        dBody.o *= dt;
+        dHolder.r *= current_dt;
+        dHolder.o *= current_dt;
+        dBody.r *= current_dt;
+        dBody.o *= current_dt;
         auto child = lbody;
         while(root)
         {
             TVec dr = child->holder.r - root->get_axis();
-            double da = root->speed_slae.o * dt;
+            double da = root->speed_slae.o * current_dt;
             TVec error = (dr+rotl(dr)*da) - (dr*cos(da)+rotl(dr)*sin(da));
             dHolder.r -= error;
             dBody.r -= error;
@@ -65,9 +93,9 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
 
     for (auto& lbody: S->BodyList) lbody->move(deltaHolder[lbody.get()], deltaBody[lbody.get()]);
     // Move vortexes, heat, ink
-    for (auto& lobj: S->VortexList) lobj.r += lobj.v * dt;
-    for (auto& lobj: S->HeatList)   lobj.r += lobj.v * dt;
-    for (auto& lobj: S->StreakList) lobj.r += lobj.v * dt;
+    for (auto& lobj: S->VortexList) lobj.r += lobj.v * current_dt;
+    for (auto& lobj: S->HeatList)   lobj.r += lobj.v * current_dt;
+    for (auto& lobj: S->StreakList) lobj.r += lobj.v * current_dt;
 
     // Remove small vortexes, small heat
     // FIXME попробовать переписать с std::remoe_if() и лямбдой
@@ -173,21 +201,6 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
             }
         }
     }
-}
-
-bool flowmove::DetectCollision(uint8_t collision_iter)
-{
-    bool collision = false;
-    for (auto lbody: S->BodyList)
-    {
-        static_assert(std::is_same<decltype(lbody), shared_ptr<TBody>>::value, "lbody should be shared_ptr<TBody>");
-        TVec3D new_pos = lbody->holder + lbody->dpos + dt*lbody->speed_slae;
-        /**/ if (new_pos.o > lbody->collision_max.o) { lbody->collision_state = +1; collision = true; }
-        else if (new_pos.o < lbody->collision_min.o) { lbody->collision_state = -1; collision = true; }
-        else { lbody->collision_state = 0; }
-        lbody->collision_state *= collision_iter;
-    }
-    return collision;
 }
 
 void flowmove::VortexShed()

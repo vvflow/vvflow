@@ -2,3 +2,7 @@
 *~
 *.pyc
 bin/
+gitinfo.cpp
+*.sublime-*
+doc/images/
+

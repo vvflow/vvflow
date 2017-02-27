@@ -948,5 +948,15 @@ std::string Space::get_body_name(const TBody* body) const
     return std::string(name);
 }
 
+shared_ptr<TBody> Space::collision_detected() const
+{
+    for (auto lbody: BodyList)
+    {
+        if (lbody->collision_detected)
+            return lbody;
+    }
+
+    return nullptr;
+}
 
 

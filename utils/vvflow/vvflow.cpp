@@ -83,18 +83,16 @@ int main(int argc, char** argv)
         if (S->BodyList.size())
         {
             dbg(tr.build());
-            for (int iter=1;; iter++)
+
+            // решаем слау
+            conv.CalcCirculationFast();
+            shared_ptr<TBody> cbody = S->collision_detected();
+            if (cbody.get() != nullptr)
             {
-                // решаем СЛАУ
+                cbody->collision_detected = false;
                 conv.CalcCirculationFast();
-                if (!fm.DetectCollision(iter))
-                    break;
-                else if (iter>2)
-                {
-                    fprintf(stderr, "Collition is not resolved in 2 iterations\n");
-                    break;
-                }
             }
+
             dbg(tr.destroy());
         }
 

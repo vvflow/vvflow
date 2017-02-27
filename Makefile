@@ -93,8 +93,12 @@ bin/libvvhd.a: $(patsubst %, bin/%.o, gitinfo $(core_objects) $(modules_objects)
 bin/libvvhd.so: $(patsubst %, bin/%.o, gitinfo $(core_objects) $(modules_objects))
 	$(CXX) $(LDFLAGS) -shared -fPIC $^ -Wl,-soname,libvvhd.so $(LDLIBS) -o ./$@
 
-.PHONY: gitinfo.cpp
+ifneq ($(MAKECMDGOALS),gitinfo.cpp)
+_ := $(shell $(MAKE) -B gitinfo.cpp)
+endif
+
 gitinfo.cpp:
-	echo "const char* gitrev = \"$(shell git rev-parse HEAD)\";" > $@
-	echo "const char* gitinfo = \"$(shell git describe --tags --always)\";" >> $@
-	echo "const char* gitdiff = \"$(shell git diff --name-only)\";" >> $@
+	echo "const char* gitrev = \"$(shell git rev-parse HEAD)\";" > .$@~
+	echo "const char* gitinfo = \"$(shell git describe --tags --always)\";" >> .$@~
+	echo "const char* gitdiff = \"$(shell git diff --name-only)\";" >> .$@~
+	diff -N .$@~ $@ && rm -f .$@~ || mv .$@~ $@

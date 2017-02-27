@@ -75,6 +75,7 @@ class Space
         bool PointIsInBody(TVec p);
         int get_body_index(const TBody* body) const;
         std::string get_body_name(const TBody* body) const;
+        shared_ptr<TBody> collision_detected() const;
 
     private:
         void Load_v1_3(const char* filename);
