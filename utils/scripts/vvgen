@@ -36,15 +36,15 @@ gis_shape = """
    |               /  Y3
    |  R0 ___,_____/
    |    /
-   |   /             ^
-   |   |             0 >
+   |   /
+   |   |
    |   \\
    |    \___,_____X2
    |    X0  X1    \\
    |               \\
    |                |
    |________________|
-  X4
+  X4                X3
 """
 parser_gis = subparsers.add_parser('gis', help='gis channel', epilog=gis_shape,
 	formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -54,6 +54,7 @@ parser_gis.add_argument('--x0', required=True, type=float)
 parser_gis.add_argument('--r0', required=True, type=float)
 parser_gis.add_argument('--x1', required=True, type=float)
 parser_gis.add_argument('--x2', required=True, type=float)
+parser_gis.add_argument('--x3', required=True, type=float)
 parser_gis.add_argument('--y3', required=True, type=float)
 parser_gis.add_argument('--x4', required=True, type=float)
 parser_gis.add_argument('--y4', required=True, type=float)
@@ -181,18 +182,18 @@ try:
 		dl_nslip=args.dl
 		dl_slip1=args.dls
 		dl_slip2=min(dl_slip1, (args.y4-args.y3)/5)
-		gen_line(     0., -args.y4,      0., -args.y3, slip="0", dl=dl_slip2);
-		gen_line(     0., -args.y3, args.x2, -args.r0, slip="0", dl=dl_nslip);
-		gen_line(args.x2, -args.r0, args.x1, -args.r0, slip="0", dl=dl_nslip);
-		gen_line(args.x1, -args.r0, args.x0, -args.r0, slip="1", dl=dl_slip1);
-		gen_arc (args.r0,  3*pi/2,     pi/2,           slip="1", dl=dl_slip1, center=(args.x0, 0.),);
-		gen_line(args.x0,  args.r0, args.x1,  args.r0, slip="1", dl=dl_slip1);
-		gen_line(args.x1,  args.r0, args.x2,  args.r0, slip="0", dl=dl_nslip);
-		gen_line(args.x2,  args.r0,      0.,  args.y3, slip="0", dl=dl_nslip);
-		gen_line(     0.,  args.y3,      0.,  args.y4, slip="0", dl=dl_slip2);
-		gen_line(     0.,  args.y4, args.x4,  args.y4, slip="1", dl=dl_slip1);
-		gen_line(args.x4,  args.y4, args.x4, -args.y4, slip="1", dl=dl_slip1);
-		gen_line(args.x4, -args.y4,      0., -args.y4, slip="1", dl=dl_slip1);
+		gen_line(args.x4, -args.y4, args.x4,  args.y4, slip="1", dl=dl_slip1);
+		gen_line(args.x4,  args.y4, args.x3,  args.y4, slip="1", dl=dl_slip1);
+		gen_line(args.x3,  args.y4, args.x3,  args.y3, slip="0", dl=dl_slip2);
+		gen_line(args.x3,  args.y3, args.x2,  args.r0, slip="0", dl=dl_nslip);
+		gen_line(args.x2,  args.r0, args.x1,  args.r0, slip="0", dl=dl_nslip);
+		gen_line(args.x1,  args.r0, args.x0,  args.r0, slip="1", dl=dl_slip1);
+		gen_arc (args.r0,    pi/2,  3*pi/2,            slip="1", dl=dl_slip1, center=(args.x0, 0.),);
+		gen_line(args.x0, -args.r0, args.x1, -args.r0, slip="1", dl=dl_slip1);
+		gen_line(args.x1, -args.r0, args.x2, -args.r0, slip="0", dl=dl_nslip);
+		gen_line(args.x2, -args.r0, args.x3, -args.y3, slip="0", dl=dl_nslip);
+		gen_line(args.x3, -args.y3, args.x3, -args.y4, slip="0", dl=dl_slip2);
+		gen_line(args.x3, -args.y4, args.x4, -args.y4, slip="1", dl=dl_slip1);
 
 	elif args.geom == 'parallelogram' or \
 		args.geom == 'pgram':
