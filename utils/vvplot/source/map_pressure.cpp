@@ -12,6 +12,7 @@
 #include "flowmove.h"
 #include "hdf5.h"
 
+static const double NaN = std::numeric_limits<double>::quiet_NaN();
 static const double S1Restriction = 1E-6;
 static const double ExpArgRestriction = -8.;
 using namespace std;
@@ -69,7 +70,11 @@ double Pressure(Space* S, convectivefast *conv, TVec p, char RefFrame, double pr
     }
     return Cp_static; // not used
 }
+
 extern "C" {
+#if 0 // dont break vim autoindent
+}
+#endif
 int map_pressure(hid_t fid, char RefFrame, double xmin, double xmax, double ymin, double ymax, double spacing)
 {
     Space *S = new Space();
@@ -121,7 +126,7 @@ int map_pressure(hid_t fid, char RefFrame, double xmin, double xmax, double ymin
         {
             double y = ymin + double(yj)*spacing;
             mem[xi*dims[1]+yj] = S->PointIsInBody(TVec(x, y)) ? 
-                       0 : Pressure(S, &conv, TVec(x, y), RefFrame, spacing);
+                       0 : Pressure(S, &conv, TVec(x, y), RefFrame, NaN);
         }
     }
     
@@ -133,6 +138,44 @@ int map_pressure(hid_t fid, char RefFrame, double xmin, double xmax, double ymin
     map_name[13] = RefFrame;
     map_save(fid, map_name, mem, dims, xmin, xmax, ymin, ymax, spacing);
     free(mem);
+
+    return 0;
+}}
+
+extern "C" {
+#if 0 // dont break vim autoindent
+}
+#endif
+int pressure_print(hid_t fid, TVec* points, int count)
+{
+    Space *S = new Space();
+    S->Load(fid);
+
+    double dl = S->AverageSegmentLength();
+    TSortedTree tr(S, 8, dl*20, 0.1);
+    S->Tree = &tr;
+    convectivefast conv(S);
+    epsfast eps(S);
+    diffusivefast diff(S);
+    flowmove fm(S);
+
+    fm.VortexShed();
+
+    //дано: условие непротекания выполнено, неизвестные вихри найдены и рождены.
+    //требуется: найти скорости вихрей (всех, включая присоединенные) и посчитать давление
+    tr.build();
+    eps.CalcEpsilonFast(false);
+    conv.CalcBoundaryConvective();
+    conv.CalcConvectiveFast();
+    diff.CalcVortexDiffusiveFast();
+
+    for (int i=0; i<count; i++)
+    {
+        TVec p = points[i];
+        double P = S->PointIsInBody(p) ? 
+            NaN : Pressure(S, &conv, p, 's', NaN);
+        printf("%.6le\n", P);
+    }
 
     return 0;
 }}

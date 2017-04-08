@@ -26,6 +26,7 @@ void print_help()
     fprintf(stderr, " -M : extract DATASET as binary matrix in form (x, y, value)\n");
 
     fprintf(stderr, " -V : calculate velocity; DATASET ignored; ARGS: px1,py1 [px2,py2 ...]\n");
+    fprintf(stderr, " -P : calculate pressure; DATASET ignored; ARGS: px1,py1 [px2,py2 ...]\n");
     fprintf(stderr, " -I : plot isolines on a DATASET; ARGS: c1 [c2 ...]\n");
 
     fprintf(stderr, " --vorticity : plot map_vorticity(); DATASET ignored; ARGS: XMIN XMAX YMIN YMAX SPACING\n");
@@ -45,6 +46,7 @@ int main(int argc, char **argv)
              !strcmp(argv[1], "-m") ||
              !strcmp(argv[1], "-M") ||
              !strcmp(argv[1], "-V") ||
+             !strcmp(argv[1], "-P") ||
              !strcmp(argv[1], "-I") ||
              !strcmp(argv[1], "--vorticity")
              ) {;}
@@ -90,6 +92,22 @@ int main(int argc, char **argv)
             }
         }
         velocity_print(fid, points, argc-4);
+        free(points);
+    }
+    else if (!strcmp(argv[1], "-P"))
+    {
+        TVec* points = (TVec*)malloc((argc-4)*sizeof(TVec));
+        for (int i=4; i<argc; i++)
+        {
+            int len;
+            if (sscanf(argv[i], "%lf,%lf%n", &points[i-4].x, &points[i-4].y, &len)!=2 || argv[i][len])
+            {
+                fprintf(stderr, "error: argument ARGS: bad point '%s': must be 'px,py'\n", argv[i]);
+                exit(-1);
+            }
+        }
+
+        pressure_print(fid, points, argc-4);
         free(points);
     }
     else if (!strcmp(argv[1], "-I"))
@@ -138,8 +156,8 @@ int main(int argc, char **argv)
         }
         map_vorticity(fid, args[0], args[1], args[2], args[3], args[4]);
     }
+
     H5Fclose(fid);
 
     exit(0);
 }
-

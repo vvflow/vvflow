@@ -30,6 +30,7 @@ extern "C" {
     int list_extract(hid_t fid, const char *dsetname);
     int dset_print(hid_t fid, const char *dsetname);
     int velocity_print(hid_t fid, TVec *_points, int _count);
+    int pressure_print(hid_t fid, TVec *_points, int _count);
     int map_isoline(hid_t fid, const char *dsetname, float *_cvals, int _cnum);
 
     int map_pressure(hid_t fid, char RefFrame, double xmin, double xmax, double ymin, double ymax, double spacing);

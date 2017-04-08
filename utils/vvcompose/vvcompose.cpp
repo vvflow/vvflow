@@ -99,6 +99,8 @@ void do_set(Space* S, const char *arg, const char *value)
 		else if ( (len=0, sscanf(arg, "move.%c%n",            &c, &len), !arg[len]) ) { vec = &move_vec; }
 		else if ( (len=0, sscanf(arg, "spring_const.%c%n",    &c, &len), !arg[len]) ) { vec = &body->kspring; }
 		else if ( (len=0, sscanf(arg, "spring_damping.%c%n",  &c, &len), !arg[len]) ) { vec = &body->damping; }
+		else if ( (len=0, sscanf(arg, "speed_slae.%c%n",      &c, &len), !arg[len]) ) { vec = &body->speed_slae; }
+		else if ( (len=0, sscanf(arg, "speed_slae_prev.%c%n", &c, &len), !arg[len]) ) { vec = &body->speed_slae_prev; }
 		else if ( (len=0, sscanf(arg, "speed.x%n",                &len), !arg[len]) ) { body->speed_x.setEvaluator(value); }
 		else if ( (len=0, sscanf(arg, "speed.y%n",                &len), !arg[len]) ) { body->speed_y.setEvaluator(value); }
 		else if ( (len=0, sscanf(arg, "speed.o%n",                &len), !arg[len]) ) { body->speed_o.setEvaluator(value); }
