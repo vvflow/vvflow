@@ -77,6 +77,24 @@ parser_parallelogram.add_argument('H', type=float, help='height')
 parser_parallelogram.add_argument('d', type=float, help='angle in degrees')
 parser_parallelogram.add_argument('N', type=int, help='total number of segments')
 
+rrect_shape = """
+    _____________
+   *             *
+  |       ^       |
+  |       0 >     | H
+  |               |
+   *_____________*
+          L       R
+"""
+
+parser_rrect = subparsers.add_parser('rrect', help='roundrect',
+	epilog=rrect_shape,
+	formatter_class=argparse.RawDescriptionHelpFormatter)
+parser_rrect.add_argument('L', type=float, help='length')
+parser_rrect.add_argument('H', type=float, help='height')
+parser_rrect.add_argument('R', type=float, help='radius of corners')
+parser_rrect.add_argument('N', type=int, help='total number of segments')
+
 args = parser.parse_args()
 # print(args)
 
@@ -210,6 +228,24 @@ try:
 				 -l2+la, +h2, dl=dl)
 		gen_line(-l2+la, +h2,
 				 +l2+la, +h2, dl=dl)
+
+	elif args.geom == 'roundrect' or \
+		args.geom == 'rrect':
+		perimeter = 2*args.L + 2*args.H + (2*pi-8)*args.R
+		dl = perimeter/args.N
+		if args.R < dl:
+			args.R = 0
+		l2 = args.L/2
+		h2 = args.H/2
+		r  = args.R
+		gen_line(+l2, +h2-r, +l2, -h2+r, dl=dl)
+		if r: gen_arc(r, +pi*0, -pi/2, center=(+l2-r, -h2+r), dl = dl)
+		gen_line(+l2-r, -h2, -l2+r, -h2, dl=dl)
+		if r: gen_arc(r, -pi/2, -pi*1, center=(-l2+r, -h2+r), dl = dl)
+		gen_line(-l2, -h2+r, -l2, +h2-r, dl=dl)
+		if r: gen_arc(r, +pi*1, +pi/2, center=(-l2+r, +h2-r), dl = dl)
+		gen_line(-l2+r, h2, +l2-r, h2, dl=dl)
+		if r: gen_arc(r, +pi/2, +pi*0, center=(+l2-r, +h2-r), dl = dl)
 
 except Exception as e:
 	subparsers.choices[args.geom].print_usage(file=sys.stderr)
