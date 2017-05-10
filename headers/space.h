@@ -6,13 +6,16 @@ class TBody;
 
 #include "elementary.h"
 #include "sorted_tree.h"
-#include "hdf5.h"
+// #include "hdf5.h"
 
 #include <iostream>
 #include <memory>
 
 using std::vector;
 using std::shared_ptr;
+
+typedef int hid_t;
+typedef int herr_t;
 
 class Space
 {
