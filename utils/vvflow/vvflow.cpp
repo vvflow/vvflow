@@ -32,9 +32,9 @@ int main(int argc, char** argv)
         else if (!strcmp(argv[1], "--profile")) b_save_profile = true;
         else if (!strcmp(argv[1], "--version"))
         {
-            cerr << "Git rev: " << Space::getGitRev() << std::endl;
-            cerr << "Git info: " << Space::getGitInfo() << std::endl;
-            cerr << "Git diff: " << Space::getGitDiff() << std::endl;
+            cerr << "Git rev: "  << libvvhd_gitrev << std::endl;
+            cerr << "Git info: " << libvvhd_gitinfo << std::endl;
+            cerr << "Git diff: " << libvvhd_gitdiff << std::endl;
             return 0;
         }
         else break;

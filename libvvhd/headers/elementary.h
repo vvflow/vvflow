@@ -17,6 +17,9 @@ const double C_1_4PI =	1./(4.*C_PI);
 const double C_1_PI = 	1./C_PI;
 const double C_2_PI = 	2./C_PI;
 
+extern const char* libvvhd_gitrev;
+extern const char* libvvhd_gitinfo;
+extern const char* libvvhd_gitdiff;
 
 /* COMMON STUFF **************************************************************/
 

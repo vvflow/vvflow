@@ -12,13 +12,6 @@
 #include "body.h"
 #include "space_hdf.cpp"
 
-extern const char* gitrev;
-extern const char* gitinfo;
-extern const char* gitdiff;
-const char* Space::getGitRev() {return gitrev;}
-const char* Space::getGitInfo() {return gitinfo;}
-const char* Space::getGitDiff() {return gitdiff;}
-
 using std::cout;
 using std::cerr;
 using std::endl;
@@ -221,9 +214,9 @@ void Space::Save(const char* format)
     attribute_write(fid, "inf_circulation", InfCirculation);
     attribute_write(fid, "gravity", gravitation);
     attribute_write(fid, "time_to_finish", Finish);
-    attribute_write(fid, "git_rev", std::string(gitrev));
-    attribute_write(fid, "git_info", std::string(gitinfo));
-    attribute_write(fid, "git_diff", std::string(gitdiff));
+    attribute_write(fid, "git_rev",  std::string(libvvhd_gitrev));
+    attribute_write(fid, "git_info", std::string(libvvhd_gitinfo));
+    attribute_write(fid, "git_diff", std::string(libvvhd_gitdiff));
 
     time_t rt; time(&rt);
     char *timestr = ctime(&rt); timestr[strlen(timestr)-1] = 0;

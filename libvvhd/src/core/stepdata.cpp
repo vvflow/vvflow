@@ -36,10 +36,10 @@ Stepdata::Stepdata(Space* s_, const char *fname, bool b_save_profile)
         H5ASSERT(h5f, "H5Hcreate");
         H5Tcommit(h5f, "string_t", string_h5t, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
-        attribute_write("caption", S->caption.c_str());
-        attribute_write("git_rev", S->getGitRev());
-        attribute_write("git_info", S->getGitInfo());
-        attribute_write("git_diff", S->getGitDiff());
+        attribute_write("caption",  S->caption.c_str());
+        attribute_write("git_rev",  libvvhd_gitrev);
+        attribute_write("git_info", libvvhd_gitinfo);
+        attribute_write("git_diff", libvvhd_gitdiff);
     } else {
         h5f = H5Fopen(fname, H5F_ACC_RDWR, H5P_DEFAULT);
         H5ASSERT(h5f, "H5Fopen");

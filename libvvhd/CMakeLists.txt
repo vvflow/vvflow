@@ -23,9 +23,33 @@ if(TARGET vvhd)
 
 else()
 
+execute_process(
+    COMMAND git rev-parse HEAD
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+    OUTPUT_VARIABLE LIBVVHD_GITREV
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+execute_process(
+    COMMAND git describe --tags --always
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+    OUTPUT_VARIABLE LIBVVHD_GITINFO
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+execute_process(
+    COMMAND git diff --name-only
+    COMMAND tr "\n" " "
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+    OUTPUT_VARIABLE LIBVVHD_GITDIFF
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+message("PROJECT_SOURCE_DIR: " ${PROJECT_SOURCE_DIR})
+message("LIBVVHD_GITREV: "  ${LIBVVHD_GITREV})
+message("LIBVVHD_GITINFO: " ${LIBVVHD_GITINFO})
+message("LIBVVHD_GITDIFF: " ${LIBVVHD_GITDIFF})
+configure_file (
+    "gitinfo.cpp.in"
+    "${PROJECT_BINARY_DIR}/gitinfo.cpp"
+  )
 include_directories(headers/)
 
-set (LIBVVHD_SOURCES ${LIBVVHD_SOURCES} ../gitinfo.cpp)
+set (LIBVVHD_SOURCES ${LIBVVHD_SOURCES} ${PROJECT_BINARY_DIR}/gitinfo.cpp)
 set (LIBVVHD_SOURCES ${LIBVVHD_SOURCES} src/core/body.cpp)
 set (LIBVVHD_SOURCES ${LIBVVHD_SOURCES} src/core/shellscript.cpp)
 set (LIBVVHD_SOURCES ${LIBVVHD_SOURCES} src/core/sorted_tree.cpp)

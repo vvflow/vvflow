@@ -60,9 +60,6 @@ class Space
         int LoadStreak(const char* filename);
         int LoadStreakSource(const char* filename);
         int LoadSource(const char* filename);
-        static const char* getGitRev();
-        static const char* getGitInfo();
-        static const char* getGitDiff();
 
         int LoadBody(const char* filename);
         void EnumerateBodies();
