@@ -11,3 +11,5 @@ add_executable(vvcompose vvcompose.cpp)
 set_target_properties(vvcompose PROPERTIES LINK_SEARCH_START_STATIC 1)
 set_target_properties(vvcompose PROPERTIES LINK_SEARCH_END_STATIC 1)
 target_link_libraries(vvcompose ${LIBVVHD_LIBRARIES})
+
+install (TARGETS vvcompose DESTINATION bin)

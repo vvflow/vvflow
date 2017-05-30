@@ -11,3 +11,5 @@ add_executable(vvflow vvflow.cpp)
 set_target_properties(vvflow PROPERTIES LINK_SEARCH_START_STATIC 1)
 set_target_properties(vvflow PROPERTIES LINK_SEARCH_END_STATIC 1)
 target_link_libraries(vvflow ${LIBVVHD_LIBRARIES})
+
+install (TARGETS vvflow DESTINATION bin)
