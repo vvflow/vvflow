@@ -6,15 +6,41 @@ project (libvvhd)
 set(LIBVVHD_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/headers)
 set(LIBVVHD_INCLUDE_DIR ${LIBVVHD_INCLUDE_DIR} PARENT_SCOPE)
 
+set (LIBVVHD_LIBRARIES "")
+set (LIBVVHD_LIBRARIES ${LIBVVHD_LIBRARIES} vvhd)
+
+# HDF5
 set(HDF5_USE_STATIC_LIBRARIES 1)
 find_package(HDF5 REQUIRED)
 include_directories(${HDF5_INCLUDE_DIRS})
+message("HDF5_C_LIBRARIES: " ${HDF5_C_LIBRARIES})
+find_library(LIBPTHREAD pthread)
+find_library(LIBDL      dl)
+find_library(LIBAEC     libaec.a)
+find_library(LIBSZ      libsz.a)
+find_library(LIBZ       libz.a)
+find_library(LIBM       libm.a)
+set (LIBVVHD_LIBRARIES ${LIBVVHD_LIBRARIES}
+    ${HDF5_hdf5_LIBRARY_RELEASE} ${LIBPTHREAD} ${LIBDL} # HDF5 is static, but pthread and dl are linked dynamically
+    ${LIBSZ} ${LIBZ} ${LIBM} ${LIBAEC} # theese are linked statically
+    )
 
-set (LIBVVHD_LIBRARIES "")
-set (LIBVVHD_LIBRARIES ${LIBVVHD_LIBRARIES} vvhd)
-set (LIBVVHD_LIBRARIES ${LIBVVHD_LIBRARIES} ${HDF5_C_LIBRARIES} aec)
-set (LIBVVHD_LIBRARIES ${LIBVVHD_LIBRARIES} lapack blas gfortran quadmath)
-set (LIBVVHD_LIBRARIES ${LIBVVHD_LIBRARIES} matheval fl)
+# LAPACK
+# set(BLA_STATIC 1)
+find_package(LAPACK REQUIRED)
+find_library(LIBLAPACK   liblapack.a)
+find_library(LIBBLAS     libblas.a)
+set (LIBVVHD_LIBRARIES ${LIBVVHD_LIBRARIES}
+    ${LIBLAPACK} ${LIBBLAS} libgfortran.a libquadmath.a
+    )
+
+# MATHEVAL
+find_library(LIBMATHEVAL libmatheval.a)
+find_library(LIBFL       libfl.a)
+set (LIBVVHD_LIBRARIES ${LIBVVHD_LIBRARIES}
+    ${LIBMATHEVAL} ${LIBFL}
+    )
+
 set (LIBVVHD_LIBRARIES ${LIBVVHD_LIBRARIES} PARENT_SCOPE)
 
 if(TARGET vvhd)
