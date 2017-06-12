@@ -40,7 +40,15 @@ int stackDump(lua_State *L)
 static const struct luavvd_member space_members[] = {
     {"re",      luavvd_getdouble, luavvd_setdouble, offsetof(Space, Re) },
     {"finish",  luavvd_getdouble, luavvd_setdouble, offsetof(Space, Finish) },
+    {"inf_g",   luavvd_getdouble, luavvd_setdouble, offsetof(Space, InfCirculation) },
     {"gravity", luavvd_getTVec,   luavvd_setTVec,   offsetof(Space, gravitation) },
+
+    {"time",       luavvd_getTTime, luavvd_setTTime, offsetof(Space, Time) },
+    {"dt",         luavvd_getTTime, luavvd_setTTime, offsetof(Space, dt) },
+    {"dt_save",    luavvd_getTTime, luavvd_setTTime, offsetof(Space, dt_save) },
+    {"dt_streak",  luavvd_getTTime, luavvd_setTTime, offsetof(Space, dt_streak) },
+    {"dt_profile", luavvd_getTTime, luavvd_setTTime, offsetof(Space, dt_profile) },
+
     {NULL, NULL, NULL, 0} /* sentinel */    
 };
 

@@ -7,11 +7,13 @@
     3: value
 */
 int luavvd_setdouble(lua_State *L);
+int luavvd_setTTime(lua_State *L);
 
 /* return *ptr
     1: ptr
 */
 int luavvd_getdouble(lua_State *L);
+int luavvd_getTTime(lua_State *L);
 
 struct luavvd_member {
     const char *name;
