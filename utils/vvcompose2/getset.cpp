@@ -26,7 +26,6 @@ int luavvd_getdouble(lua_State *L) {
 int luavvd_setTTime(lua_State *L) {
     TTime* t = (TTime*)lua_touserdata(L, 1);
 
-    printf("Set ttime\n");
     int isnum[2];
     switch (lua_type(L, 2)) {
     case LUA_TNUMBER:
@@ -47,11 +46,17 @@ int luavvd_setTTime(lua_State *L) {
             const char *typ2 = luaL_typename(L, -1);
             lua_pushfstring(L, "TTime needs two integers, got %s and %s", typ1, typ2);
             return 1;
-        } else if (lua_tointegerx(L, -1)<1) {
-            lua_pushfstring(L, "TTime timescale must be unsigned, got %d", typ1, typ2);
+        } else if (lua_tointeger(L, -1)<1) {
+            lua_pushfstring(L, "TTime timescale must be positive, got %d", t->timescale);
             return 1;
         }
-
+        return 0;
+    case LUA_TSTRING:
+        const char* s = lua_tostring(L, 2);
+        if (!parse<TTime>(s, t)) {
+            lua_pushfstring(L, "TTime can not parse '%s'", s);
+            return 1;
+        }
         return 0;
     }
     

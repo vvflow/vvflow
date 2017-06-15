@@ -267,15 +267,16 @@ template<> bool parse(const char* text, TTime* result)
 
     int len, ret;
     ret = sscanf(text, "%d/%u%n", &result->value, &result->timescale, &len);
-    if (ret==2 && text[len]=='\0')
+    if (ret==2 && text[len]=='\0') {
         return true;
-    else
-    {
+    } else {
         double dbl;
         ret = parse<double>(text, &dbl);
-        if (ret)
+        if (ret && isfinite(dbl)) {
             *result = TTime::makeWithSecondsDecimal(dbl);
-        return ret;
+            return true;
+        }
+        return false;
     }
 }
 
