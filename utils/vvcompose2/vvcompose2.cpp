@@ -4,8 +4,9 @@
 #include <lua.hpp>
 
 #include "core.h"
-#include "tvec.h"
 #include "getset.h"
+#include "tvec.h"
+#include "lua_shellscript.h"
 
 static Space* S;
 
@@ -38,10 +39,13 @@ int stackDump(lua_State *L)
 }
 
 static const struct luavvd_member space_members[] = {
-    {"re",      luavvd_getdouble, luavvd_setdouble, offsetof(Space, Re) },
-    {"finish",  luavvd_getdouble, luavvd_setdouble, offsetof(Space, Finish) },
-    {"inf_g",   luavvd_getdouble, luavvd_setdouble, offsetof(Space, InfCirculation) },
-    {"gravity", luavvd_getTVec,   luavvd_setTVec,   offsetof(Space, gravitation) },
+    {"caption", luavvd_getstring,      luavvd_setstring,      offsetof(Space, caption) },
+    {"re",      luavvd_getdouble,      luavvd_setdouble,      offsetof(Space, Re) },
+    {"finish",  luavvd_getdouble,      luavvd_setdouble,      offsetof(Space, Finish) },
+    {"inf_g",   luavvd_getdouble,      luavvd_setdouble,      offsetof(Space, InfCirculation) },
+    {"inf_vx",  luavvd_getShellScript, luavvd_setShellScript, offsetof(Space, InfSpeedX) },
+    {"inf_vy",  luavvd_getShellScript, luavvd_setShellScript, offsetof(Space, InfSpeedY) },
+    {"gravity", luavvd_getTVec,        luavvd_setTVec,        offsetof(Space, gravitation) },
 
     {"time",       luavvd_getTTime, luavvd_setTTime, offsetof(Space, Time) },
     {"dt",         luavvd_getTTime, luavvd_setTTime, offsetof(Space, dt) },
@@ -126,6 +130,7 @@ int luaopen_vvd (lua_State *L) {
     lua_setglobal(L, "S"); // pop 1
 
     luaopen_tvec(L);
+    luaopen_shellscript(L);
 
     return 0;
 }

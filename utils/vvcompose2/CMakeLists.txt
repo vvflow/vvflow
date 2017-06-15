@@ -22,6 +22,7 @@ include_directories(${LIBVVHD_INCLUDE_DIR})
 add_executable(vvcompose2
 	vvcompose2.cpp
 	tvec.cpp
+	lua_shellscript.cpp
 	getset.cpp
 )
 target_link_libraries(vvcompose2 ${LIBVVHD_LIBRARIES} ${LUA_LIBRARY} dl)

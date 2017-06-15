@@ -16,12 +16,29 @@ int luavvd_setdouble(lua_State *L) {
     return 0;
 }
 
+int luavvd_setstring(lua_State *L) {
+    std::string* str = (std::string*)lua_touserdata(L, 1);
+
+    if (lua_type(L, 2) != LUA_TSTRING) {
+        lua_pushfstring(L, "string expected, got %s", luaL_typename(L, 2));
+        return 1;
+    }
+    *str = lua_tostring(L, 2);
+
+    return 0;
+}
+
 int luavvd_getdouble(lua_State *L) {
-    double* dbl = (double*)lua_touserdata(L, 1);    
+    double* dbl = (double*)lua_touserdata(L, 1);
     lua_pushnumber(L, *dbl);
     return 1;
 }
 
+int luavvd_getstring(lua_State *L) {
+    std::string* str = (std::string*)lua_touserdata(L, 1);
+    lua_pushstring(L, str->c_str());
+    return 1;
+}
 
 int luavvd_setTTime(lua_State *L) {
     TTime* t = (TTime*)lua_touserdata(L, 1);
