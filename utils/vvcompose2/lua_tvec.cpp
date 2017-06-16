@@ -3,7 +3,7 @@
 #include <string.h>
 
 #include "getset.h"
-#include "tvec.h"
+#include "lua_tvec.h"
 
 static int tvec_abs2(lua_State *L) {
     TVec* vec = checkTVec(L, 1);

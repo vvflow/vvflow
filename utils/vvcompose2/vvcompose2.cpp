@@ -5,7 +5,7 @@
 
 #include "core.h"
 #include "getset.h"
-#include "tvec.h"
+#include "lua_tvec.h"
 #include "lua_shellscript.h"
 
 static Space* S;
