@@ -6,6 +6,7 @@
 #include "core.h"
 #include "getset.h"
 #include "lua_tvec.h"
+#include "lua_tbody.h"
 #include "lua_shellscript.h"
 
 static Space* S;
@@ -101,8 +102,10 @@ static int luavvd_getindex(lua_State *L) {
     return luaL_error(L, "S has no member '%s'", name);
 }
 
+int luavvd_gen_cylinder(lua_State *L);
 static const struct luaL_Reg luavvd [] = {
     // gen_functions
+    // {"gen_cylinder", luavvd_gen_cylinder},
     // {"newTVec", newTVec},
     // {"__newindex", stackDump},
     {NULL, NULL} /* sentinel */
@@ -129,7 +132,11 @@ int luaopen_vvd (lua_State *L) {
     lua_setmetatable(L, -2); // pop 2
     lua_setglobal(L, "S"); // pop 1
 
+    lua_pushcfunction(L, luavvd_gen_cylinder); // push 1
+    lua_setglobal(L, "gen_cylinder"); // pop 1
+
     luaopen_tvec(L);
+    luaopen_tbody(L);
     luaopen_shellscript(L);
 
     return 0;
