@@ -6,6 +6,7 @@
 #include "core.h"
 #include "getset.h"
 #include "lua_tvec.h"
+#include "lua_tvec3d.h"
 #include "lua_tbody.h"
 #include "lua_shellscript.h"
 
@@ -39,6 +40,20 @@ int stackDump(lua_State *L)
     printf("\n"); /* end the listing */
 }
 
+int space_load(lua_State *L) {
+    void* ptr = luaL_checkudata(L, 1, "LuaVVD");
+    const char* fname = lua_checkstring(L, 2);
+    S->Load(fname);
+    return 0;
+}
+
+int space_save(lua_State *L) {
+    void* ptr = luaL_checkudata(L, 1, "LuaVVD");
+    const char* fname = lua_checkstring(L, 2);
+    S->Save(fname);
+    return 0;
+}
+
 static const struct luavvd_member space_members[] = {
     {"caption", luavvd_getstring,      luavvd_setstring,      offsetof(Space, caption) },
     {"re",      luavvd_getdouble,      luavvd_setdouble,      offsetof(Space, Re) },
@@ -58,6 +73,8 @@ static const struct luavvd_member space_members[] = {
 };
 
 static const struct luavvd_method space_methods[] = {
+    {"load", space_load},
+    {"save", space_save},
     {NULL, NULL}
 } ;
 
@@ -136,6 +153,7 @@ int luaopen_vvd (lua_State *L) {
     lua_setglobal(L, "gen_cylinder"); // pop 1
 
     luaopen_tvec(L);
+    luaopen_tvec3d(L);
     luaopen_tbody(L);
     luaopen_shellscript(L);
 

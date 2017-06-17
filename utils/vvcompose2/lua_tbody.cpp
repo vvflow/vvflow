@@ -9,14 +9,29 @@
 std::map<TBody*, shared_ptr<TBody>> bodymap;
 
 static const struct luavvd_member tbody_members[] = {
-    {"label", luavvd_getstring, luavvd_setstring, offsetof(TBody, label) },
-    // {"y",    luavvd_getdouble, luavvd_setdouble, offsetof(TVec, y) },
+    {"label",           luavvd_getstring,      luavvd_setstring,      offsetof(TBody, label) },
+    {"holder_pos",      luavvd_getTVec3D,      luavvd_setTVec3D,      offsetof(TBody, holder) },
+    {"delta_pos",       luavvd_getTVec3D,      luavvd_setTVec3D,      offsetof(TBody, dpos) },
+    {"speed",           luavvd_getTVec3D,      luavvd_setTVec3D,      offsetof(TBody, speed_slae) },
+    {"collision_min",   luavvd_getTVec3D,      luavvd_setTVec3D,      offsetof(TBody, collision_min) },
+    {"collision_max",   luavvd_getTVec3D,      luavvd_setTVec3D,      offsetof(TBody, collision_max) },
+    {"spring_const",    luavvd_getTVec3D,      luavvd_setTVec3D,      offsetof(TBody, kspring) },
+    {"spring_damping",  luavvd_getTVec3D,      luavvd_setTVec3D,      offsetof(TBody, damping) },
+    {"holder_vx",       luavvd_getShellScript, luavvd_setShellScript, offsetof(TBody, speed_x) },
+    {"holder_vy",       luavvd_getShellScript, luavvd_setShellScript, offsetof(TBody, speed_y) },
+    {"holder_vo",       luavvd_getShellScript, luavvd_setShellScript, offsetof(TBody, speed_o) },
+    {"density",         luavvd_getdouble,      luavvd_setdouble,      offsetof(TBody, density) },
+    {"bounce",          luavvd_getdouble,      luavvd_setdouble,      offsetof(TBody, bounce) },
+    {"special_segment", luavvd_getint32,       luavvd_setint32,       offsetof(TBody, special_segment_no) },
+    // {"general_slip",    luavvd_getslip,        luavvd_setslip,        0 },
+    // {"root_body",       luavvd_getrootbody,    luavvd_setrootbody,    0 },
     {NULL, NULL, NULL, 0} /* sentinel */    
 };
 
 static const struct luavvd_method tbody_methods[] = {
-    // {"abs2",    tvec_abs2},
-    // {"2string", tvec_tostring},
+    {"move_r", tbody_move_r},
+    {"move_o", tbody_move_o},
+    {"move_d", tbody_move_d},
     {NULL, NULL}
 };
 

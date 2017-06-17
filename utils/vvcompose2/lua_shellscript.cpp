@@ -9,13 +9,6 @@ static int shellscript_eval(lua_State *L) {
     ShellScript* script = checkShellScript(L, 1);
     lua_Number val = luaL_checknumber(L, 2);
 
-    int isnum;
-    val = lua_tonumberx(L, 2, &isnum);
-    if (!isnum) {
-        luaL_error(L, "number expected, got %s", luaL_typename(L, 2));
-        return 1;
-    }
-
     lua_pushnumber(L, script->getValue(val));
     return 1;
 }

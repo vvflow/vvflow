@@ -16,6 +16,20 @@ int luavvd_setdouble(lua_State *L) {
     return 0;
 }
 
+int luavvd_setint32(lua_State *L) {
+    int32_t* num = (int32_t*)lua_touserdata(L, 1);
+    
+    int isnum;
+    lua_Integer val = lua_tointegerx(L, 2, &isnum);
+    if (!isnum) {
+        lua_pushfstring(L, "integer expected, got %s", luaL_typename(L, 2));
+        return 1;
+    }
+
+    *num = val;
+    return 0;
+}
+
 int luavvd_setstring(lua_State *L) {
     std::string* str = (std::string*)lua_touserdata(L, 1);
 
@@ -31,6 +45,12 @@ int luavvd_setstring(lua_State *L) {
 int luavvd_getdouble(lua_State *L) {
     double* dbl = (double*)lua_touserdata(L, 1);
     lua_pushnumber(L, *dbl);
+    return 1;
+}
+
+int luavvd_getint32(lua_State *L) {
+    int32_t* num = (int32_t*)lua_touserdata(L, 1);
+    lua_pushinteger(L, *num);
     return 1;
 }
 
