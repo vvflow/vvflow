@@ -10,8 +10,6 @@
 #include "lua_tbody.h"
 #include "lua_shellscript.h"
 
-static Space* S;
-
 int stackDump(lua_State *L)
 {
     int i;
@@ -41,14 +39,16 @@ int stackDump(lua_State *L)
 }
 
 int space_load(lua_State *L) {
-    void* ptr = luaL_checkudata(L, 1, "S");
+    Space **ptr = (Space**)luaL_checkudata(L, 1, "S");
+    Space *S = *ptr;
     const char* fname = luaL_checkstring(L, 2);
     S->Load(fname);
     return 0;
 }
 
 int space_save(lua_State *L) {
-    void* ptr = luaL_checkudata(L, 1, "S");
+    Space **ptr = (Space**)luaL_checkudata(L, 1, "S");
+    Space *S = *ptr;
     const char* fname = luaL_checkstring(L, 2);
     S->Save(fname);
     return 0;
@@ -79,7 +79,8 @@ static const struct luavvd_method space_methods[] = {
 } ;
 
 static int luavvd_newindex(lua_State *L) {
-    // static Space *S;
+    Space **ptr = (Space**)luaL_checkudata(L, 1, "S");
+    Space *S = *ptr;
     const char *name = luaL_checkstring(L, 2);
 
     for (auto f = space_members; f->name; f++) {
@@ -99,7 +100,8 @@ static int luavvd_newindex(lua_State *L) {
 }
 
 static int luavvd_getindex(lua_State *L) {
-    // static Space *S;
+    Space **ptr = (Space**)luaL_checkudata(L, 1, "S");
+    Space *S = *ptr;
     const char *name = luaL_checkstring(L, 2);
 
     for (auto f = space_members; f->name; f++) {
@@ -132,10 +134,9 @@ extern "C" {
 }
 
 int luaopen_vvd (lua_State *L) {
-    S = new Space();
-    
+    static Space S;
     Space** ptr = (Space**)lua_newuserdata(L, sizeof(Space*)); // push 1 (Space)
-    *ptr = S;
+    *ptr = &S;
     luaL_newmetatable(L, "S"); // push 2 (Space.mt)
     luaL_setfuncs(L, luavvd_space, 0);
     lua_setmetatable(L, -2); // pop 2
@@ -151,7 +152,6 @@ int luaopen_vvd (lua_State *L) {
 
     return 0;
 }
-
 
 int main (int argc, char** argv) {
     if (argc < 2) {
