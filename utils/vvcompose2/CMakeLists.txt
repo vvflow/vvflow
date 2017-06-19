@@ -26,6 +26,7 @@ add_executable(vvcompose2
 	lua_tvec3d.cpp
 	lua_shellscript.cpp
 	lua_tbody.cpp
+	lua_objlist.cpp
 	gen_cylinder.cpp
 )
 target_link_libraries(vvcompose2 ${LIBVVHD_LIBRARIES} ${LUA_LIBRARY} dl)

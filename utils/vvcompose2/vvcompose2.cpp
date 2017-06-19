@@ -9,6 +9,7 @@
 #include "lua_tvec3d.h"
 #include "lua_tbody.h"
 #include "lua_shellscript.h"
+#include "lua_objlist.h"
 
 int stackDump(lua_State *L)
 {
@@ -155,6 +156,7 @@ int luaopen_vvd (lua_State *L) {
     luaopen_tvec(L);
     luaopen_tvec3d(L);
     luaopen_tbody(L);
+    luaopen_objlist(L);
     luaopen_shellscript(L);
 
     return 0;
