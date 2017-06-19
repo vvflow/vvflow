@@ -69,6 +69,13 @@ static const struct luavvd_member space_members[] = {
     {"dt_streak",  luavvd_getTTime, luavvd_setTTime, offsetof(Space, dt_streak) },
     {"dt_profile", luavvd_getTTime, luavvd_setTTime, offsetof(Space, dt_profile) },
 
+    // {"body_list", luavvd_getbodylist, luavvd_setbodylist, offsetof(Space, BodyList) },
+    {"vort_list", luavvd_getobjlist, luavvd_setobjlist, offsetof(Space, VortexList) },
+    {"sink_list", luavvd_getobjlist, luavvd_setobjlist, offsetof(Space, SourceList) },
+    {"streak_source_list", luavvd_getobjlist, luavvd_setobjlist, offsetof(Space, StreakSourceList) },
+    {"streak_domain_list", luavvd_getobjlist, luavvd_setobjlist, offsetof(Space, StreakList) },
+
+
     {NULL, NULL, NULL, 0} /* sentinel */    
 };
 

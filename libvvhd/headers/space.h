@@ -25,12 +25,12 @@ class Space
         time_t realtime;
 
         //FIXME make all lists initialized
-        vector<shared_ptr<TBody>> BodyList; // FIXME rename to blist, vlist, hlist, ilist, slist
-        vector<TObj> VortexList;
-        vector<TObj> HeatList;
-        vector<TObj> StreakSourceList;
-        vector<TObj> StreakList;
-        vector<TObj> SourceList;
+        vector<shared_ptr<TBody>> BodyList; // FIXME rename to body_list
+        vector<TObj> VortexList; // FIXME rename to vort_list
+        vector<TObj> HeatList; // FIXME rename to heat_list
+        vector<TObj> SourceList; // FIXME rename to sink_list
+        vector<TObj> StreakSourceList; // FIXME rename to streak_source_list
+        vector<TObj> StreakList;       // FIXME rename to streak_points_list
         TSortedTree *Tree;
 
         inline void FinishStep(); //update time and coord variables
