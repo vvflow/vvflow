@@ -23,6 +23,7 @@ add_executable(vvcompose2
 	vvcompose2.cpp
 	getset.cpp
 	lua_tvec.cpp
+	lua_tvec3d.cpp
 	lua_shellscript.cpp
 	lua_tbody.cpp
 	gen_cylinder.cpp

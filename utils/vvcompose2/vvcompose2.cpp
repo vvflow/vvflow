@@ -41,15 +41,15 @@ int stackDump(lua_State *L)
 }
 
 int space_load(lua_State *L) {
-    void* ptr = luaL_checkudata(L, 1, "LuaVVD");
-    const char* fname = lua_checkstring(L, 2);
+    void* ptr = luaL_checkudata(L, 1, "S");
+    const char* fname = luaL_checkstring(L, 2);
     S->Load(fname);
     return 0;
 }
 
 int space_save(lua_State *L) {
-    void* ptr = luaL_checkudata(L, 1, "LuaVVD");
-    const char* fname = lua_checkstring(L, 2);
+    void* ptr = luaL_checkudata(L, 1, "S");
+    const char* fname = luaL_checkstring(L, 2);
     S->Save(fname);
     return 0;
 }
@@ -119,33 +119,25 @@ static int luavvd_getindex(lua_State *L) {
     return luaL_error(L, "S has no member '%s'", name);
 }
 
-int luavvd_gen_cylinder(lua_State *L);
-static const struct luaL_Reg luavvd [] = {
-    // gen_functions
-    // {"gen_cylinder", luavvd_gen_cylinder},
-    // {"newTVec", newTVec},
-    // {"__newindex", stackDump},
+
+static const struct luaL_Reg luavvd_space [] = {
+    {"__newindex", luavvd_newindex},
+    {"__index",    luavvd_getindex},
     {NULL, NULL} /* sentinel */
 };
 
+int luavvd_gen_cylinder(lua_State *L);
 extern "C" {
     int luaopen_vvd (lua_State *L);
 }
 
 int luaopen_vvd (lua_State *L) {
-    // lua_pushvalue(L, -1); /* duplicate the metatable */
-    // lua_setfield(L, -2, "__index"); /* mt.__index = mt */
-
-    // luaL_setfuncs(L, luavvd, 0); /* register metamethods */
     S = new Space();
-    luaL_newlib(L, luavvd); // push 1
     
-    luaL_newmetatable(L, "LuaVVD"); // push 2
-    lua_pushcfunction(L, luavvd_newindex); // push 3
-    lua_setfield(L, -2, "__newindex"); // pop 3
-    lua_pushcfunction(L, luavvd_getindex); // push 3
-    lua_setfield(L, -2, "__index"); // pop 3
-    
+    Space** ptr = (Space**)lua_newuserdata(L, sizeof(Space*)); // push 1 (Space)
+    *ptr = S;
+    luaL_newmetatable(L, "S"); // push 2 (Space.mt)
+    luaL_setfuncs(L, luavvd_space, 0);
     lua_setmetatable(L, -2); // pop 2
     lua_setglobal(L, "S"); // pop 1
 
@@ -171,8 +163,8 @@ int main (int argc, char** argv) {
     }
 
     lua_State *L = luaL_newstate();   /* opens Lua */
-    luaL_openlibs(L);            /* opens the basic library */
-    luaopen_vvd(L);            /* opens the basic library */
+    luaL_openlibs(L);          /* opens the basic library */
+    luaopen_vvd(L);
 
     if (luaL_dofile(L, argv[1])) {
         fprintf(stderr, "%s\n", lua_tostring(L, -1));
