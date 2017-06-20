@@ -705,28 +705,26 @@ void Space::ZeroForces()
 }
 
 /********************************** SAVE/LOAD *********************************/
-
-// FIXME merge in one template
-int Space::LoadVorticityFromFile(const char* filename)
+int Space::load_list_txt(vector<TObj>& li, const char* filename)
 {
     FILE *fin = fopen(filename, "r");
-    if (!fin) { cerr << "No file called \'" << filename << "\'\n"; return -1; }
+    if (!fin) { return errno; }
 
     TObj obj(0, 0, 0);
     while ( fscanf(fin, "%lf %lf %lf", &obj.r.x, &obj.r.y, &obj.g)==3 )
     {
-        VortexList.push_back(obj);
+        li.push_back(obj);
     }
 
     fclose(fin);
     return 0;
 }
 
-int Space::LoadVorticity_bin(const char* filename)
+int Space::load_list_bin(vector<TObj>& li, const char* filename)
 {
     fstream fin;
     fin.open(filename, ios::in | ios::binary);
-    if (!fin) { cerr << "No file called \'" << filename << "\'\n"; return -1; }
+    if (!fin) { return errno; }
 
     fin.seekg (0, ios::end);
     // size_t N = (size_t(fin.tellg())-1024)/(sizeof(double)*3);
@@ -737,73 +735,12 @@ int Space::LoadVorticity_bin(const char* filename)
     while ( fin.good() )
     {
         fin.read(pchar(&obj), 3*sizeof(double));
-        VortexList.push_back(obj);
+        li.push_back(obj);
     }
 
     fin.close();
     return 0;
 }
-
-int Space::LoadHeatFromFile(const char* filename)
-{
-    FILE *fin = fopen(filename, "r");
-    if (!fin) { cerr << "No file called " << filename << endl; return -1; }
-
-    TObj obj(0, 0, 0);
-    while ( fscanf(fin, "%lf %lf %lf", &obj.r.x, &obj.r.y, &obj.g)==3 )
-    {
-        HeatList.push_back(obj);
-    }
-
-    fclose(fin);
-    return 0;
-}
-
-int Space::LoadStreak(const char* filename)
-{
-    FILE *fin = fopen(filename, "r");
-    if (!fin) { perror("Error opening streak file"); return -1; }
-
-    TObj obj(0, 0, 0);
-    while ( fscanf(fin, "%lf %lf %lf", &obj.r.x, &obj.r.y, &obj.g)==3 )
-    {
-        StreakList.push_back(obj);
-    }
-
-    fclose(fin);
-    return 0;
-}
-
-int Space::LoadStreakSource(const char* filename)
-{
-    FILE *fin = fopen(filename, "r");
-    if (!fin) { perror("Error opening streak source file"); return -1; }
-
-    TObj obj(0, 0, 0);
-    while ( fscanf(fin, "%lf %lf %lf", &obj.r.x, &obj.r.y, &obj.g)==3 )
-    {
-        StreakSourceList.push_back(obj);
-    }
-
-    fclose(fin);
-    return 0;
-}
-
-int Space::LoadSource(const char* filename)
-{
-    FILE *fin = fopen(filename, "r");
-    if (!fin) { perror("Error opening source file"); return -1; }
-
-    TObj obj(0, 0, 0);
-    while ( fscanf(fin, "%lf %lf %lf", &obj.r.x, &obj.r.y, &obj.g)==3 )
-    {
-        SourceList.push_back(obj);
-    }
-
-    fclose(fin);
-    return 0;
-}
-
 
 int Space::LoadBody(const char* filename)
 {

@@ -6,6 +6,7 @@
 #include "core.h"
 #include "getset.h"
 #include "lua_tvec.h"
+#include "lua_tobj.h"
 #include "lua_tvec3d.h"
 #include "lua_tbody.h"
 #include "lua_shellscript.h"
@@ -72,9 +73,9 @@ static const struct luavvd_member space_members[] = {
 
     // {"body_list", luavvd_getbodylist, luavvd_setbodylist, offsetof(Space, BodyList) },
     {"vort_list", luavvd_getObjList, luavvd_setObjList, offsetof(Space, VortexList) },
-    // {"sink_list", luavvd_getObjList, luavvd_setObjList, offsetof(Space, SourceList) },
-    // {"streak_source_list", luavvd_getObjList, luavvd_setObjList, offsetof(Space, StreakSourceList) },
-    // {"streak_domain_list", luavvd_getObjList, luavvd_setObjList, offsetof(Space, StreakList) },
+    {"sink_list", luavvd_getObjList, luavvd_setObjList, offsetof(Space, SourceList) },
+    {"streak_source_list", luavvd_getObjList, luavvd_setObjList, offsetof(Space, StreakSourceList) },
+    {"streak_domain_list", luavvd_getObjList, luavvd_setObjList, offsetof(Space, StreakList) },
 
 
     {NULL, NULL, NULL, 0} /* sentinel */    
@@ -154,6 +155,7 @@ int luaopen_vvd (lua_State *L) {
     lua_setglobal(L, "gen_cylinder"); // pop 1
 
     luaopen_tvec(L);
+    luaopen_tobj(L);
     luaopen_tvec3d(L);
     luaopen_tbody(L);
     luaopen_objlist(L);

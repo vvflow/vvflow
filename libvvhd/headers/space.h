@@ -54,12 +54,8 @@ class Space
         void ZeroForces(); //zero all att-> Cp, Fr, Nu, gsum, fric, hsum variables.
 
         /***************** SAVE/LOAD ******************/
-        int LoadVorticityFromFile(const char* filename);
-        int LoadVorticity_bin(const char* filename);
-        int LoadHeatFromFile(const char* filename);
-        int LoadStreak(const char* filename);
-        int LoadStreakSource(const char* filename);
-        int LoadSource(const char* filename);
+        static int load_list_txt(vector<TObj>& li, const char* filename);
+        static int load_list_bin(vector<TObj>& li, const char* filename);
 
         int LoadBody(const char* filename);
         void EnumerateBodies();

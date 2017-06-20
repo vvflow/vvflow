@@ -1,6 +1,7 @@
 #include <lua.hpp>
 #include <stdio.h>
 #include <string.h>
+#include <cstring>
 
 #include "getset.h"
 #include "lua_tobj.h"
@@ -22,9 +23,26 @@ static int objlist_append(lua_State *L) {
 }
 
 static int objlist_clear(lua_State *L) {
+    vector<TObj> *li = checkObjList(L, 1);
+    li->clear();
+    return 0;
 }
 
-static int objlist_load(lua_State *L) {
+static int objlist_load_txt(lua_State *L) {
+    vector<TObj> *li = checkObjList(L, 1);
+    const char* fname = luaL_checkstring(L, 2);
+    int err = Space::load_list_txt(*li, fname);
+    if (err) {
+        luaL_error(L, "can not load '%s' (%s)\n", fname, strerror(err));
+    }
+    return 0;
+}
+
+static int objlist_load_bin(lua_State *L) {
+    vector<TObj> *li = checkObjList(L, 1);
+    const char* fname = luaL_checkstring(L, 2);
+    Space::load_list_bin(*li, fname);
+    return 0;
 }
 
 static int objlist_getlen(lua_State *L) {
@@ -33,13 +51,22 @@ static int objlist_getlen(lua_State *L) {
     return 1;
 }
 
+static int objlist_totable(lua_State *L) {
+    vector<TObj> *li = checkObjList(L, 1);
+    lua_newtable(L);
+    for (int i=0; i<li->size(); i++) {
+        lua_pushTObj(L, &li->at(i));
+        lua_rawseti(L, -2, i+1);
+    }
+    return 1;
+}
+
 static const struct luavvd_method objlist_methods[] = {
-    {"append", objlist_append},
-    {"clear",  objlist_clear},
-    {"load",   objlist_load},
-    // vlist:append()
-    // vlist:clear()
-    // vlist:load()
+    {"append",   objlist_append},
+    {"clear",    objlist_clear},
+    {"load_txt", objlist_load_txt},
+    {"load_bin", objlist_load_bin},
+    {"totable",  objlist_totable},
     // blist["cyl"] = gen_cyl
     // blist["plate"] = gen_plate
     // blist["body00"] = gis
@@ -50,25 +77,10 @@ static const struct luavvd_method objlist_methods[] = {
     {NULL, NULL}
 };
 
-// static int objlist_newindex(lua_State *L) {
-//     TVec3D* vec = checkTVec3D(L, 1);
-//     const char *name = luaL_checkstring(L, 2);
-
-//     for (auto f = tvec3d_members; f->name; f++) {
-//         if (strcmp(name, f->name)) continue;
-//         lua_pushcfunction(L, f->setter);
-//         lua_pushlightuserdata(L, (char*)vec + f->offset);
-//         lua_pushvalue(L, 3);
-//         lua_call(L, 2, 1);
-//         if (!lua_isnil(L, -1)) {
-//             luaL_error(L, "bad value for TVec3D.%s (%s)", name, lua_tostring(L, -1));
-//         }
-//         return 0;
-//     }
-
-//     luaL_error(L, "TVec3D can not assign '%s'", name);
-//     return 0;
-// }
+static int objlist_newindex(lua_State *L) {
+    luaL_error(L, "TList can not assign anything");
+    return 0;
+}
 
 static int objlist_getindex(lua_State *L) {
     vector<TObj>* li = checkObjList(L, 1);
@@ -90,7 +102,7 @@ static int objlist_getindex(lua_State *L) {
 }
 
 static const struct luaL_Reg luavvd_objlist [] = {
-    // {"__newindex", objlist_newindex},
+    {"__newindex", objlist_newindex},
     {"__index", objlist_getindex},
     {"__len", objlist_getlen},
     {NULL, NULL} /* sentinel */

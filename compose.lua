@@ -64,9 +64,19 @@ end
 
 cjson = require "cjson"
 S.vort_list:clear()
-S.sink_list:clear()
-S.sink_list:append({0, 0, 1000})
-S.ilist:load("ii")
+-- S.sink_list:clear()
+S.sink_list:append({0, 0, 1100})
+S.sink_list:append({0, 0, 2100})
+S.sink_list:append({0, 1, 3100}, {2,4,2})
+-- S.sink_list.foo = 5
+dump_table(S.sink_list:totable())
+-- dump_table(S.sink_list:totable())
+S.sink_list:append({0, 7.77, 1200})
+S.sink_list:append({0, 7.77, 2200})
+S.sink_list:append({0, 7.77, 3200})
+S.sink_list:load_txt("/vvflow/tmp.txt")
+dump_table(S.sink_list:totable())
+print(cjson.encode(S.sink_list:totable()))
 
 S:save("test_space.h5")
 print("FIN")

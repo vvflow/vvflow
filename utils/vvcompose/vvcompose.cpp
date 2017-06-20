@@ -8,11 +8,11 @@ void do_load(Space* S, const char *arg, const char *file)
 {
 	     if (!strcmp(arg, "hdf"))  { S->Load(file); }
 	else if (!strcmp(arg, "body")) { S->LoadBody(file); }
-	else if (!strcmp(arg, "vort")) { S->LoadVorticityFromFile(file); }
-	else if (!strcmp(arg, "heat")) { S->LoadHeatFromFile(file); }
-	else if (!strcmp(arg, "source")) { S->LoadSource(file); }
-	else if (!strcmp(arg, "ink"))  { S->LoadStreak(file); }
-	else if (!strcmp(arg, "ink_source")) { S->LoadStreakSource(file); }
+	else if (!strcmp(arg, "vort")) { Space::load_list_txt(S->VortexList, file); }
+	else if (!strcmp(arg, "heat")) { Space::load_list_txt(S->HeatList, file); }
+	else if (!strcmp(arg, "source")) { Space::load_list_txt(S->SourceList, file); }
+	else if (!strcmp(arg, "ink"))  { Space::load_list_txt(S->StreakList, file); }
+	else if (!strcmp(arg, "ink_source")) { Space::load_list_txt(S->StreakSourceList, file); }
 	else
 	{
 		fprintf(stderr, "vvcompose ERROR: load: bad argument: %s\n", arg);
