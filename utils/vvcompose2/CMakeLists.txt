@@ -5,10 +5,9 @@ project (vvcompose2)
 
 set(__bak_LIBRARY_SUFFIXES ${CMAKE_FIND_LIBRARY_SUFFIXES})
 SET(CMAKE_FIND_LIBRARY_SUFFIXES .a)
-find_package(Lua REQUIRED)
-find_library(LUA_LIBRARY liblua5.3.a)
+find_package(Lua 5.2 EXACT REQUIRED)
+find_library(LUA_LIBRARY liblua5.2.a)
 SET(CMAKE_FIND_LIBRARY_SUFFIXES ${__bak_LIBRARY_SUFFIXES})
-message("LIBLUA: ${LIBLUA}")
 include_directories(${LUA_INCLUDE_DIR})
 
 add_subdirectory(./../../libvvhd libvvhd)
@@ -23,6 +22,7 @@ add_executable(vvcompose2
 	vvcompose2.cpp
 	getset.cpp
 	lua_tvec.cpp
+	lua_tobj.cpp
 	lua_tvec3d.cpp
 	lua_shellscript.cpp
 	lua_tbody.cpp

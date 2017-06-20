@@ -6,13 +6,13 @@
 #include "lua_tvec.h"
 
 static int tvec_abs2(lua_State *L) {
-    TVec* vec = checkTVec(L, 1);
+    TVec* vec = lua_checkTVec(L, 1);
     lua_pushnumber(L, vec->abs2());
     return 1;
 }
 
 static int tvec_tostring(lua_State *L) {
-    TVec* vec = checkTVec(L, 1);
+    TVec* vec = lua_checkTVec(L, 1);
     lua_pushfstring(L, "TVec(%f,%f)", vec->x, vec->y);
     return 1;
 }
@@ -30,7 +30,7 @@ static const struct luavvd_method tvec_methods[] = {
 };
 
 static int tvec_newindex(lua_State *L) {
-    TVec* vec = checkTVec(L, 1);
+    TVec* vec = lua_checkTVec(L, 1);
     const char *name = luaL_checkstring(L, 2);
 
     for (auto f = tvec_members; f->name; f++) {
@@ -50,7 +50,7 @@ static int tvec_newindex(lua_State *L) {
 }
 
 static int tvec_getindex(lua_State *L) {
-    TVec* vec = checkTVec(L, 1);
+    TVec* vec = lua_checkTVec(L, 1);
     const char *name = luaL_checkstring(L, 2);
 
     for (auto f = tvec_members; f->name; f++) {
@@ -71,12 +71,9 @@ static int tvec_getindex(lua_State *L) {
 }
 
 static const struct luaL_Reg luavvd_tvec [] = {
-    // {"abs2", tvec_abs2},
-    // {"tvec2string", TVec2string},
     {"__tostring", tvec_tostring},
     {"__newindex", tvec_newindex},
     {"__index", tvec_getindex},
-    // {"__metaname", tvec_getindex},
     {NULL, NULL} /* sentinel */
 };
 
@@ -89,63 +86,71 @@ int luaopen_tvec (lua_State *L) {
     return 0;
 }
 
-void  pushTVec(lua_State *L, TVec* vec) {
+void  lua_pushTVec(lua_State *L, TVec* vec) {
     TVec** udat = (TVec**)lua_newuserdata(L, sizeof(TVec*));
     *udat = vec;
     luaL_getmetatable(L, "TVec");
     lua_setmetatable(L, -2);
 }
 
-TVec* checkTVec(lua_State *L, int idx) {
+TVec* lua_checkTVec(lua_State *L, int idx) {
     TVec** udat = (TVec**)luaL_checkudata(L, idx, "TVec");
     return *udat;
 }
 
-int luavvd_setTVec(lua_State *L) {
-    TVec* vec = (TVec*)lua_touserdata(L, 1);
-    
-    int isnum[2];
-    switch (lua_type(L, 2)) {
-    case LUA_TTABLE:
-        for (size_t rawlen = lua_rawlen(L, 2); rawlen != 2; ) {
-            lua_pushfstring(L, "TVec needs table with two elements, got %d", rawlen);
-            return 1;
-        }
-
-        lua_geti(L, 2, 1); // push table[1]
-        lua_geti(L, 2, 2); // push table[2]        
-        vec->x = lua_tonumberx(L, -2, &isnum[0]);
-        vec->y = lua_tonumberx(L, -1, &isnum[1]);
-        if (!isnum[0] || !isnum[1]) {
-            const char *typ1 = luaL_typename(L, -2);
-            const char *typ2 = luaL_typename(L, -1);
-            lua_pushfstring(L, "TVec needs two numbers, got %s and %s", typ1, typ2);
-            return 1;
-        }
-        return 0;
-    case LUA_TUSERDATA:
-        TVec** udata = (TVec**)luaL_testudata(L, 2, "TVec");
-
-        if (!udata) {
-            const char *typ;
-            if (luaL_getmetafield(L, 2, "__name") == LUA_TSTRING)
-                typ = lua_tostring(L, -1);
-            else
-                typ = "userdata";
-            lua_pushfstring(L, "table or TVec expected, got %s", typ);
-            return 1;    
-        }
-
-        *vec = **udata;
-        return 0;
+TVec lua_toTVecx(lua_State *L, int idx, int* isvec) {
+    if (!isvec) {
+        isvec = (int*)&isvec;
     }
     
-    const char *typ = luaL_typename(L, 2);
-    lua_pushfstring(L, "table or TVec expected, got %s", typ);
-    return 1;
+    if (lua_type(L, idx) == LUA_TTABLE) {
+        size_t rawlen = lua_rawlen(L, idx);
+        if (rawlen != 2) 
+            goto fail;
+
+        int isnum[2];
+        lua_rawgeti(L, idx, 1); // push table[1]
+        lua_rawgeti(L, idx, 2); // push table[2]        
+        TVec res;
+        res.x = lua_tonumberx(L, -2, &isnum[0]);
+        res.y = lua_tonumberx(L, -1, &isnum[1]);
+        lua_pop(L, 2);
+        if (!isnum[0] || !isnum[1])
+            goto fail;
+
+        *isvec = 1;
+        return res;
+    } else if (lua_type(L, idx) == LUA_TUSERDATA) {
+        TVec** udata = (TVec**)luaL_testudata(L, idx, "TVec");
+        if (!udata)
+            goto fail;
+
+        *isvec = 1;
+        return **udata;
+    }
+
+fail:
+    *isvec = 0;
+    return TVec();
 }
 
+/* setter */
+int luavvd_setTVec(lua_State *L) {
+    TVec* ptr = (TVec*)lua_touserdata(L, 1);
+    int isvec;
+    TVec vec = lua_toTVecx(L, 2, &isvec);
+    
+    if (!isvec) {
+        lua_pushfstring(L, "TVec needs table with two numbers");
+        return 1;
+    }
+
+    *ptr = vec;
+    return 0;
+}
+
+/* getter */
 int luavvd_getTVec(lua_State *L) {
     TVec* vec = (TVec*)lua_touserdata(L, 1);    
-    pushTVec(L, vec);
+    lua_pushTVec(L, vec);
 }

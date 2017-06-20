@@ -74,8 +74,8 @@ int luavvd_setTTime(lua_State *L) {
             return 1;
         }
 
-        lua_geti(L, 2, 1); // push table[1]
-        lua_geti(L, 2, 2); // push table[2]        
+        lua_rawgeti(L, 2, 1); // push table[1]
+        lua_rawgeti(L, 2, 2); // push table[2]        
         t->value = lua_tointegerx(L, -2, &isnum[0]);
         t->timescale = lua_tointegerx(L, -1, &isnum[1]);
         if (!isnum[0] || !isnum[1]) {

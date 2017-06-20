@@ -124,9 +124,9 @@ int luavvd_setTVec3D(lua_State *L) {
             return 1;
         }
 
-        lua_geti(L, 2, 1); // push table[1]
-        lua_geti(L, 2, 2); // push table[2]        
-        lua_geti(L, 2, 3); // push table[3]        
+        lua_rawgeti(L, 2, 1); // push table[1]
+        lua_rawgeti(L, 2, 2); // push table[2]        
+        lua_rawgeti(L, 2, 3); // push table[3]        
         vec->r.x = lua_tonumberx(L, -3, &isnum[0]);
         vec->r.y = lua_tonumberx(L, -2, &isnum[1]);
         vec->o =   lua_tonumberx(L, -1, &isnum[2]);
