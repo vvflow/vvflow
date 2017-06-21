@@ -20,19 +20,30 @@ int stackDump(lua_State *L)
         int t = lua_type(L, i);
         switch (t) {
         case LUA_TSTRING: { /* strings */
-            printf("%d str  '%s'\n", i, lua_tostring(L, i));
+            printf("#%d str  '%s'\n", i, lua_tostring(L, i));
             break;
         }
         case LUA_TBOOLEAN: { /* Booleans */
-            printf("%d bool %s\n", i, lua_toboolean(L, i) ? "true" : "false");
+            printf("#%d bool %s\n", i, lua_toboolean(L, i) ? "true" : "false");
             break;
         }
         case LUA_TNUMBER: { /* numbers */
-            printf("%d num  %g\n", i, lua_tonumber(L, i));
+            printf("#%d num  %g\n", i, lua_tonumber(L, i));
+            break;
+        }
+        case LUA_TUSERDATA: {
+            const char *typ;
+            if (luaL_getmetafield(L, i, "__name")) {
+                typ = lua_tostring(L, -1);
+                lua_pop(L, 1);
+            }
+            else
+                typ = "userdata";
+            printf("#%d udata %s\n", i, typ);
             break;
         }
         default: { /* other values */
-            printf("%d %s\n", i, lua_typename(L, t));
+            printf("#%d %s\n", i, lua_typename(L, t));
             break;
         }
         }

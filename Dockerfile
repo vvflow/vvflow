@@ -6,7 +6,7 @@ RUN apt-get update && apt-get install -y \
     libfl-dev \
     libhdf5-dev \
     liblapack-dev \
-    liblua5.3-dev \
+    liblua5.2-dev \
     libmatheval-dev \
     make \
     pkg-config \

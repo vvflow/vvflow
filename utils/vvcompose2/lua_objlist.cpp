@@ -64,7 +64,7 @@ static int objlist_totable(lua_State *L) {
 static const struct luavvd_method objlist_methods[] = {
     {"append",   objlist_append},
     {"clear",    objlist_clear},
-    {"load_txt", objlist_load_txt},
+    {"load",     objlist_load_txt},
     {"load_bin", objlist_load_bin},
     {"totable",  objlist_totable},
     // blist["cyl"] = gen_cyl
@@ -82,12 +82,19 @@ static int objlist_newindex(lua_State *L) {
     return 0;
 }
 
+// int stackDump(lua_State *L);
 static int objlist_getindex(lua_State *L) {
     vector<TObj>* li = checkObjList(L, 1);
-    // lua_Integer = luaL_checkinteger(L, 2);
 
     if (lua_isnumber(L, 2)) {
-
+        lua_Integer idx = lua_tointeger(L, 2)-1;
+        if (idx < 0 || idx >= li->size()) {
+            lua_pushnil(L);
+            return 1;
+        } else {
+            lua_pushTObj(L, &li->at(idx));
+            return 1;
+        }
     } else if (lua_isstring(L, 2)) {
         const char *name = luaL_checkstring(L, 2);
         for (auto f = objlist_methods; f->name; f++) {
@@ -96,15 +103,40 @@ static int objlist_getindex(lua_State *L) {
             return 1;
         }
         return luaL_error(L, "TList has no member '%s'", name);
-    } else {
-        return luaL_error(L, "TList invalid key (string or integer expected, got %s", luaL_typename(L, 2));
     }
+
+    return luaL_error(L, "TList invalid key (string or integer expected, got %s)", luaL_typename(L, 2));
+}
+
+static int objlist_getnext(lua_State *L) {
+    vector<TObj>* li = checkObjList(L, 1);
+
+    int idx = luaL_optinteger(L, 2, 0);
+    if (idx >= li->size()) {
+        lua_pushnil(L);
+        return 1;
+    } else {
+        lua_pushinteger(L, idx+1);
+        lua_pushTObj(L, &li->at(idx));
+        return 2;
+    }
+
+}
+
+
+static int objlist_getpairs(lua_State *L) {
+    lua_pushcfunction(L, objlist_getnext);
+    lua_pushvalue(L, 1);
+    lua_pushnil(L);
+    return 3;
 }
 
 static const struct luaL_Reg luavvd_objlist [] = {
     {"__newindex", objlist_newindex},
-    {"__index", objlist_getindex},
-    {"__len", objlist_getlen},
+    {"__index",    objlist_getindex},
+    {"__len",      objlist_getlen},
+    {"__pairs",    objlist_getpairs},
+    {"__ipairs",   objlist_getpairs},
     {NULL, NULL} /* sentinel */
 };
 
@@ -113,6 +145,8 @@ static const struct luaL_Reg luavvd_objlist [] = {
 
 int luaopen_objlist (lua_State *L) {
     luaL_newmetatable(L, "ObjList"); // push 1
+    lua_pushstring(L, "ObjList"); // push 2
+    lua_setfield(L, -2, "__name"); // pop 2
     luaL_setfuncs(L, luavvd_objlist, 0); /* register metamethods */
     return 0;
 }
