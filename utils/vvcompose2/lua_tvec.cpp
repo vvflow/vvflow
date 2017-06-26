@@ -24,8 +24,8 @@ static const struct luavvd_member tvec_members[] = {
 };
 
 static const struct luavvd_method tvec_methods[] = {
-    {"abs2",    tvec_abs2},
-    {"2string", tvec_tostring},
+    {"abs2",     tvec_abs2},
+    {"tostring", tvec_tostring},
     {NULL, NULL}
 };
 

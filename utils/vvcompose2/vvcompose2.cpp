@@ -162,6 +162,11 @@ int luaopen_vvd (lua_State *L) {
     lua_setmetatable(L, -2); // pop 2
     lua_setglobal(L, "S"); // pop 1
 
+    lua_pushnumber(L, std::numeric_limits<double>::infinity()); // push 1
+    lua_setglobal(L, "inf"); // pop 1
+    lua_pushnumber(L, std::numeric_limits<double>::quiet_NaN()); // push 1
+    lua_setglobal(L, "nan"); // pop 1
+
     lua_pushcfunction(L, luavvd_gen_cylinder); // push 1
     lua_setglobal(L, "gen_cylinder"); // pop 1
 
