@@ -34,3 +34,5 @@ target_link_libraries(vvcompose2 ${LIBVVHD_LIBRARIES} ${LUA_LIBRARY} dl)
 
 # install (TARGETS vvd DESTINATION bin)
 install (TARGETS vvcompose2 DESTINATION bin)
+
+add_custom_command(TARGET vvcompose2 POST_BUILD COMMAND vvcompose2 ${CMAKE_CURRENT_SOURCE_DIR}/test.lua)

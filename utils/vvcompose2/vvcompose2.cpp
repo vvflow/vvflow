@@ -191,6 +191,7 @@ int main (int argc, char** argv) {
     if (luaL_dofile(L, argv[1])) {
         fprintf(stderr, "%s\n", lua_tostring(L, -1));
         lua_pop(L, 1);
+        return 1;
     }
 
     lua_close(L);
