@@ -27,18 +27,36 @@ function check_val(fn, val_need)
 	end
 end
 
--- space_getindex, space_setindex
+-- inf, nan
+check_val(function() return  inf end,  1/0)
+check_val(function() return -inf end, -1/0)
+check_val(function() return tostring( inf) end,  "inf")
+check_val(function() return tostring(-inf) end, "-inf")
+check_val(function() return tostring( nan) end,  "nan")
+
+-- Space
 check_err(function() S.foo = nil end, "S can not assign 'foo'")
-check_val(function() return S.foo end, nil)
 check_err(function() return S.load() end, "bad argument #1 to 'load' (S expected, got no value)")
 check_err(function() return S.save() end, "bad argument #1 to 'save' (S expected, got no value)")
 check_err(function() return S:load() end, "bad argument #1 to 'load' (string expected, got no value)")
 check_err(function() return S:save() end, "bad argument #1 to 'save' (string expected, got no value)")
+check_val(function() return S.foo        end, nil)
+check_val(function() return S.caption    end, "")
+check_val(function() return S.time       end, 0)
+check_val(function() return S.dt         end, 1)
+check_val(function() return S.dt_save    end, 0)
+check_val(function() return S.dt_streak  end, 0)
+check_val(function() return S.dt_profile end, 0)
+check_val(function() return S.re         end, inf)
+check_val(function() return string.format("%.0e", S.finish) end, "2e+308")
+check_val(function() return S.inf_vx:tostring() end, "")
+check_val(function() return S.inf_vy:tostring() end, "")
+check_val(function() return S.inf_g             end, 0)
+check_val(function() return S.gravity:tostring() end, "TVec(0,0)")
 S:load("/dev/null")
 S:save("/dev/null")
 
-
--- luavvd_getstring, luavvd_setstring
+-- std::string
 S.caption = "good_caption"
 check_val(function() return S.caption end, "good_caption")
 check_err(function() S.caption = 100 end, "bad value for S.caption (string expected, got number)")
@@ -47,14 +65,7 @@ check_err(function() S.caption = S.gravity end, "bad value for S.caption (string
 check_err(function() S.caption = nil end, "bad value for S.caption (string expected, got nil)")
 check_val(function() return S.caption end, "good_caption")
 
--- inf, nan
-check_val(function() return  inf end,  1/0)
-check_val(function() return -inf end, -1/0)
-check_val(function() return tostring( inf) end,  "inf")
-check_val(function() return tostring(-inf) end, "-inf")
-check_val(function() return tostring( nan) end,  "nan")
-
--- luavvd_getdouble, luavvd_setdouble
+-- double
 S.re = inf
 check_val(function() return S.re end, inf)
 S.re = "10"
@@ -63,13 +74,9 @@ S.re = "+11e0"
 check_val(function() return S.re end, 11)
 S.re = 3*4
 check_val(function() return S.re end, 12)
-check_err(function() S.re = nil end, "bad value for S.re (number expected, got nil)")
-check_err(function() S.re = false end, "bad value for S.re (number expected, got boolean)")
+check_err(function() S.re = nil  end, "bad value for S.re (number expected, got nil)")
+check_err(function() S.re = true end, "bad value for S.re (number expected, got boolean)")
 check_val(function() return S.re end, 12)
-S.finish = 13
-check_val(function() return S.finish end, 13)
-S.inf_g = 14
-check_val(function() return S.inf_g end, 14)
 
 -- TVec
 S.gravity = {inf, nan}
@@ -91,6 +98,23 @@ check_val(function() return S.gravity.y end, 15.2)
 check_val(function() return S.gravity.z end, nil)
 check_val(function() return S.gravity:abs2() end, 15.1^2 + 15.2^2)
 check_val(function() return S.gravity:abs() end, math.sqrt(15.1^2 + 15.2^2))
+
+-- TTime
+S.dt = 0.1
+check_val(function() return S.dt end, 0.1)
+S.dt = {1, 10}
+check_val(function() return S.dt end, 0.1)
+S.dt = "1/10"
+check_val(function() return S.dt end, 0.1)
+check_err(function() S.dt = "inf" end, "bad value for S.dt (TTime can not parse 'inf')")
+check_err(function() S.dt = "nan" end, "bad value for S.dt (TTime can not parse 'nan')")
+
+check_err(function() S.dt = "1e500" end, "bad value for S.dt (TTime can not parse '1e500')")
+check_err(function() S.dt = {}      end, "bad value for S.dt (TTime needs table with two elements, got 0)")
+check_err(function() S.dt = {1,2,3} end, "bad value for S.dt (TTime needs table with two elements, got 3)")
+check_err(function() S.dt = {1,"a"} end, "bad value for S.dt (TTime needs two integers, got number and string)")
+check_err(function() S.dt = {-1,-3} end, "bad value for S.dt (TTime timescale must be positive, got -3)")
+check_err(function() S.dt = nil     end, "bad value for S.dt (table or number expected, got nil)")
 
 -- ShellScript
 check_err(function() S.inf_vx = "z" end, "bad value for S.inf_vx (invalid expression 'z')")
