@@ -13,6 +13,9 @@ TBody::TBody():
     speed_y(),
     speed_o()
 {
+    double inf = std::numeric_limits<double>::infinity();
+    double nan = std::numeric_limits<double>::quiet_NaN();
+
     holder = dpos = TVec3D(0., 0., 0.);
     g_dead = 0;
     fdt_dead = TVec3D(0,0,0);
@@ -21,14 +24,13 @@ TBody::TBody():
     _surface = _area = 0;
     _com = TVec(0., 0.);
     _moi_c = _moi_com = 0;
-    kspring = TVec3D(-1., -1., -1.);
+    kspring = TVec3D(inf,inf,inf);
     damping = TVec3D(0., 0., 0.);
     density = 1.;
     special_segment_no = 0;
     boundary_condition = bc_t::steady;
     heat_condition = hc_t::neglect;
 
-    double nan = std::numeric_limits<double>::quiet_NaN();
     collision_min = collision_max = TVec3D(nan, nan, nan);
     collision_detected = false;
     bounce = 0;
@@ -66,6 +68,10 @@ void TBody::move(TVec3D deltaHolder, TVec3D deltaBody)
 
 void TBody::doUpdateSegments()
 {
+    if (!alist.size()) {
+        return;
+    }
+
     alist.push_back(alist.front());
 
     for (auto lobj=alist.begin(); lobj<alist.end()-1; lobj++)
@@ -150,6 +156,10 @@ void TBody::doFillProperties()
     TVec _3S_com= TVec(0., 0.);
     double _12moi_0 = 0.;
 
+    if (!alist.size()) {
+        return;
+    }
+
     alist.push_back(alist.front());
     for (auto latt=alist.begin(); latt<alist.end()-1; latt++)
     {
@@ -188,3 +198,32 @@ inline double atan2(const TVec &p)
     return atan2(p.y, p.x);
 }
 
+/********************************** SAVE/LOAD *********************************/
+int TBody::load_txt(const char* filename)
+{
+    alist.clear();
+
+    FILE *fin = fopen(filename, "r");
+    if (!fin) { return errno; }
+
+    TAtt att;
+    int  err = 0;
+    char line[128];
+    while ( !err && !feof(fin) && !ferror(fin) && fgets(line, sizeof(line), fin) )
+    {
+        err |= sscanf(line, "%lf %lf %u", &att.corner.x, &att.corner.y, &att.slip) < 2;
+        alist.push_back(att);
+    }
+
+    err |= ferror(fin);
+    fclose(fin);
+
+    if (err) {
+        return errno?:EINVAL;
+    }
+
+    doUpdateSegments();
+    doFillProperties();
+
+    return 0;
+}

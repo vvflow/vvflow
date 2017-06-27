@@ -23,6 +23,17 @@ static int tvec_tostring(lua_State *L) {
     return 1;
 }
 
+static int tvec_totable(lua_State *L) {
+    TVec* vec = lua_checkTVec(L, 1);
+    lua_newtable(L);
+    lua_pushnumber(L, vec->x);
+    lua_rawseti(L, -2, 1);
+    lua_pushnumber(L, vec->y);
+    lua_rawseti(L, -2, 2);
+
+    return 1;
+}
+
 static const struct luavvd_member tvec_members[] = {
     {"x",    luavvd_getdouble, luavvd_setdouble, offsetof(TVec, x) },
     {"y",    luavvd_getdouble, luavvd_setdouble, offsetof(TVec, y) },
@@ -33,6 +44,7 @@ static const struct luavvd_method tvec_methods[] = {
     {"abs",      tvec_abs},
     {"abs2",     tvec_abs2},
     {"tostring", tvec_tostring},
+    {"totable",  tvec_totable},
     {NULL, NULL}
 };
 

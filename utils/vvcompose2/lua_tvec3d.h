@@ -2,8 +2,9 @@
 
 int luaopen_tvec3d (lua_State *L);
 
-/* push userdata with (TVec3D*) and set metatable "LibVVD.TVec3D" */
-void  pushTVec3D(lua_State *L, TVec3D* vec);
-/* get userdata (TVec3D*) and check metatable is "LibVVD.TVec3D" */
-TVec3D* checkTVec3D(lua_State *L, int idx);
-
+/* push userdata with (TVec3D*) and set metatable "TVec3D" */
+void    lua_pushTVec3D(lua_State *L, TVec3D* vec);
+/* get userdata (TVec3D*) and check metatable is "TVec3D" */
+TVec3D* lua_checkTVec3D(lua_State *L, int idx);
+/* get value at index and convert it to TVec3D */
+TVec3D  lua_toTVec3Dx(lua_State *L, int idx, int* isvec);

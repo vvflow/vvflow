@@ -734,7 +734,7 @@ int Space::load_list_bin(vector<TObj>& li, const char* filename)
 
     while ( fin.good() )
     {
-        fin.read(pchar(&obj), 3*sizeof(double));
+        fin.read((char*)(&obj), 3*sizeof(double));
         li.push_back(obj);
     }
 
@@ -742,39 +742,16 @@ int Space::load_list_bin(vector<TObj>& li, const char* filename)
     return 0;
 }
 
-int Space::LoadBody(const char* filename)
+int Space::load_body_txt(const char* filename)
 {
-    int err = 0;
-    auto body = std::make_shared<TBody>();
-    TAtt att;
-
-    FILE *fin = fopen(filename, "r");
-    if (!fin) goto fail;
-
-    char str[128];
-    while (!err && !feof(fin) && !ferror(fin) && fgets(str, sizeof(str), fin))
-    {
-        err |= sscanf(str, "%lf %lf %u", &att.corner.x, &att.corner.y, &att.slip) < 2;
-        body->alist.push_back(att);
+    std::shared_ptr<TBody> body = std::make_shared<TBody>();
+    int err = body->load_txt(filename);
+    if (!err) {
+        BodyList.push_back(body);
+        EnumerateBodies();
     }
 
-    err |= ferror(fin);
-    fclose(fin);
-
-    if (err)
-    {
-fail:
-        errno = errno?:EINVAL;
-        perror("Error parsing body from file");
-        return -1;
-    }
-
-    BodyList.push_back(body);
-    body->doUpdateSegments();
-    body->doFillProperties();
-    EnumerateBodies();
-
-    return 0;
+    return err;
 }
 
 void Space::EnumerateBodies()

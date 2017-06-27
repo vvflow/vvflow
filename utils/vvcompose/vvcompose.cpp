@@ -7,7 +7,7 @@
 void do_load(Space* S, const char *arg, const char *file)
 {
 	     if (!strcmp(arg, "hdf"))  { S->Load(file); }
-	else if (!strcmp(arg, "body")) { S->LoadBody(file); }
+	else if (!strcmp(arg, "body")) { S->load_body_txt(file); }
 	else if (!strcmp(arg, "vort")) { Space::load_list_txt(S->VortexList, file); }
 	else if (!strcmp(arg, "heat")) { Space::load_list_txt(S->HeatList, file); }
 	else if (!strcmp(arg, "source")) { Space::load_list_txt(S->SourceList, file); }

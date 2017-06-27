@@ -60,6 +60,9 @@ class TBody
         TBody& operator= (const TBody&) = delete;
         TBody& operator= (TBody&&) = delete;
 
+        int load_txt(const char* filename);
+        // int load_bin(const char* filename);
+
         std::string label;
         // FIXME rename to lower case
         std::vector<TAtt> alist;

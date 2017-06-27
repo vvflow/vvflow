@@ -56,8 +56,8 @@ class Space
         /***************** SAVE/LOAD ******************/
         static int load_list_txt(vector<TObj>& li, const char* filename);
         static int load_list_bin(vector<TObj>& li, const char* filename);
+        int load_body_txt(const char* filename);
 
-        int LoadBody(const char* filename);
         void EnumerateBodies();
         void ZeroBodies(); //zero Cp, Fr, Nu variables.
 

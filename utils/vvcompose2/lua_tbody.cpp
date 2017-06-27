@@ -151,6 +151,20 @@ TBody* checkTBody(lua_State *L, int idx) {
     return *udat;
 }
 
+int luavvd_load_body(lua_State *L) {
+    std::shared_ptr<TBody> body = std::make_shared<TBody>();
+    bodymap[body.get()] = body;
+
+    const char* fname = luaL_checkstring(L, 1);
+    int err = body->load_txt(fname);
+    if (err) {
+        luaL_error(L, "can not load '%s' (%s)\n", fname, strerror(err));
+    }
+
+    pushTBody(L, body.get());
+    return 1;
+}
+
 // int luavvd_setTBody(lua_State *L) {
 //     TBody* vec = (TBody*)lua_touserdata(L, 1);
     

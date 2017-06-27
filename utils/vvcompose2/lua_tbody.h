@@ -9,3 +9,4 @@ TBody* checkTBody(lua_State *L, int idx);
 
 // int luavvd_setTBody(lua_State *L);
 // int luavvd_getTBody(lua_State *L);
+int luavvd_load_body(lua_State *L);

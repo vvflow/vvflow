@@ -2,7 +2,7 @@ function printf(fmt, ...)
 	print(string.format(fmt, ...))
 end
 
-FAIL = 5
+FAIL = 42
 
 function check_err(fn, err_need)
 	ret, err_have = pcall(fn)
@@ -81,8 +81,11 @@ check_err(function() S.gravity = 100 end, "bad value for S.gravity (TVec needs t
 check_err(function() S.gravity = nil end, "bad value for S.gravity (TVec needs table with two numbers)")
 check_err(function() S.gravity = "1" end, "bad value for S.gravity (TVec needs table with two numbers)")
 check_err(function() S.gravity = {"a", "b"} end, "bad value for S.gravity (TVec needs table with two numbers)")
-check_val(function() return tostring(S.gravity) end, "TVec(15.1,15.2)")
+check_val(function() return tostring(S.gravity)  end, "TVec(15.1,15.2)")
 check_val(function() return S.gravity:tostring() end, "TVec(15.1,15.2)")
+check_val(function() return #S.gravity:totable()    end, 2)
+check_val(function() return S.gravity:totable()[1]  end, 15.1)
+check_val(function() return S.gravity:totable()[2]  end, 15.2)
 check_val(function() return S.gravity.x end, 15.1)
 check_val(function() return S.gravity.y end, 15.2)
 check_val(function() return S.gravity.z end, nil)
@@ -105,8 +108,46 @@ check_val(function() return S.inf_vx:eval(4) end, 1)
 check_val(function() return S.inf_vy:eval(8) end, 1)
 check_val(function() return S.inf_vx.member end, nil)
 
+-- TBody
+body = load_body("/dev/null")
+check_val(function() return #body                         end, 0)
+check_val(function() return body.label                    end, "")
+check_val(function() return tostring(body.holder_pos)     end, "TVec3D(0,0,0)" )
+check_val(function() return tostring(body.delta_pos)      end, "TVec3D(0,0,0)" )
+check_val(function() return tostring(body.speed)          end, "TVec3D(0,0,0)" )
+check_val(function() return tostring(body.collision_min)  end, "TVec3D(nan,nan,nan)")
+check_val(function() return tostring(body.collision_max)  end, "TVec3D(nan,nan,nan)")
+check_val(function() return tostring(body.spring_const)   end, "TVec3D(inf,inf,inf)")
+check_val(function() return tostring(body.spring_damping) end, "TVec3D(0,0,0)")
+check_val(function() return tostring(body.holder_vx)      end, "")
+check_val(function() return tostring(body.holder_vy)      end, "")
+check_val(function() return tostring(body.holder_vo)      end, "")
+check_val(function() return body.density                  end, 1)
+check_val(function() return body.bounce                   end, 0)
+check_val(function() return body.special_segment          end, 0)
 
--- inf_vx
--- inf_vy
+-- TVec3D
+body.holder_pos = {inf, nan, -inf}
+body.holder_pos = {"0", "0", "1"}
+body.holder_pos = {16.1, 16.2, 16.3}
+body.holder_pos = body.holder_pos
+check_err(function() body.holder_pos = {1} end, "bad value for TBody.holder_pos (TVec3D needs table with three numbers)")
+check_err(function() body.holder_pos = 100 end, "bad value for TBody.holder_pos (TVec3D needs table with three numbers)")
+check_err(function() body.holder_pos = nil end, "bad value for TBody.holder_pos (TVec3D needs table with three numbers)")
+check_err(function() body.holder_pos = "1" end, "bad value for TBody.holder_pos (TVec3D needs table with three numbers)")
+check_err(function() body.holder_pos = {"a",0,0} end, "bad value for TBody.holder_pos (TVec3D needs table with three numbers)")
+check_val(function() return tostring(body.holder_pos)  end, "TVec3D(16.1,16.2,16.3)")
+check_val(function() return body.holder_pos:tostring() end, "TVec3D(16.1,16.2,16.3)")
+check_val(function() return #body.holder_pos:totable()    end, 3)
+check_val(function() return body.holder_pos:totable()[1]  end, 16.1)
+check_val(function() return body.holder_pos:totable()[2]  end, 16.2)
+check_val(function() return body.holder_pos:totable()[3]  end, 16.3)
+check_val(function() return body.holder_pos.r.x end, 16.1)
+check_val(function() return body.holder_pos.r.y end, 16.2)
+check_val(function() return body.holder_pos.o   end, 16.3)
+check_val(function() return body.holder_pos.d   end, 16.3*180/math.pi)
+check_val(function() return body.holder_pos.z   end, nil)
+
+
 
 os.exit(FAIL)

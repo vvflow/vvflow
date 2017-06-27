@@ -236,9 +236,9 @@ bool convectivefast::canUseInverse()
     for (auto& lbody1: S->BodyList)
     {
         if (!lbody1->speed(S->Time).iszero()) return false;
-        if (lbody1->kspring.r.x >= 0) return false;
-        if (lbody1->kspring.r.y >= 0) return false;
-        if (lbody1->kspring.o >= 0) return false;
+        if (isfinite(lbody1->kspring.r.x) && lbody1->kspring.r.x >= 0) return false;
+        if (isfinite(lbody1->kspring.r.y) && lbody1->kspring.r.y >= 0) return false;
+        if (isfinite(lbody1->kspring.o  ) && lbody1->kspring.o   >= 0) return false;
         if (lbody1->collision_detected) return false;
     }
 
@@ -418,7 +418,7 @@ void convectivefast::_2PI_A123(const TAtt &seg, const TBody* ibody, const TBody 
     *_2PI_A1 = (ibody == &b)?  C_2PI * seg.dl.y : 0;
     *_2PI_A2 = (ibody == &b)? -C_2PI * seg.dl.x : 0;
     *_2PI_A3 = 0;
-    if ((b.kspring.o<0) && (!b.speed_o.getValue(S->Time)) && !b.root_body.lock())
+    if (!(isfinite(b.kspring.o) && b.kspring.o>=0) && (!b.speed_o.getValue(S->Time)) && !b.root_body.lock())
     {
         // в этом случае угловая скорость и так обратится в ноль
         // поэтому ради экономии времени коэффициент при ней не вычисляем
@@ -965,17 +965,17 @@ void convectivefast::FillMatrix(bool rightColOnly)
             }
         }
 
-        if (libody->kspring.r.x >= 0 && S->Time>0)
+        if (isfinite(libody->kspring.r.x) && libody->kspring.r.x >= 0 && S->Time>0)
             addJob(HookeXEquation, eq_no++, NULL, libody.get());
         else
             addJob(SpeedXEquation, eq_no++, NULL, libody.get());
 
-        if (libody->kspring.r.y >= 0 && S->Time>0)
+        if (isfinite(libody->kspring.r.y) && libody->kspring.r.y >= 0 && S->Time>0)
             addJob(HookeYEquation, eq_no++, NULL, libody.get());
         else
             addJob(SpeedYEquation, eq_no++, NULL, libody.get());
 
-        if (libody->kspring.o >= 0 && S->Time>0)
+        if (isfinite(libody->kspring.o  ) && libody->kspring.o   >= 0 && S->Time>0)
             addJob(HookeOEquation, eq_no++, NULL, libody.get());
         else
             addJob(SpeedOEquation, eq_no++, NULL, libody.get());
