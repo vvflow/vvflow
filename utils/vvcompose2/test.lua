@@ -1,30 +1,33 @@
 function printf(fmt, ...)
-	print(string.format(fmt, ...))
+    print(string.format(fmt, ...))
 end
 
 FAIL = 42
 
 function check_err(fn, err_need)
-	ret, err_have = pcall(fn)
-	info = debug.getinfo(2)
-	err_need = string.format("%s:%s: %s", info.short_src, info.currentline, err_need)
-	if err_have ~= err_need then
-		printf("Unexpected error")
-		printf("Have: %s", err_have)
-		printf("Need: %s", err_need)
-		FAIL = 1
-	end
+    ret, err_have = pcall(fn)
+    if err_need ~= nil then
+        info = debug.getinfo(2)
+        err_need = string.format("%s:%s: %s", info.short_src, info.currentline, err_need)
+    end
+
+    if err_have ~= err_need then
+        printf("Unexpected error")
+        printf("Have: %s", err_have)
+        printf("Need: %s", err_need)
+        FAIL = 1
+    end
 end
 
 function check_val(fn, val_need)
-	ret, val_have = pcall(fn)
-	info = debug.getinfo(2)
-	if val_have ~= val_need then
-		printf("%s:%s: Unexpected value", info.short_src, info.currentline)
-		printf("Have: %s", val_have)
-		printf("Need: %s", val_need)
-		FAIL = 1
-	end
+    ret, val_have = pcall(fn)
+    info = debug.getinfo(2)
+    if val_have ~= val_need then
+        printf("%s:%s: Unexpected value", info.short_src, info.currentline)
+        printf("Have: %s", val_have)
+        printf("Need: %s", val_need)
+        FAIL = 1
+    end
 end
 
 -- inf, nan
@@ -114,7 +117,7 @@ check_err(function() S.dt = {}      end, "bad value for S.dt (TTime needs table 
 check_err(function() S.dt = {1,2,3} end, "bad value for S.dt (TTime needs table with two elements, got 3)")
 check_err(function() S.dt = {1,"a"} end, "bad value for S.dt (TTime needs two integers, got number and string)")
 check_err(function() S.dt = {-1,-3} end, "bad value for S.dt (TTime timescale must be positive, got -3)")
-check_err(function() S.dt = nil     end, "bad value for S.dt (table or number expected, got nil)")
+check_err(function() S.dt = nil     end, "bad value for S.dt (number or table expected, got nil)")
 
 -- ShellScript
 check_err(function() S.inf_vx = "z" end, "bad value for S.inf_vx (invalid expression 'z')")
@@ -172,6 +175,83 @@ check_val(function() return body.holder_pos.o   end, 16.3)
 check_val(function() return body.holder_pos.d   end, 16.3*180/math.pi)
 check_val(function() return body.holder_pos.z   end, nil)
 
+-- ObjList
+check_val(function() return #S.vort_list          end, 0)
+check_val(function() return #S.sink_list          end, 0)
+check_val(function() return #S.streak_source_list end, 0)
+check_val(function() return #S.streak_domain_list end, 0)
+check_val(function() return S.vort_list.foo       end, nil)
+check_val(function() return S.vort_list[0]        end, nil)
+check_val(function() return S.vort_list[1]        end, nil)
+check_err(function() S.vort_list.foo = nil end, "TList can not assign anything")
+check_err(function() S.vort_list[0]  = nil end, "TList can not assign anything")
+check_err(function() S.vort_list[1]  = nil end, "TList can not assign anything")
+check_err(function() S.vort_list:append({1.1, 1.2, 1.3}) end, nil)
+check_err(function() S.vort_list:append({2.1, 2.2, 2.3}) end, nil)
+check_err(function() S.vort_list:append({3.1, 3.2, 3.3}) end, nil)
+check_err(function() S.vort_list:append(S.vort_list[3] ) end, nil)
+check_err(function() S.vort_list:append({1}) end, "bad argument #1 to 'append' (expected TObj)")
+check_err(function() S.vort_list:append(1.0) end, "bad argument #1 to 'append' (expected TObj)")
+check_err(function() S.vort_list:append("x") end, "bad argument #1 to 'append' (expected TObj)")
+check_val(function() return #S.vort_list end, 4)
+obj = S.vort_list[4]
+check_val(function() return tostring(obj)    end, "TObj(3.1,3.2,3.3)")
+check_val(function() return obj:tostring()   end, "TObj(3.1,3.2,3.3)")
+obj.r = {4.1, 4.2}
+obj.v = {5.3, 5.4}
+obj.g =  6.5
+check_val(function() return obj.r:tostring() end, "TVec(4.1,4.2)")
+check_val(function() return obj.v:tostring() end, "TVec(5.3,5.4)")
+check_val(function() return obj.g            end, 6.5)
+check_val(function() return obj.z            end, nil)
+check_err(function() obj.foo = nil end, "TObj can not assign 'foo'")
+check_err(function() obj.r   = nil end, "bad value for TObj.r (TVec needs table with two numbers)")
+check_err(function() obj.v   = nil end, "bad value for TObj.v (TVec needs table with two numbers)")
+S.vort_list:clear()
+check_val(function() return #S.vort_list end, 0)
+
+fname = os.tmpname()
+file = io.open(fname, "w")
+file:write("1.1 1.2 1.3\n")
+file:write("2e1 2e2 2e3\n")
+file:write("inf nan 0.0\n")
+io.close(file)
+check_err(function() S.vort_list:load(fname)         end, nil)
+check_val(function() return #S.vort_list             end, 3)
+check_val(function() return tostring(S.vort_list[1]) end, "TObj(1.1,1.2,1.3)")
+check_val(function() return tostring(S.vort_list[2]) end, "TObj(20,200,2000)")
+check_val(function() return tostring(S.vort_list[3]) end, "TObj(inf,nan,0)")
+check_val(function() return #S.vort_list:totable()   end, 3)
+check_err(function() S.vort_list:load("/nowhere")    end, "can not load '/nowhere' (No such file or directory)")
+check_err(function() S.vort_list:load("/proc/1/mem") end, "can not load '/proc/1/mem' (Permission denied)")
+file = io.open(fname, "w")
+file:write("txt txt txt\n")
+file:write("3.1 3.2 3.3\n")
+io.close(file)
+check_err(function() S.vort_list:load(fname)         end, nil)
+check_val(function() return #S.vort_list             end, 3)
+check_val(function()
+    local gsum = 0
+    for _, obj in ipairs(S.vort_list) do
+        gsum = gsum + obj.g
+    end
+    return gsum
+end, 2001.3)
+
+file = io.open(fname, "w")
+print(fname)
+file:write("\x66\x66\x66\x66\x66\x66\x10\x40") -- 4.1
+file:write("\xCC\xCC\xCC\xCC\xCC\xCC\x10\x40") -- 4.2
+file:write("\x33\x33\x33\x33\x33\x33\x11\x40") -- 4.3
+file:write("\x33\x33\x33\x33\x33\x33\x16\x40") -- not read
+file:write("\x33\x33\x33\x33\x33\x33\x16\x40") -- not read
+file:write("\x33\x33\x33\x33\x33\x33\x16")     -- not read
+io.close(file)
+check_err(function() S.vort_list:load_bin(fname)     end, nil)
+check_val(function() return #S.vort_list             end, 4)
+check_val(function() return tostring(S.vort_list[4]) end, "TObj(4.1,4.2,4.3)")
+check_val(function() return tostring(S.vort_list[5]) end, "nil")
+os.remove(fname)
 
 
 os.exit(FAIL)

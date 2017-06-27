@@ -98,7 +98,7 @@ int luavvd_setTTime(lua_State *L) {
     }
     
     const char *typ = luaL_typename(L, 2);
-    lua_pushfstring(L, "table or number expected, got %s", typ);
+    lua_pushfstring(L, "number or table expected, got %s", typ);
     return 1;
 }
 

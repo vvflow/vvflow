@@ -33,7 +33,7 @@ static int objlist_load_txt(lua_State *L) {
     const char* fname = luaL_checkstring(L, 2);
     int err = Space::load_list_txt(*li, fname);
     if (err) {
-        luaL_error(L, "can not load '%s' (%s)\n", fname, strerror(err));
+        luaL_error(L, "can not load '%s' (%s)", fname, strerror(err));
     }
     return 0;
 }
@@ -88,10 +88,7 @@ static int objlist_getindex(lua_State *L) {
 
     if (lua_isnumber(L, 2)) {
         lua_Integer idx = lua_tointeger(L, 2)-1;
-        if (idx < 0 || idx >= li->size()) {
-            lua_pushnil(L);
-            return 1;
-        } else {
+        if (idx >= 0 && idx < li->size()) {
             lua_pushTObj(L, &li->at(idx));
             return 1;
         }
@@ -102,10 +99,10 @@ static int objlist_getindex(lua_State *L) {
             lua_pushcfunction(L, f->func);
             return 1;
         }
-        return luaL_error(L, "TList has no member '%s'", name);
     }
 
-    return luaL_error(L, "TList invalid key (string or integer expected, got %s)", luaL_typename(L, 2));
+    lua_pushnil(L);
+    return 1;
 }
 
 static int objlist_getnext(lua_State *L) {
@@ -120,9 +117,7 @@ static int objlist_getnext(lua_State *L) {
         lua_pushTObj(L, &li->at(idx));
         return 2;
     }
-
 }
-
 
 static int objlist_getpairs(lua_State *L) {
     lua_pushcfunction(L, objlist_getnext);

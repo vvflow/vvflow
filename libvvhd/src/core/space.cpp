@@ -726,15 +726,9 @@ int Space::load_list_bin(vector<TObj>& li, const char* filename)
     fin.open(filename, ios::in | ios::binary);
     if (!fin) { return errno; }
 
-    fin.seekg (0, ios::end);
-    // size_t N = (size_t(fin.tellg())-1024)/(sizeof(double)*3);
-    fin.seekp(1024, ios::beg);
-
     TObj obj(0, 0, 0);
-
-    while ( fin.good() )
+    while ( fin.read(reinterpret_cast<char*>(&obj), 3*sizeof(double)) )
     {
-        fin.read((char*)(&obj), 3*sizeof(double));
         li.push_back(obj);
     }
 

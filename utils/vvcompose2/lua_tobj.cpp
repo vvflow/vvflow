@@ -19,7 +19,7 @@ static const struct luavvd_member tobj_members[] = {
 };
 
 static const struct luavvd_method tobj_methods[] = {
-    {"2string", tobj_tostring},
+    {"tostring", tobj_tostring},
     {NULL, NULL}
 };
 
@@ -61,7 +61,8 @@ static int tobj_getindex(lua_State *L) {
         return 1;
     }
 
-    return luaL_error(L, "TObj has no member '%s'", name);
+    lua_pushnil(L);
+    return 1;
 }
 
 static const struct luaL_Reg luavvd_tobj [] = {
