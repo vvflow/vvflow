@@ -138,7 +138,8 @@ static int luavvd_getindex(lua_State *L) {
         return 1;
     }
 
-    return luaL_error(L, "S has no member '%s'", name);
+    lua_pushnil(L);
+    return 1;
 }
 
 

@@ -5,6 +5,12 @@
 #include "getset.h"
 #include "lua_tvec.h"
 
+static int tvec_abs(lua_State *L) {
+    TVec* vec = lua_checkTVec(L, 1);
+    lua_pushnumber(L, vec->abs());
+    return 1;
+}
+
 static int tvec_abs2(lua_State *L) {
     TVec* vec = lua_checkTVec(L, 1);
     lua_pushnumber(L, vec->abs2());
@@ -24,6 +30,7 @@ static const struct luavvd_member tvec_members[] = {
 };
 
 static const struct luavvd_method tvec_methods[] = {
+    {"abs",      tvec_abs},
     {"abs2",     tvec_abs2},
     {"tostring", tvec_tostring},
     {NULL, NULL}
@@ -67,7 +74,8 @@ static int tvec_getindex(lua_State *L) {
         return 1;
     }
 
-    return luaL_error(L, "TVec has no member '%s'", name);
+    lua_pushnil(L);
+    return 1;
 }
 
 static const struct luaL_Reg luavvd_tvec [] = {

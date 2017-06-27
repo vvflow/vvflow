@@ -29,7 +29,7 @@ end
 
 -- space_getindex, space_setindex
 check_err(function() S.foo = nil end, "S can not assign 'foo'")
-check_err(function() return S.foo end, "S has no member 'foo'")
+check_val(function() return S.foo end, nil)
 check_err(function() return S.load() end, "bad argument #1 to 'load' (S expected, got no value)")
 check_err(function() return S.save() end, "bad argument #1 to 'save' (S expected, got no value)")
 check_err(function() return S:load() end, "bad argument #1 to 'load' (string expected, got no value)")
@@ -85,8 +85,26 @@ check_val(function() return tostring(S.gravity) end, "TVec(15.1,15.2)")
 check_val(function() return S.gravity:tostring() end, "TVec(15.1,15.2)")
 check_val(function() return S.gravity.x end, 15.1)
 check_val(function() return S.gravity.y end, 15.2)
+check_val(function() return S.gravity.z end, nil)
 check_val(function() return S.gravity:abs2() end, 15.1^2 + 15.2^2)
 check_val(function() return S.gravity:abs() end, math.sqrt(15.1^2 + 15.2^2))
+
+-- ShellScript
+check_err(function() S.inf_vx = "z" end, "bad value for S.inf_vx (invalid expression 'z')")
+check_err(function() S.inf_vx = {1} end, "bad value for S.inf_vx (string or ShellScript expected, got table)")
+check_err(function() S.inf_vx = 1.0 end, "bad value for S.inf_vx (string or ShellScript expected, got number)")
+check_err(function() S.inf_vx = nil end, "bad value for S.inf_vx (string or ShellScript expected, got nil)")
+check_err(function() S.inf_vx.s = 0 end,    "ShellScript has no parameters")
+S.inf_vx = "sin(2*pi*t/16)"
+S.inf_vy = "sin(2*pi*t/32)"
+check_val(function() return tostring(S.inf_vx) end, "sin(2*pi*t/16)")
+check_val(function() return tostring(S.inf_vy) end, "sin(2*pi*t/32)")
+check_val(function() return S.inf_vx:tostring() end, "sin(2*pi*t/16)")
+check_val(function() return S.inf_vy:tostring() end, "sin(2*pi*t/32)")
+check_val(function() return S.inf_vx:eval(4) end, 1)
+check_val(function() return S.inf_vy:eval(8) end, 1)
+check_val(function() return S.inf_vx.member end, nil)
+
 
 -- inf_vx
 -- inf_vy

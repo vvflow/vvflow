@@ -20,8 +20,8 @@ static int shellscript_tostring(lua_State *L) {
 }
 
 static const struct luaL_Reg shellscript_methods[] = {
-    {"eval",    shellscript_eval},
-    {"2string", shellscript_tostring},
+    {"eval",     shellscript_eval},
+    {"tostring", shellscript_tostring},
     {NULL, NULL}
 };
 
