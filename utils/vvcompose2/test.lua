@@ -183,6 +183,7 @@ check_val(function() return #S.streak_domain_list end, 0)
 check_val(function() return S.vort_list.foo       end, nil)
 check_val(function() return S.vort_list[0]        end, nil)
 check_val(function() return S.vort_list[1]        end, nil)
+check_err(function() S.vort_list = S.sink_list    end, "S can not assign 'vort_list'")
 check_err(function() S.vort_list.foo = nil end, "TList can not assign anything")
 check_err(function() S.vort_list[0]  = nil end, "TList can not assign anything")
 check_err(function() S.vort_list[1]  = nil end, "TList can not assign anything")
@@ -239,7 +240,6 @@ check_val(function()
 end, 2001.3)
 
 file = io.open(fname, "w")
-print(fname)
 file:write("\x66\x66\x66\x66\x66\x66\x10\x40") -- 4.1
 file:write("\xCC\xCC\xCC\xCC\xCC\xCC\x10\x40") -- 4.2
 file:write("\x33\x33\x33\x33\x33\x33\x11\x40") -- 4.3

@@ -158,11 +158,6 @@ vector<TObj>* checkObjList(lua_State *L, int idx) {
     return *udat;
 }
 
-int luavvd_setObjList(lua_State *L) {
-    lua_pushfstring(L, "TList is static, it can not be assigned");
-    return 1;
-}
-
 int luavvd_getObjList(lua_State *L) {
     vector<TObj>* li = (vector<TObj>*)lua_touserdata(L, 1);    
     pushObjList(L, li);

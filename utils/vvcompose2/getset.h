@@ -14,7 +14,6 @@ int luavvd_setTTime(lua_State *L);  // (TTime*)
 int luavvd_setTVec(lua_State *L);   // (TVec*)
 int luavvd_setTVec3D(lua_State *L); // (TVec3D*)
 int luavvd_setShellScript(lua_State *L); // (ShellScript*)
-int luavvd_setObjList(lua_State *L); // (std::vector<TObj>*)
 /* return *ptr
 pop
     1: ptr (lightuserdata)

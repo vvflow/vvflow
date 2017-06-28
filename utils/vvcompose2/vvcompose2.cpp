@@ -83,11 +83,10 @@ static const struct luavvd_member space_members[] = {
     {"dt_profile", luavvd_getTTime, luavvd_setTTime, offsetof(Space, dt_profile) },
 
     // {"body_list", luavvd_getbodylist, luavvd_setbodylist, offsetof(Space, BodyList) },
-    {"vort_list", luavvd_getObjList, luavvd_setObjList, offsetof(Space, VortexList) },
-    {"sink_list", luavvd_getObjList, luavvd_setObjList, offsetof(Space, SourceList) },
-    {"streak_source_list", luavvd_getObjList, luavvd_setObjList, offsetof(Space, StreakSourceList) },
-    {"streak_domain_list", luavvd_getObjList, luavvd_setObjList, offsetof(Space, StreakList) },
-
+    {"vort_list",          luavvd_getObjList, NULL, offsetof(Space, VortexList) },
+    {"sink_list",          luavvd_getObjList, NULL, offsetof(Space, SourceList) },
+    {"streak_source_list", luavvd_getObjList, NULL, offsetof(Space, StreakSourceList) },
+    {"streak_domain_list", luavvd_getObjList, NULL, offsetof(Space, StreakList) },
 
     {NULL, NULL, NULL, 0} /* sentinel */    
 };
@@ -105,6 +104,7 @@ static int luavvd_newindex(lua_State *L) {
 
     for (auto f = space_members; f->name; f++) {
         if (strcmp(name, f->name)) continue;
+        if (!f->setter) break;
         lua_pushcfunction(L, f->setter);
         lua_pushlightuserdata(L, (char*)S + f->offset);
         lua_pushvalue(L, 3);
