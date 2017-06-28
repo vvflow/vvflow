@@ -11,6 +11,7 @@
 #include "lua_tbody.h"
 #include "lua_shellscript.h"
 #include "lua_objlist.h"
+#include "gen_body.h"
 
 int stackDump(lua_State *L)
 {
@@ -149,7 +150,6 @@ static const struct luaL_Reg luavvd_space [] = {
     {NULL, NULL} /* sentinel */
 };
 
-int luavvd_gen_cylinder(lua_State *L);
 extern "C" {
     int luaopen_vvd (lua_State *L);
 }
