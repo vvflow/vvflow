@@ -30,6 +30,20 @@ function check_val(fn, val_need)
     end
 end
 
+function check_dev(fn, val_need, precision)
+    local ok, val_have = pcall(fn)
+    info = debug.getinfo(2)
+    if ok then
+        ok = math.abs(val_have-val_need) < precision
+    end
+    if not ok then
+        printf("%s:%s: Unexpected value", info.short_src, info.currentline)
+        printf("Have: %s", val_have)
+        printf("Need: %s", val_need)
+        FAIL = 1
+    end
+end
+
 -- inf, nan
 check_val(function() return  inf end,  1/0)
 check_val(function() return -inf end, -1/0)
@@ -138,6 +152,7 @@ check_val(function() return S.inf_vx.member end, nil)
 -- TBody
 body = load_body("/dev/null")
 check_val(function() return #body                         end, 0)
+check_val(function() return body.foo                      end, nil)
 check_val(function() return body.label                    end, "")
 check_val(function() return tostring(body.holder_pos)     end, "TVec3D(0,0,0)" )
 check_val(function() return tostring(body.delta_pos)      end, "TVec3D(0,0,0)" )
@@ -169,10 +184,12 @@ check_val(function() return #body.holder_pos:totable()    end, 3)
 check_val(function() return body.holder_pos:totable()[1]  end, 16.1)
 check_val(function() return body.holder_pos:totable()[2]  end, 16.2)
 check_val(function() return body.holder_pos:totable()[3]  end, 16.3)
-check_val(function() return body.holder_pos.r.x end, 16.1)
-check_val(function() return body.holder_pos.r.y end, 16.2)
-check_val(function() return body.holder_pos.o   end, 16.3)
-check_val(function() return body.holder_pos.d   end, 16.3*180/math.pi)
+body.holder_pos.r = {17.1, 17.2}
+body.holder_pos.d = 17.3*180/math.pi
+check_val(function() return body.holder_pos.r.x end, 17.1)
+check_val(function() return body.holder_pos.r.y end, 17.2)
+check_val(function() return body.holder_pos.o   end, 17.3)
+check_val(function() return body.holder_pos.d   end, 17.3*180/math.pi)
 check_val(function() return body.holder_pos.z   end, nil)
 
 -- ObjList
@@ -272,5 +289,21 @@ check_err(function() gen_cylinder{ r=-11, N=1 } end, "bad argument #1 to 'gen_cy
 check_err(function() gen_cylinder{ r=1, N=1, foo=5 } end, "bad argument #1 to 'gen_cylinder' (excess parameter 'foo')")
 check_val(function() return #gen_cylinder{ r=1, N=10 } end, 10)
 check_val(function() return #gen_cylinder{ r=0.5/math.pi, dl=1/10 } end, 10)
+local cyl = gen_cylinder{ r=1, N=500 }
+check_dev(function() return cyl:get_arclen() end, 2*math.pi, 1e-4)
+check_dev(function() return cyl:get_area() end, math.pi, 1e-4)
+check_dev(function() return cyl:get_moi_c() end, math.pi/2, 1e-4)
+check_err(function() cyl:move_r({1, 2}) end, nil)
+check_dev(function() return cyl:get_com()[1] end, 1, 1e-8)
+check_dev(function() return cyl:get_com()[2] end, 2, 1e-8)
+check_dev(function() return cyl:get_axis()[1] end, 1, 1e-8)
+check_dev(function() return cyl:get_axis()[2] end, 2, 1e-8)
+check_err(function() cyl.holder_pos.r = {0,0} end, nil)
+check_err(function() cyl:move_o(math.pi/4) end, nil)
+check_err(function() cyl:move_d(45) end, nil)
+check_dev(function() return cyl:get_com()[1] end, -2, 1e-8)
+check_dev(function() return cyl:get_com()[2] end, 1, 1e-8)
+check_dev(function() return cyl:get_axis()[1] end, 0, 1e-8)
+check_dev(function() return cyl:get_axis()[2] end, 0, 1e-8)
 
 os.exit(FAIL)

@@ -63,11 +63,13 @@ int luavvd_gen_cylinder(lua_State *L) {
 
     for (size_t i=0; i<N; i++) {
         double a = double(i)/N*2*M_PI;
-        att.corner.x = -r*sin(a);
-        att.corner.y = +r*cos(a);
+        att.corner.x = -r*cos(a);
+        att.corner.y = +r*sin(a);
         body->alist.push_back(att);
     }
 
+    body->doUpdateSegments();
+    body->doFillProperties();
     bodymap[body.get()] = body;
     pushTBody(L, body.get());
     return 1;

@@ -49,6 +49,39 @@ static int tbody_move_d(lua_State *L) {
     return 0;
 }
 
+static int tbody_get_surface(lua_State *L) {
+    lua_pushnumber(L, checkTBody(L, 1)->get_surface());
+    return 1;
+}
+static int tbody_get_area(lua_State *L) {
+    lua_pushnumber(L, checkTBody(L, 1)->get_area());
+    return 1;
+}
+static int tbody_get_moi_c(lua_State *L) {
+    lua_pushnumber(L, checkTBody(L, 1)->get_moi_c());
+    return 1;
+}
+static int tbody_get_com(lua_State *L) {
+    TBody* body = checkTBody(L, 1);
+    TVec com = body->get_com();
+    lua_newtable(L);
+    lua_pushnumber(L, com.x);
+    lua_rawseti(L, -2, 1);
+    lua_pushnumber(L, com.y);
+    lua_rawseti(L, -2, 2);
+    return 1;
+}
+static int tbody_get_axis(lua_State *L) {
+    TBody* body = checkTBody(L, 1);
+    TVec axis = body->get_axis();
+    lua_newtable(L);
+    lua_pushnumber(L, axis.x);
+    lua_rawseti(L, -2, 1);
+    lua_pushnumber(L, axis.y);
+    lua_rawseti(L, -2, 2);
+    return 1;
+}
+
 static const struct luavvd_member tbody_members[] = {
     {"label",           luavvd_getstring,      luavvd_setstring,      offsetof(TBody, label) },
     {"holder_pos",      luavvd_getTVec3D,      luavvd_setTVec3D,      offsetof(TBody, holder) },
@@ -73,6 +106,11 @@ static const struct luavvd_method tbody_methods[] = {
     {"move_r", tbody_move_r},
     {"move_o", tbody_move_o},
     {"move_d", tbody_move_d},
+    {"get_arclen", tbody_get_surface},
+    {"get_area", tbody_get_area},
+    {"get_moi_c", tbody_get_moi_c},
+    {"get_com", tbody_get_com},
+    {"get_axis", tbody_get_axis},
     {NULL, NULL}
 };
 
@@ -92,8 +130,7 @@ static int tbody_newindex(lua_State *L) {
         return 0;
     }
 
-    luaL_error(L, "TBody can not assign '%s'", name);
-    return 0;
+    return luaL_error(L, "TBody can not assign '%s'", name);
 }
 
 static int tbody_getindex(lua_State *L) {
@@ -114,7 +151,8 @@ static int tbody_getindex(lua_State *L) {
         return 1;
     }
 
-    return luaL_error(L, "TBody has no member '%s'", name);
+    lua_pushnil(L);
+    return 1;
 }
 
 static int tbody_getlen(lua_State *L) {
