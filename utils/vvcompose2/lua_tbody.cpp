@@ -82,6 +82,16 @@ static int tbody_get_axis(lua_State *L) {
     return 1;
 }
 
+static int tbody_totable(lua_State *L) {
+    TBody* body = checkTBody(L, 1);
+    lua_newtable(L);
+    for (int i=0; i<body->alist.size(); i++) {
+        lua_pushTVec(L, &body->alist[i].r);
+        lua_rawseti(L, -2, i+1);
+    }
+    return 1;
+}
+
 static const struct luavvd_member tbody_members[] = {
     {"label",           luavvd_getstring,      luavvd_setstring,      offsetof(TBody, label) },
     {"holder_pos",      luavvd_getTVec3D,      luavvd_setTVec3D,      offsetof(TBody, holder) },
@@ -111,6 +121,7 @@ static const struct luavvd_method tbody_methods[] = {
     {"get_moi_c", tbody_get_moi_c},
     {"get_com", tbody_get_com},
     {"get_axis", tbody_get_axis},
+    {"totable", tbody_totable},
     {NULL, NULL}
 };
 
@@ -251,3 +262,23 @@ int luavvd_load_body(lua_State *L) {
 //     TVec* vec = (TVec*)lua_touserdata(L, 1);    
 //     pushTVec(L, vec);
 // }
+
+
+void gen_line(std::vector<TAtt>& alist, TVec p1, TVec p2, size_t N, uint32_t slip) {
+    TAtt att;
+    att.slip = slip;
+    for (size_t i=0; i<N; i++) {
+        att.corner = p1 + (p2-p1)*i/N;
+        alist.push_back(att);
+    }
+}
+
+void gen_arc(std::vector<TAtt>& alist, TVec c, double R, double a1, double a2, size_t N, uint32_t slip) {
+    TAtt att;
+    att.slip = slip;
+    for (size_t i=0; i<N; i++) {
+        double ai = a1 + (a2-a1)*double(i)/double(N);
+        att.corner = c + TVec(R*cos(ai), R*sin(ai));
+        alist.push_back(att);
+    }
+}

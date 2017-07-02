@@ -11,7 +11,6 @@
 #include "lua_tbody.h"
 #include "lua_shellscript.h"
 #include "lua_objlist.h"
-#include "gen_body.h"
 
 int stackDump(lua_State *L)
 {

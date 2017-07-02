@@ -5,7 +5,6 @@
 #include <map>
 
 #include "getset.h"
-#include "gen_body.h"
 #include "lua_tbody.h"
 
 extern std::map<TBody*, shared_ptr<TBody>> bodymap;
@@ -18,7 +17,7 @@ int luavvd_gen_cylinder(lua_State *L) {
     int is_ok;
     lua_Integer N=0;
     lua_Number  dl=0.0;
-    lua_Number  r=0.0;
+    lua_Number  R=0.0;
 
     lua_getfield(L, 1, "N");
     if (!lua_isnil(L, -1)) {
@@ -41,12 +40,12 @@ int luavvd_gen_cylinder(lua_State *L) {
     lua_pushnil(L);
     lua_setfield(L, 1, "dl");
 
-    lua_getfield(L, 1, "r");
-    r = lua_tonumberx(L, -1, &is_ok);
-    luaL_argcheck(L, is_ok&& isfinite(r), 1, "'r' must be a number");
-    luaL_argcheck(L, r > 0, 1, "'r' must be positive");
+    lua_getfield(L, 1, "R");
+    R = lua_tonumberx(L, -1, &is_ok);
+    luaL_argcheck(L, is_ok&& isfinite(R), 1, "'R' must be a number");
+    luaL_argcheck(L, R > 0, 1, "'R' must be positive");
     lua_pushnil(L);
-    lua_setfield(L, 1, "r");
+    lua_setfield(L, 1, "R");
 
     lua_pushnil(L);
     if (lua_next(L, 1)) {
@@ -55,18 +54,11 @@ int luavvd_gen_cylinder(lua_State *L) {
         luaL_argerror(L, 1, lua_tostring(L, -1));
     }
 
-    TAtt att;
-    att.slip = 0;
     if (!N) {
-        N = ceil(2*M_PI*r/dl);
+        N = ceil(2*M_PI*R/dl);
     }
 
-    for (size_t i=0; i<N; i++) {
-        double a = double(i)/N*2*M_PI;
-        att.corner.x = -r*cos(a);
-        att.corner.y = +r*sin(a);
-        body->alist.push_back(att);
-    }
+    gen_arc(body->alist, TVec(0, 0), R, 2*M_PI, 0, N);
 
     body->doUpdateSegments();
     body->doFillProperties();

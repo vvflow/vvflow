@@ -281,15 +281,15 @@ check_err(function() gen_cylinder{ dl=nan } end, "bad argument #1 to 'gen_cylind
 check_err(function() gen_cylinder{ dl=inf } end, "bad argument #1 to 'gen_cylinder' ('dl' must be a number)")
 check_err(function() gen_cylinder{ dl=-11 } end, "bad argument #1 to 'gen_cylinder' ('dl' must be positive)")
 check_err(function() gen_cylinder{ N=1, dl=1 } end, "bad argument #1 to 'gen_cylinder' ('N' and 'dl' are mutually exclusive)")
-check_err(function() gen_cylinder{ r=1       } end, "bad argument #1 to 'gen_cylinder' (either 'N' or dl' must be specified)")
-check_err(function() gen_cylinder{ r={0}, N=1 } end, "bad argument #1 to 'gen_cylinder' ('r' must be a number)")
-check_err(function() gen_cylinder{ r=inf, N=1 } end, "bad argument #1 to 'gen_cylinder' ('r' must be a number)")
-check_err(function() gen_cylinder{ r=nan, N=1 } end, "bad argument #1 to 'gen_cylinder' ('r' must be a number)")
-check_err(function() gen_cylinder{ r=-11, N=1 } end, "bad argument #1 to 'gen_cylinder' ('r' must be positive)")
-check_err(function() gen_cylinder{ r=1, N=1, foo=5 } end, "bad argument #1 to 'gen_cylinder' (excess parameter 'foo')")
-check_val(function() return #gen_cylinder{ r=1, N=10 } end, 10)
-check_val(function() return #gen_cylinder{ r=0.5/math.pi, dl=1/10 } end, 10)
-local cyl = gen_cylinder{ r=1, N=500 }
+check_err(function() gen_cylinder{ R=1       } end, "bad argument #1 to 'gen_cylinder' (either 'N' or dl' must be specified)")
+check_err(function() gen_cylinder{ R={0}, N=1 } end, "bad argument #1 to 'gen_cylinder' ('R' must be a number)")
+check_err(function() gen_cylinder{ R=inf, N=1 } end, "bad argument #1 to 'gen_cylinder' ('R' must be a number)")
+check_err(function() gen_cylinder{ R=nan, N=1 } end, "bad argument #1 to 'gen_cylinder' ('R' must be a number)")
+check_err(function() gen_cylinder{ R=-11, N=1 } end, "bad argument #1 to 'gen_cylinder' ('R' must be positive)")
+check_err(function() gen_cylinder{ R=1, N=1, foo=5 } end, "bad argument #1 to 'gen_cylinder' (excess parameter 'foo')")
+check_val(function() return #gen_cylinder{ R=1, N=10 } end, 10)
+check_val(function() return #gen_cylinder{ R=0.5/math.pi, dl=1/10 } end, 10)
+local cyl = gen_cylinder{ R=1, N=500 }
 check_dev(function() return cyl:get_arclen() end, 2*math.pi, 1e-4)
 check_dev(function() return cyl:get_area() end, math.pi, 1e-4)
 check_dev(function() return cyl:get_moi_c() end, math.pi/2, 1e-4)
@@ -305,5 +305,8 @@ check_dev(function() return cyl:get_com()[1] end, -2, 1e-8)
 check_dev(function() return cyl:get_com()[2] end, 1, 1e-8)
 check_dev(function() return cyl:get_axis()[1] end, 0, 1e-8)
 check_dev(function() return cyl:get_axis()[2] end, 0, 1e-8)
+
+-- gen_plate
+
 
 os.exit(FAIL)
