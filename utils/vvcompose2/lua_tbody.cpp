@@ -263,7 +263,6 @@ int luavvd_load_body(lua_State *L) {
 //     pushTVec(L, vec);
 // }
 
-
 void gen_line(std::vector<TAtt>& alist, TVec p1, TVec p2, size_t N, uint32_t slip) {
     TAtt att;
     att.slip = slip;
