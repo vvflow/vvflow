@@ -28,6 +28,7 @@ add_executable(vvcompose2
 	lua_tbody.cpp
 	lua_objlist.cpp
 	gen_cylinder.cpp
+	gen_plate.cpp
 )
 target_link_libraries(vvcompose2 ${LIBVVHD_LIBRARIES} ${LUA_LIBRARY} dl)
 # target_link_libraries(vvcompose2 )

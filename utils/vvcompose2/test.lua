@@ -3,6 +3,7 @@ function printf(fmt, ...)
 end
 
 FAIL = 42
+pi = math.pi
 
 function check_err(fn, err_need)
     ret, err_have = pcall(fn)
@@ -307,6 +308,33 @@ check_dev(function() return cyl:get_axis()[1] end, 0, 1e-8)
 check_dev(function() return cyl:get_axis()[2] end, 0, 1e-8)
 
 -- gen_plate
+check_err(function() gen_plate() end, "bad argument #1 to 'gen_plate' (table expected, got no value)")
+check_err(function() gen_plate{ N={0} } end, "bad argument #1 to 'gen_plate' ('N' must be a number)")
+check_err(function() gen_plate{ N=nan } end, "bad argument #1 to 'gen_plate' ('N' must be positive)")
+check_err(function() gen_plate{ N=inf } end, "bad argument #1 to 'gen_plate' ('N' must be positive)")
+check_err(function() gen_plate{ N=-11 } end, "bad argument #1 to 'gen_plate' ('N' must be positive)")
+check_err(function() gen_plate{ dl={0} } end, "bad argument #1 to 'gen_plate' ('dl' must be a number)")
+check_err(function() gen_plate{ dl=nan } end, "bad argument #1 to 'gen_plate' ('dl' must be a number)")
+check_err(function() gen_plate{ dl=inf } end, "bad argument #1 to 'gen_plate' ('dl' must be a number)")
+check_err(function() gen_plate{ dl=-11 } end, "bad argument #1 to 'gen_plate' ('dl' must be positive)")
+check_err(function() gen_plate{ N=1, dl=1 } end, "bad argument #1 to 'gen_plate' ('N' and 'dl' are mutually exclusive)")
+check_err(function() gen_plate{ R1=1       } end, "bad argument #1 to 'gen_plate' (either 'N' or dl' must be specified)")
+check_err(function() gen_plate{ R1={0}, N=1 } end, "bad argument #1 to 'gen_plate' ('R1' must be a number)")
+check_err(function() gen_plate{ R1=inf, N=1 } end, "bad argument #1 to 'gen_plate' ('R1' must be a number)")
+check_err(function() gen_plate{ R1=nan, N=1 } end, "bad argument #1 to 'gen_plate' ('R1' must be a number)")
+check_err(function() gen_plate{ R1=-11, N=1 } end, "bad argument #1 to 'gen_plate' ('R1' must be positive)")
+check_err(function() gen_plate{ R1=1, N=1 } end, "bad argument #1 to 'gen_plate' ('R2' must be a number)")
+check_err(function() gen_plate{ R1=1, R2=1, N=1 } end, "bad argument #1 to 'gen_plate' ('L' must be a number)")
+check_err(function() gen_plate{ R1=1, R2=1, L=5, N=1, foo=5 } end, "bad argument #1 to 'gen_plate' (excess parameter 'foo')")
+check_val(function() return #gen_plate{ R1=0.5,    R2=0.5,    L=1, N=100 } end, 100)
+check_val(function() return #gen_plate{ R1=0.5/pi, R2=0.5/pi, L=1, dl=1/100 } end, 100+200)
+local plate = gen_plate{ R1=1, R2=1, L=2, N=1000 }
+check_dev(function() return plate:get_arclen() end, 2*math.pi+4, 1e-4)
+check_dev(function() return plate:get_area() end, math.pi+4, 1e-4)
+check_dev(function() return plate:get_com()[1] end, 1, 1e-8)
+check_dev(function() return plate:get_com()[2] end, 0, 1e-8)
+check_dev(function() return plate:get_axis()[1] end, 0, 1e-8)
+check_dev(function() return plate:get_axis()[2] end, 0, 1e-8)
 
 
 os.exit(FAIL)

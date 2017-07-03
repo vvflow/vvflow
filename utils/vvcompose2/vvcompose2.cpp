@@ -171,6 +171,8 @@ int luaopen_vvd (lua_State *L) {
     lua_setglobal(L, "load_body"); // pop 1
     lua_pushcfunction(L, luavvd_gen_cylinder); // push 1
     lua_setglobal(L, "gen_cylinder"); // pop 1
+    lua_pushcfunction(L, luavvd_gen_plate); // push 1
+    lua_setglobal(L, "gen_plate"); // pop 1
 
     luaopen_tvec(L);
     luaopen_tobj(L);
