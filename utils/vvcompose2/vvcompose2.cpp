@@ -186,6 +186,9 @@ int luaopen_vvd (lua_State *L) {
 
 int main (int argc, char** argv) {
     if (argc < 2) {
+        printf("vvcompose %s\n", libvvhd_gitinfo);
+        printf("revision: %s\n", libvvhd_gitrev);
+        printf("git_diff: %s\n", libvvhd_gitdiff);
         fprintf(stderr, "Missing filename\n");
         exit(-1);
     } else if (argc > 2) {

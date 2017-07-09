@@ -2,7 +2,7 @@ function printf(fmt, ...)
     print(string.format(fmt, ...))
 end
 
-FAIL = 42
+FAIL = 0
 pi = math.pi
 
 function check_err(fn, err_need)

@@ -27,6 +27,7 @@ $ sudo docker run -it --rm \
 cd /root
 cmake /vvflow
 make -j
+cpack
 ```
 
 Установка
