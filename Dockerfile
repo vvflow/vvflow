@@ -14,10 +14,9 @@ RUN apt-get update && apt-get install -y \
     make \
     pkg-config \
     python-pip \
-    ruby-rack \
     ruby-ronn \
-    ruby-sinatra \
     && pip install grip \
     && apt-get clean
 
+WORKDIR /root
 CMD /bin/bash

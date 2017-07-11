@@ -28,45 +28,119 @@ This manual will not discuss the Lua syntax in all details, although it will cov
 
 ## SYNTAX
 
+### Space
+
+The general concept in Vvflow CFD Suite is the _Space_ `S`.
+It holds all the data about the simulation.
+Here are listed all defined properties with their types and physical meaning.
+Description of all types is given below.
+
+  * S.*caption* (string) :
+    simulation caption is used in results filenames:
+    stepdata_*caption*.h5, results_*caption*/
+
+  * S.*re* (number) :
+    *re* = 1/*nyu*, where *nyu* is the kinematic viscosity of fluid
+
+  * S.*inf_g* (number) :
+    circulation over an infinite contour
+
+  * S.*inf_vx*, S.*inf_vy* (TEval) :
+    math expressions of undisturbed flow speed
+
+  * S.*gravity* (TVec) :
+    acceleration of gravity
+
+  * S.*time* (TTime) :
+    current simulation time
+
+  * S.*dt* (TTime) :
+    simulation timestep
+
+  * S.*dt_save* (TTime) :
+    period to save results
+
+  * S.*dt_streak* (TTime) :
+    period of streak domains shedding
+
+  * S.*dt_profile* (TTime) :
+    period to save profiles of pressure and friction
+
+  * S.*finish* (number) :
+    time to finish the simulation
+
+  * S.*body_list* (TBodyList) :
+    list of bodies
+
+  * S.*vort_list* (TObjList) :
+    list of vortex domains
+
+  * S.*sink_list* (TObjList) :
+    list of sources and sinks
+
+  * S.*streak_source_list* (TObjList) :
+    list of streak sources
+
+  * S.*streak_domain_list* (TObjList) :
+    list of streak particles
+
+  * S`:save`(*FILE*), S`:load`(*FILE*) :
+    save or load the Space in HDF5 format
+
+_Examples_:
+
+    S.re = 140
+    S.inf_vx = "1+0.5*sin(2*pi*0.1*t)" -- gusty wind
+    S.dt = "1/1000"
+    S.dt_save = "50/1000"
+    S.finish = 10
+    cyl = gen_cylinder{R=0.5, N=600}
+    cyl.label = "cyl"
+    cyl.density = 8 -- steel
+    cyl.spring_const.r.y = 10
+    S.body_list.insert(cyl)
+    S.caption = string.format("example_re%f", S.re)
+    S:save(S.caption..".h5")
+
 ### TVec
 
   * vec.*x* (number) :
-  
+
   * vec.*y* (number) :
-  
+
   * vec = {*x*, *y*} :
-  
+
   * vec`:abs2`() :
     return *x*\^2 + *y*\^2
-  
+
   * vec`:abs`() :
     return sqrt( *x*\^2 + *y*\^2 )
-  
+
   * vec`:tostring`(), `tostring`(vec) :
     return string "TVec(*x*,*y*)"
-  
+
   * vec`:totable`() :
     return Lua table {*x*, *y*}
 
 _Example_:
 
     S.gravity = {0, -9.8}
-    local my_vector = S.gravity
-    print(my_vector.x)      -- '0'
-    print(my_vector.y)      -- '-9.8'
-    print(my_vector:abs2()) -- '96.04', which is 9.8^2
-    print(my_vector:abs())  -- '9.8'
-    my_vector.x = 0 -- vectors are referenced by pointers
-    my_vector.y = 0 -- now gravity.y is 0
+    local vec = S.gravity
+    print(vec.x)      -- '0'
+    print(vec.y)      -- '-9.8'
+    print(vec:abs2()) -- '96.04', which is 9.8^2
+    print(vec:abs())  -- '9.8'
+    vec.x = 0 -- vectors are referenced by pointers
+    vec.y = 0 -- now gravity.y is 0
 
 ### TVec3D
 
-Extended version of TVec with the third rotational component (angle) 
+Extended version of TVec with the third rotational component (angle)
 
   * vec3d.*r* (TVec) :
-  
+
   * vec3d.*o* (number, radians) :
-  
+
   * vec3d.*d* (number, degrees) :
 
   * vec3d = {*x*, *y*, *o*} :
@@ -74,7 +148,7 @@ Extended version of TVec with the third rotational component (angle)
 
   * vec3d`:tostring`(), `tostring`(vec3d) :
     return string "TVec3D(*x*,*y*,*o*)"
-  
+
   * vec3d`:totable`() :
     return Lua table {*x*, *y*, *o*}
 
@@ -97,9 +171,9 @@ TObj is a general class for vortex domains, sources and sinks, streak domains an
 
   * obj.*g* (number) :
     In *S.vort_list* it denotes circulation of vortex domain;
-    
+
     In *S.sink_list* it denotes intensity of sources (positive) and sinks (negative);
-    
+
     In *S.streak_source_list* and *S.streak_domain_list* the value *g* is ignored (and copied as is);
 
   * obj = {*x*, *y*, *g*} :
@@ -112,12 +186,12 @@ TObj is a general class for vortex domains, sources and sinks, streak domains an
 
 TTime class represets time as a common fraction.
 There are three forms of assignment:
-  
+
   * time =  {*num*, *den*} :
-  
+
   * time = "*num*/*den*" :
     initialize with fraction *num*/*den*
-  
+
   * time = *t* :
     initialize with decimal *t*
 
@@ -137,7 +211,7 @@ TEval is implemented using [GNU libmatheval](https://www.gnu.org/software/libmat
 
   * e = "*expr*" :
     initialize with math expression *expr*
-  
+
   * e`:eval`(*t*) :
     evaluate the math expression
 
@@ -166,7 +240,7 @@ _Example_:
 
   * body.*holder_vx*, body.*holder_vy*, body.*holder_vo* (TEval):
     expressions of the holder movement speed
-  
+
   * body.*speed* (TVec3D) :
     the speed obtained by solving the System of Linear Equations.
     The rotation *axis* `=` *holder_pos* `+` *delta_pos*, see body`:get_axis`().
@@ -186,19 +260,19 @@ _Example_:
     Due to the mistake in code the damping should be negative (the author will fix it later).
 
   * body.*collision_min*, body.*collision_max* (TVec3D) :
-    boundaries for body movement (concerning the *axis*) 
+    boundaries for body movement (concerning the *axis*)
 
   * body.*bounce* (number) :
-    coefficient of restitution (considering collisions)    
+    coefficient of restitution (considering collisions)
 
   * body.*special_segment* (integer) :
     the number of segment where slip/no-slip boundary condition
-    is replaced with equation of the flow steadines at infinity  
+    is replaced with equation of the flow steadines at infinity
 
   * `#`body :
     return number of body segments
 
-  * body`:move_r`({*x*, *y*}) :
+  * body`:move_r`(TVec) :
     displace the body together with *holder_pos.r*, keeping *delta_pos* unchanged
 
   * body`:move_o`(*o*), body`:move_d`(*d*):
@@ -210,7 +284,7 @@ _Example_:
 
   * body`:get_axis`() :
     return Lua table {*axis.x*, *axis.y*}, where *axis* `=` *holder_pos.r* `+` *delta_pos.r*
-  
+
   * body`:get_com`() :
     return Lua table {*com.x*, *com.y*}, where *com* is the body center of mass
 
@@ -238,42 +312,51 @@ _Example_:
     cyl.spring_const.r.x = 1
     cyl.spring_const.r.y = inf
 
+### TObjList
 
-### ObjList
+  * list`:append`(*obj*, ...) :
+    append one or more objects to the list.
+    *obj* can be either TObj instance or Lua table {*x*, *y*, *g*}
+
+  * list`:clear`() :
+    remove all objects from list
+
+  * list`:load`(*FILE*) :
+    load body from text file with columns "*x* *y* *g*".
+    Loading does not remove any objects appended earlier.
+
+  * list`:load_bin`(*FILE*) :
+    load body from binary file, reading TObj values *x*, *y*, *g* from
+    three 8-byte blocks in double-precision floating-point format
+
+  * list`:totable`() :
+    return Lua table with objects (TObj)
+
+  * #list :
+    return number of objects in list
+
+  * `ipairs`(list) :
+    iterate over list
+
+_Example_:
+
+    S.vort_list:clear()
+    S.vort_list:load("vlist.txt")
+    local gsum = 0
+    for i, obj in ipairs(S.vort_list) do
+        gsum = gsum + obj.g
+    end
+    print("Total circulation =", gsum)
+
+    S.sink_list:clear()
+    S.sink_list:append({0, 0, 10}) -- add source
+    print(#S.sink_list)   -- '1'
+    print(S.sink_list[1]) -- 'TObj(0,0,10)'
 
 ### BodyList
 
-    
 
 Several built-in functions may be used to generate common shapes, which are described in section [BODY GENERATORS]. Alternatively, _TBody_ can be loaded from file:
-
-
-
-### Space
-
-
-## EXAMPLES
-
-### Space
-
-The most basic thing is the _Space_ `S`. Just as a usual class in programming, Space has member variables, accessed with dot (`.`). The complete list of members will be given later. Here is a short example: 
-
-    S.caption = "example"
-    S.re = 1/100 -- one can already use math here
-    -- the string after tho dashes is a comment, which is ignored
-
-_Space_ also has member functions:
-
-    S:save("example.h5")
-    S:load("example.h5")
-    -- the colon (`:`) is a part of Lua syntax
-    -- in fact it is just a short form of
-    -- S.save(S, "example.h5")
-
-### Body
-
-
-### ObjList
 
 _ObjList_ is a general class for It is used for _vortex domains_, _sources_ and _sinks_, _streak sources_ and _streak domains_.
 

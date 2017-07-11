@@ -13,27 +13,39 @@ include_directories(${LUA_INCLUDE_DIR})
 add_subdirectory(./../../libvvhd libvvhd)
 include_directories(${LIBVVHD_INCLUDE_DIR})
 
-#LUALIBVVD
-# add_library(vvd SHARED vvcompose2.cpp)
-# target_link_libraries(vvd ${LUA_LIBRARIES})
-
-# include_directories(./)
 add_executable(vvcompose2
-	vvcompose2.cpp
-	getset.cpp
-	lua_tvec.cpp
-	lua_tobj.cpp
-	lua_tvec3d.cpp
-	lua_shellscript.cpp
-	lua_tbody.cpp
-	lua_objlist.cpp
-	gen_cylinder.cpp
-	gen_plate.cpp
+    vvcompose2.cpp
+    getset.cpp
+    lua_tvec.cpp
+    lua_tobj.cpp
+    lua_tvec3d.cpp
+    lua_shellscript.cpp
+    lua_tbody.cpp
+    lua_objlist.cpp
+    gen_cylinder.cpp
+    gen_plate.cpp
 )
 target_link_libraries(vvcompose2 ${LIBVVHD_LIBRARIES} ${LUA_LIBRARY} dl)
-# target_link_libraries(vvcompose2 )
-
-# install (TARGETS vvd DESTINATION bin)
-install (TARGETS vvcompose2 DESTINATION bin)
-
 add_custom_command(TARGET vvcompose2 POST_BUILD COMMAND vvcompose2 ${CMAKE_CURRENT_SOURCE_DIR}/test.lua)
+
+SET(MAN_NAMES vvcompose.1)
+SET(MAN_FILES)
+foreach(m IN LISTS MAN_NAMES)
+    set(mf ${CMAKE_CURRENT_BINARY_DIR}/${m})
+    set(ms ${CMAKE_CURRENT_SOURCE_DIR}/${m}.md)
+    add_custom_command(
+        OUTPUT ${mf}
+        COMMAND ronn --roff --pipe ${ms} > ${mf}
+        DEPENDS ${ms}
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+        COMMENT "Building manpage ${mf}"
+        VERBATIM)
+    list(APPEND MAN_FILES ${mf})
+endforeach()
+add_custom_target(man ALL DEPENDS ${MAN_FILES})
+
+install (TARGETS vvcompose2 DESTINATION bin)
+install (FILES ${MAN_FILES} DESTINATION share/man/man1)
+
+
+
