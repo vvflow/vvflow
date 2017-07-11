@@ -21,7 +21,7 @@ static int tbody_move_r(lua_State *L) {
     lua_pushvalue(L, 2);
     lua_call(L, 2, 1);
     if (!lua_isnil(L, -1)) {
-        luaL_error(L, "bad argument #2 for TBody.move_r (%s)", lua_tostring(L, -1));
+        luaL_error(L, "bad argument #1 for TBody.move_r (%s)", lua_tostring(L, -1));
     }
 
     body->move(move_vec, move_vec);
@@ -86,31 +86,53 @@ static int tbody_totable(lua_State *L) {
     TBody* body = checkTBody(L, 1);
     lua_newtable(L);
     for (int i=0; i<body->alist.size(); i++) {
-        lua_pushTVec(L, &body->alist[i].r);
+        lua_pushTVec(L, &body->alist[i].corner);
         lua_rawseti(L, -2, i+1);
     }
     return 1;
 }
 
 static const struct luavvd_member tbody_members[] = {
-    {"label",           luavvd_getstring,      luavvd_setstring,      offsetof(TBody, label) },
-    {"holder_pos",      luavvd_getTVec3D,      luavvd_setTVec3D,      offsetof(TBody, holder) },
-    {"delta_pos",       luavvd_getTVec3D,      luavvd_setTVec3D,      offsetof(TBody, dpos) },
-    {"speed",           luavvd_getTVec3D,      luavvd_setTVec3D,      offsetof(TBody, speed_slae) },
-    {"collision_min",   luavvd_getTVec3D,      luavvd_setTVec3D,      offsetof(TBody, collision_min) },
-    {"collision_max",   luavvd_getTVec3D,      luavvd_setTVec3D,      offsetof(TBody, collision_max) },
-    {"spring_const",    luavvd_getTVec3D,      luavvd_setTVec3D,      offsetof(TBody, kspring) },
-    {"spring_damping",  luavvd_getTVec3D,      luavvd_setTVec3D,      offsetof(TBody, damping) },
-    {"holder_vx",       luavvd_getShellScript, luavvd_setShellScript, offsetof(TBody, speed_x) },
-    {"holder_vy",       luavvd_getShellScript, luavvd_setShellScript, offsetof(TBody, speed_y) },
-    {"holder_vo",       luavvd_getShellScript, luavvd_setShellScript, offsetof(TBody, speed_o) },
-    {"density",         luavvd_getdouble,      luavvd_setdouble,      offsetof(TBody, density) },
-    {"bounce",          luavvd_getdouble,      luavvd_setdouble,      offsetof(TBody, bounce) },
-    {"special_segment", luavvd_getint32,       luavvd_setint32,       offsetof(TBody, special_segment_no) },
+    {"label",           luavvd_getstring,      luavvd_setstring,      0 },
+    {"holder_pos",      luavvd_getTVec3D,      luavvd_setTVec3D,      0 },
+    {"delta_pos",       luavvd_getTVec3D,      luavvd_setTVec3D,      0 },
+    {"speed",           luavvd_getTVec3D,      luavvd_setTVec3D,      0 },
+    {"collision_min",   luavvd_getTVec3D,      luavvd_setTVec3D,      0 },
+    {"collision_max",   luavvd_getTVec3D,      luavvd_setTVec3D,      0 },
+    {"spring_const",    luavvd_getTVec3D,      luavvd_setTVec3D,      0 },
+    {"spring_damping",  luavvd_getTVec3D,      luavvd_setTVec3D,      0 },
+    {"holder_vx",       luavvd_getShellScript, luavvd_setShellScript, 0 },
+    {"holder_vy",       luavvd_getShellScript, luavvd_setShellScript, 0 },
+    {"holder_vo",       luavvd_getShellScript, luavvd_setShellScript, 0 },
+    {"density",         luavvd_getdouble,      luavvd_setdouble,      0 },
+    {"bounce",          luavvd_getdouble,      luavvd_setdouble,      0 },
+    {"special_segment", luavvd_getint32,       luavvd_setint32,       0 },
     // {"general_slip",    luavvd_getslip,        luavvd_setslip,        0 },
     // {"root_body",       luavvd_getrootbody,    luavvd_setrootbody,    0 },
     {NULL, NULL, NULL, 0} /* sentinel */    
 };
+
+#define BIND_MEMBER(NAME, MEMBER) \
+    else if (!strcmp(name, NAME)) { \
+        lua_pushlightuserdata(L, (char*)&body->MEMBER); \
+    }
+
+#define PUSH_MEMBER() \
+    if (0) ; \
+    BIND_MEMBER("label",           label) \
+    BIND_MEMBER("holder_pos",      holder) \
+    BIND_MEMBER("delta_pos",       dpos) \
+    BIND_MEMBER("speed",           speed_slae) \
+    BIND_MEMBER("collision_min",   collision_min) \
+    BIND_MEMBER("collision_max",   collision_max) \
+    BIND_MEMBER("spring_const",    kspring) \
+    BIND_MEMBER("spring_damping",  damping) \
+    BIND_MEMBER("holder_vx",       speed_x) \
+    BIND_MEMBER("holder_vy",       speed_y) \
+    BIND_MEMBER("holder_vo",       speed_o) \
+    BIND_MEMBER("density",         density) \
+    BIND_MEMBER("bounce",          bounce) \
+    BIND_MEMBER("special_segment", special_segment_no)
 
 static const struct luavvd_method tbody_methods[] = {
     {"move_r", tbody_move_r},
@@ -132,7 +154,7 @@ static int tbody_newindex(lua_State *L) {
     for (auto f = tbody_members; f->name; f++) {
         if (strcmp(name, f->name)) continue;
         lua_pushcfunction(L, f->setter);
-        lua_pushlightuserdata(L, (char*)body + f->offset);
+        PUSH_MEMBER();
         lua_pushvalue(L, 3);
         lua_call(L, 2, 1);
         if (!lua_isnil(L, -1)) {
@@ -151,7 +173,7 @@ static int tbody_getindex(lua_State *L) {
     for (auto f = tbody_members; f->name; f++) {
         if (strcmp(name, f->name)) continue;
         lua_pushcfunction(L, f->getter);
-        lua_pushlightuserdata(L, (char*)body + f->offset);
+        PUSH_MEMBER();
         lua_call(L, 1, 1);
         return 1;
     }
@@ -165,6 +187,8 @@ static int tbody_getindex(lua_State *L) {
     lua_pushnil(L);
     return 1;
 }
+
+#undef BIND_MEMBER
 
 static int tbody_getlen(lua_State *L) {
     TBody* body = checkTBody(L, 1);
