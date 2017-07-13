@@ -159,4 +159,5 @@ vector<TObj>* checkObjList(lua_State *L, int idx) {
 int luavvd_getObjList(lua_State *L) {
     vector<TObj>* li = (vector<TObj>*)lua_touserdata(L, 1);    
     pushObjList(L, li);
+    return 1;
 }

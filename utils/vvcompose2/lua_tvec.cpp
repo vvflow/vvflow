@@ -173,4 +173,5 @@ int luavvd_setTVec(lua_State *L) {
 int luavvd_getTVec(lua_State *L) {
     TVec* vec = (TVec*)lua_touserdata(L, 1);    
     lua_pushTVec(L, vec);
+    return 1;
 }

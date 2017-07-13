@@ -26,8 +26,7 @@ static const struct luaL_Reg shellscript_methods[] = {
 };
 
 static int shellscript_newindex(lua_State *L) {
-    luaL_error(L, "ShellScript has no parameters");
-    return 0;
+    return luaL_error(L, "ShellScript has no parameters");
 }
 
 static const struct luaL_Reg luavvd_shellscript [] = {
@@ -97,4 +96,5 @@ int luavvd_setShellScript(lua_State *L) {
 int luavvd_getShellScript(lua_State *L) {
     ShellScript* script = (ShellScript*)lua_touserdata(L, 1);    
     pushShellScript(L, script);
+    return 1;
 }

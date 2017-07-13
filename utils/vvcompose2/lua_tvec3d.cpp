@@ -185,4 +185,5 @@ int luavvd_setTVec3D(lua_State *L) {
 int luavvd_getTVec3D(lua_State *L) {
     TVec3D* vec = (TVec3D*)lua_touserdata(L, 1);    
     lua_pushTVec3D(L, vec);
+    return 1;
 }

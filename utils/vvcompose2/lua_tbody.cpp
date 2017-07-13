@@ -10,8 +10,6 @@
 #include "lua_shellscript.h"
 
 static int tbody_move_r(lua_State *L) {
-    shared_ptr<TBody> body = checkTBody(L, 1);
-
     // TVec vec = TVec();
     TVec3D move_vec = TVec3D();
     lua_pushcfunction(L, luavvd_setTVec);
@@ -22,26 +20,27 @@ static int tbody_move_r(lua_State *L) {
         luaL_error(L, "bad argument #1 for TBody.move_r (%s)", lua_tostring(L, -1));
     }
 
+    shared_ptr<TBody> body = checkTBody(L, 1);
     body->move(move_vec, move_vec);
 
     return 0;
 }
 
 static int tbody_move_o(lua_State *L) {
-    shared_ptr<TBody> body = checkTBody(L, 1);
     lua_Number val = luaL_checknumber(L, 2);
-
     TVec3D move_vec = TVec3D(0, 0, val);
+
+    shared_ptr<TBody> body = checkTBody(L, 1);
     body->move(move_vec, move_vec);
 
     return 0;
 }
 
 static int tbody_move_d(lua_State *L) {
-    shared_ptr<TBody> body = checkTBody(L, 1);
     lua_Number val = luaL_checknumber(L, 2);
-
     TVec3D move_vec = TVec3D(0, 0, val*C_PI/180.0);
+
+    shared_ptr<TBody> body = checkTBody(L, 1);
     body->move(move_vec, move_vec);
 
     return 0;
@@ -154,28 +153,29 @@ static const struct luavvd_method tbody_methods[] = {
 };
 
 static int tbody_newindex(lua_State *L) {
-    shared_ptr<TBody> body = checkTBody(L, 1);
     const char *name = luaL_checkstring(L, 2);
+    shared_ptr<TBody> body = checkTBody(L, 1);
 
     for (auto f = tbody_members; f->name; f++) {
         if (strcmp(name, f->name)) continue;
         lua_pushcfunction(L, f->setter);
         PUSH_MEMBER();
-        body.reset();
         lua_pushvalue(L, 3);
+        body.reset();
         lua_call(L, 2, 1);
         if (!lua_isnil(L, -1)) {
-            luaL_error(L, "bad value for TBody.%s (%s)", name, lua_tostring(L, -1));
+            return luaL_error(L, "bad value for TBody.%s (%s)", name, lua_tostring(L, -1));
         }
         return 0;
     }
 
+    body.reset();
     return luaL_error(L, "TBody can not assign '%s'", name);
 }
 
 static int tbody_getindex(lua_State *L) {
-    shared_ptr<TBody> body = checkTBody(L, 1);
     const char *name = luaL_checkstring(L, 2);
+    shared_ptr<TBody> body = checkTBody(L, 1);
 
     for (auto f = tbody_members; f->name; f++) {
         if (strcmp(name, f->name)) continue;

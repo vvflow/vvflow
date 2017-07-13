@@ -153,4 +153,5 @@ int luavvd_setTObj(lua_State *L) {
 int luavvd_getTObj(lua_State *L) {
     TObj* obj = (TObj*)lua_touserdata(L, 1);    
     lua_pushTObj(L, obj);
+    return 1;
 }
