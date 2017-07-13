@@ -159,29 +159,6 @@ _Example_:
     body.delta_pos.o = math.pi -- in radians
     body.delta_pos.d = 180 -- in degrees
 
-### TObj
-
-TObj is a general class for vortex domains, sources and sinks, streak domains and streak sources.
-
-  * obj.*r* (TVec) :
-    object position
-
-  * obj.*v* (TVec) :
-    object speed, for internal use only
-
-  * obj.*g* (number) :
-    In *S.vort_list* it denotes circulation of vortex domain;
-
-    In *S.sink_list* it denotes intensity of sources (positive) and sinks (negative);
-
-    In *S.streak_source_list* and *S.streak_domain_list* the value *g* is ignored (and copied as is);
-
-  * obj = {*x*, *y*, *g*} :
-    initialization with *r* = {*x*, *y*}, *v* = {0, 0}
-
-  * obj:`tostring`(), `tostring`(obj) :
-    return string "TObj(*x*,*y*,*g*)"
-
 ### TTime
 
 TTime class represets time as a common fraction.
@@ -312,6 +289,57 @@ _Example_:
     cyl.spring_const.r.x = 1
     cyl.spring_const.r.y = inf
 
+### TBodyList
+
+  * S.body_list`:insert`(*body*) :
+    add *body* to the list
+
+  * S.body_list`:erase`(*body*) :
+    remove *body* from the list
+
+  * S.body_list`:clear`() :
+    remove all bodies
+
+  * `#`S.body_list :
+    return number of bodies in list
+
+  * S.body_list[*i*] :
+    return body at position *i*.
+    Counting is valid from `1` to `#list`, other indices return `nil`.
+
+  * `ipairs`(S.body_list) :
+    iterate over bodies
+
+_Example_:
+
+    -- change body density
+    S:load("example_re140.h5")
+    S.body_list[1].density = 4
+    S:save("example_re140.h5")
+
+### TObj
+
+TObj is a general class for vortex domains, sources and sinks, streak domains and streak sources.
+
+  * obj.*r* (TVec) :
+    object position
+
+  * obj.*v* (TVec) :
+    object speed, for internal use only
+
+  * obj.*g* (number) :
+    In *S.vort_list* it denotes circulation of vortex domain;
+
+    In *S.sink_list* it denotes intensity of sources (positive) and sinks (negative);
+
+    In *S.streak_source_list* and *S.streak_domain_list* the value *g* is ignored (and copied as is);
+
+  * obj = {*x*, *y*, *g*} :
+    initialization with *r* = {*x*, *y*}, *v* = {0, 0}
+
+  * obj:`tostring`(), `tostring`(obj) :
+    return string "TObj(*x*,*y*,*g*)"
+
 ### TObjList
 
   * list`:append`(*obj*, ...) :
@@ -340,7 +368,7 @@ _Example_:
     Counting is valid from `1` to `#list`, other indices return `nil`.
 
   * `ipairs`(list) :
-    iterate over list
+    iterate over objects in list
 
 _Example_:
 
@@ -358,24 +386,113 @@ _Example_:
     print(S.sink_list[1]) -- 'TObj(0,0,10)'
     print(S.sink_list[2]) -- 'nil'
 
-### BodyList
-
-
-Several built-in functions may be used to generate common shapes, which are described in section [BODY GENERATORS]. Alternatively, _TBody_ can be loaded from file:
-
-_ObjList_ is a general class for It is used for _vortex domains_, _sources_ and _sinks_, _streak sources_ and _streak domains_.
-
-    S.vort_list:load("list.txt")
-    -- in three columns: x y g
-
-    S.sink_list:append({-1, 0, +1})
-    S.sink_list:append({+1, 0, -1})
-    -- positive is for source
-    -- negative is for sink
-
-    S.streak_source_list:clear()
-    S.streak_domain_list:clear()
-
-## EXTENDED TOPICS
-
 ## BODY GENERATORS
+
+### gen_cylinder{R, [N|dl]}
+
+Generate a cylinder with center at {0, 0}
+
+    #        .-'""'-.
+    #      .'        '.
+    #     /            \
+    #    ;              ;
+    #    ;       \      ;
+    #     \     R \    /
+    #      '.      \ .'
+    #        '-....-'
+
+  * `R` :
+    radius of the cylinder
+
+  * `N`, `dl` :
+    specify either number of segments or average segment length
+
+_Example_:
+cyl = gen_cylinder{R=0.5, N=500}
+
+### gen_semicyl{R, [N|dl]}
+
+The bottom half of a cylinder
+
+    #      ____________________
+    #     |          /         |
+    #     ;         /          ;
+    #      ;       / R        ;
+    #       \     /          /
+    #        '.  /         .`
+    #          `-.______.-'
+    #      
+
+### gen_plate{R1, R2, L, [N|dl]}
+
+Shape of a plate is formed by two circles and two tangents.
+Circles radius are `R1` and `R2`, their centers are {0, 0} and {0, `L`}.
+
+    #        .-'""""""""""""""""""""""""'-.
+    #      .'                             /'.
+    #     /                           R2 /   \
+    #    ;       __________ L _________ /     ;
+    #    ;      /                             ;
+    #     \    / R1                          /
+    #      '. /                            .'
+    #        '-..........................-'
+
+
+  * `R1`, `R2` :
+    radius of the left and right edge respectively
+
+  * `L` :
+    distance between circles centers
+
+  * `N`, `dl` :
+    specify either number of segments or average segment length
+
+### gen_parallelogram{L, H, d, [N|dl]}
+
+Generate parallelogram with origin is in bottom left corner.
+
+    #          _______________
+    #         /|            d /
+    #        / |             /
+    #       /  |H           /
+    #      /   |           /
+    #     /    |          /
+    #    /_____|_________/
+    #      L
+
+  * `L` :
+    basement length
+
+  * `H` :
+    height
+
+  * `d` :
+    angle in degrees
+
+  * `N`, `dl` :
+    specify either number of segments or average segment length
+
+### gen_roundrect{L, H, R, [N|dl]}
+
+Generate roundrect with origin in center.
+
+    #       .-."""""""""""""""""""""""""".-.
+    #     /`  ; R                           `\
+    #    ;    ;                               ;
+    #    |""""                                |
+    #    |                                    |
+    #    ;                                    ;
+    #     \                                  /
+    #      `'-'..........................'-'`
+
+  * `L` :
+    basement length
+
+  * `H` :
+    height
+
+  * `d` :
+    angle in degrees
+
+  * `N`, `dl` :
+    specify either number of segments or average segment length
