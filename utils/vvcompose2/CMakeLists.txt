@@ -22,11 +22,15 @@ add_executable(vvcompose2
     lua_shellscript.cpp
     lua_tbody.cpp
     lua_objlist.cpp
+    lua_bodylist.cpp
     gen_cylinder.cpp
     gen_plate.cpp
 )
 target_link_libraries(vvcompose2 ${LIBVVHD_LIBRARIES} ${LUA_LIBRARY} dl)
-add_custom_command(TARGET vvcompose2 POST_BUILD COMMAND vvcompose2 ${CMAKE_CURRENT_SOURCE_DIR}/test.lua)
+add_custom_command(
+    TARGET vvcompose2 POST_BUILD
+    COMMAND vvcompose2 ${CMAKE_CURRENT_SOURCE_DIR}/test.lua
+)
 
 SET(MAN_NAMES vvcompose.1)
 SET(MAN_FILES)

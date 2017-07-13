@@ -9,10 +9,8 @@
 #include "lua_tvec3d.h"
 #include "lua_shellscript.h"
 
-std::map<TBody*, shared_ptr<TBody>> bodymap;
-
 static int tbody_move_r(lua_State *L) {
-    TBody* body = checkTBody(L, 1);
+    shared_ptr<TBody> body = checkTBody(L, 1);
 
     // TVec vec = TVec();
     TVec3D move_vec = TVec3D();
@@ -30,7 +28,7 @@ static int tbody_move_r(lua_State *L) {
 }
 
 static int tbody_move_o(lua_State *L) {
-    TBody* body = checkTBody(L, 1);
+    shared_ptr<TBody> body = checkTBody(L, 1);
     lua_Number val = luaL_checknumber(L, 2);
 
     TVec3D move_vec = TVec3D(0, 0, val);
@@ -40,7 +38,7 @@ static int tbody_move_o(lua_State *L) {
 }
 
 static int tbody_move_d(lua_State *L) {
-    TBody* body = checkTBody(L, 1);
+    shared_ptr<TBody> body = checkTBody(L, 1);
     lua_Number val = luaL_checknumber(L, 2);
 
     TVec3D move_vec = TVec3D(0, 0, val*C_PI/180.0);
@@ -62,7 +60,7 @@ static int tbody_get_moi_c(lua_State *L) {
     return 1;
 }
 static int tbody_get_com(lua_State *L) {
-    TBody* body = checkTBody(L, 1);
+    shared_ptr<TBody> body = checkTBody(L, 1);
     TVec com = body->get_com();
     lua_newtable(L);
     lua_pushnumber(L, com.x);
@@ -72,7 +70,7 @@ static int tbody_get_com(lua_State *L) {
     return 1;
 }
 static int tbody_get_axis(lua_State *L) {
-    TBody* body = checkTBody(L, 1);
+    shared_ptr<TBody> body = checkTBody(L, 1);
     TVec axis = body->get_axis();
     lua_newtable(L);
     lua_pushnumber(L, axis.x);
@@ -83,13 +81,21 @@ static int tbody_get_axis(lua_State *L) {
 }
 
 static int tbody_totable(lua_State *L) {
-    TBody* body = checkTBody(L, 1);
+    shared_ptr<TBody> body = checkTBody(L, 1);
     lua_newtable(L);
     for (int i=0; i<body->alist.size(); i++) {
         lua_pushTVec(L, &body->alist[i].corner);
         lua_rawseti(L, -2, i+1);
     }
     return 1;
+}
+
+static int tbody_gc(lua_State *L) {
+    shared_ptr<TBody>* udat =
+        (shared_ptr<TBody>*)luaL_checkudata(L, 1, "TBody");
+    // printf("GC %p(%s) -> %ld\n", udat->get(), (**udat).label.c_str(), udat->use_count()-1);
+    udat->~shared_ptr<TBody>();
+    return 0;
 }
 
 static const struct luavvd_member tbody_members[] = {
@@ -148,13 +154,14 @@ static const struct luavvd_method tbody_methods[] = {
 };
 
 static int tbody_newindex(lua_State *L) {
-    TBody* body = checkTBody(L, 1);
+    shared_ptr<TBody> body = checkTBody(L, 1);
     const char *name = luaL_checkstring(L, 2);
 
     for (auto f = tbody_members; f->name; f++) {
         if (strcmp(name, f->name)) continue;
         lua_pushcfunction(L, f->setter);
         PUSH_MEMBER();
+        body.reset();
         lua_pushvalue(L, 3);
         lua_call(L, 2, 1);
         if (!lua_isnil(L, -1)) {
@@ -167,13 +174,14 @@ static int tbody_newindex(lua_State *L) {
 }
 
 static int tbody_getindex(lua_State *L) {
-    TBody* body = checkTBody(L, 1);
+    shared_ptr<TBody> body = checkTBody(L, 1);
     const char *name = luaL_checkstring(L, 2);
 
     for (auto f = tbody_members; f->name; f++) {
         if (strcmp(name, f->name)) continue;
         lua_pushcfunction(L, f->getter);
         PUSH_MEMBER();
+        body.reset();
         lua_call(L, 1, 1);
         return 1;
     }
@@ -191,7 +199,7 @@ static int tbody_getindex(lua_State *L) {
 #undef BIND_MEMBER
 
 static int tbody_getlen(lua_State *L) {
-    TBody* body = checkTBody(L, 1);
+    shared_ptr<TBody> body = checkTBody(L, 1);
     lua_pushinteger(L, body->size());
     return 1;
 }
@@ -200,6 +208,7 @@ static const struct luaL_Reg luavvd_tbody [] = {
     {"__newindex", tbody_newindex},
     {"__index",    tbody_getindex},
     {"__len",      tbody_getlen},
+    {"__gc",       tbody_gc},
     {NULL, NULL} /* sentinel */
 };
 
@@ -212,80 +221,34 @@ int luaopen_tbody (lua_State *L) {
     return 0;
 }
 
-void  pushTBody(lua_State *L, TBody* body) {
-    TBody** udat = (TBody**)lua_newuserdata(L, sizeof(TBody*));
-    *udat = body;
+void pushTBody(lua_State *L, shared_ptr<TBody>& body) {
+    shared_ptr<TBody>* udat =
+        (shared_ptr<TBody>*)lua_newuserdata(L, sizeof(shared_ptr<TBody>));
+    new (udat) shared_ptr<TBody>(body);
     luaL_getmetatable(L, "TBody");
     lua_setmetatable(L, -2);
+    // printf("++ %p(%s) -> %ld\n", udat->get(), (**udat).label.c_str(), udat->use_count());
 }
 
-TBody* checkTBody(lua_State *L, int idx) {
-    TBody** udat = (TBody**)luaL_checkudata(L, idx, "TBody");
+shared_ptr<TBody> checkTBody(lua_State *L, int idx) {
+    shared_ptr<TBody>* udat =
+        (shared_ptr<TBody>*)luaL_checkudata(L, idx, "TBody");
     return *udat;
 }
 
 int luavvd_load_body(lua_State *L) {
-    std::shared_ptr<TBody> body = std::make_shared<TBody>();
-    bodymap[body.get()] = body;
-
     const char* fname = luaL_checkstring(L, 1);
+
+    shared_ptr<TBody> body = std::make_shared<TBody>();
     int err = body->load_txt(fname);
     if (err) {
-        luaL_error(L, "can not load '%s' (%s)\n", fname, strerror(err));
+        body.reset();
+        return luaL_error(L, "can not load '%s' (%s)\n", fname, strerror(err));
     }
 
-    pushTBody(L, body.get());
+    pushTBody(L, body);
     return 1;
 }
-
-// int luavvd_setTBody(lua_State *L) {
-//     TBody* vec = (TBody*)lua_touserdata(L, 1);
-    
-//     int isnum[2];
-//     switch (lua_type(L, 2)) {
-//     case LUA_TTABLE:
-//         for (size_t rawlen = lua_rawlen(L, 2); rawlen != 2; ) {
-//             lua_pushfstring(L, "TBody needs table with two elements, got %d", rawlen);
-//             return 1;
-//         }
-
-//         lua_geti(L, 2, 1); // push table[1]
-//         lua_geti(L, 2, 2); // push table[2]        
-//         vec->x = lua_tonumberx(L, -2, &isnum[0]);
-//         vec->y = lua_tonumberx(L, -1, &isnum[1]);
-//         if (!isnum[0] || !isnum[1]) {
-//             const char *typ1 = luaL_typename(L, -2);
-//             const char *typ2 = luaL_typename(L, -1);
-//             lua_pushfstring(L, "TBody needs two numbers, got %s and %s", typ1, typ2);
-//             return 1;
-//         }
-//         return 0;
-//     case LUA_TUSERDATA:
-//         TBody** udata = (TBody**)luaL_testudata(L, 2, "TVec");
-
-//         if (!udata) {
-//             const char *typ;
-//             if (luaL_getmetafield(L, 2, "__name") == LUA_TSTRING)
-//                 typ = lua_tostring(L, -1);
-//             else
-//                 typ = "userdata";
-//             lua_pushfstring(L, "table or TVec expected, got %s", typ);
-//             return 1;    
-//         }
-
-//         *vec = **udata;
-//         return 0;
-//     }
-    
-//     const char *typ = luaL_typename(L, 2);
-//     lua_pushfstring(L, "table or TVec expected, got %s", typ);
-//     return 1;
-// }
-
-// int luavvd_getTBody(lua_State *L) {
-//     TVec* vec = (TVec*)lua_touserdata(L, 1);    
-//     pushTVec(L, vec);
-// }
 
 void gen_line(std::vector<TAtt>& alist, TVec p1, TVec p2, size_t N, uint32_t slip) {
     TAtt att;

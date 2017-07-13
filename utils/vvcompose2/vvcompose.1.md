@@ -332,8 +332,12 @@ _Example_:
   * list`:totable`() :
     return Lua table with objects (TObj)
 
-  * #list :
+  * `#`list :
     return number of objects in list
+
+  * list[*i*] :
+    return object at position *i*.
+    Counting is valid from `1` to `#list`, other indices return `nil`.
 
   * `ipairs`(list) :
     iterate over list
@@ -352,6 +356,7 @@ _Example_:
     S.sink_list:append({0, 0, 10}) -- add source
     print(#S.sink_list)   -- '1'
     print(S.sink_list[1]) -- 'TObj(0,0,10)'
+    print(S.sink_list[2]) -- 'nil'
 
 ### BodyList
 

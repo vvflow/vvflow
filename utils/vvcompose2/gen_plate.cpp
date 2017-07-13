@@ -7,11 +7,7 @@
 #include "getset.h"
 #include "lua_tbody.h"
 
-extern std::map<TBody*, shared_ptr<TBody>> bodymap;
-
 int luavvd_gen_plate(lua_State *L) {
-    std::shared_ptr<TBody> body = std::make_shared<TBody>();
-
     luaL_checktype(L, 1, LUA_TTABLE);
 
     int is_ok;
@@ -135,6 +131,8 @@ int luavvd_gen_plate(lua_State *L) {
         r2 = r2+gap;
     }
 
+    std::shared_ptr<TBody> body = std::make_shared<TBody>();
+
     gen_arc (body->alist, TVec(c2, 0), r2, -phi1, -phi2,              N_stop/2, stop<1);
     gen_line(body->alist, TVec(c2, 0)+r2*TVec(cos(phi2), -sin(phi2)),
                           TVec(c1, 0)+r1*TVec(cos(phi),  -sin(phi)),  N_side,   false);
@@ -146,7 +144,6 @@ int luavvd_gen_plate(lua_State *L) {
     body->doUpdateSegments();
     body->doFillProperties();
 
-    bodymap[body.get()] = body;
-    pushTBody(L, body.get());
+    pushTBody(L, body);
     return 1;
 }

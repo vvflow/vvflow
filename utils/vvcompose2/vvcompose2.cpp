@@ -11,6 +11,7 @@
 #include "lua_tbody.h"
 #include "lua_shellscript.h"
 #include "lua_objlist.h"
+#include "lua_bodylist.h"
 
 int stackDump(lua_State *L)
 {
@@ -82,7 +83,7 @@ static const struct luavvd_member space_members[] = {
     {"dt_streak",  luavvd_getTTime, luavvd_setTTime, offsetof(Space, dt_streak) },
     {"dt_profile", luavvd_getTTime, luavvd_setTTime, offsetof(Space, dt_profile) },
 
-    // {"body_list", luavvd_getbodylist, luavvd_setbodylist, offsetof(Space, BodyList) },
+    {"body_list",         luavvd_getBodyList, NULL, offsetof(Space, BodyList) },
     {"vort_list",          luavvd_getObjList, NULL, offsetof(Space, VortexList) },
     {"sink_list",          luavvd_getObjList, NULL, offsetof(Space, SourceList) },
     {"streak_source_list", luavvd_getObjList, NULL, offsetof(Space, StreakSourceList) },
@@ -179,6 +180,7 @@ int luaopen_vvd (lua_State *L) {
     luaopen_tvec3d(L);
     luaopen_tbody(L);
     luaopen_objlist(L);
+    luaopen_bodylist(L);
     luaopen_shellscript(L);
 
     return 0;
@@ -200,12 +202,13 @@ int main (int argc, char** argv) {
     luaL_openlibs(L);          /* opens the basic library */
     luaopen_vvd(L);
 
-    if (luaL_dofile(L, argv[1])) {
+    int ret = luaL_dofile(L, argv[1]);
+
+    if (ret) {
         fprintf(stderr, "%s\n", lua_tostring(L, -1));
         lua_pop(L, 1);
-        return 1;
     }
 
     lua_close(L);
-    return 0;
+    return ret;
 }

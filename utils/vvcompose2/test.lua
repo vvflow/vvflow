@@ -151,7 +151,7 @@ check_val(function() return S.inf_vy:eval(8) end, 1)
 check_val(function() return S.inf_vx.member end, nil)
 
 -- TBody
-body = load_body("/dev/null")
+local body = load_body("/dev/null")
 check_val(function() return #body                         end, 0)
 check_val(function() return body.foo                      end, nil)
 check_val(function() return body.label                    end, "")
@@ -192,6 +192,8 @@ check_val(function() return body.holder_pos.r.y end, 17.2)
 check_val(function() return body.holder_pos.o   end, 17.3)
 check_val(function() return body.holder_pos.d   end, 17.3*180/math.pi)
 check_val(function() return body.holder_pos.z   end, nil)
+body = nil
+collectgarbage()
 
 -- ObjList
 check_val(function() return #S.vort_list          end, 0)
@@ -202,9 +204,9 @@ check_val(function() return S.vort_list.foo       end, nil)
 check_val(function() return S.vort_list[0]        end, nil)
 check_val(function() return S.vort_list[1]        end, nil)
 check_err(function() S.vort_list = S.sink_list    end, "S can not assign 'vort_list'")
-check_err(function() S.vort_list.foo = nil end, "TList can not assign anything")
-check_err(function() S.vort_list[0]  = nil end, "TList can not assign anything")
-check_err(function() S.vort_list[1]  = nil end, "TList can not assign anything")
+check_err(function() S.vort_list.foo = nil end, "TObjList can not assign anything")
+check_err(function() S.vort_list[0]  = nil end, "TObjList can not assign anything")
+check_err(function() S.vort_list[1]  = nil end, "TObjList can not assign anything")
 check_err(function() S.vort_list:append({1.1, 1.2, 1.3}) end, nil)
 check_err(function() S.vort_list:append({2.1, 2.2, 2.3}) end, nil)
 check_err(function() S.vort_list:append({3.1, 3.2, 3.3}) end, nil)
@@ -289,7 +291,9 @@ check_err(function() gen_cylinder{ R=nan, N=1 } end, "bad argument #1 to 'gen_cy
 check_err(function() gen_cylinder{ R=-11, N=1 } end, "bad argument #1 to 'gen_cylinder' ('R' must be positive)")
 check_err(function() gen_cylinder{ R=1, N=1, foo=5 } end, "bad argument #1 to 'gen_cylinder' (excess parameter 'foo')")
 check_val(function() return #gen_cylinder{ R=1, N=10 } end, 10)
+collectgarbage()
 check_val(function() return #gen_cylinder{ R=0.5/math.pi, dl=1/10 } end, 10)
+collectgarbage()
 local cyl = gen_cylinder{ R=1, N=500 }
 check_dev(function() return cyl:get_arclen() end, 2*math.pi, 1e-4)
 check_dev(function() return cyl:get_area() end, math.pi, 1e-4)
@@ -313,6 +317,7 @@ check_dev(function() return cyl:get_com()[2] end, 1, 1e-8)
 check_dev(function() return cyl:get_axis()[1] end, 0, 1e-8)
 check_dev(function() return cyl:get_axis()[2] end, 0, 1e-8)
 cyl = nil
+collectgarbage()
 
 -- gen_plate
 check_err(function() gen_plate() end, "bad argument #1 to 'gen_plate' (table expected, got no value)")
@@ -334,7 +339,9 @@ check_err(function() gen_plate{ R1=1, N=1 } end, "bad argument #1 to 'gen_plate'
 check_err(function() gen_plate{ R1=1, R2=1, N=1 } end, "bad argument #1 to 'gen_plate' ('L' must be a number)")
 check_err(function() gen_plate{ R1=1, R2=1, L=5, N=1, foo=5 } end, "bad argument #1 to 'gen_plate' (excess parameter 'foo')")
 check_val(function() return #gen_plate{ R1=0.5,    R2=0.5,    L=1, N=100 } end, 100)
+collectgarbage()
 check_val(function() return #gen_plate{ R1=0.5/pi, R2=0.5/pi, L=1, dl=1/100 } end, 100+200)
+collectgarbage()
 local plate = gen_plate{ R1=1, R2=1, L=2, N=1000 }
 check_dev(function() return plate:get_arclen() end, 2*math.pi+4, 1e-4)
 check_dev(function() return plate:get_area() end, math.pi+4, 1e-4)
@@ -354,5 +361,49 @@ check_dev(function() return plate:get_com()[1] end, 2, 1e-8)
 check_dev(function() return plate:get_com()[2] end, -1, 1e-8)
 check_dev(function() return plate:get_axis()[1] end, 2, 1e-8)
 check_dev(function() return plate:get_axis()[2] end, 0, 1e-8)
+plate = nil
+collectgarbage()
 
-os.exit(FAIL)
+-- TBodyList
+local cyl = gen_cylinder{R=0.5, N=200}
+cyl.label = "cyl"
+check_err(function() S.body_list.foo = nil end, "TBodyList can not assign anything")
+check_err(function() S.body_list[0] = nil end, "TBodyList can not assign anything")
+check_err(function() S.body_list:erase(cyl) end, "bad argument #1 to 'erase' (the body is not in list)")
+check_err(function() S.body_list:erase(cyl) end, "bad argument #1 to 'erase' (the body is not in list)")
+check_err(function() S.body_list:erase(cyl) end, "bad argument #1 to 'erase' (the body is not in list)")
+check_err(function() S.body_list:erase(cyl) end, "bad argument #1 to 'erase' (the body is not in list)")
+check_err(function() S.body_list:erase(cyl) end, "bad argument #1 to 'erase' (the body is not in list)")
+check_err(function() S.body_list:erase(cyl) end, "bad argument #1 to 'erase' (the body is not in list)")
+check_err(function() S.body_list:erase(cyl) end, "bad argument #1 to 'erase' (the body is not in list)")
+check_err(function() S.body_list:insert(cyl) end, nil)
+check_err(function() S.body_list:insert(cyl) end, "bad argument #1 to 'insert' (can not insert the body twice)")
+check_val(function() return #S.body_list end, 1)
+check_err(function() S.body_list:clear() end, nil)
+check_val(function() return #S.body_list end, 0)
+cyl = nil
+collectgarbage()
+
+local cyl1 = gen_cylinder{R=0.5, N=200}
+cyl1.label = "cyl1"
+cyl1:move_r({1, 0})
+check_err(function() S.body_list:insert(cyl1) end, nil)
+local cyl2 = gen_cylinder{R=0.5, N=200}
+cyl2.label = "cyl2"
+cyl2:move_r({-1, 0})
+check_err(function() S.body_list:insert(cyl2) end, nil)
+local blist = {}
+for i, b in ipairs(S.body_list) do
+    blist[i] = b
+    check_val(function() return S.body_list[i].label end, b.label)
+    collectgarbage()
+end
+for i, b in ipairs({"cyl1", "cyl2"}) do
+    check_val(function() return blist[i].label end, b)
+end
+collectgarbage()
+
+FAIL = 1
+if FAIL ~= 0 then
+    error("There were errors")
+end

@@ -28,6 +28,7 @@ int luavvd_getTVec(lua_State *L);   // lua_newuserdata(TVec*, "TVec")
 int luavvd_getTVec3D(lua_State *L); // lua_newuserdata(TVec3D*, "TVec3D")
 int luavvd_getShellScript(lua_State *L); // lua_newuserdata(ShellScript*, "ShellScript")
 int luavvd_getObjList(lua_State *L); // lua_newuserdata(std::vector<TObj>*, "ObjList")
+int luavvd_getBodyList(lua_State *L); // lua_newuserdata(std::vector<shared_ptr<TBody>>*, "BodyList")
 
 struct luavvd_member {
     const char *name;

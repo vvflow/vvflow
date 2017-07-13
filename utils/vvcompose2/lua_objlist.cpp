@@ -78,8 +78,7 @@ static const struct luavvd_method objlist_methods[] = {
 };
 
 static int objlist_newindex(lua_State *L) {
-    luaL_error(L, "TList can not assign anything");
-    return 0;
+    return luaL_error(L, "TObjList can not assign anything");
 }
 
 // int stackDump(lua_State *L);
@@ -119,7 +118,7 @@ static int objlist_getnext(lua_State *L) {
     }
 }
 
-static int objlist_getpairs(lua_State *L) {
+static int objlist_getipairs(lua_State *L) {
     lua_pushcfunction(L, objlist_getnext);
     lua_pushvalue(L, 1);
     lua_pushnil(L);
@@ -130,8 +129,7 @@ static const struct luaL_Reg luavvd_objlist [] = {
     {"__newindex", objlist_newindex},
     {"__index",    objlist_getindex},
     {"__len",      objlist_getlen},
-    {"__pairs",    objlist_getpairs},
-    {"__ipairs",   objlist_getpairs},
+    {"__ipairs",   objlist_getipairs},
     {NULL, NULL} /* sentinel */
 };
 
