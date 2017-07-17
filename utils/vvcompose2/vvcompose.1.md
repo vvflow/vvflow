@@ -412,7 +412,7 @@ cyl = gen_cylinder{R=0.5, N=500}
 
 ### gen_semicyl{R, [N|dl]}
 
-The bottom half of a cylinder
+The bottom half of a cylinder with center at {0, 0}
 
     #      ____________________
     #     |          /         |
@@ -421,7 +421,25 @@ The bottom half of a cylinder
     #       \     /          /
     #        '.  /         .`
     #          `-.______.-'
-    #      
+    #
+
+### gen_ellipse{Rx, Ry, [N|dl]}
+
+Generate an ellipse with center at {0, 0}
+
+    #        .--"""""--.
+    #      .'     | Ry  '.
+    #     /       |       \
+    #    ;        +---Rx---;
+    #     \               /
+    #      '.           .'
+    #        '--.....--'
+
+  * `Rx`, `Ry` :
+    Ellipse semi-axis
+
+  * `N`, `dl` :
+    specify either number of segments or average segment length
 
 ### gen_plate{R1, R2, L, [N|dl]}
 
@@ -457,8 +475,8 @@ Generate parallelogram with origin is in bottom left corner.
     #       /  |H           /
     #      /   |           /
     #     /    |          /
-    #    /_____|_________/
-    #      L
+    #    /_____'_________/
+    #            L
 
   * `L` :
     basement length
@@ -476,23 +494,51 @@ Generate parallelogram with origin is in bottom left corner.
 
 Generate roundrect with origin in center.
 
-    #       .-."""""""""""""""""""""""""".-.
-    #     /`  ; R                           `\
-    #    ;    ;                               ;
-    #    |""""                                |
+    #       .-;""""""""""""""""""""""""""--.
+    #     /`  | R                           `\
+    #    ;    |                               ;
+    #    |----+                               |
     #    |                                    |
     #    ;                                    ;
     #     \                                  /
-    #      `'-'..........................'-'`
+    #      `'--..........................--'`
 
   * `L` :
-    basement length
+    bounding rect length
 
   * `H` :
-    height
+    bounding rect height
 
-  * `d` :
-    angle in degrees
+  * `R` :
+    corner radius (shoud be less than `0.5*min(L,H)` )
 
   * `N`, `dl` :
     specify either number of segments or average segment length
+
+### gen_savonius{R, h, [N|dl]}
+
+Savonius is formed by 6 semi-circles.
+This is how it looks like:
+
+    #        .-'""'-.
+    #      .'        '.
+    #     /   .-""-.   \          __
+    #    ;   /      \   ;        /  \ 
+    #    \__/        ;   \      /   ;
+    #                 \   '-..-'   /
+    #                  '.        .'
+    #                    '-....-'
+
+  * `R` :
+    radius of the midline
+
+  * `h` :
+    thickness of savonius
+
+  * `N`, `dl` :
+    specify either number of segments or average segment length
+             
+            
+          
+          
+          

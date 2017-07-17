@@ -40,6 +40,7 @@ foreach(m IN LISTS MAN_NAMES)
     add_custom_command(
         OUTPUT ${mf}
         COMMAND ronn --roff --pipe ${ms} > ${mf}
+        COMMAND ronn --html --pipe ${ms} > ${mf}.html
         DEPENDS ${ms}
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
         COMMENT "Building manpage ${mf}"

@@ -13,3 +13,5 @@ sudo docker run -it --rm \
 
 # python -m SimpleHTTPServer 1207 &
 # grip /vvflow/README.md 0.0.0.0:1207 &
+# http://127.0.0.1:1207/utils/vvcompose2/vvcompose.1.html#BODY-GENERATORS
+# man -l utils/vvcompose2/vvcompose.1
