@@ -283,7 +283,12 @@ file:write(" 0 2 1\n")
 file:write("-1 0 1\n")
 io.close(file)
 body1 = load_body(fname)
-check_val(function() return body1.slip end, 1)
+check_val(function() return body1.slip end, true)
+check_err(function() body1.slip = true end)
+check_err(function() body1.slip = false end)
+check_err(function() body1.slip = 0 end, "bad value for TBody.slip (boolean expected, got number)")
+check_err(function() body1.slip = nil end, "bad value for TBody.slip (boolean expected, got nil)")
+check_val(function() return body1.slip end, false)
 check_err(function() body1.root = body1 end)
 check_val(function() return body1.root end, body1)
 check_err(function() body1.root = nil end)
@@ -296,6 +301,8 @@ file:write("-1 0 0\n")
 io.close(file)
 body2 = load_body(fname)
 check_val(function() return body2.slip end, nil)
+check_err(function() body2.slip = true end)
+check_val(function() return body2.slip end, true)
 check_err(function() body2.root = body1 end)
 body1 = nil
 collectgarbage()
@@ -436,7 +443,6 @@ for i, b in ipairs({"cyl1", "cyl2"}) do
 end
 collectgarbage()
 
-FAIL = 1
 if FAIL ~= 0 then
     error("There were errors")
 end

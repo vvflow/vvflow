@@ -11,13 +11,12 @@
 
 int luavvd_setslip(lua_State *L) {
     TBody* body = (TBody*)lua_touserdata(L, 1);
-
-    int isnum;
-    lua_Integer val = lua_tointegerx(L, 2, &isnum);
-    if (!isnum) {
-        lua_pushfstring(L, "integer expected, got %s", luaL_typename(L, 2));
+    if (!lua_isboolean(L, 2)) {
+        lua_pushfstring(L, "boolean expected, got %s", luaL_typename(L, 2));
         return 1;
     }
+
+    int val = lua_toboolean(L, 2);
 
     for (auto& latt: body->alist) {
         latt.slip = val;
@@ -35,7 +34,7 @@ int luavvd_getslip(lua_State *L) {
             return 1;
         }
     }
-    lua_pushnumber(L, slip);
+    lua_pushboolean(L, slip);
     return 1;
 }
 

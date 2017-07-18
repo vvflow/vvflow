@@ -242,9 +242,19 @@ _Example_:
   * body.*bounce* (number) :
     coefficient of restitution (considering collisions)
 
+  * body.*slip* (boolean) :
+    whether to use slip or no-slip condition
+    for all segments of the body.
+    Valid values are `false` (no-slip, default) and `true` (slip).
+    Getting the value may return `nil`, which indicates
+    that the boundary condition is not uniform along the surface.
+
   * body.*special_segment* (integer) :
     the number of segment where slip/no-slip boundary condition
     is replaced with equation of the flow steadines at infinity
+
+  * body.*root* (TBody) :
+    the root of the body. When `nil`, the holder is ultimate.
 
   * `#`body :
     return number of body segments
