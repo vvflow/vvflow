@@ -3,7 +3,7 @@ vvcompose(1) -- compose the CFD problem to be solved with vvflow program
 
 ## SYNOPSIS
 
-`vvcompose` <FILE>
+`vvcompose` [-v] [-h] [--] [<FILE>] [<args>]
 
 ## DESCRIPTION
 
@@ -19,12 +19,24 @@ then it can be launched as a usual shell script (if executable permissions are s
 
     $ ./FILE
 
+When called without arguments,
+vvcompose runs in the interactive mode
+reading Lua commands from the standard input (stdin).
+
 This manual will not discuss the Lua syntax in all details, although it will cover several topics which are essential for using vvcompose. The Lua basics can be found at various online resources. Here is a couple of them:
 
  * [Programming in Lua](https://www.lua.org/pil/1.html)
  * [Learn X in Y minutes](https://learnxinyminutes.com/docs/lua/)
  * [Lua math](http://lua-users.org/wiki/MathLibraryTutorial)
  * [Tutorials collection](http://lua-users.org/wiki/TutorialDirectory)
+
+## OPTIONS
+
+  * -v :
+    print program version and exit
+
+  * -h :
+    show manpage and exit
 
 ## SYNTAX
 

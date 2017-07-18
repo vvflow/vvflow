@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <getopt.h>
 #include <lua.hpp>
 
 #include "core.h"
@@ -187,26 +189,57 @@ int luaopen_vvd (lua_State *L) {
 }
 
 int main (int argc, char** argv) {
-    if (argc < 2) {
-        printf("vvcompose %s\n", libvvhd_gitinfo);
-        printf("revision: %s\n", libvvhd_gitrev);
-        printf("git_diff: %s\n", libvvhd_gitdiff);
-        fprintf(stderr, "Missing filename\n");
-        exit(-1);
-    } else if (argc > 2) {
-        fprintf(stderr, "Too many arguments\n");
-        exit(-1);
+
+    int c;
+
+    while ( (c = getopt(argc, argv, "hv")) != -1 ) {
+        switch (c) {
+        case 'h':
+            return execlp("man", "man", "vvcompose2", NULL);
+        case 'v':
+            printf("vvcompose %s\n", libvvhd_gitinfo);
+            printf("revision: %s\n", libvvhd_gitrev);
+            printf("git_diff: %s\n", libvvhd_gitdiff);
+            return 0;
+        case '?':
+            return 1;
+        default:
+            abort();
+        }
     }
 
     lua_State *L = luaL_newstate();   /* opens Lua */
     luaL_openlibs(L);          /* opens the basic library */
     luaopen_vvd(L);
+    int ret = 0;
 
-    int ret = luaL_dofile(L, argv[1]);
+    if (argc < 2) {
+        /* interpreter mode */
+        char buff[256];
+        do {
+            printf("> ");
+            fflush(stdout);
+            char *s = fgets(buff, sizeof(buff), stdin);
+            if (ferror(stdin)) {
+                fprintf(stderr, "%s\n", strerror(errno));
+                break;
+            } else if (!s) {
+                break;
+            }
 
-    if (ret) {
-        fprintf(stderr, "%s\n", lua_tostring(L, -1));
-        lua_pop(L, 1);
+            int err = luaL_loadstring(L, buff) || lua_pcall(L, 0, 0, 0);
+            if (err) {
+                fprintf(stderr, "! %s\n", lua_tostring(L, -1));
+                lua_pop(L, 1); /* pop error message from the stack */
+            }
+        } while (true);
+    } else {
+        ret = luaL_dofile(L, argv[optind]);
+
+        if (ret) {
+            fprintf(stderr, "%s\n", lua_tostring(L, -1));
+            lua_pop(L, 1);
+        }
     }
 
     lua_close(L);
