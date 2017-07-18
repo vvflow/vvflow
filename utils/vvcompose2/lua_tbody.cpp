@@ -9,6 +9,60 @@
 #include "lua_tvec3d.h"
 #include "lua_shellscript.h"
 
+int luavvd_setslip(lua_State *L) {
+    TBody* body = (TBody*)lua_touserdata(L, 1);
+
+    int isnum;
+    lua_Integer val = lua_tointegerx(L, 2, &isnum);
+    if (!isnum) {
+        lua_pushfstring(L, "integer expected, got %s", luaL_typename(L, 2));
+        return 1;
+    }
+
+    for (auto& latt: body->alist) {
+        latt.slip = val;
+    }
+    return 0;
+}
+
+int luavvd_getslip(lua_State *L) {
+    TBody* body = (TBody*)lua_touserdata(L, 1);
+
+    uint32_t slip = body->alist.begin()->slip;
+    for (auto& latt: body->alist) {
+        if (latt.slip != slip) {
+            lua_pushnil(L);
+            return 1;
+        }
+    }
+    lua_pushnumber(L, slip);
+    return 1;
+}
+
+int luavvd_setrootbody(lua_State *L) {
+    weak_ptr<TBody>* rootptr = (weak_ptr<TBody>*)lua_touserdata(L, 1);
+    if (lua_isnil(L, 2)) {
+        rootptr->reset();
+    } else {
+        shared_ptr<TBody> body = checkTBody(L, 2);
+        *rootptr = body;
+    }
+
+    return 0;
+}
+
+int luavvd_getrootbody(lua_State *L) {
+    weak_ptr<TBody>* rootptr = (weak_ptr<TBody>*)lua_touserdata(L, 1);
+    if (rootptr->expired()) {
+        lua_pushnil(L);
+    } else {
+        shared_ptr<TBody> body = rootptr->lock();
+        pushTBody(L, body);
+    }
+
+    return 1;
+}
+
 static int tbody_move_r(lua_State *L) {
     // TVec vec = TVec();
     TVec3D move_vec = TVec3D();
@@ -97,6 +151,15 @@ static int tbody_gc(lua_State *L) {
     return 0;
 }
 
+static int tbody_eq(lua_State *L) {
+    shared_ptr<TBody>* udat1 =
+        (shared_ptr<TBody>*)luaL_checkudata(L, 1, "TBody");
+    shared_ptr<TBody>* udat2 =
+        (shared_ptr<TBody>*)luaL_checkudata(L, 2, "TBody");
+    lua_pushboolean(L, udat1->get() == udat2->get());
+    return 1;
+}
+
 static const struct luavvd_member tbody_members[] = {
     {"label",           luavvd_getstring,      luavvd_setstring,      0 },
     {"holder_pos",      luavvd_getTVec3D,      luavvd_setTVec3D,      0 },
@@ -112,8 +175,8 @@ static const struct luavvd_member tbody_members[] = {
     {"density",         luavvd_getdouble,      luavvd_setdouble,      0 },
     {"bounce",          luavvd_getdouble,      luavvd_setdouble,      0 },
     {"special_segment", luavvd_getint32,       luavvd_setint32,       0 },
-    // {"general_slip",    luavvd_getslip,        luavvd_setslip,        0 },
-    // {"root_body",       luavvd_getrootbody,    luavvd_setrootbody,    0 },
+    {"slip",            luavvd_getslip,        luavvd_setslip,        0 },
+    {"root",            luavvd_getrootbody,    luavvd_setrootbody,    0 },
     {NULL, NULL, NULL, 0} /* sentinel */    
 };
 
@@ -137,7 +200,11 @@ static const struct luavvd_member tbody_members[] = {
     BIND_MEMBER("holder_vo",       speed_o) \
     BIND_MEMBER("density",         density) \
     BIND_MEMBER("bounce",          bounce) \
-    BIND_MEMBER("special_segment", special_segment_no)
+    BIND_MEMBER("special_segment", special_segment_no) \
+    else if (!strcmp(name, "slip")) { \
+        lua_pushlightuserdata(L, (char*)body.get()); \
+    } \
+    BIND_MEMBER("root",            root_body) \
 
 static const struct luavvd_method tbody_methods[] = {
     {"move_r", tbody_move_r},
@@ -209,6 +276,7 @@ static const struct luaL_Reg luavvd_tbody [] = {
     {"__index",    tbody_getindex},
     {"__len",      tbody_getlen},
     {"__gc",       tbody_gc},
+    {"__eq",       tbody_eq},
     {NULL, NULL} /* sentinel */
 };
 

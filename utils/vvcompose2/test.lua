@@ -275,6 +275,34 @@ check_val(function() return tostring(S.vort_list[4]) end, "TObj(4.1,4.2,4.3)")
 check_val(function() return tostring(S.vort_list[5]) end, "nil")
 os.remove(fname)
 
+-- root_body, general_slip
+fname = os.tmpname()
+file = io.open(fname, "w")
+file:write(" 1 0 1\n")
+file:write(" 0 2 1\n")
+file:write("-1 0 1\n")
+io.close(file)
+body1 = load_body(fname)
+check_val(function() return body1.slip end, 1)
+check_err(function() body1.root = body1 end)
+check_val(function() return body1.root end, body1)
+check_err(function() body1.root = nil end)
+check_val(function() return body1.root end, nil)
+
+file = io.open(fname, "w")
+file:write(" 1 0 0\n")
+file:write(" 0 2 1\n")
+file:write("-1 0 0\n")
+io.close(file)
+body2 = load_body(fname)
+check_val(function() return body2.slip end, nil)
+check_err(function() body2.root = body1 end)
+body1 = nil
+collectgarbage()
+check_val(function() return body2.root end, nil)
+body2 = nil
+os.remove(fname)
+
 -- gen_cylinder
 check_err(function() gen_cylinder() end, "bad argument #1 to 'gen_cylinder' (table expected, got no value)")
 check_err(function() gen_cylinder{ N={0} } end, "bad argument #1 to 'gen_cylinder' ('N' must be a number)")
