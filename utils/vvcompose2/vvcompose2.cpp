@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <getopt.h>
+#include <signal.h>
 #include <lua.hpp>
 
 #include "core.h"
@@ -14,6 +15,7 @@
 #include "lua_shellscript.h"
 #include "lua_objlist.h"
 #include "lua_bodylist.h"
+#include "linenoise.h"
 
 int stackDump(lua_State *L)
 {
@@ -188,6 +190,13 @@ int luaopen_vvd (lua_State *L) {
     return 0;
 }
 
+volatile sig_atomic_t c_sigint = 0;
+void handle_sigint(int signum) {
+    c_sigint = 1;
+    printf("caught sigint\n");
+    return;
+}
+
 int main (int argc, char** argv) {
 
     int c;
@@ -215,24 +224,28 @@ int main (int argc, char** argv) {
 
     if (argc < 2) {
         /* interpreter mode */
-        char buff[256];
-        do {
-            printf("> ");
-            fflush(stdout);
-            char *s = fgets(buff, sizeof(buff), stdin);
-            if (ferror(stdin)) {
-                fprintf(stderr, "%s\n", strerror(errno));
-                break;
-            } else if (!s) {
+        signal(SIGINT, handle_sigint);
+
+        char *line;
+        while(true) {
+            line = linenoise("vvcompose> ");
+            if (errno == EAGAIN) {
+                errno = 0;
+                continue;
+            } else if (!line) {
                 break;
             }
 
-            int err = luaL_loadstring(L, buff) || lua_pcall(L, 0, 0, 0);
+            linenoiseHistoryAdd(line);
+
+            int err = luaL_loadstring(L, line) || lua_pcall(L, 0, 0, 0);
             if (err) {
-                fprintf(stderr, "! %s\n", lua_tostring(L, -1));
-                lua_pop(L, 1); /* pop error message from the stack */
+                printf("%s\n", lua_tostring(L, -1));
+                lua_pop(L, 1);
             }
-        } while (true);
+            
+            linenoiseFree(line);
+        }
     } else {
         ret = luaL_dofile(L, argv[optind]);
 
