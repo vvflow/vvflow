@@ -208,7 +208,8 @@ int main (int argc, char** argv) {
         case 'v':
             printf("vvcompose %s\n", libvvhd_gitinfo);
             printf("revision: %s\n", libvvhd_gitrev);
-            printf("git_diff: %s\n", libvvhd_gitdiff);
+            if (libvvhd_gitdiff[0] != '\0')
+                printf("git_diff: %s\n", libvvhd_gitdiff);
             return 0;
         case '?':
             return 1;
