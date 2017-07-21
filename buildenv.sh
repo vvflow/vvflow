@@ -1,12 +1,17 @@
 #!/dev/null
 
 mkdir -p build
-sudo docker build -t dovvbuild:latest $PWD && \
+
+OS="$1"
+[ -n "$OS" ] || OS="ubuntu-xenial"
+echo Running $OS
+
+sudo docker build -t vvflow-build:$OS $PWD -f Dockerfile.$OS && \
 sudo docker run -it --rm \
     -v $PWD:/vvflow:ro \
     -v $PWD/build:/root \
     -p 1207:1207 \
-    dovvbuild:latest /bin/bash
+    vvflow-build:$OS /bin/bash
 
 # Ronn cheatsheet:
 # http://ricostacruz.com/cheatsheets/ronn.html
