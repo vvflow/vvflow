@@ -1,7 +1,7 @@
 cmake_minimum_required (VERSION 3.0)
 set (CMAKE_CXX_STANDARD 11)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
-project (vvcompose2)
+project (vvcompose)
 
 set(__bak_LIBRARY_SUFFIXES ${CMAKE_FIND_LIBRARY_SUFFIXES})
 SET(CMAKE_FIND_LIBRARY_SUFFIXES .a)
@@ -13,8 +13,8 @@ include_directories(${LUA_INCLUDE_DIR})
 add_subdirectory(./../../libvvhd libvvhd)
 include_directories(${LIBVVHD_INCLUDE_DIR})
 
-add_executable(vvcompose2
-    vvcompose2.cpp
+add_executable(vvcompose
+    vvcompose.cpp
     getset.cpp
     lua_tvec.cpp
     lua_tobj.cpp
@@ -27,10 +27,10 @@ add_executable(vvcompose2
     gen_plate.cpp
     linenoise.c
 )
-target_link_libraries(vvcompose2 ${LIBVVHD_LIBRARIES} ${LUA_LIBRARY} dl)
+target_link_libraries(vvcompose ${LIBVVHD_LIBRARIES} ${LUA_LIBRARY} dl)
 add_custom_command(
-    TARGET vvcompose2 POST_BUILD
-    COMMAND vvcompose2 ${CMAKE_CURRENT_SOURCE_DIR}/test.lua
+    TARGET vvcompose POST_BUILD
+    COMMAND vvcompose ${CMAKE_CURRENT_SOURCE_DIR}/test.lua
 )
 
 SET(MAN_NAMES vvcompose.1)
@@ -50,7 +50,7 @@ foreach(m IN LISTS MAN_NAMES)
 endforeach()
 add_custom_target(man ALL DEPENDS ${MAN_FILES})
 
-install (TARGETS vvcompose2 DESTINATION bin)
+install (TARGETS vvcompose DESTINATION bin)
 install (FILES ${MAN_FILES} DESTINATION share/man/man1)
 
 
