@@ -1,10 +1,13 @@
 FROM debian:jessie
 RUN echo "deb http://deb.debian.org/debian jessie contrib" >> /etc/apt/sources.list
+RUN echo "deb http://deb.debian.org/debian jessie-backports main" >> /etc/apt/sources.list
 RUN apt-get update && apt-get install -y \
     build-essential \
     cmake \
     cmake-curses-gui \
     git \
+# libaec + libsz
+    libaec-dev \
     libfl-dev \
     libgflags-dev \
     libhdf5-dev \
