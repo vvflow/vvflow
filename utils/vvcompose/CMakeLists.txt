@@ -23,6 +23,7 @@ add_executable(vvcompose
     lua_tbody.cpp
     lua_objlist.cpp
     lua_bodylist.cpp
+    gen_body.cpp
     gen_cylinder.cpp
     gen_plate.cpp
     gen_gis.cpp

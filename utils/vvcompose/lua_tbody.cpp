@@ -1,13 +1,12 @@
 #include <lua.hpp>
-#include <stdio.h>
+// #include <stdio.h>
 #include <string.h>
-#include <map>
 
 #include "getset.h"
 #include "lua_tbody.h"
 #include "lua_tvec.h"
-#include "lua_tvec3d.h"
-#include "lua_shellscript.h"
+// #include "lua_tvec3d.h"
+// #include "lua_shellscript.h"
 
 int luavvd_setslip(lua_State *L) {
     TBody* body = (TBody*)lua_touserdata(L, 1);
@@ -315,23 +314,4 @@ int luavvd_load_body(lua_State *L) {
 
     pushTBody(L, body);
     return 1;
-}
-
-void gen_line(std::vector<TAtt>& alist, TVec p1, TVec p2, size_t N, uint32_t slip) {
-    TAtt att;
-    att.slip = slip;
-    for (size_t i=0; i<N; i++) {
-        att.corner = p1 + (p2-p1)*i/N;
-        alist.push_back(att);
-    }
-}
-
-void gen_arc(std::vector<TAtt>& alist, TVec c, double R, double a1, double a2, size_t N, uint32_t slip) {
-    TAtt att;
-    att.slip = slip;
-    for (size_t i=0; i<N; i++) {
-        double ai = a1 + (a2-a1)*double(i)/double(N);
-        att.corner = c + TVec(R*cos(ai), R*sin(ai));
-        alist.push_back(att);
-    }
 }
