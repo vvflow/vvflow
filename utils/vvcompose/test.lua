@@ -370,14 +370,22 @@ check_err(function() gen_plate{ dl=nan } end, "bad argument #1 to 'gen_plate' ('
 check_err(function() gen_plate{ dl=inf } end, "bad argument #1 to 'gen_plate' ('dl' must be finite)")
 check_err(function() gen_plate{ dl=-11 } end, "bad argument #1 to 'gen_plate' ('dl' must be positive)")
 check_err(function() gen_plate{ N=1, dl=1 } end, "bad argument #1 to 'gen_plate' ('N' and 'dl' are mutually exclusive)")
+check_err(function() gen_plate{            } end, "bad argument #1 to 'gen_plate' (either 'N' or dl' must be specified)")
 check_err(function() gen_plate{ R1=1       } end, "bad argument #1 to 'gen_plate' (either 'N' or dl' must be specified)")
+check_err(function() gen_plate{        N=1 } end, "bad argument #1 to 'gen_plate' ('R1' must be a number)")
 check_err(function() gen_plate{ R1={0}, N=1 } end, "bad argument #1 to 'gen_plate' ('R1' must be a number)")
 check_err(function() gen_plate{ R1=inf, N=1 } end, "bad argument #1 to 'gen_plate' ('R1' must be finite)")
 check_err(function() gen_plate{ R1=nan, N=1 } end, "bad argument #1 to 'gen_plate' ('R1' must be finite)")
 check_err(function() gen_plate{ R1=-11, N=1 } end, "bad argument #1 to 'gen_plate' ('R1' must be positive)")
-check_err(function() gen_plate{ R1=1, N=1 } end, "bad argument #1 to 'gen_plate' ('R2' must be a number)")
+check_err(function() gen_plate{ R1=1, N=1 }   end, "bad argument #1 to 'gen_plate' ('R2' must be a number)")
 check_err(function() gen_plate{ R1=1, R2=1, N=1 } end, "bad argument #1 to 'gen_plate' ('L' must be a number)")
 check_err(function() gen_plate{ R1=1, R2=1, L=5, N=1, foo=5 } end, "bad argument #1 to 'gen_plate' (excess parameter 'foo')")
+check_err(function() gen_plate{ R1=1, R2=1, L=5, N=1, start=-1 } end, "bad argument #1 to 'gen_plate' ('start' must be in range [0, 1))")
+check_err(function() gen_plate{ R1=1, R2=1, L=5, N=1, start= 1 } end, "bad argument #1 to 'gen_plate' ('start' must be in range [0, 1))")
+check_err(function() gen_plate{ R1=1, R2=1, L=5, N=1, start= 2 } end, "bad argument #1 to 'gen_plate' ('start' must be in range [0, 1))")
+check_err(function() gen_plate{ R1=1, R2=1, L=5, N=1, stop=-1 } end, "bad argument #1 to 'gen_plate' ('stop' must be in range (0, 1])")
+check_err(function() gen_plate{ R1=1, R2=1, L=5, N=1, stop= 0 } end, "bad argument #1 to 'gen_plate' ('stop' must be in range (0, 1])")
+check_err(function() gen_plate{ R1=1, R2=1, L=5, N=1, stop= 2 } end, "bad argument #1 to 'gen_plate' ('stop' must be in range (0, 1])")
 check_val(function() return #gen_plate{ R1=0.5,    R2=0.5,    L=1, N=100 } end, 100)
 collectgarbage()
 check_val(function() return #gen_plate{ R1=0.5/pi, R2=0.5/pi, L=1, dl=1/100 } end, 100+200)
@@ -402,6 +410,43 @@ check_dev(function() return plate:get_com()[2] end, -1, 1e-8)
 check_dev(function() return plate:get_axis()[1] end, 2, 1e-8)
 check_dev(function() return plate:get_axis()[2] end, 0, 1e-8)
 plate = nil
+collectgarbage()
+
+-- gen_gis
+check_err(function() gen_gis() end, "bad argument #1 to 'gen_gis' (table expected, got no value)")
+check_err(function() gen_gis{ dln=nil } end, "bad argument #1 to 'gen_gis' ('dln' must be a number)")
+check_err(function() gen_gis{ dln=0.0 } end, "bad argument #1 to 'gen_gis' ('dln' must be positive)")
+check_err(function() gen_gis{ dln=0.1, dls=nil } end, "bad argument #1 to 'gen_gis' ('dls' must be a number)")
+check_err(function() gen_gis{ dln=0.1, dls={0} } end, "bad argument #1 to 'gen_gis' ('dls' must be a number)")
+check_err(function() gen_gis{ dln=0.1, dls=0.0 } end, "bad argument #1 to 'gen_gis' ('dls' must be positive)")
+check_err(function() gen_gis{ dln=0.1, dls=nan } end, "bad argument #1 to 'gen_gis' ('dls' must be finite)")
+check_err(function() gen_gis{ dln=0.1, dls=inf } end, "bad argument #1 to 'gen_gis' ('dls' must be finite)")
+check_err(function() gen_gis{ dln=0.1, dls=0.2, R0=nil } end, "bad argument #1 to 'gen_gis' ('R0' must be a number)")
+check_err(function() gen_gis{ dln=0.1, dls=0.2, R0={0} } end, "bad argument #1 to 'gen_gis' ('R0' must be a number)")
+check_err(function() gen_gis{ dln=0.1, dls=0.2, R0=0.0 } end, "bad argument #1 to 'gen_gis' ('R0' must be positive)")
+check_err(function() gen_gis{ dln=0.1, dls=0.2, R0=nan } end, "bad argument #1 to 'gen_gis' ('R0' must be finite)")
+check_err(function() gen_gis{ dln=0.1, dls=0.2, R0=inf } end, "bad argument #1 to 'gen_gis' ('R0' must be finite)")
+check_err(function() gen_gis{ dln=0.1, dls=0.2, R0=0.5, d=nil } end, "bad argument #1 to 'gen_gis' ('d' must be a number)")
+check_err(function() gen_gis{ dln=0.1, dls=0.2, R0=0.5, d=-10 } end, "bad argument #1 to 'gen_gis' ('d' must be in range [0, 90))")
+check_err(function() gen_gis{ dln=0.1, dls=0.2, R0=0.5, d= 90 } end, "bad argument #1 to 'gen_gis' ('d' must be in range [0, 90))")
+check_err(function() gen_gis{ dln=0.1, dls=0.2, R0=0.5, d= 15, X0=-1, X1=-2 } end, "bad argument #1 to 'gen_gis' ('X1' must be >= X0)")
+check_err(function() gen_gis{ dln=0.1, dls=0.2, R0=0.5, d= 15, X0=-9, X1=-1, X2=-2 } end, "bad argument #1 to 'gen_gis' ('X2' must be >= X1)")
+check_err(function() gen_gis{ dln=0.1, dls=0.2, R0=0.5, d= 15, X0=-5, X1=-4, X2=-3, X3=0, L=5.5} end, "bad argument #1 to 'gen_gis' ('L' must be greater than chamber length)")
+check_err(function() gen_gis{ dln=0.1, dls=0.2, R0=0.5, d= 30, X0=-5, X1=-4, X2=-3, X3=0, L=5.6, H=1.00+2*math.sqrt(3)} end, "bad argument #1 to 'gen_gis' ('H' must be greater than chamber width)")
+check_err(function() gen_gis{ dln=0.1, dls=0.2, R0=0.5, d= 30, X0=-5, X1=-4, X2=-3, X3=0, L=5.6, H=1.01+2*math.sqrt(3)} end, nil)
+local gis = gen_gis{
+    dln=0.1, dls=0.2,
+    d=0, L=100, H=100,
+    R0=0.01,
+    X0=49.90,
+    X1=49.91,
+    X2=49.92,
+    X3=50
+}
+check_dev(function() return gis:get_area() end, 10000, 1)
+check_dev(function() return gis:get_com()[1] end, 0, 1e-4)
+check_dev(function() return gis:get_com()[2] end, 0, 1e-4)
+gis = nil
 collectgarbage()
 
 -- TBodyList

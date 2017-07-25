@@ -15,6 +15,8 @@
 #include "lua_shellscript.h"
 #include "lua_objlist.h"
 #include "lua_bodylist.h"
+#include "gen_body.h"
+
 #include "linenoise.h"
 
 int stackDump(lua_State *L)
@@ -178,6 +180,8 @@ int luaopen_vvd (lua_State *L) {
     lua_setglobal(L, "gen_cylinder"); // pop 1
     lua_pushcfunction(L, luavvd_gen_plate); // push 1
     lua_setglobal(L, "gen_plate"); // pop 1
+    lua_pushcfunction(L, luavvd_gen_gis); // push 1
+    lua_setglobal(L, "gen_gis"); // pop 1
 
     luaopen_tvec(L);
     luaopen_tobj(L);

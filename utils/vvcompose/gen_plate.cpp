@@ -1,17 +1,11 @@
 #include <lua.hpp>
-#include <stdio.h>
-#include <string.h>
-#include <math.h>
-#include <map>
 
-#include "getset.h"
 #include "lua_tbody.h"
 #include "gen_body.h"
 
 int luavvd_gen_plate(lua_State *L) {
     luaL_checktype(L, 1, LUA_TTABLE);
 
-    int is_ok;
     lua_Integer N=0;
     lua_Number  dl=0.0;
     lua_Number  R1=0.0;
@@ -37,7 +31,7 @@ int luavvd_gen_plate(lua_State *L) {
     Ll = get_param(L, "L",  "positive", std::numeric_limits<double>::min());
     start = get_param(L, "start", "in range [0, 1)",
         /*min*/ 0,
-        /*max*/ 1 - std::numeric_limits<double>::min(),
+        /*max*/ 1 - std::numeric_limits<double>::epsilon(),
         /*default*/ 0);
     stop  = get_param(L, "stop",  "in range (0, 1]",
         /*min*/ std::numeric_limits<double>::min(),

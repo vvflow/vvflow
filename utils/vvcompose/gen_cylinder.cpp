@@ -1,16 +1,11 @@
 #include <lua.hpp>
-// #include <stdio.h>
-#include <string.h>
-#include <math.h>
 
-#include "getset.h"
 #include "lua_tbody.h"
 #include "gen_body.h"
 
 int luavvd_gen_cylinder(lua_State *L) {
     luaL_checktype(L, 1, LUA_TTABLE);
 
-    int is_ok;
     lua_Integer N=0;
     lua_Number  dl=0.0;
     lua_Number  R=0.0;
