@@ -26,8 +26,9 @@ int luavvd_gen_plate(lua_State *L) {
     luaL_argcheck(L, (N>0)|(dl>0), 1, "either 'N' or dl' must be specified");
     luaL_argcheck(L, (N>0)^(dl>0), 1, "'N' and 'dl' are mutually exclusive");
 
-    R1 = get_param(L, "R1", "positive", std::numeric_limits<double>::min());
-    R2 = get_param(L, "R2", "positive", std::numeric_limits<double>::min());
+    R1 = get_param(L, "R1", ">= 0", 0);
+    R2 = get_param(L, "R2", ">= 0", 0);
+    luaL_argcheck(L, (R1>0)|(R2>0), 1, "either 'R1' or 'R2' must be > 0");
     Ll = get_param(L, "L",  "positive", std::numeric_limits<double>::min());
     start = get_param(L, "start", "in range [0, 1)",
         /*min*/ 0,
