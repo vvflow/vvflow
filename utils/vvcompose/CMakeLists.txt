@@ -25,6 +25,7 @@ add_executable(vvcompose
     lua_bodylist.cpp
     gen_cylinder.cpp
     gen_plate.cpp
+    gen_gis.cpp
     linenoise.c
 )
 target_link_libraries(vvcompose ${LIBVVHD_LIBRARIES} ${LUA_LIBRARY} dl)

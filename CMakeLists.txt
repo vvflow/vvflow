@@ -3,6 +3,8 @@ set (CMAKE_CXX_STANDARD 11)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 project (vvflow)
 
+set(CMAKE_EXE_LINKER_FLAGS "-static-libstdc++")
+
 # add_subdirectory(libvvhd)
 add_subdirectory(utils/vvflow)
 add_subdirectory(utils/vvxtract)
