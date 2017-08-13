@@ -1,13 +1,12 @@
 cmake_minimum_required (VERSION 3.0)
-set (CMAKE_CXX_STANDARD 11)
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 project (vvcompose)
 
-set(__bak_LIBRARY_SUFFIXES ${CMAKE_FIND_LIBRARY_SUFFIXES})
-SET(CMAKE_FIND_LIBRARY_SUFFIXES .a)
-find_package(Lua 5.2 EXACT REQUIRED)
-find_library(LUA_LIBRARY liblua5.2.a)
-SET(CMAKE_FIND_LIBRARY_SUFFIXES ${__bak_LIBRARY_SUFFIXES})
+find_library(LUA_LIBRARY lua5.2)
+find_path(LUA_INCLUDE_DIR lua.hpp
+    PATH_SUFFIXES lua5.2
+)
+message("LUA_LIBRARY: " ${LUA_LIBRARY})
+message("LUA_INCLUDE_DIR: " ${LUA_INCLUDE_DIR})
 include_directories(${LUA_INCLUDE_DIR})
 
 add_subdirectory(./../../libvvhd libvvhd)
@@ -29,7 +28,7 @@ add_executable(vvcompose
     gen_gis.cpp
     linenoise.c
 )
-target_link_libraries(vvcompose ${LIBVVHD_LIBRARIES} ${LUA_LIBRARY} dl)
+target_link_libraries(vvcompose vvhd ${LUA_LIBRARY} dl)
 add_custom_command(
     TARGET vvcompose POST_BUILD
     COMMAND vvcompose ${CMAKE_CURRENT_SOURCE_DIR}/test.lua
@@ -54,6 +53,3 @@ add_custom_target(man ALL DEPENDS ${MAN_FILES})
 
 install (TARGETS vvcompose DESTINATION bin)
 install (FILES ${MAN_FILES} DESTINATION share/man/man1)
-
-
-

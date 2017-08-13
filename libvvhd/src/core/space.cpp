@@ -533,8 +533,8 @@ void Space::Load_v1_3(const char* fname)
     if (!fin) { perror("Error loading the space"); return; }
 
     //loading different lists
-    int64_t tmp;
-    char comment[9]; comment[8]=0;
+    int64_t tmp = 0;
+    char comment[9] = {};
     for (int i=0; i<64; i++)
     {
         fseek(fin, i*16, SEEK_SET);
@@ -635,7 +635,10 @@ void Space::Load_v1_3(const char* fname)
             body->doUpdateSegments();
             body->doFillProperties();
         }
-        else fprintf(stderr, "S->Load(): ignoring field \"%s\"", comment);
+        else {
+            fprintf(stderr, "S->Load(): ignoring field \"%s\"\n", comment);
+            exit(-1);
+        }
     }
 
     EnumerateBodies();

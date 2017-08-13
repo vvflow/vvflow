@@ -1,47 +1,29 @@
 cmake_minimum_required (VERSION 3.0)
-set (CMAKE_CXX_STANDARD 11)
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 project (libvvhd)
 
-set(LIBVVHD_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/headers)
-set(LIBVVHD_INCLUDE_DIR ${LIBVVHD_INCLUDE_DIR} PARENT_SCOPE)
-
-set (LIBVVHD_LIBRARIES "")
-set (LIBVVHD_LIBRARIES ${LIBVVHD_LIBRARIES} vvhd)
+set(LIBVVHD_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/headers PARENT_SCOPE)
 
 # HDF5
-set(HDF5_USE_STATIC_LIBRARIES 1)
 find_package(HDF5 REQUIRED)
 include_directories(${HDF5_INCLUDE_DIRS})
-message("HDF5_C_LIBRARIES: " ${HDF5_C_LIBRARIES})
-find_library(LIBPTHREAD pthread)
-find_library(LIBDL      dl)
-find_library(LIBAEC     libaec.a)
-find_library(LIBSZ      libsz.a)
-find_library(LIBZ       libz.a)
-find_library(LIBM       libm.a)
-set (LIBVVHD_LIBRARIES ${LIBVVHD_LIBRARIES}
-    ${HDF5_hdf5_LIBRARY_RELEASE} ${LIBPTHREAD} ${LIBDL} # HDF5 is static, but pthread and dl are linked dynamically
-    ${LIBSZ} ${LIBZ} ${LIBM} ${LIBAEC} # theese are linked statically
-    )
 
 # LAPACK
-# set(BLA_STATIC 1)
-find_package(LAPACK REQUIRED)
-find_library(LIBLAPACK   liblapack.a)
-find_library(LIBBLAS     libblas.a)
-set (LIBVVHD_LIBRARIES ${LIBVVHD_LIBRARIES}
-    ${LIBLAPACK} ${LIBBLAS} libgfortran.a libquadmath.a
-    )
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    find_package(LAPACK REQUIRED)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
+    find_library(MKL_LIBRARIES mkl_core)
+    set(LAPACK_LIBRARIES "")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -openmp -mkl")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -debug all")
+    set(CMAKE_SHARED_LINKER_FLAGS "-mkl=parallel")
+endif()
 
 # MATHEVAL
-find_library(LIBMATHEVAL libmatheval.a)
-find_library(LIBFL       libfl.a)
-set (LIBVVHD_LIBRARIES ${LIBVVHD_LIBRARIES}
-    ${LIBMATHEVAL} ${LIBFL}
-    )
+find_path(LIBMATHEVAL_INCLUDE_DIR matheval.h)
+find_library(LIBMATHEVAL matheval)
 
-set (LIBVVHD_LIBRARIES ${LIBVVHD_LIBRARIES} PARENT_SCOPE)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 
 if(TARGET vvhd)
 
@@ -87,6 +69,7 @@ set (LIBVVHD_SOURCES ${LIBVVHD_SOURCES} src/modules/diffusivefast.cpp)
 set (LIBVVHD_SOURCES ${LIBVVHD_SOURCES} src/modules/epsfast.cpp)
 set (LIBVVHD_SOURCES ${LIBVVHD_SOURCES} src/modules/flowmove.cpp)
 set (LIBVVHD_SOURCES ${LIBVVHD_SOURCES} src/modules/matrix.cpp)
-add_library(vvhd STATIC ${LIBVVHD_SOURCES})
+add_library(vvhd SHARED ${LIBVVHD_SOURCES})
+target_link_libraries(vvhd ${HDF5_C_LIBRARIES} ${LAPACK_LIBRARIES} ${LIBMATHEVAL})
 
 endif()

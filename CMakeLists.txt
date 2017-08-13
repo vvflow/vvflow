@@ -1,11 +1,8 @@
 cmake_minimum_required (VERSION 3.0)
-set (CMAKE_CXX_STANDARD 11)
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 project (vvflow)
 
-set(CMAKE_EXE_LINKER_FLAGS "-static-libstdc++")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
-# add_subdirectory(libvvhd)
 add_subdirectory(utils/vvflow)
 add_subdirectory(utils/vvxtract)
 add_subdirectory(utils/vvcompose)
