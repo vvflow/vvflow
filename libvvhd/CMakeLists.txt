@@ -72,4 +72,6 @@ set (LIBVVHD_SOURCES ${LIBVVHD_SOURCES} src/modules/matrix.cpp)
 add_library(vvhd SHARED ${LIBVVHD_SOURCES})
 target_link_libraries(vvhd ${HDF5_C_LIBRARIES} ${LAPACK_LIBRARIES} ${LIBMATHEVAL})
 
+install (TARGETS vvhd DESTINATION lib)
+
 endif()
