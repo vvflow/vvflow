@@ -541,23 +541,27 @@ Generate roundrect with origin in center.
   * `N`, `dl` :
     specify either number of segments or average segment length
 
-### gen_gis{R0, X0, X1, X2, X3, d, L, H}
+### gen_gis{R0, X0, X1, X2, X3, d, L, H, dln, dls}
 
-This is a chamber for pulsating jets generator.
+This is a chamber for the generator of pulsating jets (GPJ).
 It consists of prechamber, straight channel, expanding channel, and a bounding box.
 
 Prechamber is a half of a circle with radius `R0` and center at {`X0`, 0}.
 Boundary condition in prechamber is always slip.
 
 Straight channel is formed by two symmetric horizontal lines:
-with slip from `X0` to `X1` and no-slip from `X1` to `X2`.
+with slip condition from `X0` to `X1` and no-slip from `X1` to `X2`.
 
 Expanding channel is defined by angle `d` in degrees. It spans from `X2` to `X3`.
+The boundary condition in expanding channel is no-slip.
 
 The bounding box is a rectangle with constraints X:{`X3`-`L`, `X3`}, Y:{-`H`/2, `H`/2}.
+The bounding box implies slip boundary condition.
+
+Regions with no-slip boundary condition have segment length `dln`, regions with slip - `dls`. 
 
     #    ,----------------,  - H
-    #    |              .-'  - y3
+    #    |              .-'
     #    |     .------""     - r0
     #    |    /
     #    |    \
@@ -565,14 +569,14 @@ The bounding box is a rectangle with constraints X:{`X3`-`L`, `X3`}, Y:{-`H`/2, 
     #    |              '-.
     #    '----------------'
 
-    #                     ..--"
-    #      .-"""""""|""""'
+    #          slip | noslip ..--"
+    #      .-"""""""|"""""""'
     #     /    
     #    ;    +
     #     \    
-    #      '-.......|....,
-    #                     ""--,
-    #         ^x0   ^x1  ^x2  ^x3
+    #      '-.......|.......,
+    #                        ""--,
+    #         ^x0   ^x1     ^x2  ^x3
 
 ### gen_savonius{R, h, [N|dl]}
 
