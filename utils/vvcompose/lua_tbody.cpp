@@ -98,25 +98,29 @@ static int tbody_move_d(lua_State *L) {
     return 0;
 }
 
-static int tbody_get_surface(lua_State *L) {
-    lua_pushnumber(L, checkTBody(L, 1)->get_surface());
+static int tbody_get_slen(lua_State *L) {
+    lua_pushnumber(L, checkTBody(L, 1)->get_slen());
     return 1;
 }
 static int tbody_get_area(lua_State *L) {
     lua_pushnumber(L, checkTBody(L, 1)->get_area());
     return 1;
 }
-static int tbody_get_moi_c(lua_State *L) {
-    lua_pushnumber(L, checkTBody(L, 1)->get_moi_c());
+static int tbody_get_moi_cofm(lua_State *L) {
+    lua_pushnumber(L, checkTBody(L, 1)->get_moi_cofm());
     return 1;
 }
-static int tbody_get_com(lua_State *L) {
+static int tbody_get_moi_axis(lua_State *L) {
+    lua_pushnumber(L, checkTBody(L, 1)->get_moi_axis());
+    return 1;
+}
+static int tbody_get_cofm(lua_State *L) {
     shared_ptr<TBody> body = checkTBody(L, 1);
-    TVec com = body->get_com();
+    TVec cofm = body->get_cofm();
     lua_newtable(L);
-    lua_pushnumber(L, com.x);
+    lua_pushnumber(L, cofm.x);
     lua_rawseti(L, -2, 1);
-    lua_pushnumber(L, com.y);
+    lua_pushnumber(L, cofm.y);
     lua_rawseti(L, -2, 2);
     return 1;
 }
@@ -208,10 +212,11 @@ static const struct luavvd_method tbody_methods[] = {
     {"move_r", tbody_move_r},
     {"move_o", tbody_move_o},
     {"move_d", tbody_move_d},
-    {"get_arclen", tbody_get_surface},
+    {"get_slen", tbody_get_slen},
     {"get_area", tbody_get_area},
-    {"get_moi_c", tbody_get_moi_c},
-    {"get_com", tbody_get_com},
+    {"get_moi_cofm", tbody_get_moi_cofm},
+    {"get_moi_axis", tbody_get_moi_axis},
+    {"get_cofm", tbody_get_cofm},
     {"get_axis", tbody_get_axis},
     {"totable", tbody_totable},
     {NULL, NULL}

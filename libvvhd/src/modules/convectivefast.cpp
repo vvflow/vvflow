@@ -574,12 +574,12 @@ void convectivefast::fillInfSteadyEquationForSegment(unsigned eq_no, TAtt* seg, 
 void convectivefast::fillHydroXEquation(unsigned eq_no, TBody* ibody, bool rightColOnly)
 {
     const double _1_dt = 1/S->dt;
-    const TVec r_c_com = ibody->get_com() - ibody->get_axis();
+    const TVec r_c_com = ibody->get_cofm() - ibody->get_axis();
 
     //right column
     *matrix.getRightCol(eq_no) =
         + ibody->get_area()*_1_dt*ibody->speed_slae_prev.r.x
-        + ibody->get_area()*_1_dt*rotl(2*ibody->get_com()+r_c_com).x * ibody->speed_slae_prev.o
+        + ibody->get_area()*_1_dt*rotl(2*ibody->get_cofm()+r_c_com).x * ibody->speed_slae_prev.o
         // - (-ibody->speed_slae_prev.r.y) * ibody->speed_slae_prev.o * ibody->get_area()
         + sqr(ibody->speed_slae_prev.o) * ibody->get_area() * r_c_com.x
         + ibody->fdt_dead.r.x*_1_dt;
@@ -594,7 +594,7 @@ void convectivefast::fillHydroXEquation(unsigned eq_no, TBody* ibody, bool right
         // speed_slae
         *matrix.getCell(eq_no, &ibody->speed_slae.r.x) = ibody->get_area()*_1_dt;
         *matrix.getCell(eq_no, &ibody->speed_slae.r.y) = 0;
-        *matrix.getCell(eq_no, &ibody->speed_slae.o)   = ibody->get_area()*_1_dt * (-2*ibody->get_com().y - r_c_com.y);
+        *matrix.getCell(eq_no, &ibody->speed_slae.o)   = ibody->get_area()*_1_dt * (-2*ibody->get_cofm().y - r_c_com.y);
 
         // force_hydro
         *matrix.getCell(eq_no, &ibody->force_hydro.r.x) = -1;
@@ -604,12 +604,12 @@ void convectivefast::fillHydroXEquation(unsigned eq_no, TBody* ibody, bool right
 void convectivefast::fillHydroYEquation(unsigned eq_no, TBody* ibody, bool rightColOnly)
 {
     const double _1_dt = 1/S->dt;
-    const TVec r_c_com = ibody->get_com() - ibody->get_axis();
+    const TVec r_c_com = ibody->get_cofm() - ibody->get_axis();
 
     //right column
     *matrix.getRightCol(eq_no) =
         + ibody->get_area()*_1_dt*ibody->speed_slae_prev.r.y
-        + ibody->get_area()*_1_dt*rotl(2*ibody->get_com()+r_c_com).y * ibody->speed_slae_prev.o
+        + ibody->get_area()*_1_dt*rotl(2*ibody->get_cofm()+r_c_com).y * ibody->speed_slae_prev.o
         // - (ibody->speed_slae_prev.r.x) * ibody->speed_slae_prev.o * ibody->get_area()
         + sqr(ibody->speed_slae_prev.o) * ibody->get_area() * r_c_com.y
         + ibody->fdt_dead.r.y*_1_dt;
@@ -623,7 +623,7 @@ void convectivefast::fillHydroYEquation(unsigned eq_no, TBody* ibody, bool right
         // Speed_slae
         *matrix.getCell(eq_no, &ibody->speed_slae.r.x) = 0;
         *matrix.getCell(eq_no, &ibody->speed_slae.r.y) = ibody->get_area()*_1_dt;
-        *matrix.getCell(eq_no, &ibody->speed_slae.o)   = ibody->get_area()*_1_dt * (2*ibody->get_com().x + r_c_com.x);
+        *matrix.getCell(eq_no, &ibody->speed_slae.o)   = ibody->get_area()*_1_dt * (2*ibody->get_cofm().x + r_c_com.x);
 
         // force_hydro
         *matrix.getCell(eq_no, &ibody->force_hydro.r.y) = -1;
@@ -634,12 +634,12 @@ void convectivefast::fillHydroOEquation(unsigned eq_no, TBody* ibody, bool right
 {
     const double _1_dt = 1/S->dt;
     const double _1_2dt = 0.5/S->dt;
-    const TVec r_c_com = ibody->get_com() - ibody->get_axis();
+    const TVec r_c_com = ibody->get_cofm() - ibody->get_axis();
 
     //right column
     *matrix.getRightCol(eq_no) =
         + ibody->get_area()*_1_dt * rotl(r_c_com) * ibody->speed_slae_prev.r
-        + 2*ibody->get_moi_c()*_1_dt * ibody->speed_slae_prev.o
+        + 2*ibody->get_moi_axis()*_1_dt * ibody->speed_slae_prev.o
         // - (r_c_com * ibody->speed_slae_prev.r) * ibody->speed_slae_prev.o * ibody->get_area()
         + ibody->fdt_dead.o*_1_2dt;
     if (rightColOnly) return;
@@ -652,7 +652,7 @@ void convectivefast::fillHydroOEquation(unsigned eq_no, TBody* ibody, bool right
         // Speed_slae
         *matrix.getCell(eq_no, &ibody->speed_slae.r.x) = ibody->get_area()*_1_dt * (-r_c_com.y);
         *matrix.getCell(eq_no, &ibody->speed_slae.r.y) = ibody->get_area()*_1_dt * (r_c_com.x);
-        *matrix.getCell(eq_no, &ibody->speed_slae.o)   = 2*ibody->get_moi_c()*_1_dt;
+        *matrix.getCell(eq_no, &ibody->speed_slae.o)   = 2*ibody->get_moi_axis()*_1_dt;
 
         // force_hydro
         *matrix.getCell(eq_no, &ibody->force_hydro.o) = -1;
@@ -671,7 +671,7 @@ void convectivefast::fillHydroOEquation(unsigned eq_no, TBody* ibody, bool right
 void convectivefast::fillNewtonXEquation(unsigned eq_no, TBody* ibody, bool rightColOnly)
 {
     const double _1_dt = 1/S->dt;
-    const TVec r_c_com = ibody->get_com() - ibody->get_axis();
+    const TVec r_c_com = ibody->get_cofm() - ibody->get_axis();
 
     //right column
     *matrix.getRightCol(eq_no) =
@@ -707,7 +707,7 @@ void convectivefast::fillNewtonXEquation(unsigned eq_no, TBody* ibody, bool righ
 void convectivefast::fillNewtonYEquation(unsigned eq_no, TBody* ibody, bool rightColOnly)
 {
     const double _1_dt = 1/S->dt;
-    const TVec r_c_com = ibody->get_com() - ibody->get_axis();
+    const TVec r_c_com = ibody->get_cofm() - ibody->get_axis();
 
     //right column
     *matrix.getRightCol(eq_no) =
@@ -743,12 +743,12 @@ void convectivefast::fillNewtonYEquation(unsigned eq_no, TBody* ibody, bool righ
 void convectivefast::fillNewtonOEquation(unsigned eq_no, TBody* ibody, bool rightColOnly)
 {
     const double _1_dt = 1/S->dt;
-    const TVec r_c_com = ibody->get_com() - ibody->get_axis();
+    const TVec r_c_com = ibody->get_cofm() - ibody->get_axis();
 
     //right column
     *matrix.getRightCol(eq_no) =
         - ibody->get_area()*_1_dt*ibody->density * (rotl(r_c_com)*ibody->speed_slae_prev.r)
-        - ibody->get_moi_c()*_1_dt*ibody->density * ibody->speed_slae_prev.o
+        - ibody->get_moi_axis()*_1_dt*ibody->density * ibody->speed_slae_prev.o
         - (ibody->density-1.0) * (rotl(r_c_com)*S->gravitation) * ibody->get_area()
         - ibody->friction_prev.o;
     if (rightColOnly) return;
@@ -756,9 +756,9 @@ void convectivefast::fillNewtonOEquation(unsigned eq_no, TBody* ibody, bool righ
     // self
     {
         // Speed_slae
-        *matrix.getCell(eq_no, &ibody->speed_slae.r.x) = ibody->get_area()*_1_dt*ibody->density * r_c_com.y;
+        *matrix.getCell(eq_no, &ibody->speed_slae.r.x) = +ibody->get_area()*_1_dt*ibody->density * r_c_com.y;
         *matrix.getCell(eq_no, &ibody->speed_slae.r.y) = -ibody->get_area()*_1_dt*ibody->density * r_c_com.x;
-        *matrix.getCell(eq_no, &ibody->speed_slae.o)   = -ibody->get_moi_c()*_1_dt*ibody->density;
+        *matrix.getCell(eq_no, &ibody->speed_slae.o)   = -ibody->get_moi_axis()*_1_dt*ibody->density;
         // force_hydro
         *matrix.getCell(eq_no, &ibody->force_hydro.o) = 1;
         // force_holder

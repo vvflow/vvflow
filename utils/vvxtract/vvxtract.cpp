@@ -64,11 +64,11 @@ void print_body(TBody *body)
 	attribute_print("force_hydro", body->force_hydro);
 	attribute_print("force_holder", body->force_holder);
 	attribute_print("friction_prev", body->friction_prev);
-	attribute_print("surface", body->get_surface());
+	attribute_print("slen", body->get_slen());
 	attribute_print("area", body->get_area());
-	attribute_print("com", body->get_com());
+	attribute_print("cofm", body->get_cofm());
 	attribute_print("axis", body->get_axis());
-	attribute_print("moi_c", body->get_moi_c());
+	attribute_print("moi_axis", body->get_moi_axis());
 }
 
 static std::string info[4];

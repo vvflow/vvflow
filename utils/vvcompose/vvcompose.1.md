@@ -284,19 +284,23 @@ _Example_:
   * body`:get_axis`() :
     return Lua table {*axis.x*, *axis.y*}, where *axis* `=` *holder_pos.r* `+` *delta_pos.r*
 
-  * body`:get_com`() :
-    return Lua table {*com.x*, *com.y*}, where *com* is the body center of mass
+  * body`:get_cofm`() :
+    return Lua table {*cofm.x*, *cofm.y*}, where *cofm* is the body center of mass
 
-  * body`:get_arclen`() :
+  * body`:get_slen`() :
     return the body surface length
 
   * body`:get_area`() :
     return the body area
 
-  * body`:get_moi_c`() :
+  * body`:get_moi_cofm`() :
     return the moment of inertia about the center of mass.
     Moment of inertia is calculated for density = 1,
     do not forget to multiply it.
+
+  * body`:get_moi_axis`() :
+    return the moment of inertia about the *axis*.
+    *moi_axis* = *moi_cofm* + (*axis*-*cofm*).abs2() * *area*.
 
   * body`:totable`() :
     return Lua table with body corners (TVec)

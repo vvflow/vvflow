@@ -173,8 +173,9 @@ void Space::dataset_write_body(const char* name, const TBody& body)
     attribute_write(file_dataset, "bounce", body.bounce);
 
     attribute_write(file_dataset, "area", body.get_area());
-    attribute_write(file_dataset, "com", body.get_com());
-    attribute_write(file_dataset, "moi_c", body.get_moi_c());
+    attribute_write(file_dataset, "cofm", body.get_cofm());
+    attribute_write(file_dataset, "moi_cofm", body.get_moi_cofm());
+    attribute_write(file_dataset, "moi_axis", body.get_moi_axis());
 
     attribute_write(file_dataset, "boundary_condition", body.boundary_condition);
     attribute_write(file_dataset, "special_segment_no", body.special_segment_no);
@@ -807,7 +808,7 @@ double Space::AverageSegmentLength()
 {
     if (!BodyList.size()) return std::numeric_limits<double>::lowest();
 
-    double SurfaceLength = BodyList.front()->get_surface();
+    double SurfaceLength = BodyList.front()->get_slen();
     int N = BodyList.front()->size() - 1;
     if (N<=0) return std::numeric_limits<double>::lowest();
     return SurfaceLength / N;

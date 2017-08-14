@@ -21,9 +21,9 @@ TBody::TBody():
     fdt_dead = TVec3D(0,0,0);
     friction = friction_prev = TVec3D(0,0,0);
     force_hydro = force_holder = TVec3D(0,0,0);
-    _surface = _area = 0;
-    _com = TVec(0., 0.);
-    _moi_c = _moi_com = 0;
+    _slen = _area = 0;
+    _cofm = TVec(0., 0.);
+    _moi_cofm = 0;
     kspring = TVec3D(inf,inf,inf);
     damping = TVec3D(0., 0., 0.);
     density = 1.;
@@ -113,7 +113,7 @@ TAtt* TBody::isPointInContour(TVec p, vector<T> &list)
         p.y < _min_rect_bl.y ||
         p.x > _min_rect_tr.x ||
         p.y > _min_rect_tr.y ||
-        (p-_com).abs2() > _min_disc_r2
+        (p-_cofm).abs2() > _min_disc_r2
         )) return NULL;
 
     TAtt *nearest = NULL;
@@ -151,10 +151,10 @@ TAtt* TBody::isPointInContour(TVec p, vector<T> &list)
 
 void TBody::doFillProperties()
 {
-    // FIXME mistake: moi_c after load and save changes
-    _surface = _area = _moi_c = _moi_com = 0;
-    TVec _3S_com= TVec(0., 0.);
-    double _12moi_0 = 0.;
+    _slen = 0;
+    _area = 0;
+    TVec _3S_cofm = TVec(0., 0.);
+    double _12moi_0 = 0.; // 12 * moment of inertia around point (0, 0)
 
     if (!alist.size()) {
         return;
@@ -163,17 +163,16 @@ void TBody::doFillProperties()
     alist.push_back(alist.front());
     for (auto latt=alist.begin(); latt<alist.end()-1; latt++)
     {
-        _surface+= latt->dl.abs();
+        _slen+= latt->dl.abs();
         _area+= latt->r.y*latt->dl.x;
-        _3S_com-= latt->r * (rotl(latt->corner) * (latt+1)->corner);
+        _3S_cofm-= latt->r * (rotl(latt->corner) * (latt+1)->corner);
         _12moi_0 -= (latt->corner.abs2() + latt->corner*(latt+1)->corner + (latt+1)->corner.abs2())
             *  (rotl(latt->corner) * (latt+1)->corner);
 
     }
     alist.pop_back();
-    _com = _3S_com/(3*_area);
-    _moi_com = _12moi_0/12. - _area*_com.abs2();
-    _moi_c = _moi_com + _area*(get_axis() - _com).abs2();
+    _cofm = _3S_cofm/(3*_area);
+    _moi_cofm = _12moi_0/12. - _area*_cofm.abs2();
 
     _min_disc_r2 = 0;
     _min_rect_bl = TVec(
@@ -184,7 +183,7 @@ void TBody::doFillProperties()
             -std::numeric_limits<double>::infinity());
     for (auto& latt: alist)
     {
-        double r2 = (latt.corner-_com).abs2();
+        double r2 = (latt.corner-_cofm).abs2();
         if (r2 > _min_disc_r2) _min_disc_r2 = r2;
         if (latt.corner.x > _min_rect_tr.x) _min_rect_tr.x = latt.corner.x;
         if (latt.corner.y > _min_rect_tr.y) _min_rect_tr.y = latt.corner.y;

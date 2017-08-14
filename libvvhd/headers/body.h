@@ -111,12 +111,12 @@ class TBody
         bool isInsideValid() {return _area<=0;}
 
         void doFillProperties();
-        double get_surface() const {return _surface;}
-        double get_area() const {return _area;}
-        TVec   get_com() const {return _com;} // center of mass
+        double get_slen() const {return _slen;} // surface arc length
+        double get_area() const {return _area;} // body area
+        TVec   get_cofm() const {return _cofm;} // center of mass
         TVec   get_axis() const {return holder.r + dpos.r;}
-        double get_moi_c() const {return _moi_c;} // moment of inertia about rotation axis
-        void override_moi_c(double newMoi_c) {_moi_c = newMoi_c;}
+        double get_moi_cofm() const {return _moi_cofm;} // moment of inertia about center of mass
+        double get_moi_axis() const {return _moi_cofm + (get_axis()-_cofm).abs2()*_area;} // moment of inertia about rotation axis
         size_t size() const    {return alist.size();}
 
         int eq_forces_no; // starting number of forces equations
@@ -126,12 +126,11 @@ class TBody
         //int *ObjectIsInHeatLayer(TObj &obj); //link to element of HeatLayer array
 
     private:
-        double _surface;
+        double _slen;
         double _area;
-        TVec   _com; //center of mass (in global ref frame)
-        double _moi_com; //moment of inertia about com;
-        double _moi_c; //moi about rotation axis
-        double _min_disc_r2; //min((corner-com).abs2())
+        TVec   _cofm; //center of mass (in global ref frame)
+        double _moi_cofm; //moment of inertia about cofm;
+        double _min_disc_r2; //min((corner-cofm).abs2())
         TVec   _min_rect_bl; //TVec(min(corner.x), min(corner.y))
         TVec   _min_rect_tr; //TVec(max(corner.x), max(corner.y))
 
