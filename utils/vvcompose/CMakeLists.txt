@@ -29,11 +29,15 @@ add_executable(vvcompose
     linenoise.c
 )
 target_link_libraries(vvcompose vvhd ${LUA_LIBRARY} dl)
+
+if(NOT NO_SELFTEST)
 add_custom_command(
     TARGET vvcompose POST_BUILD
     COMMAND vvcompose ${CMAKE_CURRENT_SOURCE_DIR}/test.lua
 )
+endif()
 
+if(NOT NO_MANPAGES)
 SET(MAN_NAMES vvcompose.1)
 SET(MAN_FILES)
 foreach(m IN LISTS MAN_NAMES)
@@ -50,6 +54,7 @@ foreach(m IN LISTS MAN_NAMES)
     list(APPEND MAN_FILES ${mf})
 endforeach()
 add_custom_target(man ALL DEPENDS ${MAN_FILES})
+endif()
 
 install (TARGETS vvcompose DESTINATION bin)
 install (FILES ${MAN_FILES} DESTINATION share/man/man1)
