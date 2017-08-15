@@ -252,6 +252,13 @@ int main (int argc, char** argv) {
             linenoiseFree(line);
         }
     } else {
+        lua_newtable(L);
+        for (int i=optind+1; i<argc; i++) {
+            lua_pushstring(L, argv[i]);
+            lua_rawseti(L, -2, i-optind);
+        }
+        lua_setglobal(L, "arg");
+
         ret = luaL_dofile(L, argv[optind]);
 
         if (ret) {
