@@ -9,3 +9,4 @@ add_executable(vvxtract vvxtract.cpp)
 target_link_libraries(vvxtract vvhd)
 
 install (TARGETS vvxtract DESTINATION bin)
+install(PROGRAMS h5xtract DESTINATION bin)
