@@ -4,6 +4,7 @@ project (vvflow)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 add_subdirectory(utils/vvflow)
+add_subdirectory(utils/vvplot)
 add_subdirectory(utils/vvxtract)
 add_subdirectory(utils/vvcompose)
 add_subdirectory(utils/scripts)

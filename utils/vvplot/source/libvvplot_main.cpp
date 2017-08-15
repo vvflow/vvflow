@@ -5,11 +5,12 @@
 
 void print_version()
 {
-    fprintf(stderr, "libvvplot.so compiled with:\n");
-    fprintf(stderr, " - libvvhd git_commit %s\n", Space().getGitInfo());
     unsigned ver[3];
     H5get_libversion(&ver[0], &ver[1], &ver[2]);
-    fprintf(stderr, " - libhdf version %u.%u.%u\n", ver[0], ver[1], ver[2]);
+    fprintf(stderr, "libhdf version: %u.%u.%u\n", ver[0], ver[1], ver[2]);
+    fprintf(stderr, "libvvhd version: %s (%s)\n", libvvhd_gitinfo, libvvhd_gitrev);
+    if (libvvhd_gitdiff[0] != '\0')
+        fprintf(stderr, "git_diff: %s\n", libvvhd_gitdiff);
     fflush(stderr);
 }
 

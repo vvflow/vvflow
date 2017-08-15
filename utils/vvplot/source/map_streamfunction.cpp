@@ -35,9 +35,9 @@ double _2pi_psi_q(TVec dr, double q)
 }
 
 inline static
-double _2pi_psi_qatt(TVec p, TVec att, TVec com, double q)
+double _2pi_psi_qatt(TVec p, TVec att, TVec cofm, double q)
 {
-    TVec v1 = com-p;
+    TVec v1 = cofm-p;
     TVec v2 = att-p;
     return q * atan2(rotl(v2)*v1, v2*v1);
 }
@@ -63,7 +63,7 @@ double Psi(Space* S, TVec p, double spacing, double& psi_gap)
             double g = -Vs * latt.dl;
             double q = -rotl(Vs) * latt.dl;
             tmp_4pi_psi_g += _4pi_psi_g(p-latt.r, rd2_global, g);
-            tmp_2pi_psi_q += _2pi_psi_qatt(p, latt.r, lbody->get_com(), q);
+            tmp_2pi_psi_q += _2pi_psi_qatt(p, latt.r, lbody->get_cofm(), q);
         }
     }
 
