@@ -18,14 +18,13 @@ set(LIBVVPLOT_SOURCES ${LIBVVPLOT_SOURCES} source/isoline.cpp)
 
 add_library(vvplot SHARED ${LIBVVPLOT_SOURCES})
 target_link_libraries(vvplot vvhd)
-install(TARGETS
-	vvplot
-	DESTINATION lib
-)
 
 add_executable(libvvplot source/libvvplot_main.cpp)
 target_link_libraries(libvvplot vvplot vvhd)
+set_target_properties(libvvplot PROPERTIES INSTALL_RPATH "$ORIGIN")
+
 install(TARGETS
+	vvplot
 	libvvplot
 	DESTINATION bin
 )
