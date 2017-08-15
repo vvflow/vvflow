@@ -208,7 +208,7 @@ int main (int argc, char** argv) {
     while ( (c = getopt(argc, argv, "hv")) != -1 ) {
         switch (c) {
         case 'h':
-            return execlp("man", "man", "vvcompose2", NULL);
+            return execlp("man", "man", "vvcompose", NULL);
         case 'v':
             printf("vvcompose %s\n", libvvhd_gitinfo);
             printf("revision: %s\n", libvvhd_gitrev);
