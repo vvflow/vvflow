@@ -1,4 +1,18 @@
-VVFlow. Инструкция пользователя
+Установка программного комплекса
+=======
+
+Программный комплекс устанавливается из deb-репозитория:
+```
+#!bash
+# sudo apt-get intall curl apt-transport-https
+TOKEN=c924a03ddb1308dfdd423f9735693041557bdb3300138134
+echo "deb https://$TOKEN:@packagecloud.io/rosik/vvflow/ubuntu/ xenial main" | sudo tee /etc/apt/sources.list.d/vvflow.list
+curl -sL "https://$TOKEN:@packagecloud.io/rosik/vvflow/gpgkey" | sudo apt-key add -
+sudo apt-get update
+sudo apt-get install vvflow
+```
+
+Проведение вычислительного эксперимента
 =======
 
 *vvcompose*
@@ -26,19 +40,21 @@ COMMAND:
 
 Вот так выглядит расчет цилиндра
 
-    $ vvcompose \
-        set caption re600_n350 \
-        load body cyl350.txt \
-        set inf_speed.x '1' \
-        set dt 0.005 \
-        set dt_save 0.1 \
-        set re 600 \
-        set time 0 \
-        set time_to_finish 500 \
-        save re600_n350.h5
+```
+#!bash
+vvcompose \
+    set caption re600_n350 \
+    load body cyl350.txt \
+    set inf_speed.x '1' \
+    set dt 0.005 \
+    set dt_save 0.1 \
+    set re 600 \
+    set time 0 \
+    set time_to_finish 500 \
+    save re600_n350.h5
+```
 
 Вместо того, что бы загружать тело из файла, можно соорудить удобный костылик на баше
-
 ```
 #!bash
 function gen_cylinder() {
@@ -53,10 +69,8 @@ awk -v N=$1 -f - /dev/null <<AWK
     }
 AWK
 }
-```
-```
-#!console
-$ vvcompose load body <(gen_cylinder 350)
+
+vvcompose load body <(gen_cylinder 350)
 ```
 
 Аналогичным способом можно генерировать и другие данные. За примерами стоит заглянуть в папку с тестами. Там можно найти много интересного.
@@ -66,8 +80,8 @@ $ vvcompose load body <(gen_cylinder 350)
 
 Следующим этапом является непосредственно запуск расчета. Расчетом занимается программа `vvflow`. Если не углубляться в подробности, то все выглядит просто:
 ```
-#!console
-$ vvflow --progress --profile re600_n350.h5
+#!bash
+vvflow --progress --profile re600_n350.h5
 ```
 
 У команды `vvflow` есть две полезные опции:
@@ -131,19 +145,29 @@ optional arguments:
  - `--size WxH`: размер картинки в пикселях; один из двух параметров можно не писать (например `--size 1280x` - высота изображения будет вычислена автоматически).
 
 Примеры использования:
-```
-#!console
+
 самый простой вариант
-$ vvplot re600_n350.h5 -b -x -2 20 ./
-    
+```
+#!bash
+vvplot re600_n350.h5 -b -x -2 20 ./
+```
+
 немного красивее
-$ vvplot results_re600_n350/010000.h5 -bvV -x -2 20 ./images --timelabel --spring
+```
+#!bash
+vvplot results_re600_n350/010000.h5 -bvV -x -2 20 ./images --timelabel --spring
+```
 
 строим кадры для мультика
-$ for f in results_re600_n350/*.h5; do vvplot $f -bvV -x -2 20 ./images --timelabel --spring; done;
+```
+#!bash
+for f in results_re600_n350/*.h5; do vvplot $f -bvV -x -2 20 ./images --timelabel --spring; done;
+```
 
 кодируем кадры в единый видеофайл (с использованием ffmpeg)
-$ vvencode 'images/*.png' re600_n350.mp4
+```
+#!bash
+vvencode 'images/*.png' re600_n350.mp4
 ```
 
 *h5xtract*
@@ -179,12 +203,66 @@ time    body00/force_hydro
 
 Например, мы хотим посмотреть на силу сопротивления из расчета выше:
 ```
-#!console
-$ h5xtract stepdata_re600_n350.h5 time body00/force_hydro | gpquick --points > fx_raw.png
+#!bash
+h5xtract stepdata_re600_n350.h5 time body00/force_hydro | gpquick --points > fx_raw.png
 ```
 
 А если нам не понравилась "шуба" на графике, можно отфильтровать ее с помощью moving average:
 ```
-#!console
-$ h5xtract stepdata_re600_n350.h5 time body00/force_hydro | vvawk.mavg -v span=100 - | gpquick --lines > fx_mavg.png
+#!bash
+h5xtract stepdata_re600_n350.h5 time body00/force_hydro | vvawk.mavg -v span=100 - | gpquick --lines > fx_mavg.png
 ```
+
+Разработка 
+=======
+
+Сборку проекта удобнее всего выполнять внутри докер контейнера.
+Об установке самого докера можно почитать на [официальном сайте](https://docs.docker.com/engine/installation/linux/ubuntu/#install-docker).
+Для запуска контейнера удобнее используется `buildenv.sh` из репозитория:
+```
+#!bash
+. buildenv.sh
+# в качестве аргумента можно указать целевой дистрибутив
+# . buildenv.sh ubuntu-xenial # default
+# . buildenv.sh debian-jessie
+```
+
+Внутри контейнера присутствуют все необходимые девелоперские либы (см. `Dockerfile`).
+Исходники vvflow примаунчены к директории `/vvflow`. И если в `/root` заняться компиляцией, то все бинарники окажутся на host'е в директории `./build`.
+
+Для сборки проекта используется cmake:
+
+```
+#!bash
+cd /root
+cmake -D CMAKE_BUILD_TYPE=Release /vvflow
+make -j
+cpack
+```
+
+Распространять скомпилированный проект можно с помощью deb-пакетов через [packagecloud.io](https://packagecloud.io/):
+```
+#!bash
+export PACKAGECLOUD_TOKEN=api_token # https://packagecloud.io/api_token
+pkgcloud-push rosik/vvflow/ubuntu/xenial ./vvflow.deb
+```
+
+В процессе разработки также может пригодиться предпросмотр Markdown файлов:
+```
+#!bash
+grip /vvflow 0.0.0.0:1207
+```
+* README.md: http://127.0.0.1:1207
+* INSTALL.md: http://127.0.0.1:1207/INSTALL.md
+
+Документацию можно проверять командой `man` внутри контейнера:
+```
+#!bash
+man -l utils/vvcompose/vvcompose.1
+```
+Либо через http сервер:
+```
+#!bash
+python -m SimpleHTTPServer 1207
+```
+* http://127.0.0.1:1207/utils/vvcompose/vvcompose.1.html
