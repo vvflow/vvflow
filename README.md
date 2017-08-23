@@ -4,7 +4,7 @@
 Программный комплекс устанавливается из deb-репозитория:
 ```
 #!bash
-# sudo apt-get intall curl apt-transport-https
+# sudo apt-get install curl apt-transport-https
 TOKEN=c924a03ddb1308dfdd423f9735693041557bdb3300138134
 echo "deb https://$TOKEN:@packagecloud.io/rosik/vvflow/ubuntu/ xenial main" | sudo tee /etc/apt/sources.list.d/vvflow.list
 curl -sL "https://$TOKEN:@packagecloud.io/rosik/vvflow/gpgkey" | sudo apt-key add -
