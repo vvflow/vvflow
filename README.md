@@ -93,7 +93,7 @@ vvflow --progress --profile re600_n350.h5
 
 ```
 #!bash
-cat <<EOF | qsub -d. -l nodes=1:ppn=6 -N testrun
+qsub -d. -l nodes=1:ppn=6 -N testrun <<EOF
     export PATH="/home/user/.local/bin";
     export LD_LIBRARY_PATH="/home/user/.local/lib";
     ulimit -c unlimited;
