@@ -1,10 +1,8 @@
 #include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
+#include <unistd.h> // execlp
 #include <lua.hpp>
 
-#include "core.h"
 #include "getset.h"
 
 #include "lua_space.h"
