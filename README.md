@@ -92,8 +92,14 @@ vvflow --progress --profile re600_n350.h5
 Кулеры зажужжат, в текущей директории начнут появляться результаты, и через денёк другой можно будет заняться обработкой. Если перспектива ждать не радует, а под рукой есть кластер c [PBS](https://en.wikipedia.org/wiki/Portable_Batch_System), то запуск будет немного сложнее.
 
 ```
-#!console
-$ echo 'cd "${PBS_O_WORKDIR}"; export PATH="${PBS_O_PATH}"; vvflow re600_n350.h5;' | qsub -l nodes=1:ppn=12 -N testrun
+#!bash
+cat <<EOF | qsub -d. -l nodes=1:ppn=6 -N testrun
+    export PATH="/home/user/.local/bin";
+    export LD_LIBRARY_PATH="/home/user/.local/lib";
+    ulimit -c unlimited;
+    export OMP_NUM_THREADS=6;
+    exec vvflow re600_n350.h5;
+EOF
 ```
 
 Обработка результатов
