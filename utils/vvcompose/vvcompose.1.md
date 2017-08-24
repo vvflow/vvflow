@@ -3,7 +3,7 @@ vvcompose(1) -- compose the CFD problem to be solved with vvflow program
 
 ## SYNOPSIS
 
-`vvcompose` [-v] [-h] [--] [<FILE>] [<args>]
+`vvcompose` [<OPTIONS>] [--] [<FILE>] [<args>]
 
 ## DESCRIPTION
 
@@ -32,10 +32,10 @@ This manual will not discuss the Lua syntax in all details, although it will cov
 
 ## OPTIONS
 
-  * -v :
+  * -v, --version :
     print program version and exit
 
-  * -h :
+  * -h, --help :
     show manpage and exit
 
 ## SYNTAX

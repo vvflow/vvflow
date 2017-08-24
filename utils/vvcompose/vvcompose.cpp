@@ -2,8 +2,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <getopt.h>
-#include <signal.h>
 #include <lua.hpp>
 
 #include "core.h"
@@ -194,43 +192,50 @@ int luaopen_vvd (lua_State *L) {
     return 0;
 }
 
-volatile sig_atomic_t c_sigint = 0;
-void handle_sigint(int signum) {
-    c_sigint = 1;
-    printf("caught sigint\n");
-    return;
-}
-
 int main (int argc, char** argv) {
 
-    int c;
-
-    while ( (c = getopt(argc, argv, "hv")) != -1 ) {
-        switch (c) {
-        case 'h':
+    if (argc > 1) {
+        // try to parse arguments
+        if (!strcmp(argv[1], "-h") || !strcmp(argv[1], "--help")) {
             return execlp("man", "man", "vvcompose", NULL);
-        case 'v':
-            printf("vvcompose %s\n", libvvhd_gitinfo);
-            printf("revision: %s\n", libvvhd_gitrev);
-            if (libvvhd_gitdiff[0] != '\0')
-                printf("git_diff: %s\n", libvvhd_gitdiff);
+        } else if (!strcmp(argv[1], "-v") || !strcmp(argv[1], "--version")) {
+            fprintf(stderr, "vvcompose %s\n", libvvhd_gitinfo);
+            fprintf(stderr, "revision: %s\n", libvvhd_gitrev);
+            if (libvvhd_gitdiff[0] == '\0') return 0;
+            fprintf(stderr, "git_diff: %s\n", libvvhd_gitdiff);
             return 0;
-        case '?':
+        } else if (!strcmp(argv[1], "--")) {
+            argv[1] = argv[0];
+            argc--;
+            argv++;
+        } else if (!strncmp(argv[1], "-", 1)) {
+            fprintf(stderr, "%s: invalid option '%s'\n", argv[0], argv[1]);
             return 1;
-        default:
-            abort();
         }
     }
 
-    lua_State *L = luaL_newstate();   /* opens Lua */
-    luaL_openlibs(L);          /* opens the basic library */
+    lua_State *L = luaL_newstate();
+    luaL_openlibs(L);
     luaopen_vvd(L);
     int ret = 0;
 
-    if (argc < 2) {
-        /* interpreter mode */
-        signal(SIGINT, handle_sigint);
+    if (argc > 1) {
+        /* load script from file */
+        lua_newtable(L);
+        for (int i=1; i<argc; i++) {
+            lua_pushstring(L, argv[i]);
+            lua_rawseti(L, -2, i-1);
+        }
+        lua_setglobal(L, "arg");
 
+        ret = luaL_dofile(L, argv[1]);
+
+        if (ret) {
+            fprintf(stderr, "%s\n", lua_tostring(L, -1));
+            lua_pop(L, 1);
+        }
+    } else {
+        /* interpreter mode */
         char *line;
         while(true) {
             line = linenoise("vvcompose> ");
@@ -250,20 +255,6 @@ int main (int argc, char** argv) {
             }
             
             linenoiseFree(line);
-        }
-    } else {
-        lua_newtable(L);
-        for (int i=optind+1; i<argc; i++) {
-            lua_pushstring(L, argv[i]);
-            lua_rawseti(L, -2, i-optind);
-        }
-        lua_setglobal(L, "arg");
-
-        ret = luaL_dofile(L, argv[optind]);
-
-        if (ret) {
-            fprintf(stderr, "%s\n", lua_tostring(L, -1));
-            lua_pop(L, 1);
         }
     }
 
