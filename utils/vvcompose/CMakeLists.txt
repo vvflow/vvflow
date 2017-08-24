@@ -15,6 +15,7 @@ include_directories(${LIBVVHD_INCLUDE_DIR})
 add_executable(vvcompose
     vvcompose.cpp
     getset.cpp
+    lua_space.cpp
     lua_tvec.cpp
     lua_tobj.cpp
     lua_tvec3d.cpp
