@@ -31,16 +31,3 @@ Without <DATASET> specified vvxtract runs with `--info` option enabled.
     * creation time (hdf attribute 'time_local');
     * creator version (hdf attributes 'git_info', 'git_rev').
     This is default when no dataset is specified.
-    
-  * -f, --format [text|float|double]:
-    dataset output format.
-    Default is `text`.
-
-  * --xyvalue:
-    rearrange output in form (x, y, value).
-    Raise error if <DATASET> has no margins attributes.
-
-  * --margins:
-    prepend matrix with `xmin`, `xmax`, `ymin`, `ymax`, `spacing` attributes.
-    Raise error if <DATASET> has no margins attributes.
-    Ignored in `--xyvalue` mode.
