@@ -5,4 +5,5 @@ bin/
 gitinfo.cpp
 *.sublime-*
 doc/images/
+build/
 

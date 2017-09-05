@@ -827,7 +827,7 @@ static int linenoiseEdit(int stdin_fd, int stdout_fd, char *buf, size_t buflen, 
             return (int)l.len;
         case CTRL_C:     /* ctrl-c */
             errno = EAGAIN;
-            write(stdin_fd, "^C", 2);
+            if (write(stdin_fd, "^C", 2)<=0) {}
             return -1;
         case BACKSPACE:   /* backspace */
         case 8:     /* ctrl-h */
