@@ -98,9 +98,94 @@ int main(int argc, char **argv)
         printf("created: %s\n", h5a_read<std::string>(fid, "time_local").c_str());
         printf("version: %s\n", h5a_read<std::string>(fid, "git_info").c_str());
         printf("git_rev: %s\n", h5a_read<std::string>(fid, "git_rev").c_str());
-        std::string git_diff = h5a_read<std::string>(fid, "git_diff");
+        std::string git_diff =  h5a_read<std::string>(fid, "git_diff");
         if (!git_diff.empty()) {
             printf("git_diff: %s\n", git_diff.c_str());
+        }
+    }
+
+    if (b_info && H5Aexists(fid, "dt")) {
+        Space S;
+        S.Load(fid);
+
+        printf("\n");
+        printf("-- space\n");
+        printf("S.re = %lg\n", S.Re);
+        printf("S.inf_g = %lg\n", S.InfCirculation);
+        printf("S.inf_vx = '%s'\n", std::string(S.InfSpeedX).c_str());
+        printf("S.inf_vy = '%s'\n", std::string(S.InfSpeedY).c_str());
+        printf("S.gravity = {%lg, %lg}\n", S.gravitation.x, S.gravitation.y);
+        printf("S.time = '%d/%u' -- %lg\n", S.Time.value, S.Time.timescale, double(S.Time));
+        printf("S.dt = '%d/%u' -- %lg\n", S.dt.value, S.dt.timescale, double(S.dt));
+        printf("S.dt_save = '%d/%u'\n", S.dt_save.value, S.dt_save.timescale);
+        printf("S.dt_streak = '%d/%u'\n", S.dt_streak.value, S.dt_streak.timescale);
+        printf("S.dt_profile = '%d/%u'\n", S.dt_profile.value, S.dt_profile.timescale);
+        printf("S.finish = %lg\n", S.Finish);
+        printf("-- #S.body_list = %zd -- number of elements\n", long(S.BodyList.size()));
+        printf("-- #S.vort_list = %zd\n", long(S.VortexList.size()));
+        printf("-- #S.sink_list = %zd\n", long(S.SourceList.size()));
+        printf("-- #S.streak_source_list = %zd\n", long(S.StreakList.size()));
+        printf("-- #S.streak_domain_list = %zd\n", long(S.StreakSourceList.size()));
+
+        for (shared_ptr<TBody>& lbody: S.BodyList)
+        {
+            const TBody& b = *lbody;
+            printf("\n");
+            const char* blabel;
+            printf("-- %s (%s)", S.get_body_name(&b).c_str(), b.label.c_str());
+            if (!b.label.empty()){
+                blabel = b.label.c_str();
+            } else {
+                blabel = S.get_body_name(&b).c_str();
+            }
+            printf("\n");
+            #define S2D(v) v.x, v.y
+            #define S3D(v) v.r.x, v.r.y, v.o
+            #define S4D(v) v.r.x, v.r.y, v.o, v.o*180./C_PI
+            printf("%s.label = '%s'\n", blabel, b.label.c_str());
+            printf("%s.density = %lg\n", blabel, b.density);
+            printf("%s.holder_pos = {%lg, %lg, %lg} -- .d = %lg\n", blabel, S4D(b.holder));
+            printf("%s.holder_vx = '%s'\n", blabel, std::string(b.speed_x).c_str());
+            printf("%s.holder_vy = '%s'\n", blabel, std::string(b.speed_y).c_str());
+            printf("%s.holder_vo = '%s'\n", blabel, std::string(b.speed_o).c_str());
+            printf("%s.speed = {%lg, %lg, %lg}\n", blabel, S3D(b.speed_slae));
+            printf("%s.delta_pos = {%lg, %lg, %lg} -- .d = %lg\n", blabel, S4D(b.dpos));
+            printf("%s.spring_const = {%lg, %lg, %lg}\n", blabel, S3D(b.kspring));
+            printf("%s.spring_damping = {%lg, %lg, %lg}\n", blabel, S3D(b.damping));
+            printf("%s.collision_min = {%lg, %lg, %lg} -- .d = %lg\n", blabel, S4D(b.collision_min));
+            printf("%s.collision_max = {%lg, %lg, %lg} -- .d = %lg\n", blabel, S4D(b.collision_max));
+            printf("%s.bounce = %lg\n", blabel, b.bounce);
+
+            uint32_t slip = b.alist.begin()->slip;
+            for (auto& latt: b.alist) {
+                if (latt.slip != slip) {
+                    slip = 3;
+                    break;
+                }
+            }
+            printf("%s.slip = %s\n", blabel, (slip==0)?"false -- no-slip":(slip==1)?"true -- slip":"nil -- mixed");
+            printf("%s.special_segment = %d\n", blabel, b.special_segment_no);
+
+            if (b.root_body.expired()) {
+                printf("%s.root = nil\n", blabel);
+            } else {
+                shared_ptr<TBody> lroot = b.root_body.lock();
+                const char* rlabel;
+                if (!lroot->label.empty()){
+                    rlabel = lroot->label.c_str();
+                } else {
+                    rlabel = S.get_body_name(lroot.get()).c_str();
+                }
+                printf("%s.root = %s\n", blabel, rlabel);
+            }
+
+            printf("-- #%s = %zd -- number of segments\n", blabel, b.size());
+            printf("-- %s.get_axis() = {%lg, %lg}\n", blabel, S2D(b.get_axis()));
+            printf("-- %s.get_cofm() = {%lg, %lg}\n", blabel, S2D(b.get_cofm()));
+            printf("-- %s.get_slen() = %lg\n", blabel, b.get_slen());
+            printf("-- %s.get_area() = %lg\n", blabel, b.get_area());
+            printf("-- %s.get_moi_cofm() = %lg\n", blabel, b.get_moi_cofm());
+            printf("-- %s.get_moi_axis() = %lg\n", blabel, b.get_moi_axis());
         }
         return 0;
     }
@@ -157,7 +242,7 @@ int main(int argc, char **argv)
         }
     }
 
-    printf("#");
+    if (datasets.size()) printf("#");
     for (size_t i=0; i<datasets.size(); i++) {
         dataset_t& dat = datasets[i];
         for (size_t j=0; j<dat.cols; j++) {
@@ -168,7 +253,7 @@ int main(int argc, char **argv)
             printf("\t");
         }
     }
-    printf("\n");
+    if (datasets.size()) printf("\n");
 
     for (size_t row=0; row<max_rows; row++) {
         for (dataset_t& dat: datasets) {
