@@ -22,4 +22,4 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean
 
 WORKDIR /root
-CMD /bin/bash
+CMD grip /vvflow 0.0.0.0:1207 & python -m SimpleHTTPServer 1208 & /bin/bash

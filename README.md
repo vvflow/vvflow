@@ -259,7 +259,6 @@ pkgcloud-push rosik/vvflow/ubuntu/xenial ./vvflow.deb
 grip /vvflow 0.0.0.0:1207
 ```
 * README.md: http://127.0.0.1:1207
-* INSTALL.md: http://127.0.0.1:1207/INSTALL.md
 
 Документацию можно проверять командой `man` внутри контейнера:
 ```
@@ -269,6 +268,7 @@ man -l utils/vvcompose/vvcompose.1
 Либо через http сервер:
 ```
 #!bash
-python -m SimpleHTTPServer 1207
+python -m SimpleHTTPServer 1208
 ```
-* http://127.0.0.1:1207/utils/vvcompose/vvcompose.1.html
+* http://127.0.0.1:1208/utils/vvcompose/vvcompose.1.html
+* http://127.0.0.1:1208/utils/vvxtract/vvxtract.1.html

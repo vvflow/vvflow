@@ -11,7 +11,8 @@ sudo docker run -it --rm \
     -v $PWD:/vvflow:ro \
     -v $PWD/build:/root \
     -p 1207:1207 \
-    vvflow-build:$OS /bin/bash
+    -p 1208:1208 \
+    vvflow-build:$OS
 
 # Ronn cheatsheet:
 # http://ricostacruz.com/cheatsheets/ronn.html
