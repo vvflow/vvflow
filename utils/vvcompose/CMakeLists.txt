@@ -54,7 +54,7 @@ foreach(m IN LISTS MAN_NAMES)
         VERBATIM)
     list(APPEND MAN_FILES ${mf})
 endforeach()
-add_custom_target(man ALL DEPENDS ${MAN_FILES})
+add_custom_target(vvcompose.man ALL DEPENDS ${MAN_FILES})
 endif()
 
 install (TARGETS vvcompose DESTINATION bin)

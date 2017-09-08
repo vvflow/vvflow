@@ -3,15 +3,20 @@ vvxtract(1) -- extract data from h5 files obtained with vvflow program
 
 ## SYNOPSIS
 
-`vvxtract` [<OPTIONS>] <FILE> [<DATASET>]
+`vvxtract` [<OPTIONS>] <FILE> [<DATASET> ...]
 
 ## DESCRIPTION
 
 vvxtract is a part of Vvflow CFD Suite. It serves as a postprocessor for extracting obtained CFD simulation results.
 
-vvxtract writes data to the standard output in text or binary format.
+<FILE> is a hdf5 file, containing either a _Space_ from `vvcompose` or _stepdata_ from `vvflow`.
 
 Without <DATASET> specified vvxtract runs with `--info` option enabled.
+It shows general information about the file: caption, creation time, creator version.
+When <FILE> is a _Space_ it also shows attributes of the space and all bodies in vvcompose-like style. 
+
+With one or more <DATASET> option specified
+vvxtract merges lines of all datasets.
 
 ## OPTIONS
 
@@ -21,13 +26,11 @@ Without <DATASET> specified vvxtract runs with `--info` option enabled.
   * -h, --help :
     show manpage and exit
 
-  * --list:
+  * -l, --list:
     list all datasets in file and exit
 
-  * --info:
-    show general information about the file and exit.
-    The optut is:
-    * internal caption (hdf attribute 'caption');
-    * creation time (hdf attribute 'time_local');
-    * creator version (hdf attributes 'git_info', 'git_rev').
-    This is default when no dataset is specified.
+  * -i, --info:
+    show general information about the file and exit
+
+## SEE ALSO
+  vvcompose(1)

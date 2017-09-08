@@ -600,8 +600,6 @@ This is how it looks like:
 
   * `N`, `dl` :
     specify either number of segments or average segment length
-             
-            
-          
-          
-          
+
+## SEE ALSO
+  vvxtract(1)
