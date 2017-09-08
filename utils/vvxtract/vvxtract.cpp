@@ -180,9 +180,9 @@ int main(int argc, char **argv)
             }
 
             printf("-- #%s = %zd -- number of segments\n", blabel, b.size());
-            printf("-- %s.get_axis() = {%lg, %lg}\n", blabel, S2D(b.get_axis()));
-            printf("-- %s.get_cofm() = {%lg, %lg}\n", blabel, S2D(b.get_cofm()));
-            printf("-- %s.get_slen() = %lg\n", blabel, b.get_slen());
+            printf("-- %s.get_axis() = {%lg, %lg} -- rotation axis\n", blabel, S2D(b.get_axis()));
+            printf("-- %s.get_cofm() = {%lg, %lg} -- center of mass\n", blabel, S2D(b.get_cofm()));
+            printf("-- %s.get_slen() = %lg -- surface length\n", blabel, b.get_slen());
             printf("-- %s.get_area() = %lg\n", blabel, b.get_area());
             printf("-- %s.get_moi_cofm() = %lg\n", blabel, b.get_moi_cofm());
             printf("-- %s.get_moi_axis() = %lg\n", blabel, b.get_moi_axis());

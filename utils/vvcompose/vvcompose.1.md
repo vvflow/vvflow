@@ -110,7 +110,7 @@ _Examples_:
     cyl.label = "cyl"
     cyl.density = 8 -- steel
     cyl.spring_const.r.y = 10
-    S.body_list.insert(cyl)
+    S.body_list:insert(cyl)
     S.caption = string.format("example_re%f", S.re)
     S:save(S.caption..".h5")
 

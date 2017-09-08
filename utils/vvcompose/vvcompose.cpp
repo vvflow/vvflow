@@ -128,6 +128,8 @@ int main (int argc, char** argv) {
         }
     } else {
         /* interpreter mode */
+        printf("vvcompose %s\n", libvvhd_gitinfo);
+        printf("Press Ctrl+D to exit\n");
         char *line;
         while(true) {
             line = linenoise("vvcompose> ");
