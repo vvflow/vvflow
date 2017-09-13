@@ -302,3 +302,4 @@ python -m SimpleHTTPServer 1208
 ```
 * http://127.0.0.1:1208/utils/vvcompose/vvcompose.1.html
 * http://127.0.0.1:1208/utils/vvxtract/vvxtract.1.html
+* http://127.0.0.1:1208/utils/vvplot3/vvplot.1.html
