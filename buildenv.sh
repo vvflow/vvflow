@@ -7,12 +7,16 @@ OS="$1"
 echo Running $OS
 
 sudo docker build -t vvflow-build:$OS $PWD -f Dockerfile.$OS && \
+xhost +local:docker
 sudo docker run -it --rm \
     -v $PWD:/vvflow:ro \
     -v $PWD/build:/root \
     -p 1207:1207 \
     -p 1208:1208 \
+    -e DISPLAY=$DISPLAY \
+    -v /tmp/.X11-unix:/tmp/.X11-unix \
     vvflow-build:$OS
+xhost -local:docker
 
 # Ronn cheatsheet:
 # http://ricostacruz.com/cheatsheets/ronn.html

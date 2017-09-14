@@ -48,6 +48,8 @@ namespace opt {
     extern int holder;
     extern int spring;
 
+    extern int dry_run;
+
     extern rect_t rect;
     extern mesh_t mesh_hi;
     extern mesh_t mesh_lo;

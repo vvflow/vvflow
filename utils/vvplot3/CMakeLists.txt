@@ -12,7 +12,7 @@ include_directories(${LIBVVHD_INCLUDE_DIR})
 add_executable(vvplot3
     vvplot.cpp
     optparse.cpp
-    # exear.cpp
+    exear.cpp
     # map_vorticity.cpp
 )
 

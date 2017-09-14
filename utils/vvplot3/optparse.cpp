@@ -16,6 +16,7 @@ void opt::parse(int argc, char **argv) {
 	while (1) {
         static struct option long_options[] =
         {
+            {"dry-run", no_argument, 0, 'n'},
             {"version", no_argument, 0, 'v'},
             {"help",    no_argument, 0, 'h'},
 
@@ -46,7 +47,7 @@ void opt::parse(int argc, char **argv) {
         /* getopt_long stores the option index here. */
         int option_index = 0;
 
-        int c = getopt_long(argc, argv, "vhBVSGPx:y:s:", long_options, &option_index);
+        int c = getopt_long(argc, argv, "nvhBVSGPx:y:s:", long_options, &option_index);
 
         if (c == -1) {
             break;
@@ -56,6 +57,9 @@ void opt::parse(int argc, char **argv) {
         bool fail = false;
         int  optn = 0;
         switch (c) {
+        case 'n': // -n, --dry-run
+            opt::dry_run = true;
+            break;
         case 'v': // -v, --version
             fprintf(stderr, "vvplot %s\n", libvvhd_gitinfo);
             fprintf(stderr, "revision: %s\n", libvvhd_gitrev);
@@ -94,16 +98,18 @@ void opt::parse(int argc, char **argv) {
             // }
             break;
         case 'G': // -G, --G GAMMA
+            opt::P = false;
             opt::G = true;
             if (!optarg) break;
             fail = sscanf(optarg, "%lf %n", &opt::Grange, &optn) < 1;
             fail = fail || !isfinite(opt::Grange); 
-            fail = fail || !(opt::Grange > 0);
+            fail = fail || !(opt::Grange >= 0);
             // if (!fail) {
             //     printf("GAMMA -> %lf\n", opt::Grange);
             // }
             break;
         case 'P': // -P, --P PMIN,PMAX
+            opt::G = false;
             opt::P = true;
             if (!optarg) break;
             fail = sscanf(optarg, "%lf , %lf %n", &opt::Pmin, &opt::Pmax, &optn) < 2;

@@ -42,6 +42,9 @@ vvplot(1) -- plot Vvflow simulation results
   * -h, --help :
     show this manpage and exit
 
+  * -n, --dry-run :
+    exit after generating gnuplot script without actual plotting
+
   * --ref-xy {o,b,f} :
     reference frame: original, body, fluid (default: 'o'); affects options -x, -y
   

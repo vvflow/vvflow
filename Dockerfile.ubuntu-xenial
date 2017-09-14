@@ -5,6 +5,8 @@ RUN apt-get update && apt-get install -y \
     cmake \
     cmake-curses-gui \
     git \
+    gnuplot5 \
+    libarchive-dev \
     libfl-dev \
     libgflags-dev \
     libhdf5-dev \
@@ -15,6 +17,7 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     python-pip \
     ruby-ronn \
+    x11-apps \
     && pip install grip \
     && apt-get clean
 
