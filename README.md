@@ -1,9 +1,7 @@
-Установка программного комплекса
-=======
+## Installation
 
 Программный комплекс устанавливается из deb-репозитория:
 ```
-#!bash
 # sudo apt-get install curl apt-transport-https
 TOKEN=c924a03ddb1308dfdd423f9735693041557bdb3300138134
 echo "deb https://$TOKEN:@packagecloud.io/rosik/vvflow/ubuntu/ xenial main" | sudo tee /etc/apt/sources.list.d/vvflow.list
@@ -12,11 +10,9 @@ sudo apt-get update
 sudo apt-get install vvflow
 ```
 
-Проведение вычислительного эксперимента
-=======
+## Flow simulation
 
-*vvcompose*
------------
+### *vvcompose*
 
 Для того, что бы что-то посчитать, первым делом нужно
 создать файл расчёта и описать моделируемое пространство `Space`.
@@ -28,7 +24,6 @@ sudo apt-get install vvflow
 Например вот так выглядит расчет цилиндра:
 
 ```
-#!bash
 vvcompose <<EOF
     S.inf_vx = "1"
     S.re = 600
@@ -49,14 +44,12 @@ EOF
 а сразу генерировать внутри `vvcompose`.
 Обо всём этом написано в мануале, поэтому обязательно его прочитайте: `man vvcompose`.
 
-*vvflow*
---------
+### *vvflow*
 
 Следующим этапом является непосредственно запуск расчёта.
 Этим занимается программа `vvflow`.
 Если не углубляться в подробности, то всё выглядит просто:
 ```
-#!bash
 vvflow --progress --profile re600_n350.h5
 ```
 
@@ -71,7 +64,6 @@ vvflow --progress --profile re600_n350.h5
 то запуск будет немного сложнее:
 
 ```
-#!bash
 qsub -d. -l nodes=1:ppn=6 -N testrun <<EOF
     export PATH="/home/user/.local/bin";
     export LD_LIBRARY_PATH="/home/user/.local/lib";
@@ -81,8 +73,7 @@ qsub -d. -l nodes=1:ppn=6 -N testrun <<EOF
 EOF
 ```
 
-Обработка результатов
----------------------
+### Postprocessing results
 
 После того, как расчёт завершится,
 в текущей директории будет лежать файл stepdata_re600_n350.h5
@@ -95,8 +86,7 @@ EOF
 * [vvawk](#vvawk)
 * [gpquick](#gpquick)
 
-*vvxtract*
-----------
+### *vvxtract*
 
 `vvxtract` является прямой противоположностью программы `vvcompose`.
 Актуальную справку по опциям можно получить в мануале: `man vvxtract` (не пренебрегайте им).
@@ -105,7 +95,6 @@ EOF
 примерно в том виде, как они выглядят в `vvcompose`:
 
 ```
-#!console
 $ vvxtract re600_n350.h5
 -- space
 S.re = 600
@@ -133,7 +122,6 @@ cyl.slip = false -- no-slip
 `vvxtract` можно также использовать для распаковки файлов `stepdata`:
 
 ```
-#!console
 $ vvxtract stepdata_re600_n350.h5 time body00/force_hydro | less
 #time   body00/force_hydro[1]   body00/force_hydro[2]   body00/force_hydro[3]
 +0.000000e+00   +3.140723e+02   -2.296381e-13   +5.088693e-15
@@ -143,15 +131,13 @@ $ vvxtract stepdata_re600_n350.h5 time body00/force_hydro | less
 ...
 ```
 
-*vvplot, vvencode*
-------------------
+### *vvplot, vvencode*
 
 Самое простое, что можно сделать - нарисвать вихревую картину течения, или даже мультфильм.
 Для этих целей служит утилита `vvplot`.
 Здесь я привожу маленький кусочек справки, а полный набор аргументов можно узнать командой `vvplot --help`
 
 ```
-#!text
 usage: vvplot [-h] [-b] [-g] [-H] [-i] [-p] [-P] [-s] [-v] [-V] [-w] [-f] [-n]
               [--nooverride] [--colorbox] [--timelabel] [--spring]
               [--blankbody N] -x XMIN XMAX [-y YMIN YMAX] [--size WxH]
@@ -190,36 +176,30 @@ optional arguments:
 
 самый простой вариант
 ```
-#!bash
 vvplot re600_n350.h5 -b -x -2 20 ./
 ```
 
 немного красивее
 ```
-#!bash
 vvplot results_re600_n350/010000.h5 -bvV -x -2 20 ./images --timelabel --spring
 ```
 
 строим кадры для мультика
 ```
-#!bash
 for f in results_re600_n350/*.h5; do vvplot $f -bvV -x -2 20 ./images --timelabel --spring; done;
 ```
 
 кодируем кадры в единый видеофайл (с использованием ffmpeg)
 ```
-#!bash
 vvencode 'images/*.png' re600_n350.mp4
 ```
 
-*h5xtract*
-----------
+### *h5xtract*
 
 `h5xtract` - отличный инструмент для извлечения данных из файла stepdata. Синтаксис не покажу, а покажу сразу пример использования.
 
 
-*vvawk*
--------
+### *vvawk*
 
 `vvawk` это целая пачка скриптов на языке awk, которая хорошо дополняет собой утилиту `vvxtract`.
 Для более подробного описания запускайте утилиты без аргументов.
@@ -232,31 +212,27 @@ vvencode 'images/*.png' re600_n350.mp4
  - `vvawk.ampl`: вычисляет амплитуду (amplitude) колебаний значений в колонке
  (разность между средним всех локальных минимумов и средним всех локальных максимумов).
 
-*gpquick*
----------
+### *gpquick*
 
 `gpquick` - это ултилита для быстрого предпросмотра графиков.
 
 Например, мы хотим посмотреть на силу сопротивления из расчета выше:
 ```
-#!bash
 vvxtract stepdata_re600_n350.h5 time body00/force_hydro | gpquick --points > fx_raw.png
 ```
 
 А если нам не понравилась "шуба" на графике, можно отфильтровать ее с помощью moving average:
 ```
-#!bash
 vvxtract stepdata_re600_n350.h5 time body00/force_hydro | vvawk.mavg -v span=100 - | gpquick --lines > fx_mavg.png
 ```
 
-Разработка 
-=======
+## Development and compilation
 
 Сборку проекта удобнее всего выполнять внутри докер контейнера.
 Об установке самого докера можно почитать на [официальном сайте](https://docs.docker.com/engine/installation/linux/ubuntu/#install-docker).
 Для запуска контейнера удобнее используется `buildenv.sh` из репозитория:
+
 ```
-#!bash
 . buildenv.sh
 # в качестве аргумента можно указать целевой дистрибутив
 # . buildenv.sh ubuntu-xenial # default
@@ -269,7 +245,6 @@ vvxtract stepdata_re600_n350.h5 time body00/force_hydro | vvawk.mavg -v span=100
 Для сборки проекта используется cmake:
 
 ```
-#!bash
 cd /root
 cmake -D CMAKE_BUILD_TYPE=Release /vvflow
 make -j
@@ -277,27 +252,26 @@ cpack
 ```
 
 Распространять скомпилированный проект можно с помощью deb-пакетов через [packagecloud.io](https://packagecloud.io/):
+
 ```
-#!bash
 export PACKAGECLOUD_TOKEN=api_token # https://packagecloud.io/api_token
 pkgcloud-push rosik/vvflow/ubuntu/xenial ./vvflow.deb
 ```
 
 В процессе разработки также может пригодиться предпросмотр Markdown файлов:
+
 ```
-#!bash
 grip /vvflow 0.0.0.0:1207
 ```
+
 * README.md: http://127.0.0.1:1207
 
 Документацию можно проверять командой `man` внутри контейнера:
 ```
-#!bash
 man -l utils/vvcompose/vvcompose.1
 ```
 Либо через http сервер:
 ```
-#!bash
 python -m SimpleHTTPServer 1208
 ```
 * http://127.0.0.1:1208/utils/vvcompose/vvcompose.1.html
