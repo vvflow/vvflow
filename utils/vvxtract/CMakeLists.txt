@@ -13,23 +13,20 @@ add_executable(vvxtract vvxtract.cpp)
 target_link_libraries(vvxtract vvhd)
 
 if(NOT NO_MANPAGES)
-SET(MAN_NAMES vvxtract.1)
-SET(MAN_FILES)
-foreach(m IN LISTS MAN_NAMES)
-    set(mf ${CMAKE_CURRENT_BINARY_DIR}/${m})
-    set(ms ${CMAKE_CURRENT_SOURCE_DIR}/${m}.md)
-    add_custom_command(
-        OUTPUT ${mf}
-        COMMAND ronn --roff --pipe ${ms} > ${mf}
-        COMMAND ronn --html --pipe ${ms} > ${mf}.html
-        DEPENDS ${ms}
-        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-        COMMENT "Building manpage ${mf}"
-        VERBATIM)
-    list(APPEND MAN_FILES ${mf})
-endforeach()
-add_custom_target(vvxtract.man ALL DEPENDS ${MAN_FILES})
+set(MAN_MD ${CMAKE_CURRENT_SOURCE_DIR}/vvxtract.1.md)
+set(MAN_ROFF ${CMAKE_CURRENT_BINARY_DIR}/vvxtract.1)
+set(MAN_HTML ${CMAKE_CURRENT_BINARY_DIR}/vvxtract.1.html)
+add_custom_command(
+    OUTPUT ${MAN_ROFF} ${MAN_HTML}
+    COMMAND ronn --roff --pipe ${MAN_MD} > ${MAN_ROFF}
+    COMMAND ronn --html --pipe ${MAN_MD} > ${MAN_HTML}
+    DEPENDS ${MAN_MD}
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    COMMENT "Building manpage ${MAN_ROFF}"
+    VERBATIM)
+add_custom_target(vvxtract.man ALL DEPENDS ${MAN_ROFF} ${MAN_HTML})
 endif()
 
 install (TARGETS vvxtract DESTINATION bin)
-install (FILES ${MAN_FILES} DESTINATION share/man/man1)
+install (FILES ${MAN_ROFF} DESTINATION share/man/man1)
+install (FILES ${MAN_HTML} DESTINATION share/doc/vvflow)

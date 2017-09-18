@@ -10,6 +10,20 @@ add_subdirectory(utils/vvxtract)
 add_subdirectory(utils/vvcompose)
 add_subdirectory(utils/scripts)
 
+if(NOT NO_MANPAGES)
+set(MAN_MD   ${CMAKE_CURRENT_SOURCE_DIR}/README.md)
+set(MAN_HTML ${CMAKE_CURRENT_BINARY_DIR}/README.html)
+add_custom_command(
+    OUTPUT ${MAN_HTML}
+    COMMAND grip --export ${MAN_MD} ${MAN_HTML}
+    DEPENDS ${MAN_MD}
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    COMMENT "Building ${MAN_HTML}"
+    VERBATIM)
+add_custom_target(readme.man ALL DEPENDS ${MAN_HTML})
+endif()
+install (FILES ${MAN_HTML} DESTINATION share/doc/vvflow)
+
 SET(CPACK_GENERATOR "DEB")
 execute_process(
     COMMAND git describe --tags --always
