@@ -30,7 +30,7 @@ namespace opt {
     extern double Sstep;
 
     extern bool   G;
-    extern double Grange;
+    extern double Gmax;
 
     extern bool   P;
     extern double Pmin;

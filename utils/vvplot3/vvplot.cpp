@@ -17,6 +17,7 @@
 
 /* vvhd */
 #include <core.h>
+// #include <map_vorticity.h>
 
 #include "./exear.h"
 #include "./optparse.h"
@@ -29,7 +30,7 @@ namespace opt {
 
     bool   V = false;
     int    Vsize = 6; // =0: plot dots; >0: plot circles
-    double Vcirc = 0.;
+    double Vcirc = 0.; // circle size in Oxy scale
 
     bool   S = false;
     double Smin = d_nan;
@@ -37,7 +38,7 @@ namespace opt {
     double Sstep = d_nan;
 
     bool   G = false;
-    double Grange = 0;
+    double Gmax = 0;
 
     bool   P = false;
     double Pmin = -1.5;
@@ -141,12 +142,13 @@ int main(int argc, char **argv)
 
     if (opt::G) {
         std::stringstream bin;
+        // MapVorticity vrt = 
         // map_vorticity(&S, bin, rect, mesh_hi);
         e->append("map_vorticity", bin.str());
 
-        if (opt::Grange > 0) {
+        if (opt::Gmax > 0) {
             main_gp << "set palette defined (-1 \"#000000\", 1 \"#ffffff\")" << std::endl
-            << strfmt( "set cbrange [%lg:%lg]\n", -opt::Grange, opt::Grange);
+            << strfmt( "set cbrange [%lg:%lg]\n", -opt::Gmax, opt::Gmax);
         }
 
         plot_cmd << DELIMITER;

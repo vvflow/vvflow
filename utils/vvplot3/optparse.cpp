@@ -101,11 +101,11 @@ void opt::parse(int argc, char **argv) {
             opt::P = false;
             opt::G = true;
             if (!optarg) break;
-            fail = sscanf(optarg, "%lf %n", &opt::Grange, &optn) < 1;
-            fail = fail || !isfinite(opt::Grange); 
-            fail = fail || !(opt::Grange >= 0);
+            fail = sscanf(optarg, "%lf %n", &opt::Gmax, &optn) < 1;
+            fail = fail || !isfinite(opt::Gmax); 
+            fail = fail || !(opt::Gmax >= 0);
             // if (!fail) {
-            //     printf("GAMMA -> %lf\n", opt::Grange);
+            //     printf("GAMMA -> %lf\n", opt::Gmax);
             // }
             break;
         case 'P': // -P, --P PMIN,PMAX

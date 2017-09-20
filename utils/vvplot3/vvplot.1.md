@@ -9,30 +9,37 @@ vvplot(1) -- plot Vvflow simulation results
 
 ## MAIN OPTIONS
 
-  * -x `XMIN,XMAX`, -y `YMIN,YMAX` :
-    X and Y axis range (default: 0,0);
+  * -x `XMIN`,`XMAX`, -y `YMIN`,`YMAX` :
+    X and Y axis range;
     when XMIN=XMAX or YMIN=YMAX their values will be claculated from --size flag;
     one of XMIN, XMAX, YMIN or YMAX may be NaN (then it is to be calculated from --size flag)
+    (default: 0,0)
 
-  * --size `WxH` :
-    image size (default: 1280x720);
+  * --size `W`x`H` :
+    image size;
     either W or H may be zero, but only if both -x and -y are specified
+    (default: 1280x720)
 
   * -B :
     plot bodies
 
   * -V, --V `SIZE` :
-    plot vortex domains with circles of diameter `SIZE` (in pixels, default:6);
-    when `SIZE` is 0 dots are drawed instead of circles
+    plot vortex domains with circles of diameter SIZE;
+    when SIZE is 0 dots are drawed instead of circles
+    (in pixels, default:6)
   
-  * -S, --S `SMIN,SMAX,SSTEP` :
-    plot streamlines at given streamfunction constants (default: auto)
+  * -S, --S `SMIN`,`SMAX`,`SSTEP` :
+    plot streamlines at given streamfunction constants
+    (default: auto)
   
-  * -G, --G `GAMMA` :
-    plot vorticity field with magnitude `GAMMA` (default: auto)
+  * -P, --P `PMIN`,`PMAX`[,`PSTEP`] :
+    plot pressure field with color range \[PMIN, PMAX\];
+    when PSTEP is specified, also plot isopressure lines with specified step
+    (default: -1.5,1,0.125)
   
-  * -P, --P `PMIN,PMAX` :
-    plot pressure field with specified values range (default: -1.5,1)
+  * -G, --G `GMAX` :
+    plot vorticity field with color range \[-GMAX, GMAX\]
+    (default: auto)
 
 ## OTHER OPTIONS
 
