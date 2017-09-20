@@ -8,6 +8,8 @@
 // #include "lua_tvec3d.h"
 // #include "lua_shellscript.h"
 
+using std::weak_ptr;
+
 int luavvd_setslip(lua_State *L) {
     TBody* body = (TBody*)lua_touserdata(L, 1);
     if (!lua_isboolean(L, 2)) {

@@ -1,16 +1,9 @@
 #ifndef BODY_H_
 #define BODY_H_
 
-class Space;
-class TBody;
-class TAtt;
-
 #include "elementary.h"
 #include <vector>
 #include <memory>
-
-using std::vector;
-using std::weak_ptr;
 
 //boundary condition
 enum class bc_t { steady, kutta };
@@ -66,7 +59,7 @@ class TBody
         std::string label;
         // FIXME rename to lower case
         std::vector<TAtt> alist;
-        weak_ptr<TBody> root_body;
+        std::weak_ptr<TBody> root_body;
 
         TVec3D holder; //in doc = $R_bx$, $R_by$, $\alpha_b$
         TVec3D dpos; // same with delta
@@ -136,7 +129,7 @@ class TBody
 
         std::vector<TVec> heat_layer;
         template <class T>
-            TAtt* isPointInContour(TVec p, vector<T> &list);
+            TAtt* isPointInContour(TVec p, std::vector<T> &list);
 };
 
 #endif /* BODY_H_ */
