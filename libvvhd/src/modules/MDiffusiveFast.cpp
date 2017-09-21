@@ -1,23 +1,15 @@
 #include <math.h>
 #include <cstdlib>
-#include "diffusivefast.h"
+#include <iostream>
+
+#include "MDiffusiveFast.hpp"
 #define expdef(x) exp(x)
 
 const double ExpArgRestriction = -8.;
 
-#include "iostream"
-using namespace std;
-
-diffusivefast::diffusivefast(Space *sS)
-{
-    S = sS;
-    Re = S->Re;
-    Pr = S->Pr;
-}
-
 void diffusivefast::CalcVortexDiffusiveFast()
 {
-    auto& bnodes = S->Tree->getBottomNodes();
+    auto& bnodes = Tree->getBottomNodes();
 
     // FIXME omp here
     // #pragma omp parallel for schedule(dynamic, 10)
@@ -57,7 +49,7 @@ void diffusivefast::CalcVortexDiffusiveFast()
 
 void diffusivefast::CalcHeatDiffusiveFast()
 {
-    auto& bnodes = S->Tree->getBottomNodes();
+    auto& bnodes = Tree->getBottomNodes();
 
     // #pragma omp parallel for schedule(dynamic, 10)
     for (auto llbnode = bnodes.begin(); llbnode < bnodes.end(); llbnode++)

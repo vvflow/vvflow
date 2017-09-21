@@ -1,22 +1,13 @@
-#include "epsfast.h"
 #include <math.h>
 #include <limits>
 #include <iostream>
-
-using namespace std;
-
-epsfast::epsfast(Space *sS)
-{
-    S = sS;
-    merged_ = 0;
-}
-
+#include "MEpsFast.hpp"
 
 void epsfast::CalcEpsilonFast(bool merge)
 {
     merged_ = 0;
 
-    auto& bottom_nodes = S->Tree->getBottomNodes();
+    auto& bottom_nodes = Tree->getBottomNodes();
     static_assert(std::is_same<decltype(bottom_nodes), vector<TSortedNode*>&>::value, "bottom_nodes must be reference");
 
     for (auto lbnode: bottom_nodes)

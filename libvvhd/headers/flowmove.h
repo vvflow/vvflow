@@ -6,7 +6,8 @@
 class flowmove
 {
     public:
-        flowmove(Space *sS, double sRemoveEps = 1E-10);
+        flowmove(Space *S, double RemoveEps = 1E-10):
+            S(S), dt(S->dt), RemoveEps(RemoveEps), CleanedV_(0) {}
         void MoveAndClean(bool remove, bool zero_speed = true);
         void VortexShed();
         void StreakShed();

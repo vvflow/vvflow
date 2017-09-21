@@ -1,9 +1,13 @@
-#ifndef BODY_H_
-#define BODY_H_
+#pragma once
 
-#include "elementary.h"
 #include <vector>
 #include <memory>
+
+#include "elementary.h"
+#include "TVec.hpp"
+#include "TVec3D.hpp"
+#include "TObj.hpp"
+#include "TEval.hpp"
 
 //boundary condition
 enum class bc_t { steady, kutta };
@@ -89,9 +93,9 @@ class TBody
 
     public:
         //functions \vec V(t), \omega(t)
-        ShellScript speed_x;
-        ShellScript speed_y;
-        ShellScript speed_o;
+        TEval speed_x;
+        TEval speed_y;
+        TEval speed_o;
         TVec3D speed(double t) const;
 
         //see \vec c_s \vert_Rotation
@@ -131,5 +135,3 @@ class TBody
         template <class T>
             TAtt* isPointInContour(TVec p, std::vector<T> &list);
 };
-
-#endif /* BODY_H_ */

@@ -1,7 +1,7 @@
 #include "stdio.h"
 
 #include "core.h"
-#include "convectivefast.h"
+#include "MConvectiveFast.hpp"
 
 class sensors
 {

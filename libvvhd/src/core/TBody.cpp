@@ -1,10 +1,9 @@
-#include "space.h"
-#include "body.h"
 #include <stdio.h>
 #include <iostream>
 #include <limits>
 #include <math.h>
-using namespace std;
+
+#include "TBody.hpp"
 
 TBody::TBody():
     label(),
@@ -105,7 +104,7 @@ template <class T> TVec corner(T lobj);
 template <> inline TVec corner(TVec lobj) {return lobj;}
 template <> inline TVec corner(TAtt lobj) {return lobj.corner;}
 template <class T>
-TAtt* TBody::isPointInContour(TVec p, vector<T> &list)
+TAtt* TBody::isPointInContour(TVec p, std::vector<T> &list)
 {
     bool inContour = isInsideValid();
     if ( !inContour && (

@@ -8,8 +8,8 @@
 #include <time.h>
 #include <type_traits> // static_assert
 
-#include "space.h"
-#include "body.h"
+#include "TSpace.hpp"
+#include "TBody.hpp"
 #include "space_hdf.cpp"
 
 using std::cout;
@@ -516,7 +516,7 @@ void LoadList(vector<TObj> &list, FILE* fin)
     }
 }
 
-void read_shell_script(FILE* file, ShellScript &script)
+void read_shell_script(FILE* file, TEval &script)
 {
     int32_t len;
     fread(&len, 4, 1, file);

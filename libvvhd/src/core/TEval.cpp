@@ -1,13 +1,14 @@
-#include "shellscript.h"
-#include "string.h"
+#include <string.h>
 #include <stdlib.h>
-#include "stdio.h"
+#include <stdio.h>
 #include <limits>
-#include "matheval.h"
+#include <matheval.h>
+
+#include "TEval.hpp"
 
 static const char* evaluator_names[] = {(char*)"t"};
 
-ShellScript::ShellScript():
+TEval::TEval():
     script(),
     evaluator(NULL),
     cacheTime1(std::numeric_limits<double>::lowest()),
@@ -17,13 +18,13 @@ ShellScript::ShellScript():
 {
 }
 
-ShellScript::~ShellScript()
+TEval::~TEval()
 {
     if (evaluator)
         evaluator_destroy(evaluator);
 }
 
-bool ShellScript::setEvaluator(const std::string &s)
+bool TEval::setEvaluator(const std::string &s)
 {
     cacheTime1 = cacheTime2 = std::numeric_limits<double>::lowest();
     script = s;
@@ -55,7 +56,7 @@ fail:
     return false;
 }
 
-double ShellScript::getValue(double t) const
+double TEval::getValue(double t) const
 {
     if (!evaluator)
         return 0;

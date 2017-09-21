@@ -5,21 +5,16 @@
 #include <assert.h>
 #include <complex>
 
-using namespace std;
+#include "MConvectiveFast.hpp"
 
-#include "convectivefast.h"
-
+using std::isfinite;
+using std::complex;
 /****************************** MAIN FUNCTIONS ********************************/
-
-convectivefast::convectivefast(Space *sS)
-{
-    S = sS;
-}
 
 TVec convectivefast::SpeedSumFast(TVec p)
 {
     TVec res(0, 0);
-    TSortedNode* Node = S->Tree->findNode(p);
+    TSortedNode* Node = Tree->findNode(p);
     if (!Node) return res;
 
     for (TSortedNode* lfnode: *Node->FarNodes)
@@ -84,7 +79,7 @@ TVec convectivefast::SrcSpeed(const TVec &p)
 
 void convectivefast::CalcConvectiveFast()
 {
-    auto& bnodes = S->Tree->getBottomNodes();
+    auto& bnodes = Tree->getBottomNodes();
 
     //FIXME omp here
     for (auto llbnode = bnodes.begin(); llbnode < bnodes.end(); llbnode++)
@@ -503,7 +498,7 @@ void convectivefast::fillSlipEquationForSegment(unsigned eq_no, TAtt* seg, TBody
     *matrix.getRightCol(eq_no) = rotl(S->InfSpeed())*seg->dl;
     *matrix.getRightCol(eq_no) += rotl(SrcSpeed(seg->r))*seg->dl;
     //influence of all free vortices
-    TSortedNode* Node = S->Tree->findNode(seg->r);
+    TSortedNode* Node = Tree->findNode(seg->r);
     *matrix.getRightCol(eq_no) -= NodeInfluence(*Node, *seg);
     if (rightColOnly) return;
 

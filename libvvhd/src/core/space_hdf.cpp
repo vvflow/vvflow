@@ -105,7 +105,7 @@ void attribute_read(hid_t hid, const char *name, std::string& val)
 }
 
 template<>
-void attribute_read(hid_t hid, const char *name, ShellScript& val)
+void attribute_read(hid_t hid, const char *name, TEval& val)
 {
     std::string buf;
     attribute_read<std::string>(hid, name, buf);

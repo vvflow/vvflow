@@ -1,9 +1,8 @@
 #include "core.h"
-#include "sorted_tree.h"
-#include "math.h"
-#include "iostream"
+#include "TSortedTree.hpp"
+#include <math.h>
+#include <iostream>
 #include <limits>
-using namespace std;
 
 const int Tree_MaxListSize = 16;
 

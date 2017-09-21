@@ -1,13 +1,16 @@
-#ifndef __CONVECTIVEFAST_H__
-#define __CONVECTIVEFAST_H__
+#pragma once
+
 #include <math.h>
 #include "core.h"
+#include "TSortedTree.hpp"
 #include "matrix.h"
 
 class convectivefast
 {
     public:
-        convectivefast(Space *sS);
+        convectivefast(Space *S, TSortedTree *Tree):
+            S(S),
+            Tree(Tree) {}
         void CalcConvectiveFast();
         void CalcBoundaryConvective();
         TVec SpeedSumFast(TVec p);
@@ -32,6 +35,7 @@ class convectivefast
 
     private:
         Space *S;
+        TSortedTree *Tree;
 
         int MatrixSize;
         Matrix matrix;
@@ -68,7 +72,3 @@ class convectivefast
         void fillSpeedYEquation(unsigned eq_no, TBody* ibody, bool rightColOnly);
         void fillSpeedOEquation(unsigned eq_no, TBody* ibody, bool rightColOnly);
 };
-
-
-
-#endif

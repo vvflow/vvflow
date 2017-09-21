@@ -1,25 +1,24 @@
-#ifndef __shellscript_h__
-#define __shellscript_h__
+#pragma once
 
 #include "stdio.h"
 #include <iostream>
 
-class ShellScript
+class TEval
 {
     private:
         std::string script;
     public:
-        ShellScript();
-        ~ShellScript();
+        TEval();
+        ~TEval();
         bool setEvaluator(const std::string &s);
         double getValue(double t) const;
 
         operator const std::string() const { return script; }
 
-        ShellScript(const ShellScript&) = delete;
-        ShellScript(ShellScript&&) = delete;
-        ShellScript& operator= (const ShellScript&) = delete;
-        ShellScript& operator= (ShellScript&&) = delete;
+        TEval(const TEval&) = delete;
+        TEval(TEval&&) = delete;
+        TEval& operator= (const TEval&) = delete;
+        TEval& operator= (TEval&&) = delete;
 
     private:
         void* evaluator;
@@ -28,5 +27,3 @@ class ShellScript
         mutable double cacheTime2;
         mutable double cacheValue2;
 };
-
-#endif //__shellscript_h__

@@ -1,5 +1,4 @@
-#ifndef SORTEDTREE_H_
-#define SORTEDTREE_H_
+#pragma once
 
 class snode; typedef snode TSortedNode;
 class stree; typedef stree TSortedTree;
@@ -81,5 +80,3 @@ class stree
 
         friend class snode;
 };
-
-#endif /*SORTEDTREE_H_*/

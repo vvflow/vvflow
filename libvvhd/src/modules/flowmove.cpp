@@ -6,14 +6,6 @@
 #include <map>
 #include <time.h>
 
-flowmove::flowmove(Space *sS, double sRemoveEps)
-{
-    S = sS;
-    dt = S->dt;
-    RemoveEps = sRemoveEps;
-    CleanedV_ = 0;
-}
-
 void flowmove::MoveAndClean(bool remove, bool zero_speed)
 {
     CleanedV_ = 0;

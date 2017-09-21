@@ -8,9 +8,10 @@
 #include <time.h>
 
 #include "core.h"
-#include "epsfast.h"
-#include "convectivefast.h"
-#include "diffusivefast.h"
+#include "MEpsFast.hpp"
+#include "MConvectiveFast.hpp"
+#include "MDiffusiveFast.hpp"
+#include "MStepdata.hpp"
 #include "flowmove.h"
 
 #include "sensors.cpp"
@@ -68,10 +69,9 @@ int main(int argc, char** argv)
     double min_node_size = dl>0 ? dl*5 : 0;
     double max_node_size = dl>0 ? dl*100 : std::numeric_limits<double>::max();
     TSortedTree tr(S, 8, min_node_size, max_node_size);
-    S->Tree = &tr;
-    convectivefast conv(S);
-    epsfast eps(S);
-    diffusivefast diff(S);
+    convectivefast conv(S, &tr);
+    epsfast eps(S, &tr);
+    diffusivefast diff(S, &tr);
     flowmove fm(S);
     sensors sens(S, &conv, (argc>2)?argv[2]:NULL, f_sensors_output);
     #ifdef OVERRIDEMOI

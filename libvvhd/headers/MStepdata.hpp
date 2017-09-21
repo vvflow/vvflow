@@ -1,10 +1,10 @@
-#ifndef STEPDATA_H_
-#define STEPDATA_H_
+#pragma once
 
-#include "core.h"
 #include <iostream>
 #include <vector>
 #include <time.h>
+
+#include "core.h"
 
 class Stepdata
 {
@@ -40,5 +40,3 @@ class Stepdata
         std::vector<int> pressure_h5d;
         std::vector<int> friction_h5d;
 };
-
-#endif
