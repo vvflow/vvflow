@@ -6,18 +6,20 @@
 #include <complex>
 
 #include "MConvectiveFast.hpp"
+#include "elementary.h"
 
 using std::isfinite;
 using std::complex;
+
 /****************************** MAIN FUNCTIONS ********************************/
 
 TVec convectivefast::SpeedSumFast(TVec p)
 {
     TVec res(0, 0);
-    TSortedNode* Node = Tree->findNode(p);
+    const TSortedNode* Node = Tree->findNode(p);
     if (!Node) return res;
 
-    for (TSortedNode* lfnode: *Node->FarNodes)
+    for (const TSortedNode* lfnode: *Node->FarNodes)
     {
         res+= BioSavar(lfnode->CMp, p) + BioSavar(lfnode->CMm, p);
     }
@@ -498,7 +500,7 @@ void convectivefast::fillSlipEquationForSegment(unsigned eq_no, TAtt* seg, TBody
     *matrix.getRightCol(eq_no) = rotl(S->InfSpeed())*seg->dl;
     *matrix.getRightCol(eq_no) += rotl(SrcSpeed(seg->r))*seg->dl;
     //influence of all free vortices
-    TSortedNode* Node = Tree->findNode(seg->r);
+    const TSortedNode* Node = Tree->findNode(seg->r);
     *matrix.getRightCol(eq_no) -= NodeInfluence(*Node, *seg);
     if (rightColOnly) return;
 

@@ -2,8 +2,8 @@
 // #include <inttypes.h> /* PRIu32 */
 // #include <sys/stat.h> /* chmod */
 #include <unistd.h> /* exec */
-#include <string.h> /* strerror */
-#include <math.h> /* nan */
+#include <cstring> /* strerror */
+#include <cmath> /* nan */
 // #include <errno.h>
 // #include <fcntl.h> /* O_RDONLY */
 
@@ -16,11 +16,11 @@
 #include <memory> //unique_ptr
 
 /* vvhd */
-#include <core.h>
+#include "TSpace.hpp"
 // #include <map_vorticity.h>
 
-#include "./exear.h"
-#include "./optparse.h"
+#include "./exear.hpp"
+#include "./optparse.hpp"
 static const double d_nan = nan("");
 static const double d_inf = 1.0l/0.0l;
 

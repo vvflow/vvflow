@@ -25,8 +25,8 @@ static const struct luavvd_member space_members[] = {
     {"re",      luavvd_getdouble,      luavvd_setdouble,      offsetof(Space, Re) },
     {"finish",  luavvd_getdouble,      luavvd_setdouble,      offsetof(Space, Finish) },
     {"inf_g",   luavvd_getdouble,      luavvd_setdouble,      offsetof(Space, InfCirculation) },
-    {"inf_vx",  luavvd_getShellScript, luavvd_setShellScript, offsetof(Space, InfSpeedX) },
-    {"inf_vy",  luavvd_getShellScript, luavvd_setShellScript, offsetof(Space, InfSpeedY) },
+    {"inf_vx",  luavvd_getTEval,       luavvd_setTEval,       offsetof(Space, InfSpeedX) },
+    {"inf_vy",  luavvd_getTEval,       luavvd_setTEval,       offsetof(Space, InfSpeedY) },
     {"gravity", luavvd_getTVec,        luavvd_setTVec,        offsetof(Space, gravitation) },
 
     {"time",       luavvd_getTTime, luavvd_setTTime, offsetof(Space, Time) },

@@ -1,6 +1,9 @@
+#include <cstdint>
+#include <string>
 #include <lua.hpp>
+
 #include "getset.h"
-#include "core.h"
+#include "TTime.hpp"
 
 int luavvd_setdouble(lua_State *L) {
     double* dbl = (double*)lua_touserdata(L, 1);
@@ -62,6 +65,7 @@ int luavvd_getstring(lua_State *L) {
 
 int luavvd_setTTime(lua_State *L) {
     TTime* t = (TTime*)lua_touserdata(L, 1);
+    TTime nt;
 
     int isnum[2];
     switch (lua_type(L, 2)) {
@@ -76,24 +80,35 @@ int luavvd_setTTime(lua_State *L) {
 
         lua_rawgeti(L, 2, 1); // push table[1]
         lua_rawgeti(L, 2, 2); // push table[2]        
-        t->value = lua_tointegerx(L, -2, &isnum[0]);
-        t->timescale = lua_tointegerx(L, -1, &isnum[1]);
+        nt.value = lua_tointegerx(L, -2, &isnum[0]);
+        nt.timescale = lua_tointegerx(L, -1, &isnum[1]);
         if (!isnum[0] || !isnum[1]) {
             const char *typ1 = luaL_typename(L, -2);
             const char *typ2 = luaL_typename(L, -1);
             lua_pushfstring(L, "TTime needs two integers, got %s and %s", typ1, typ2);
             return 1;
         } else if (lua_tointeger(L, -1)<1) {
-            lua_pushfstring(L, "TTime timescale must be positive, got %d", t->timescale);
+            lua_pushfstring(L, "TTime timescale must be positive, got %d", nt.timescale);
             return 1;
         }
+        *t = nt;
         return 0;
     case LUA_TSTRING:
         const char* s = lua_tostring(L, 2);
-        if (!parse<TTime>(s, t)) {
+
+        bool fail = false;
+        int  slen = 0;
+
+        fail = sscanf(s, "%d/%u %n", &nt.value, &nt.timescale, &slen) < 2;
+        fail = fail || s[slen]!='\0';
+        if (fail) {
             lua_pushfstring(L, "TTime can not parse '%s'", s);
             return 1;
+        } else if (nt.timescale < 1) {
+            lua_pushfstring(L, "TTime timescale must be positive, got %d", nt.timescale);
+            return 1;
         }
+        *t = nt;
         return 0;
     }
     

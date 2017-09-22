@@ -1,6 +1,7 @@
 #pragma once
 
-#include "elementary.h"
+#include <iostream>
+#include <math.h>
 
 class TVec
 {

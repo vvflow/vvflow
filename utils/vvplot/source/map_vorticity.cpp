@@ -1,4 +1,3 @@
-#include "core.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,11 +7,12 @@
 #include <fstream>
 #include <math.h>
 #include <assert.h>
-#include "hdf5.h"
+#include <hdf5.h>
 
+#include "elementary.h"
 #include "libvvplot_api.h"
-#include "flowmove.h"
-#include "epsfast.h"
+#include "MFlowmove.hpp"
+#include "MEpsFast.hpp"
 
 static const double ExpArgRestriction = -8.;
 static double dl;
@@ -50,13 +50,13 @@ double eps2h(const TSortedNode &Node, TVec p)
     return res2;
 }
 
-TObj* Nearest(TSortedNode &Node, TVec p)
+TObj* Nearest(const TSortedNode &node, TVec p)
 {
     TVec dr(0, 0);
     double resr = std::numeric_limits<double>::max();
     TObj *res = NULL;
 
-    for (TSortedNode* lnnode: *Node.NearNodes)
+    for (TSortedNode* lnnode: *node.NearNodes)
     {
         for (TObj *lobj = lnnode->vRange.first; lobj < lnnode->vRange.last; lobj++)
         {
@@ -74,11 +74,11 @@ TObj* Nearest(TSortedNode &Node, TVec p)
     return res;
 }
 
-double h2(TSortedNode &Node, TVec p)
+double h2(const TSortedNode &node, TVec p)
 {
     double resh2 = std::numeric_limits<double>::max();
 
-    for (TSortedNode* lnnode: *Node.NearNodes)
+    for (TSortedNode* lnnode: *node.NearNodes)
     {
         for (TObj* latt: lnnode->bllist)
         {
@@ -89,10 +89,10 @@ double h2(TSortedNode &Node, TVec p)
     return resh2;
 }
 
-double Vorticity(Space* S, TVec p)
+double Vorticity(const TSortedTree& tree, TVec p)
 {
     double T=0;
-    TSortedNode* bnode = S->Tree->findNode(p);
+    const TSortedNode* bnode = tree.findNode(p);
 
     //return  bnode->NearNodes->size_safe();
     // TObj* nrst = Nearest(*bnode, p);
@@ -134,10 +134,10 @@ int map_vorticity(hid_t fid, double xmin, double xmax, double ymin, double ymax,
     S->StreakList.clear();
 
     dl = S->AverageSegmentLength();
-    S->Tree = new TSortedTree(S, 8, dl*20, std::numeric_limits<double>::max());
-    S->Tree->build();
+    TSortedTree tree(S, 8, dl*20, std::numeric_limits<double>::max());
+    tree.build();
 
-    auto& bnodes = S->Tree->getBottomNodes();
+    auto& bnodes = tree.getBottomNodes();
     #pragma omp parallel for
     for (auto llbnode = bnodes.begin(); llbnode < bnodes.end(); llbnode++)
     {
@@ -164,7 +164,7 @@ int map_vorticity(hid_t fid, double xmin, double xmax, double ymin, double ymax,
         {
             double y = ymin + double(yj)*spacing;
             TVec xy(x,y);
-            mem[xi*dims[1]+yj] = S->PointIsInBody(xy) ? 0 : Vorticity(S, xy);
+            mem[xi*dims[1]+yj] = S->PointIsInBody(xy) ? 0 : Vorticity(tree, xy);
         }
     }
 

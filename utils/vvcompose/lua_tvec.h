@@ -1,4 +1,5 @@
-#include "core.h"
+#pragma once
+#include "TVec.hpp"
 
 int luaopen_tvec (lua_State *L);
 

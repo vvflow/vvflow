@@ -1,19 +1,19 @@
 #pragma once
 
-#include "core.h"
+#include "TSpace.hpp"
 #include "TSortedTree.hpp"
 
 class diffusivefast
 {
     public:
-        diffusivefast(Space *S, TSortedTree* Tree):
+        diffusivefast(Space *S, const TSortedTree* Tree):
             S(S), Tree(Tree), Re(S->Re), Pr(S->Pr) {}
         void CalcVortexDiffusiveFast();
         void CalcHeatDiffusiveFast();
 
     private:
         Space *S;
-        TSortedTree* Tree;
+        const TSortedTree* Tree;
         double Re;
         double Pr;
         enum ParticleType {Vortex, Heat};

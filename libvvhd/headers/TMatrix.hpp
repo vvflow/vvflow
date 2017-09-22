@@ -1,9 +1,7 @@
-#ifndef matrix_h
-#define matrix_h
+#pragma once
 
-#include "stdint.h"
-#include "vector"
-#include "map"
+#include <vector>
+#include <map>
 
 class Matrix
 {
@@ -54,5 +52,3 @@ class Matrix
         //Source for saving and loading matrix can be found
         //in git baecb9308569b6f52a863697908c33ced7ed811b
 };
-
-#endif

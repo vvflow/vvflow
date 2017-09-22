@@ -68,7 +68,7 @@ int luavvd_gen_plate(lua_State *L) {
     double r2 = R1 + stop*(R2-R1);
     double c1 = start*Ll;
     double c2 = stop*Ll;
-    gap = max(dl, gap);
+    gap = std::max(dl, gap);
 
     double phi1, phi2;
     if (stop == 1) {

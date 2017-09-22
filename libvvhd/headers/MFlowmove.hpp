@@ -1,7 +1,6 @@
-#ifndef __FLOWMOVE_H__
-#define __FLOWMOVE_H__
-#include <math.h>
-#include "core.h"
+#pragma once
+
+#include "TSpace.hpp"
 
 class flowmove
 {
@@ -23,5 +22,3 @@ class flowmove
         int CleanedV_;
         //int CleanedH_;
 };
-
-#endif

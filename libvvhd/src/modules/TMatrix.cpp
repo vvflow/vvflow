@@ -1,18 +1,18 @@
-#include "stdio.h"
-#include "string.h"
-#include "malloc.h"
-#include "stdlib.h"
-#include "matrix.h"
+#include <cstdio>
+#include <cstring>
+#include <cstdlib>
+
+#include "TMatrix.hpp"
 
 #ifdef __INTEL_COMPILER
-#include "mkl.h"
+    #include <mkl.h>
 #else
-#include "cblas.h"
-extern "C" {
-    void dgesv_(int* n, const int* nrhs, double* a, int* lda, int* ipiv, double *x, int *incx, int *info);
-    void dgetrf_(int* M, int *N, double* A, int* lda, int* IPIV, int* INFO);
-    void dgetri_(int* N, double* A, int* lda, int* IPIV, double* WORK, int* lwork, int* INFO);
-}
+    #include <cblas.h>
+    extern "C" {
+        void dgesv_(int* n, const int* nrhs, double* a, int* lda, int* ipiv, double *x, int *incx, int *info);
+        void dgetrf_(int* M, int *N, double* A, int* lda, int* IPIV, int* INFO);
+        void dgetri_(int* N, double* A, int* lda, int* IPIV, double* WORK, int* lwork, int* INFO);
+    }
 #endif
 
 #define NDEBUG

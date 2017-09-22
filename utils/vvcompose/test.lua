@@ -118,15 +118,17 @@ check_val(function() return S.gravity:abs2() end, 15.1^2 + 15.2^2)
 check_val(function() return S.gravity:abs() end, math.sqrt(15.1^2 + 15.2^2))
 
 -- TTime
-S.dt = 0.1
-check_val(function() return S.dt end, 0.1)
-S.dt = {1, 10}
-check_val(function() return S.dt end, 0.1)
-S.dt = "1/10"
-check_val(function() return S.dt end, 0.1)
-check_err(function() S.dt = "inf" end, "bad value for S.dt (TTime can not parse 'inf')")
-check_err(function() S.dt = "nan" end, "bad value for S.dt (TTime can not parse 'nan')")
+check_val(function() S.dt = 0.25;           return S.dt; end, 0.25)
+check_val(function() S.dt = {1, 8};         return S.dt; end, 0.125)
+check_val(function() S.dt = "1/16";         return S.dt; end, 0.0625)
+check_val(function() S.dt = "1/2500000000"; return S.dt; end, 0.4e-9)
+check_val(function() S.dt = "1/4294967297"; return S.dt; end, 1) -- uint32 overflow
+check_val(function() S.dt = "1/-4294967295"; return S.dt; end, 1) -- uint32 overflow
+check_val(function() S.dt = {1,4000000000}; return S.dt; end, 0.25e-9)
+check_err(function() S.dt = "inf"  end, "bad value for S.dt (TTime can not parse 'inf')")
+check_err(function() S.dt = "nan"  end, "bad value for S.dt (TTime can not parse 'nan')")
 
+check_err(function() S.dt = "0.100" end, "bad value for S.dt (TTime can not parse '0.100')")
 check_err(function() S.dt = "1e500" end, "bad value for S.dt (TTime can not parse '1e500')")
 check_err(function() S.dt = {}      end, "bad value for S.dt (TTime needs table with two elements, got 0)")
 check_err(function() S.dt = {1,2,3} end, "bad value for S.dt (TTime needs table with two elements, got 3)")
@@ -134,12 +136,12 @@ check_err(function() S.dt = {1,"a"} end, "bad value for S.dt (TTime needs two in
 check_err(function() S.dt = {-1,-3} end, "bad value for S.dt (TTime timescale must be positive, got -3)")
 check_err(function() S.dt = nil     end, "bad value for S.dt (number or table expected, got nil)")
 
--- ShellScript
+-- TEval
 check_err(function() S.inf_vx = "z" end, "bad value for S.inf_vx (invalid expression 'z')")
-check_err(function() S.inf_vx = {1} end, "bad value for S.inf_vx (string or ShellScript expected, got table)")
-check_err(function() S.inf_vx = 1.0 end, "bad value for S.inf_vx (string or ShellScript expected, got number)")
-check_err(function() S.inf_vx = nil end, "bad value for S.inf_vx (string or ShellScript expected, got nil)")
-check_err(function() S.inf_vx.s = 0 end,    "ShellScript has no parameters")
+check_err(function() S.inf_vx = {1} end, "bad value for S.inf_vx (string or TEval expected, got table)")
+check_err(function() S.inf_vx = 1.0 end, "bad value for S.inf_vx (string or TEval expected, got number)")
+check_err(function() S.inf_vx = nil end, "bad value for S.inf_vx (string or TEval expected, got nil)")
+check_err(function() S.inf_vx.s = 0 end,    "TEval has no parameters")
 S.inf_vx = "sin(2*pi*t/16)"
 S.inf_vy = "sin(2*pi*t/32)"
 check_val(function() return tostring(S.inf_vx) end, "sin(2*pi*t/16)")
@@ -164,7 +166,7 @@ check_val(function() return tostring(body.collision_max)  end, "TVec3D(nan,nan,n
 check_val(function() return tostring(body.spring_const)   end, "TVec3D(inf,inf,inf)")
 check_val(function() return tostring(body.spring_damping) end, "TVec3D(0,0,0)")
 check_val(function() return tostring(body.holder_vx)      end, "")
-check_err(function() body.holder_vx.foo = nil             end, "ShellScript has no parameters")
+check_err(function() body.holder_vx.foo = nil             end, "TEval has no parameters")
 check_val(function() return tostring(body.holder_vy)      end, "")
 check_val(function() return tostring(body.holder_vo)      end, "")
 check_val(function() return body.density                  end, 1)

@@ -1,14 +1,15 @@
 #pragma once
 
-#include <math.h>
-#include "core.h"
+#include <cmath>
+
+#include "TSpace.hpp"
 #include "TSortedTree.hpp"
-#include "matrix.h"
+#include "TMatrix.hpp"
 
 class convectivefast
 {
     public:
-        convectivefast(Space *S, TSortedTree *Tree):
+        convectivefast(Space *S, const TSortedTree *Tree):
             S(S),
             Tree(Tree) {}
         void CalcConvectiveFast();
@@ -35,7 +36,7 @@ class convectivefast
 
     private:
         Space *S;
-        TSortedTree *Tree;
+        const TSortedTree *Tree;
 
         int MatrixSize;
         Matrix matrix;

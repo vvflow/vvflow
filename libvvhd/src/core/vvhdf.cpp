@@ -1,4 +1,5 @@
 #include <limits>
+#include <string>
 #include "vvhdf.h"
 
 template<typename T>

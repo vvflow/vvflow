@@ -1,6 +1,5 @@
-#include "limits"
-#include "hdf5.h"
-#include "core.h"
+#include <limits>
+#include <hdf5.h>
 
 static hid_t fid;
 static hid_t DATASPACE_SCALAR()

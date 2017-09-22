@@ -1,8 +1,8 @@
 #ifndef __LIBVVPLOT_API__
 #define __LIBVVPLOT_API__
 
-#include "hdf5.h"
-#include "elementary.h"
+#include <hdf5.h>
+#include "TVec.hpp"
 
 inline
 void attribute_read_double(hid_t hid, const char *name, double &value)

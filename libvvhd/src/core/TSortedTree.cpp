@@ -1,8 +1,9 @@
-#include "core.h"
-#include "TSortedTree.hpp"
-#include <math.h>
-#include <iostream>
+// #include <cmath>
+#include <string>
+#include <algorithm>
 #include <limits>
+
+#include "TSortedTree.hpp"
 
 const int Tree_MaxListSize = 16;
 
@@ -28,20 +29,20 @@ snode::~snode()
 
 void TSortedNode::DivideNode()
 {
-    if ( max(h,w) < parent->maxNodeSize )
-        if ( min(h,w) <= parent->minNodeSize )
+    if ( std::max(h,w) < parent->maxNodeSize )
+        if ( std::min(h,w) <= parent->minNodeSize )
         {
             parent->bottomNodes.push_back(this);
             return;
         }
 
-    long MaxListSize = max(
+    long MaxListSize = std::max( {
             bllist.size(),
             vRange.size(),
             hRange.size(),
-            sRange.size());
+            sRange.size() } );
 
-    if ( max(h,w) < parent->maxNodeSize )
+    if ( std::max(h,w) < parent->maxNodeSize )
         if ( MaxListSize < Tree_MaxListSize ) //look for define
         {
             parent->bottomNodes.push_back(this);
@@ -98,10 +99,10 @@ void TSortedNode::Stretch()
 
     for (auto& llobj: bllist)
     {
-        tr.x = max(tr.x, llobj->r.x);
-        tr.y = max(tr.y, llobj->r.y);
-        bl.x = min(bl.x, llobj->r.x);
-        bl.y = min(bl.y, llobj->r.y);
+        tr.x = std::max(tr.x, llobj->r.x);
+        tr.y = std::max(tr.y, llobj->r.y);
+        bl.x = std::min(bl.x, llobj->r.x);
+        bl.y = std::min(bl.y, llobj->r.y);
     }
 
     //fprintf(stderr, "%d %d stretch body: l=%g, r=%g, b=%g, t=%g\n", i, j, bl.rx, tr.rx, bl.ry, tr.ry);
@@ -122,10 +123,10 @@ void TSortedNode::Stretch(range &oRange, TVec &tr, TVec &bl)
 {
     for (TObj *lobj = oRange.first; lobj < oRange.last; lobj++)
     {
-        tr.x = max(tr.x, lobj->r.x);
-        tr.y = max(tr.y, lobj->r.y);
-        bl.x = min(bl.x, lobj->r.x);
-        bl.y = min(bl.y, lobj->r.y);
+        tr.x = std::max(tr.x, lobj->r.x);
+        tr.y = std::max(tr.y, lobj->r.y);
+        bl.x = std::min(bl.x, lobj->r.x);
+        bl.y = std::min(bl.y, lobj->r.y);
     }
 }
 
@@ -194,7 +195,7 @@ void TSortedNode::FindNearNodes(TSortedNode* top)
     TVec dr = TVec(top->x, top->y) - TVec(x, y);
     double HalfPerim = top->h + top->w + h + w;
 
-    if ( dr.abs2() > parent->farCriteria*sqr(HalfPerim) )
+    if ( dr.abs2() > parent->farCriteria* HalfPerim*HalfPerim )
     {
         //Far
         FarNodes->push_back(top);
@@ -264,7 +265,7 @@ void stree::destroy()
     bottomNodes.clear();
 }
 
-vector<TSortedNode*>& stree::getBottomNodes()
+vector<TSortedNode*> const& stree::getBottomNodes() const
 {
     if (bottomNodes.empty())
     {
@@ -273,7 +274,7 @@ vector<TSortedNode*>& stree::getBottomNodes()
     return bottomNodes;
 }
 
-TSortedNode* stree::findNode(TVec p)
+const TSortedNode* stree::findNode(TVec p) const
 {
     TSortedNode *Node = rootNode;
 
@@ -291,7 +292,7 @@ TSortedNode* stree::findNode(TVec p)
     return Node;
 }
 
-void stree::printBottomNodes(FILE* f, bool PrintDepth)
+void stree::printBottomNodes(FILE* f, bool PrintDepth) const
 {
     for (auto& lbn: bottomNodes)
     {

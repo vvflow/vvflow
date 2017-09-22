@@ -18,7 +18,9 @@ using std::endl;
 using std::fstream;
 using std::ios;
 
-// FIXME убрать везде using namespace std
+extern const char* libvvhd_gitrev;
+extern const char* libvvhd_gitinfo;
+extern const char* libvvhd_gitdiff;
 
 Space::Space():
     caption(),
@@ -658,8 +660,8 @@ FILE* Space::OpenFile(const char* format)
 
 void Space::CalcForces()
 {
-    const double C_NyuDt_Pi = dt/(C_PI*Re);
-    const double C_Nyu_Pi = 1./(C_PI*Re);
+    const double C_NyuDt_Pi = dt/(M_PI*Re);
+    const double C_Nyu_Pi = 1./(M_PI*Re);
     for (auto& lbody: BodyList)
     {
         double tmp_gsum = 0;

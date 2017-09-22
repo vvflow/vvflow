@@ -1,11 +1,14 @@
 #include <lua.hpp>
-#include <stdio.h>
-#include <string.h>
+#include <cstdio>
 #include <cstring>
 
 #include "getset.h"
 #include "lua_tobj.h"
 #include "lua_objlist.h"
+
+#include "TSpace.hpp"
+
+using std::vector;
 
 static int objlist_append(lua_State *L) {
     vector<TObj> *li = checkObjList(L, 1);

@@ -1,4 +1,5 @@
-#include "core.h"
+#pragma once
+#include "TObj.hpp"
 
 int luaopen_tobj(lua_State *L);
 

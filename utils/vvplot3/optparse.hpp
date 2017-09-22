@@ -1,5 +1,4 @@
-#ifndef _OPTPARSE_H_
-#define _OPTPARSE_H_
+#pragma once
 
 typedef struct {
     double xmin;
@@ -57,5 +56,3 @@ namespace opt {
     extern const char* input;
     extern const char* target;
 }
-
-#endif

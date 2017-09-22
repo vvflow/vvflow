@@ -8,7 +8,13 @@ void epsfast::CalcEpsilonFast(bool merge)
     merged_ = 0;
 
     auto& bottom_nodes = Tree->getBottomNodes();
-    static_assert(std::is_same<decltype(bottom_nodes), vector<TSortedNode*>&>::value, "bottom_nodes must be reference");
+    static_assert(
+        std::is_same<
+            decltype(bottom_nodes),
+            const vector<TSortedNode*>&
+        >::value,
+        "unexpected bottom_nodes must be reference"
+    );
 
     for (auto lbnode: bottom_nodes)
     {

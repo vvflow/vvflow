@@ -1,6 +1,5 @@
 #pragma once
 
-#include "elementary.h"
 #include "TVec.hpp"
 
 class TVec3D

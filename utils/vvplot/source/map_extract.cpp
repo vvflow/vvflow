@@ -3,7 +3,6 @@
 #include "string.h"
 #include "malloc.h"
 #include "libvvplot_api.h"
-#include "core.h"
 
 static hid_t DATASPACE_SCALAR = -1;
 inline void attribute_write(hid_t hid, const char *name, double value)

@@ -19,7 +19,7 @@ add_executable(vvcompose
     lua_tvec.cpp
     lua_tobj.cpp
     lua_tvec3d.cpp
-    lua_shellscript.cpp
+    lua_teval.cpp
     lua_tbody.cpp
     lua_objlist.cpp
     lua_bodylist.cpp

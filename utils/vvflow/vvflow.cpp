@@ -1,18 +1,18 @@
-#include "iostream"
-#include "fstream"
-#include "stdio.h"
+#include <iostream>
+#include <fstream>
+#include <cstdio>
 
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <string.h>
-#include <time.h>
+#include <cstring>
+#include <ctime>
 
-#include "core.h"
+#include "elementary.h"
 #include "MEpsFast.hpp"
 #include "MConvectiveFast.hpp"
 #include "MDiffusiveFast.hpp"
 #include "MStepdata.hpp"
-#include "flowmove.h"
+#include "MFlowmove.hpp"
 
 #include "sensors.cpp"
 #include "omp.h"

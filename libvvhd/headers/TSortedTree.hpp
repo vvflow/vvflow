@@ -3,11 +3,11 @@
 class snode; typedef snode TSortedNode;
 class stree; typedef stree TSortedTree;
 
-#include "core.h"
 #include <stdio.h>
 #include <limits>
 #include <vector>
 
+#include "TSpace.hpp"
 using std::vector;
 
 class range
@@ -18,7 +18,7 @@ class range
         range() { first = last = NULL;}
         range(TObj *f, TObj *l) { first = f; last = l; }
         void set(TObj *f, TObj *l) { first = f; last = l; }
-        int size() { return last-first; }
+        size_t size() { return last-first; }
 };
 
 class snode
@@ -64,10 +64,10 @@ class stree
         void build(bool IncludeVortexes = true, bool IncludeBody = true, bool IncludeHeat = true);
         void destroy();
 
-        vector<snode*>& getBottomNodes();
-        snode* findNode(TVec p);
+        vector<TSortedNode*> const& getBottomNodes() const;
+        const TSortedNode* findNode(TVec p) const;
 
-        void printBottomNodes(FILE* f, bool PrintDepth = false); // prints lines such "x y w h [i]"
+        void printBottomNodes(FILE* f, bool PrintDepth = false) const; // prints lines such "x y w h [i]"
 
     private:
         Space *S;
@@ -75,8 +75,8 @@ class stree
         double minNodeSize;
         double maxNodeSize;
 
-        snode *rootNode;
-        vector<snode*> bottomNodes;
+        TSortedNode *rootNode;
+        vector<TSortedNode*> bottomNodes;
 
         friend class snode;
 };

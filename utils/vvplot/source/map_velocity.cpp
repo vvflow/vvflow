@@ -1,15 +1,14 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 #include <fstream>
-#include <math.h>
-#include <time.h>
+#include <cmath>
+#include <ctime>
+#include <hdf5.h>
 
 #include "libvvplot_api.h"
-#include "convectivefast.h"
-#include "epsfast.h"
-#include "flowmove.h"
-#include "core.h"
-#include "hdf5.h"
+#include "MConvectiveFast.hpp"
+#include "MEpsFast.hpp"
+#include "MFlowmove.hpp"
 
 static double Rd2;
 static TVec RefFrame_Speed;
@@ -26,12 +25,12 @@ int velocity_print(hid_t fid, TVec* points, int count)
 
     bool is_viscous = (S->Re != std::numeric_limits<double>::infinity());
     double dl = S->AverageSegmentLength(); Rd2 = dl*dl/25;
-    S->Tree = new TSortedTree(S, 8, dl*20, 0.3);
-    convectivefast conv(S);
+    TSortedTree tree(S, 8, dl*20, 0.3);
+    convectivefast conv(S, &tree);
     flowmove flow(S);
-    epsfast eps(S);
+    epsfast eps(S, &tree);
     flow.VortexShed();
-    S->Tree->build();
+    tree.build();
     eps.CalcEpsilonFast(/*merge=*/is_viscous);
 
     for (int i=0; i<count; i++)

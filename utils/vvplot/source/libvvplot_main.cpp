@@ -1,6 +1,7 @@
-#include "core.h"
-#include "string.h"
-#include "stdlib.h"
+#include <cstring>
+#include <cstdlib>
+
+#include "elementary.h"
 #include "libvvplot_api.h"
 
 void print_version()

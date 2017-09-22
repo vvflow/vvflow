@@ -1,7 +1,7 @@
+#include <cstring>
 #include <lua.hpp>
-// #include <stdio.h>
-#include <string.h>
 
+#include "elementary.h"
 #include "getset.h"
 #include "lua_tbody.h"
 #include "lua_tvec.h"
@@ -9,6 +9,7 @@
 // #include "lua_shellscript.h"
 
 using std::weak_ptr;
+using std::shared_ptr;
 
 int luavvd_setslip(lua_State *L) {
     TBody* body = (TBody*)lua_touserdata(L, 1);
@@ -173,9 +174,9 @@ static const struct luavvd_member tbody_members[] = {
     {"collision_max",   luavvd_getTVec3D,      luavvd_setTVec3D,      0 },
     {"spring_const",    luavvd_getTVec3D,      luavvd_setTVec3D,      0 },
     {"spring_damping",  luavvd_getTVec3D,      luavvd_setTVec3D,      0 },
-    {"holder_vx",       luavvd_getShellScript, luavvd_setShellScript, 0 },
-    {"holder_vy",       luavvd_getShellScript, luavvd_setShellScript, 0 },
-    {"holder_vo",       luavvd_getShellScript, luavvd_setShellScript, 0 },
+    {"holder_vx",       luavvd_getTEval,       luavvd_setTEval,       0 },
+    {"holder_vy",       luavvd_getTEval,       luavvd_setTEval,       0 },
+    {"holder_vo",       luavvd_getTEval,       luavvd_setTEval,       0 },
     {"density",         luavvd_getdouble,      luavvd_setdouble,      0 },
     {"bounce",          luavvd_getdouble,      luavvd_setdouble,      0 },
     {"special_segment", luavvd_getint32,       luavvd_setint32,       0 },

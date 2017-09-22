@@ -1,10 +1,13 @@
-#include "core.h"
-#include "flowmove.h"
-#include "math.h"
 #include <cstdlib>
+#include <ctime>
+#include <cmath>
 #include <algorithm>
 #include <map>
-#include <time.h>
+
+#include "MFlowmove.hpp"
+#include "TVec.hpp"
+#include "TObj.hpp"
+#include "TVec3D.hpp"
 
 void flowmove::MoveAndClean(bool remove, bool zero_speed)
 {

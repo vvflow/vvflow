@@ -1,16 +1,16 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 #include <iostream>
 #include <fstream>
-#include <math.h>
+#include <cmath>
+#include <hdf5.h>
 
-#include "core.h"
+#include "elementary.h"
 #include "libvvplot_api.h"
-#include "convectivefast.h"
-#include "epsfast.h"
-#include "diffusivefast.h"
-#include "flowmove.h"
-#include "hdf5.h"
+#include "MConvectiveFast.hpp"
+#include "MEpsFast.hpp"
+#include "MDiffusiveFast.hpp"
+#include "MFlowmove.hpp"
 
 static const double NaN = std::numeric_limits<double>::quiet_NaN();
 static const double S1Restriction = 1E-6;
@@ -82,10 +82,9 @@ int map_pressure(hid_t fid, char RefFrame, double xmin, double xmax, double ymin
 
     double dl = S->AverageSegmentLength();
     TSortedTree tr(S, 8, dl*20, 0.1);
-    S->Tree = &tr;
-    convectivefast conv(S);
-    epsfast eps(S);
-    diffusivefast diff(S);
+    convectivefast conv(S, &tr);
+    epsfast eps(S, &tr);
+    diffusivefast diff(S, &tr);
     flowmove fm(S);
 
     /**************************** LOAD ARGUMENTS ******************************/
@@ -153,10 +152,9 @@ int pressure_print(hid_t fid, TVec* points, int count)
 
     double dl = S->AverageSegmentLength();
     TSortedTree tr(S, 8, dl*20, 0.1);
-    S->Tree = &tr;
-    convectivefast conv(S);
-    epsfast eps(S);
-    diffusivefast diff(S);
+    convectivefast conv(S, &tr);
+    epsfast eps(S, &tr);
+    diffusivefast diff(S, &tr);
     flowmove fm(S);
 
     fm.VortexShed();

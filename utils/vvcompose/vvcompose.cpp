@@ -1,8 +1,9 @@
-#include <stdio.h>
-#include <string.h>
+#include <cstdio>
+#include <cstring>
 #include <unistd.h> // execlp
 #include <lua.hpp>
 
+#include "elementary.h"
 #include "getset.h"
 
 #include "lua_space.h"
@@ -10,7 +11,7 @@
 #include "lua_tobj.h"
 #include "lua_tvec3d.h"
 #include "lua_tbody.h"
-#include "lua_shellscript.h"
+#include "lua_teval.h"
 #include "lua_objlist.h"
 #include "lua_bodylist.h"
 #include "gen_body.h"
@@ -76,10 +77,10 @@ int luaopen_vvd (lua_State *L) {
     luaopen_tvec(L);
     luaopen_tobj(L);
     luaopen_tvec3d(L);
+    luaopen_teval(L);
     luaopen_tbody(L);
     luaopen_objlist(L);
     luaopen_bodylist(L);
-    luaopen_shellscript(L);
 
     return 0;
 }

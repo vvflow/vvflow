@@ -1,12 +1,13 @@
 #include <lua.hpp>
-#include <stdio.h>
-#include <string.h>
-#include <cstring>
+#include <cstdio>
 #include <cstring>
 
 #include "getset.h"
 #include "lua_tbody.h"
 #include "lua_bodylist.h"
+
+using std::vector;
+using std::shared_ptr;
 
 static int bodylist_insert(lua_State *L) {
     vector<shared_ptr<TBody>>& li = *checkBodyList(L, 1);

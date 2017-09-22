@@ -1,11 +1,16 @@
-#include "./optparse.h"
+#include <cerrno> /* errno */
+#include <cstdio> /* stderr */
+#include <cstdlib> /* exit */
+#include <cstring> /* strerror */
+#include <cmath> /* isfinite */
+#include <unistd.h> /* exec */
+
+#include <algorithm>
 
 #include <getopt.h>
-#include <errno.h> /* errno */
-#include <string.h> /* strerror */
-#include <unistd.h> /* exec */
-#include <math.h> /* isfinite */
-#include <core.h> /* vvhd */
+
+#include "elementary.h"
+#include "./optparse.hpp"
 
 static double &xmin = opt::rect.xmin;
 static double &xmax = opt::rect.xmax;
@@ -86,10 +91,10 @@ void opt::parse(int argc, char **argv) {
             opt::S = true;
             if (!optarg) break;
             fail = sscanf(optarg, "%lf , %lf , %lf %n", &opt::Smin, &opt::Smax, &opt::Sstep, &optn) < 3;
-            fail = fail || !isfinite(opt::Smin);
-            fail = fail || !isfinite(opt::Smax);
+            fail = fail || !std::isfinite(opt::Smin);
+            fail = fail || !std::isfinite(opt::Smax);
             fail = fail || !(opt::Smax >= opt::Smin);
-            fail = fail || !isfinite(opt::Sstep);
+            fail = fail || !std::isfinite(opt::Sstep);
             fail = fail || !(opt::Sstep>0);
             // if (!fail) {
             //     printf("SMIN -> %lf\n", opt::Smin);
@@ -102,7 +107,7 @@ void opt::parse(int argc, char **argv) {
             opt::G = true;
             if (!optarg) break;
             fail = sscanf(optarg, "%lf %n", &opt::Gmax, &optn) < 1;
-            fail = fail || !isfinite(opt::Gmax); 
+            fail = fail || !std::isfinite(opt::Gmax); 
             fail = fail || !(opt::Gmax >= 0);
             // if (!fail) {
             //     printf("GAMMA -> %lf\n", opt::Gmax);
@@ -113,8 +118,8 @@ void opt::parse(int argc, char **argv) {
             opt::P = true;
             if (!optarg) break;
             fail = sscanf(optarg, "%lf , %lf %n", &opt::Pmin, &opt::Pmax, &optn) < 2;
-            fail = fail || !isfinite(opt::Pmin);
-            fail = fail || !isfinite(opt::Pmax);
+            fail = fail || !std::isfinite(opt::Pmin);
+            fail = fail || !std::isfinite(opt::Pmax);
             fail = fail || !(opt::Pmax >= opt::Pmin);
             // if (!fail) {
             //     printf("PMIN -> %lf\n", opt::Pmin);
@@ -123,7 +128,7 @@ void opt::parse(int argc, char **argv) {
             break;
         case 'x': // -x
             fail = sscanf(optarg, "%lf , %lf %n", &xmin, &xmax, &optn) < 2;
-            fail = fail || isinf(xmin) || isinf(xmax);
+            fail = fail || std::isinf(xmin) || std::isinf(xmax);
             // if (!fail) {
             //     printf("XMIN -> %lf\n", xmin);
             //     printf("XMAX -> %lf\n", xmax);
@@ -131,7 +136,7 @@ void opt::parse(int argc, char **argv) {
             break;
         case 'y': // -y
             fail = sscanf(optarg, "%lf , %lf %n", &ymin, &ymax, &optn) < 2;
-            fail = fail || isinf(ymin) || isinf(ymax);
+            fail = fail || std::isinf(ymin) || std::isinf(ymax);
             // if (!fail) {
             //     printf("YMIN -> %lf\n", ymin);
             //     printf("YMAX -> %lf\n", ymax);
@@ -209,10 +214,10 @@ void opt::parse(int argc, char **argv) {
         if (!opt::height) { var_names+= COMMA+ "--size (H)"; var_cnt++; }
         if (xmin==xmax)  { var_names+= COMMA+ "-x (XMIN, XMAX)"; var_cnt++; }
         if (ymin==ymax)  { var_names+= COMMA+ "-y (YMIN, YMAX)"; var_cnt++; }
-        if (isnan(xmin)) { var_names+= COMMA+ "-x (XMIN)"; var_cnt++; }
-        if (isnan(xmax)) { var_names+= COMMA+ "-x (XMAX)"; var_cnt++; }
-        if (isnan(ymin)) { var_names+= COMMA+ "-y (YMIN)"; var_cnt++; }
-        if (isnan(ymax)) { var_names+= COMMA+ "-y (YMAX)"; var_cnt++; }
+        if (std::isnan(xmin)) { var_names+= COMMA+ "-x (XMIN)"; var_cnt++; }
+        if (std::isnan(xmax)) { var_names+= COMMA+ "-x (XMAX)"; var_cnt++; }
+        if (std::isnan(ymin)) { var_names+= COMMA+ "-y (YMIN)"; var_cnt++; }
+        if (std::isnan(ymax)) { var_names+= COMMA+ "-y (YMAX)"; var_cnt++; }
         #undef COMMA
 
         if (var_cnt < 1) {
@@ -227,10 +232,10 @@ void opt::parse(int argc, char **argv) {
         if (!opt::height) { opt::height = double(opt::width) *(ymax-ymin)/(xmax-xmin); opt::height-=opt::height%2; }
         if (xmin==xmax)  { double xc=xmin, dx=(ymax-ymin)*opt::width/opt::height/2.0; xmax=xc+dx; xmin=xc-dx; }
         if (ymin==ymax)  { double yc=ymin, dy=(xmax-xmin)*opt::height/opt::width/2.0; ymax=yc+dy; ymin=yc-dy; }
-        if (isnan(xmin)) { xmin = xmax - (ymax-ymin)*opt::width/opt::height; }
-        if (isnan(xmax)) { xmax = xmin + (ymax-ymin)*opt::width/opt::height; }
-        if (isnan(ymin)) { ymin = ymax - (xmax-xmin)*opt::height/opt::width; }
-        if (isnan(ymax)) { ymax = ymin + (xmax-xmin)*opt::height/opt::width; }
+        if (std::isnan(xmin)) { xmin = xmax - (ymax-ymin)*opt::width/opt::height; }
+        if (std::isnan(xmax)) { xmax = xmin + (ymax-ymin)*opt::width/opt::height; }
+        if (std::isnan(ymin)) { ymin = ymax - (xmax-xmin)*opt::height/opt::width; }
+        if (std::isnan(ymax)) { ymax = ymin + (xmax-xmin)*opt::height/opt::width; }
 
         opt::mesh_lo.dxdy = (xmax-xmin)/opt::mesh_lo.xres;
         opt::mesh_lo.yres = ceil((ymax-ymin)/opt::mesh_lo.dxdy);

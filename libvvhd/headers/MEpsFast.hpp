@@ -1,19 +1,18 @@
 #pragma once
 
-#include "core.h"
 #include "TSortedTree.hpp"
 
 class epsfast
 {
     public:
-        epsfast(Space *S, TSortedTree *Tree):
+        epsfast(Space *S, const TSortedTree *Tree):
             S(S), Tree(Tree), merged_(0) {}
         void CalcEpsilonFast(bool merge);
         int Merged(){return merged_;}
 
     private:
         Space *S;
-        TSortedTree *Tree;
+        const TSortedTree *Tree;
         //double merge_criteria_sq; // = (0.3*AverageSegmentLenght)^2
         double eps_restriction; // = 0.6*AverageSegmentLenght 
         int merged_;

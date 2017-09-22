@@ -1,3 +1,4 @@
+#pragma once
 #include <lua.hpp>
 
 /* class.member = *ptr = value
@@ -13,7 +14,8 @@ int luavvd_setstring(lua_State *L); // (std::string*)
 int luavvd_setTTime(lua_State *L);  // (TTime*)
 int luavvd_setTVec(lua_State *L);   // (TVec*)
 int luavvd_setTVec3D(lua_State *L); // (TVec3D*)
-int luavvd_setShellScript(lua_State *L); // (ShellScript*)
+int luavvd_setTEval(lua_State *L);  // (TEval*)
+
 /* return *ptr
 pop
     1: ptr (lightuserdata)
@@ -26,7 +28,8 @@ int luavvd_getstring(lua_State *L); // lua_pushstring
 int luavvd_getTTime(lua_State *L);  // lua_pushnumber
 int luavvd_getTVec(lua_State *L);   // lua_newuserdata(TVec*, "TVec")
 int luavvd_getTVec3D(lua_State *L); // lua_newuserdata(TVec3D*, "TVec3D")
-int luavvd_getShellScript(lua_State *L); // lua_newuserdata(ShellScript*, "ShellScript")
+int luavvd_getTEval(lua_State *L);  // lua_newuserdata(TEval*, "TEval")
+
 int luavvd_getObjList(lua_State *L); // lua_newuserdata(std::vector<TObj>*, "ObjList")
 int luavvd_getBodyList(lua_State *L); // lua_newuserdata(std::vector<shared_ptr<TBody>>*, "BodyList")
 

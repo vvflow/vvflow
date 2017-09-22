@@ -1,13 +1,14 @@
-#include <stdio.h>
-#include <getopt.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <unistd.h>
+#include <getopt.h>
 
 #include <vector>
+#include <string>
 
-#include "core.h"
 #include "vvhdf.h"
+#include "TSpace.hpp"
 
 struct dataset_t {
     size_t cols;

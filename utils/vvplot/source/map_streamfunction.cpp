@@ -1,12 +1,14 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 #include <fstream>
-#include <math.h>
-#include <time.h>
+#include <cmath>
+#include <ctime>
+#include <hdf5.h>
 
+#include "elementary.h"
 #include "libvvplot_api.h"
-#include "core.h"
-#include "hdf5.h"
+#include "TSpace.hpp"
+#include "TSortedTree.hpp"
 
 static double dl;
 static double rd2_global;
@@ -42,7 +44,7 @@ double _2pi_psi_qatt(TVec p, TVec att, TVec cofm, double q)
     return q * atan2(rotl(v2)*v1, v2*v1);
 }
 
-double Psi(Space* S, TVec p, double spacing, double& psi_gap)
+double Psi(Space* S, const TSortedTree* tree, TVec p, double spacing, double& psi_gap)
 {
     double tmp_4pi_psi_g = 0.0;
     double tmp_2pi_psi_q = 0.0;
@@ -78,7 +80,7 @@ double Psi(Space* S, TVec p, double spacing, double& psi_gap)
         }
     }
 
-    TSortedNode* Node = S->Tree->findNode(p);
+    const TSortedNode* Node = tree->findNode(p);
     if (!Node) return 0;
     for (TSortedNode* lfnode: *Node->FarNodes)
     {
@@ -125,17 +127,17 @@ int map_streamfunction(hid_t fid, char RefFrame, double xmin, double xmax, doubl
 
     dl = S->AverageSegmentLength();
     rd2_global = sqr(0.2*dl);
-    S->Tree = new TSortedTree(S, 8, dl*20, std::numeric_limits<double>::max());
-    S->Tree->build();
+    TSortedTree tree(S, 8, dl*20, std::numeric_limits<double>::max());
+    tree.build();
 
-    auto& bnodes = S->Tree->getBottomNodes();
+    auto& bnodes = tree.getBottomNodes();
     #pragma omp parallel for
     for (auto llbnode = bnodes.begin(); llbnode < bnodes.end(); llbnode++)
     {
         TSortedNode* lbnode = *llbnode;
         for (TObj *lobj = lbnode->vRange.first; lobj < lbnode->vRange.last; lobj++)
         {
-            lobj->v.x = sqr(EPS_MULT)*max(eps2h(*lbnode, lobj->r)*0.25, rd2_global);
+            lobj->v.x = sqr(EPS_MULT)*std::max(eps2h(*lbnode, lobj->r)*0.25, rd2_global);
         }
     }
 
@@ -155,7 +157,7 @@ int map_streamfunction(hid_t fid, char RefFrame, double xmin, double xmax, doubl
         {
             double y = ymin + double(yj)*spacing;
             double psi_gap = 0;
-            mem[xi*dims[1]+yj] = Psi(S, TVec(x, y), spacing, psi_gap);
+            mem[xi*dims[1]+yj] = Psi(S, &tree, TVec(x, y), spacing, psi_gap);
             if (psi_gap)
             {
                 gap_t gap = {0};

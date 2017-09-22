@@ -3,9 +3,10 @@
 #include <iostream>
 
 #include "MDiffusiveFast.hpp"
+#include "elementary.h"
 #define expdef(x) exp(x)
 
-const double ExpArgRestriction = -8.;
+constexpr double ExpArgRestriction = -8.;
 
 void diffusivefast::CalcVortexDiffusiveFast()
 {

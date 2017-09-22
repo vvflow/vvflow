@@ -1,7 +1,8 @@
 #include <lua.hpp>
-#include <stdio.h>
-#include <string.h>
+#include <cstdio>
+#include <cstring>
 
+#include "elementary.h"
 #include "getset.h"
 #include "lua_tvec.h"
 #include "lua_tvec3d.h"

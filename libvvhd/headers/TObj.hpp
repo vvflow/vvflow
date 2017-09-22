@@ -1,7 +1,10 @@
 #pragma once
 
-#include "elementary.h"
+#include <math.h>
 #include "TVec.hpp"
+
+inline static
+double sign(double x) { return (x>0) ? 1 : ((x<0) ? -1 : 0); }
 
 class TObj
 {
@@ -12,12 +15,15 @@ class TObj
         double _1_eps; // eps = max (nearest dl/3 on wall,  dist to 2nd nearest vortex)
 
     public:
-        TObj() :r(), v()
-    {g = _1_eps = 0.;}
-        TObj(double rx_, double ry_, double g_) :r(rx_, ry_), v()
-    { g=g_; _1_eps = 0.;}
-        TObj(TVec r_, double g_) :r(r_), v()
-    { g=g_; _1_eps = 0.;}
+        TObj():
+            r(), g(),
+            v(), _1_eps() {}
+        TObj(double rx, double ry, double g):
+            r(rx, ry), g(g),
+            v(), _1_eps() {}
+        TObj(TVec r, double g):
+            r(r), g(g),
+            v(), _1_eps() {}
 
         int sign() { return ::sign(g); }
 

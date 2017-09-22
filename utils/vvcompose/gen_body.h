@@ -1,4 +1,7 @@
-#include "core.h"
+#pragma once
+#include <vector>
+#include <limits>
+#include "TVec.hpp"
 
 lua_Number get_param(
     lua_State *L,
