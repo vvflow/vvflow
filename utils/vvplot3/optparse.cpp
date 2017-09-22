@@ -1,3 +1,6 @@
+#include "./optparse.hpp"
+#include "elementary.h"
+
 #include <cerrno> /* errno */
 #include <cstdio> /* stderr */
 #include <cstdlib> /* exit */
@@ -8,9 +11,6 @@
 #include <algorithm>
 
 #include <getopt.h>
-
-#include "elementary.h"
-#include "./optparse.hpp"
 
 static double &xmin = opt::rect.xmin;
 static double &xmax = opt::rect.xmax;

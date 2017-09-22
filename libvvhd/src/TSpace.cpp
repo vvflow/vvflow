@@ -1,26 +1,24 @@
-#include <math.h>
-#include <float.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include "TSpace.hpp"
+#include "elementary.h"
+#include "space_hdf.cpp"
+
+#include <cmath>
+// #include <float.h>
+#include <cstdio>
+#include <cstdlib>
 #include <malloc.h>
 #include <cstring>
 #include <fstream>
-#include <time.h>
+#include <ctime>
 #include <type_traits> // static_assert
-
-#include "TSpace.hpp"
-#include "TBody.hpp"
-#include "space_hdf.cpp"
 
 using std::cout;
 using std::cerr;
 using std::endl;
 using std::fstream;
 using std::ios;
-
-extern const char* libvvhd_gitrev;
-extern const char* libvvhd_gitinfo;
-extern const char* libvvhd_gitdiff;
+using std::vector;
+using std::shared_ptr;
 
 Space::Space():
     caption(),

@@ -1,5 +1,5 @@
-#include <sys/stat.h>
 #include "./exear.hpp"
+#include <sys/stat.h>
 
 const char* Exear::exear_header =
 "#!/bin/bash\n"

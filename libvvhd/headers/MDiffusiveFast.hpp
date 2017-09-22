@@ -1,6 +1,5 @@
 #pragma once
 
-#include "TSpace.hpp"
 #include "TSortedTree.hpp"
 
 class diffusivefast

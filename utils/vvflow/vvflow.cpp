@@ -1,3 +1,10 @@
+#include "MEpsFast.hpp"
+#include "MConvectiveFast.hpp"
+#include "MDiffusiveFast.hpp"
+#include "MStepdata.hpp"
+#include "MFlowmove.hpp"
+#include "elementary.h"
+
 #include <iostream>
 #include <fstream>
 #include <cstdio>
@@ -7,19 +14,15 @@
 #include <cstring>
 #include <ctime>
 
-#include "elementary.h"
-#include "MEpsFast.hpp"
-#include "MConvectiveFast.hpp"
-#include "MDiffusiveFast.hpp"
-#include "MStepdata.hpp"
-#include "MFlowmove.hpp"
-
 #include "sensors.cpp"
 #include "omp.h"
 #define dbg(a) a
 //#define dbg(a) cerr << "Doing " << #a << "... " << flush; a; cerr << "done\n";
 #define seek(f) while (fgetc(f)!='\n'){}
-using namespace std;
+
+using std::cerr;
+using std::endl;
+using std::shared_ptr;
 
 //#define OVERRIDEMOI 0.35
 

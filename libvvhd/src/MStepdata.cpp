@@ -1,11 +1,8 @@
 #include "MStepdata.hpp"
-#include <stddef.h>
+#include "elementary.h"
+
 #include <hdf5.h>
 #include <limits>
-
-extern const char* libvvhd_gitrev;
-extern const char* libvvhd_gitinfo;
-extern const char* libvvhd_gitdiff;
 
 #define H5ASSERT(expr, msg) if (expr<0) { \
     fprintf(stderr, "%s failed (%s:%d). Aborting.\n", msg, __FILE__, __LINE__); \

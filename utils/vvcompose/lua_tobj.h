@@ -1,5 +1,7 @@
 #pragma once
+
 #include "TObj.hpp"
+#include <lua.hpp>
 
 int luaopen_tobj(lua_State *L);
 

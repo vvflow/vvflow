@@ -1,9 +1,8 @@
-#include <lua.hpp>
-#include <stdio.h>
-#include <string.h>
-
-#include "getset.h"
 #include "lua_tvec.h"
+#include "getset.h"
+
+// #include <stdio.h>
+#include <cstring>
 
 static int tvec_abs(lua_State *L) {
     TVec* vec = lua_checkTVec(L, 1);

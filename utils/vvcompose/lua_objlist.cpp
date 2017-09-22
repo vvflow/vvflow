@@ -1,12 +1,10 @@
-#include <lua.hpp>
-#include <cstdio>
-#include <cstring>
-
-#include "getset.h"
-#include "lua_tobj.h"
 #include "lua_objlist.h"
+#include "lua_tobj.h"
+#include "getset.h"
 
 #include "TSpace.hpp"
+
+#include <cstring>
 
 using std::vector;
 

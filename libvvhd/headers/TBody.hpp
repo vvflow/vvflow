@@ -1,13 +1,13 @@
 #pragma once
 
-#include <vector>
-#include <memory>
-
-// #include "elementary.h"
 #include "TVec.hpp"
 #include "TVec3D.hpp"
 #include "TObj.hpp"
 #include "TEval.hpp"
+
+#include <string>
+#include <vector>
+#include <memory> // weak_ptr
 
 //boundary condition
 enum class bc_t { steady, kutta };

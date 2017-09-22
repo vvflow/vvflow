@@ -1,9 +1,13 @@
-#include <lua.hpp>
-#include <stdio.h>
-#include <string.h>
-
 #include "getset.h"
 #include "lua_tbody.h"
+
+#include <lua.hpp>
+#include <cmath>
+#include <cstdio>
+#include <cstring>
+
+using std::isnan;
+using std::isfinite;
 
 lua_Number get_param(
     lua_State *L,

@@ -1,11 +1,3 @@
-#include <cstdio>
-#include <cstring>
-#include <unistd.h> // execlp
-#include <lua.hpp>
-
-#include "elementary.h"
-#include "getset.h"
-
 #include "lua_space.h"
 #include "lua_tvec.h"
 #include "lua_tobj.h"
@@ -15,7 +7,13 @@
 #include "lua_objlist.h"
 #include "lua_bodylist.h"
 #include "gen_body.h"
+#include "getset.h"
 
+#include "elementary.h"
+
+#include <cstdio>
+#include <cstring>
+#include <unistd.h> // execlp
 #include "linenoise.h"
 
 int stackDump(lua_State *L)

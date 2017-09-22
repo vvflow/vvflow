@@ -1,11 +1,11 @@
-#include <lua.hpp>
-#include <cstdio>
-#include <cstring>
+#include "lua_tvec3d.h"
+#include "lua_tvec.h"
+#include "getset.h"
 
 #include "elementary.h"
-#include "getset.h"
-#include "lua_tvec.h"
-#include "lua_tvec3d.h"
+
+// #include <cstdio>
+#include <cstring>
 
 static int tvec3d_tostring(lua_State *L) {
     TVec3D* vec = lua_checkTVec3D(L, 1);

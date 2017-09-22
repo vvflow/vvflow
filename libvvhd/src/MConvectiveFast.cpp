@@ -1,12 +1,7 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <iostream>
-#include <string.h>
-#include <assert.h>
-#include <complex>
-
 #include "MConvectiveFast.hpp"
 #include "elementary.h"
+
+#include <complex>
 
 using std::isfinite;
 using std::complex;

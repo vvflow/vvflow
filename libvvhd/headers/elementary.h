@@ -1,9 +1,5 @@
 #pragma once
 
-// #include <cmath>
-// #include <iostream>
-// #include <cstdint>
-
 constexpr double C_PI =     3.14159265358979323846;
 constexpr double C_2PI =    2.*C_PI;
 constexpr double C_1_2PI =  1./(2.*C_PI);
@@ -18,5 +14,4 @@ extern const char* libvvhd_gitdiff;
 /* COMMON STUFF **************************************************************/
 
 // inline double sign(double x) { return (x>0) ? 1 : ((x<0) ? -1 : 0); }
-inline double sqr(double x) { return x*x; }
-inline int sqr(int x) { return x*x; }
+template<typename T> T sqr(T x) { return x*x; }

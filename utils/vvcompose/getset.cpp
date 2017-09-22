@@ -1,9 +1,7 @@
-#include <cstdint>
-#include <string>
-#include <lua.hpp>
-
 #include "getset.h"
 #include "TTime.hpp"
+
+#include <lua.hpp>
 
 int luavvd_setdouble(lua_State *L) {
     double* dbl = (double*)lua_touserdata(L, 1);

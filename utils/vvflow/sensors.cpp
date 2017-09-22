@@ -1,6 +1,9 @@
-#include <cstdio>
-
 #include "MConvectiveFast.hpp"
+
+// #include <cstdio>
+#include <vector>
+
+using std::vector;
 
 class sensors
 {

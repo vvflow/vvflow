@@ -1,8 +1,7 @@
-#include <cstdio>
-#include <cstring>
-#include <cstdlib>
-
 #include "TMatrix.hpp"
+#include "elementary.h"
+
+#include <cstring> // memcpy
 
 #ifdef __INTEL_COMPILER
     #include <mkl.h>
@@ -14,11 +13,6 @@
         void dgetri_(int* N, double* A, int* lda, int* IPIV, double* WORK, int* lwork, int* INFO);
     }
 #endif
-
-#define NDEBUG
-#include "assert.h"
-
-#define sqr(x) (x*x)
 
 Matrix::Matrix()
 {
@@ -166,7 +160,7 @@ uint32_t Matrix::SuperFastHash (const char * data, int len) {
 void Matrix::solveUsingInverseMatrix(bool useInverseMatrix)
 {
     selfTest();
-    assert(!testNan());
+    // assert(!testNan());
 
     if (useInverseMatrix)
     {

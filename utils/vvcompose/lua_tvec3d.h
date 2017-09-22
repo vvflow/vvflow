@@ -1,5 +1,7 @@
 #pragma once
+
 #include "TVec3D.hpp"
+#include <lua.hpp>
 
 int luaopen_tvec3d (lua_State *L);
 

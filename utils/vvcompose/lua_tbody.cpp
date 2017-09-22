@@ -1,12 +1,9 @@
-#include <cstring>
-#include <lua.hpp>
-
-#include "elementary.h"
-#include "getset.h"
 #include "lua_tbody.h"
-#include "lua_tvec.h"
-// #include "lua_tvec3d.h"
-// #include "lua_shellscript.h"
+#include "lua_tvec.h" // lua_pushTVec
+#include "getset.h"
+#include "elementary.h"
+
+#include <cstring>
 
 using std::weak_ptr;
 using std::shared_ptr;

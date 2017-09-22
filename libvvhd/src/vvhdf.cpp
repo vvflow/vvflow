@@ -1,6 +1,7 @@
+#include "vvhdf.h"
+
 #include <limits>
 #include <string>
-#include "vvhdf.h"
 
 template<typename T>
 struct h5t{

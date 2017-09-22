@@ -1,17 +1,14 @@
 #pragma once
 
-#include <iostream>
-#include <memory>
-#include <vector>
-
 #include "TVec.hpp"
 #include "TObj.hpp"
 #include "TVec3D.hpp"
 #include "TBody.hpp"
 #include "TTime.hpp"
 
-using std::vector;
-using std::shared_ptr;
+#include <string>
+// #include <memory>
+#include <vector>
 
 typedef int hid_t;
 typedef int herr_t;
@@ -24,12 +21,12 @@ class Space
         time_t realtime;
 
         //FIXME make all lists initialized
-        vector<shared_ptr<TBody>> BodyList; // FIXME rename to body_list
-        vector<TObj> VortexList; // FIXME rename to vort_list
-        vector<TObj> HeatList; // FIXME rename to heat_list
-        vector<TObj> SourceList; // FIXME rename to sink_list
-        vector<TObj> StreakSourceList; // FIXME rename to streak_source_list
-        vector<TObj> StreakList;       // FIXME rename to streak_points_list
+        std::vector<std::shared_ptr<TBody>> BodyList; // FIXME rename to body_list
+        std::vector<TObj> VortexList; // FIXME rename to vort_list
+        std::vector<TObj> HeatList; // FIXME rename to heat_list
+        std::vector<TObj> SourceList; // FIXME rename to sink_list
+        std::vector<TObj> StreakSourceList; // FIXME rename to streak_source_list
+        std::vector<TObj> StreakList;       // FIXME rename to streak_points_list
         // TSortedTree *Tree;
 
         inline void FinishStep(); //update time and coord variables
@@ -53,8 +50,8 @@ class Space
         void ZeroForces(); //zero all att-> Cp, Fr, Nu, gsum, fric, hsum variables.
 
         /***************** SAVE/LOAD ******************/
-        static int load_list_txt(vector<TObj>& li, const char* filename);
-        static int load_list_bin(vector<TObj>& li, const char* filename);
+        static int load_list_txt(std::vector<TObj>& li, const char* filename);
+        static int load_list_bin(std::vector<TObj>& li, const char* filename);
         int load_body_txt(const char* filename);
 
         void EnumerateBodies();
@@ -70,11 +67,11 @@ class Space
         bool PointIsInBody(TVec p);
         int get_body_index(const TBody* body) const;
         std::string get_body_name(const TBody* body) const;
-        shared_ptr<TBody> collision_detected() const;
+        std::shared_ptr<TBody> collision_detected() const;
 
     private:
         void Load_v1_3(const char* filename);
-        herr_t dataset_read_list(hid_t fid, const char *name, vector<TObj>& list);
-        void dataset_write_list(const char* name, const vector<TObj>& list);
+        herr_t dataset_read_list(hid_t fid, const char *name, std::vector<TObj>& list);
+        void dataset_write_list(const char* name, const std::vector<TObj>& list);
         void dataset_write_body(const char* name, const TBody& body);
 };

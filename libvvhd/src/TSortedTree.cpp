@@ -1,9 +1,10 @@
-// #include <cmath>
-#include <string>
+#include "TSortedTree.hpp"
+
+// #include <string>
 #include <algorithm>
 #include <limits>
 
-#include "TSortedTree.hpp"
+using std::vector;
 
 const int Tree_MaxListSize = 16;
 

@@ -1,5 +1,9 @@
-#include <hdf5.h>
+#pragma once
+
 #include "elementary.h"
+
+#include <hdf5.h>
+#include <string>
 
 // inline
 // void attribute_read_double(hid_t hid, const char *name, double &value)

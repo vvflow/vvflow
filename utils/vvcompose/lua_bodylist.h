@@ -1,6 +1,7 @@
 #pragma once
 
 #include "TBody.hpp"
+#include <lua.hpp>
 #include <vector>
 
 int luaopen_bodylist (lua_State *L);

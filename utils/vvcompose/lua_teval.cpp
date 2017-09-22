@@ -1,9 +1,9 @@
-#include <lua.hpp>
-#include <stdio.h>
-#include <string.h>
-
-#include "getset.h"
 #include "lua_teval.h"
+#include "getset.h"
+
+// #include <stdio.h>
+#include <cstring>
+
 
 static int teval_eval(lua_State *L) {
     TEval* script = checkTEval(L, 1);

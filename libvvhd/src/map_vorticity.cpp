@@ -1,9 +1,7 @@
-/* vvhd */
-#include <flowmove.h>
-#include <epsfast.h>
-
 #include "map_vorticity.h"
 
+#include <flowmove.h>
+#include <epsfast.h>
 
 DEFINE_double(EPS_MULT, 2.0, "smoothing factor for gaussian pofiles of vortex domains");
 static double DL = 0.0; // average segments length

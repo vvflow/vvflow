@@ -1,4 +1,5 @@
 #pragma once
+
 #include <lua.hpp>
 
 /* class.member = *ptr = value

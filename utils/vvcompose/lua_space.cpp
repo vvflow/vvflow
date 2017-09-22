@@ -1,9 +1,7 @@
-#include <lua.hpp>
-#include <stdio.h>
-#include <string.h>
-
-#include "getset.h"
 #include "lua_space.h"
+#include "getset.h"
+
+#include <cstring>
 
 static int space_load(lua_State *L) {
     Space **ptr = (Space**)luaL_checkudata(L, 1, "S");

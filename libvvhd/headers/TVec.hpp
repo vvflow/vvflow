@@ -1,7 +1,7 @@
 #pragma once
 
 #include <iostream>
-#include <math.h>
+#include <cmath>
 
 class TVec
 {
@@ -19,8 +19,8 @@ class TVec
         bool iszero() const {return (fabs(x)+fabs(y) < 1E-10); }
         void set(double rx, double ry) {x=rx; y=ry;}
 
-        friend std::istream& operator>> (std::istream& is, TVec& p) 		{ return is >> p.x >> p.y; }
-        friend std::ostream& operator<< (std::ostream& os, const TVec& p) 	{ return os << p.x << " \t" << p.y; }
+        // friend std::istream& operator>> (std::istream& is, TVec& p) 		{ return is >> p.x >> p.y; }
+        // friend std::ostream& operator<< (std::ostream& os, const TVec& p) 	{ return os << p.x << " \t" << p.y; }
 
         friend const TVec operator* (const double c, const TVec &p) { return TVec(p.x*c, p.y*c); }
         friend const TVec operator* (const TVec &p, const double c) { return TVec(p.x*c, p.y*c); }

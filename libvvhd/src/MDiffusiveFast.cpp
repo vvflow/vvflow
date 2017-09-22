@@ -1,9 +1,6 @@
-#include <math.h>
-#include <cstdlib>
-#include <iostream>
-
 #include "MDiffusiveFast.hpp"
 #include "elementary.h"
+
 #define expdef(x) exp(x)
 
 constexpr double ExpArgRestriction = -8.;

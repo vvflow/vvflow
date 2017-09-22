@@ -1,10 +1,9 @@
-#include <lua.hpp>
-#include <cstdio>
-#include <cstring>
-
-#include "getset.h"
-#include "lua_tbody.h"
 #include "lua_bodylist.h"
+#include "lua_tbody.h"
+#include "getset.h"
+
+// #include <cstdio>
+#include <cstring>
 
 using std::vector;
 using std::shared_ptr;

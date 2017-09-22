@@ -1,3 +1,6 @@
+#include "TSpace.hpp"
+#include "vvhdf.h"
+
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -7,8 +10,7 @@
 #include <vector>
 #include <string>
 
-#include "vvhdf.h"
-#include "TSpace.hpp"
+using std::shared_ptr;
 
 struct dataset_t {
     size_t cols;

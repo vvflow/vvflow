@@ -1,5 +1,7 @@
 #pragma once
+
 #include "TEval.hpp"
+#include <lua.hpp>
 
 int luaopen_teval (lua_State *L);
 

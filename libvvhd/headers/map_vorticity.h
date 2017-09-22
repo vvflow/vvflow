@@ -1,5 +1,5 @@
 #pragma once
-#include <core.h>
+
 #include <sstream>
 
 // void map_vorticity(Space* S, std::stringstream &bin, rect_t &rect, mesh_t &mesh);

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "TBody.hpp"
+#include <lua.hpp>
 
 int luaopen_tbody (lua_State *L);
 

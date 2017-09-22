@@ -1,9 +1,8 @@
-#include <lua.hpp>
-#include <stdio.h>
-#include <string.h>
-
-#include "getset.h"
 #include "lua_tobj.h"
+#include "getset.h"
+
+// #include <stdio.h>
+#include <cstring>
 
 static int tobj_tostring(lua_State *L) {
     TObj* obj = lua_checkTObj(L, 1);

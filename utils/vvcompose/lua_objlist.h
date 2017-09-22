@@ -1,6 +1,7 @@
 #pragma once
 
 #include "TObj.hpp"
+#include <lua.hpp>
 #include <vector>
 
 int luaopen_objlist (lua_State *L);

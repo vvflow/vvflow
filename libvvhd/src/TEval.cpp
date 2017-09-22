@@ -1,10 +1,8 @@
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
+#include "TEval.hpp"
+
+#include <cstring> // strcmp
 #include <limits>
 #include <matheval.h>
-
-#include "TEval.hpp"
 
 static const char* evaluator_names[] = {(char*)"t"};
 

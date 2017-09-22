@@ -1,9 +1,7 @@
-#include <stdio.h>
-#include <iostream>
-#include <limits>
-#include <math.h>
-
 #include "TBody.hpp"
+
+#include <cstdio>
+#include <limits>
 
 TBody::TBody():
     label(),

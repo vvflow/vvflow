@@ -1,13 +1,9 @@
-#include <cstdlib>
+#include "MFlowmove.hpp"
+
 #include <ctime>
-#include <cmath>
-#include <algorithm>
 #include <map>
 
-#include "MFlowmove.hpp"
-#include "TVec.hpp"
-#include "TObj.hpp"
-#include "TVec3D.hpp"
+using std::shared_ptr;
 
 void flowmove::MoveAndClean(bool remove, bool zero_speed)
 {

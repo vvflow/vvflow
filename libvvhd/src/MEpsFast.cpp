@@ -1,7 +1,11 @@
-#include <math.h>
-#include <limits>
-#include <iostream>
 #include "MEpsFast.hpp"
+
+#include <cmath>
+// #include <limits>
+// #include <iostream>
+
+using std::isnan;
+using std::vector;
 
 void epsfast::CalcEpsilonFast(bool merge)
 {
@@ -107,7 +111,7 @@ double epsfast::epsv(const TSortedNode &Node, TObj *lv, double merge_criteria_sq
         return std::numeric_limits<double>::min();
     if ( !lv2 )
         return sqrt(res1);
-    if ( isnan(merge_criteria_sq) )
+    if ( std::isnan(merge_criteria_sq) )
         return sqrt(res2);
 
     if (
