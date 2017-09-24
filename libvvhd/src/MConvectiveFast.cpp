@@ -410,7 +410,7 @@ void convectivefast::_2PI_A123(const TAtt &seg, const TBody* ibody, const TBody 
     *_2PI_A1 = (ibody == &b)?  C_2PI * seg.dl.y : 0;
     *_2PI_A2 = (ibody == &b)? -C_2PI * seg.dl.x : 0;
     *_2PI_A3 = 0;
-    if (!(isfinite(b.kspring.o) && b.kspring.o>=0) && (!b.speed_o.getValue(S->Time)) && !b.root_body.lock())
+    if (!(isfinite(b.kspring.o) && b.kspring.o>=0) && (!b.speed_o.eval(S->Time)) && !b.root_body.lock())
     {
         // в этом случае угловая скорость и так обратится в ноль
         // поэтому ради экономии времени коэффициент при ней не вычисляем
@@ -850,7 +850,7 @@ void convectivefast::fillHookeOEquation(unsigned eq_no, TBody* ibody, bool right
 
 void convectivefast::fillSpeedXEquation(unsigned eq_no, TBody* ibody, bool rightColOnly)
 {
-    *matrix.getRightCol(eq_no) = ibody->speed_x.getValue(S->Time);
+    *matrix.getRightCol(eq_no) = ibody->speed_x.eval(S->Time);
     if (rightColOnly) return;
 
     // self
@@ -871,7 +871,7 @@ void convectivefast::fillSpeedXEquation(unsigned eq_no, TBody* ibody, bool right
 
 void convectivefast::fillSpeedYEquation(unsigned eq_no, TBody* ibody, bool rightColOnly)
 {
-    *matrix.getRightCol(eq_no) = ibody->speed_y.getValue(S->Time);
+    *matrix.getRightCol(eq_no) = ibody->speed_y.eval(S->Time);
     if (rightColOnly) return;
 
     // self
@@ -892,7 +892,7 @@ void convectivefast::fillSpeedYEquation(unsigned eq_no, TBody* ibody, bool right
 
 void convectivefast::fillSpeedOEquation(unsigned eq_no, TBody* ibody, bool rightColOnly)
 {
-    *matrix.getRightCol(eq_no) = ibody->speed_o.getValue(S->Time);
+    *matrix.getRightCol(eq_no) = ibody->speed_o.eval(S->Time);
     if (rightColOnly) return;
 
     // self

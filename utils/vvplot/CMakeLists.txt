@@ -1,12 +1,11 @@
 cmake_minimum_required (VERSION 3.0)
 project (vvscripts)
 
+include_directories(${LIBVVHD_INCLUDE_DIR})
+
 # HDF5
 find_package(HDF5 REQUIRED)
 include_directories(${HDF5_INCLUDE_DIRS})
-
-add_subdirectory(./../../libvvhd libvvhd)
-include_directories(${LIBVVHD_INCLUDE_DIR})
 
 include_directories(source/)
 set(LIBVVPLOT_SOURCES ${LIBVVPLOT_SOURCES} source/map_extract.cpp)

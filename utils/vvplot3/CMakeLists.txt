@@ -1,12 +1,5 @@
 cmake_minimum_required (VERSION 3.0)
-project (vvplot3)
 
-
-
-
-
-
-add_subdirectory(./../../libvvhd libvvhd)
 include_directories(${LIBVVHD_INCLUDE_DIR})
 
 add_executable(vvplot3
@@ -20,10 +13,6 @@ add_executable(vvplot3
 # include_directories(${LibArchive_INCLUDE_DIR})
 find_library(LIBARCHIVE libarchive.a)
 target_link_libraries(vvplot3 vvhd ${LIBARCHIVE})
-
-# include_directories(${GFlags_INCLUDE_DIR})
-# find_library(LIBGFLAGS libgflags_nothreads.a)
-# target_link_libraries(vvplot ${LIBGFLAGS})
 
 if(NOT NO_MANPAGES)
 set(MAN_MD ${CMAKE_CURRENT_SOURCE_DIR}/vvplot.1.md)

@@ -520,12 +520,10 @@ void read_shell_script(FILE* file, TEval &script)
 {
     int32_t len;
     fread(&len, 4, 1, file);
-    char *str = new char[len+1];
-    fread(str, 1, len, file);
+    char str[len+1];
+    fread(&str, 1, len, file);
     str[len] = 0;
-    if (!script.setEvaluator(str))
-        fprintf(stderr, "Warning: bad math expression (%s), using 0\n", str);
-    delete[] str;
+    script = str;
 }
 
 void Space::Load_v1_3(const char* fname)

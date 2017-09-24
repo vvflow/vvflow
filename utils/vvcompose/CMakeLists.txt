@@ -1,6 +1,8 @@
 cmake_minimum_required (VERSION 3.0)
 project (vvcompose)
 
+include_directories(${LIBVVHD_INCLUDE_DIR})
+
 find_library(LUA_LIBRARY lua5.2)
 find_path(LUA_INCLUDE_DIR lua.hpp
     PATH_SUFFIXES lua5.2
@@ -8,9 +10,6 @@ find_path(LUA_INCLUDE_DIR lua.hpp
 message("LUA_LIBRARY: " ${LUA_LIBRARY})
 message("LUA_INCLUDE_DIR: " ${LUA_INCLUDE_DIR})
 include_directories(${LUA_INCLUDE_DIR})
-
-add_subdirectory(./../../libvvhd libvvhd)
-include_directories(${LIBVVHD_INCLUDE_DIR})
 
 add_executable(vvcompose
     vvcompose.cpp

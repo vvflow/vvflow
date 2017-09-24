@@ -3,13 +3,13 @@
 
 // #include <stdio.h>
 #include <cstring>
-
+#include <stdexcept>
 
 static int teval_eval(lua_State *L) {
     TEval* script = checkTEval(L, 1);
     lua_Number val = luaL_checknumber(L, 2);
 
-    lua_pushnumber(L, script->getValue(val));
+    lua_pushnumber(L, script->eval(val));
     return 1;
 }
 
@@ -60,16 +60,12 @@ TEval* checkTEval(lua_State *L, int idx) {
 
 int luavvd_setTEval(lua_State *L) {
     TEval* script = (TEval*)lua_touserdata(L, 1);
-    
+    std::string str;
+
     switch (lua_type(L, 2)) {
-    case LUA_TSTRING: {
-        const char* s = lua_tostring(L, 2);
-        if (!script->setEvaluator(s)) {
-            lua_pushfstring(L, "invalid expression '%s'", s);
-            return 1;
-        }
-        return 0;
-    }
+    case LUA_TSTRING:
+        str = lua_tostring(L, 2);
+        break;
     case LUA_TUSERDATA: {
         TEval** udata = (TEval**)luaL_testudata(L, 2, "TEval");
 
@@ -83,14 +79,22 @@ int luavvd_setTEval(lua_State *L) {
             return 1;
         }
 
-        script->setEvaluator(std::string(**udata).c_str());
+        str = **udata;
+        break;
+    }
+    default:
+        const char *typ = luaL_typename(L, 2);
+        lua_pushfstring(L, "string or TEval expected, got %s", typ);
+        return 1;
+    }
+
+    try {
+        *script = str;
         return 0;
+    } catch (const std::invalid_argument& e) {
+        lua_pushfstring(L, "invalid expression '%s'", str.c_str());
+        return 1;
     }
-    }
-    
-    const char *typ = luaL_typename(L, 2);
-    lua_pushfstring(L, "string or TEval expected, got %s", typ);
-    return 1;
 }
 
 int luavvd_getTEval(lua_State *L) {

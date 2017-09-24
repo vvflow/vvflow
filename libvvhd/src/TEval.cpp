@@ -1,81 +1,125 @@
 #include "TEval.hpp"
 
+#include <matheval.h>
 #include <cstring> // strcmp
 #include <limits>
-#include <matheval.h>
+#include <stdexcept>
 
 static const char* evaluator_names[] = {(char*)"t"};
 
 TEval::TEval():
-    script(),
-    evaluator(NULL),
-    cacheTime1(std::numeric_limits<double>::lowest()),
-    cacheValue1(),
-    cacheTime2(std::numeric_limits<double>::lowest()),
-    cacheValue2()
+    evaluator(nullptr)
+{
+    dropCache();
+}
+
+TEval::TEval(const TEval& copy):
+    TEval(std::string(copy))
 {
 }
+
+
+TEval::TEval(const std::string& str):
+    evaluator(nullptr)
+{
+    dropCache();
+    if (str.empty())
+        return;
+
+    evaluator = evaluator_create((char*)str.c_str());
+    if (!evaluator) {
+        throw std::invalid_argument("evaluator_create(): malformed expression");
+    }
+    if (!validate(evaluator)) {
+        evaluator_destroy(evaluator);
+        throw std::invalid_argument("evaluator_create(): invalid expression");
+    }
+}
+
+TEval& TEval::operator=(const TEval& copy)
+{
+    return *this = std::string(copy);
+}
+
+TEval& TEval::operator=(const std::string& str)
+{
+    if (str.empty())
+        return *this;
+
+    void* evaluator_new = evaluator_create((char*)str.c_str());
+    if (!evaluator_new) {
+        throw std::invalid_argument("evaluator_create(): malformed expression");
+    }
+    if (!validate(evaluator_new)) {
+        evaluator_destroy(evaluator_new);
+        throw std::invalid_argument("evaluator_create(): invalid expression");
+    }
+
+    dropCache();
+    if (evaluator) {
+        evaluator_destroy(evaluator);
+    }
+    evaluator = evaluator_new;
+    return *this;
+}
+
 
 TEval::~TEval()
 {
-    if (evaluator)
+    if (evaluator) {
         evaluator_destroy(evaluator);
+    }
 }
 
-bool TEval::setEvaluator(const std::string &s)
+TEval::operator std::string() const
 {
-    cacheTime1 = cacheTime2 = std::numeric_limits<double>::lowest();
-    script = s;
-
-    if (evaluator)
-    {
-        evaluator_destroy(evaluator);
-        evaluator = NULL;
+    if (evaluator) {
+        return evaluator_get_string(evaluator);
+    } else {
+        return std::string();
     }
-    if (script.empty())
-        goto pass;
-    evaluator = evaluator_create((char*)script.c_str());
-    if (!evaluator)
-        goto fail;
+}
 
+
+void TEval::dropCache() {
+    cacheTime1 = std::numeric_limits<double>::quiet_NaN();
+    cacheTime2 = std::numeric_limits<double>::quiet_NaN();
+    cacheValue1 = 0.;
+    cacheValue2 = 0.;
+}
+
+bool TEval::validate(void *evaluator) {
     char **var_names;
     int var_count;
     evaluator_get_variables(evaluator, &var_names, &var_count);
     if (var_count > 1)
-        goto fail;
+        return false;
     if (var_count && strcmp(var_names[0], evaluator_names[0]))
-        goto fail;
-
-pass:
+        return false;
     return true;
-
-fail:
-    script = "";
-    return false;
 }
 
-double TEval::getValue(double t) const
+double TEval::eval(double t) const
 {
     if (!evaluator)
         return 0;
 
-    double resultValue = 0;
+    double ret = 0;
 #pragma omp critical
     {
-        /**/ if (t == cacheTime2) resultValue = cacheValue2;
-        else if (t == cacheTime1) resultValue = cacheValue1;
-        else
-        {
-            resultValue = evaluator_evaluate(evaluator, 1, (char**)evaluator_names, &t);
+        if (t == cacheTime2) {
+            ret = cacheValue2;
+        } else if (t == cacheTime1) {
+            ret = cacheValue1;
+        } else {
+            ret = evaluator_evaluate(evaluator, 1, (char**)evaluator_names, &t);
 
             cacheTime2 = cacheTime1;
             cacheValue2 = cacheValue1;
             cacheTime1 = t;
-            cacheValue1 = resultValue;
+            cacheValue1 = ret;
         }
     }
 
-    return resultValue;
+    return ret;
 }
-
-

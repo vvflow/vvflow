@@ -33,7 +33,7 @@ class Space
 
         TEval InfSpeedX;
         TEval InfSpeedY;
-        TVec InfSpeed() {return TVec(InfSpeedX.getValue(Time), InfSpeedY.getValue(Time));}
+        TVec InfSpeed() {return TVec(InfSpeedX.eval(Time), InfSpeedY.eval(Time));}
         TVec InfMarker;
         void ZeroSpeed();
         double InfCirculation;

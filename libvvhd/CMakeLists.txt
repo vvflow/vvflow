@@ -1,7 +1,9 @@
 cmake_minimum_required (VERSION 3.0)
 project (libvvhd)
 
+set(LIBVVHD_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/headers)
 set(LIBVVHD_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/headers PARENT_SCOPE)
+add_subdirectory(test)
 
 # HDF5
 find_package(HDF5 REQUIRED)
@@ -24,12 +26,6 @@ find_path(LIBMATHEVAL_INCLUDE_DIR matheval.h)
 find_library(LIBMATHEVAL matheval)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
-
-if(TARGET vvhd)
-
-# message("libvvhd is already defined")
-
-else()
 
 execute_process(
     COMMAND git rev-parse HEAD
@@ -73,5 +69,3 @@ add_library(vvhd SHARED ${LIBVVHD_SOURCES})
 target_link_libraries(vvhd ${HDF5_C_LIBRARIES} ${LAPACK_LIBRARIES} ${LIBMATHEVAL})
 
 install (TARGETS vvhd DESTINATION lib)
-
-endif()

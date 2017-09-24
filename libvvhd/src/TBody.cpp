@@ -36,9 +36,9 @@ TBody::TBody():
 TVec3D TBody::speed(double t) const
 {
     return TVec3D(
-            speed_x.getValue(t),
-            speed_y.getValue(t),
-            speed_o.getValue(t)
+            speed_x.eval(t),
+            speed_y.eval(t),
+            speed_o.eval(t)
             );
 }
 
