@@ -42,7 +42,8 @@ class TAtt : public TObj
             heat_const(),
             slip(slip),
             gsum(), hsum(), fric(),
-            Cp(), Fr(), Nu() {}
+            Cp(), Fr(), Nu(),
+            eq_no() {}
         TAtt(TVec corner, bool slip = false):
             TAtt(corner.x, corner.y, slip) {}
 
@@ -56,10 +57,12 @@ class TBody
     public:
         TBody();
         ~TBody() = default;
-        TBody(const TBody&) = delete;
-        TBody(TBody&&) = delete;
-        TBody& operator= (const TBody&) = delete;
-        TBody& operator= (TBody&&) = delete;
+        TBody(const TBody& copy);
+        TBody& operator= (const TBody& copy);
+
+        // delete std::move
+        TBody(TBody&& move) = delete;
+        TBody& operator= (TBody&& move) = delete;
 
         int load_txt(const char* filename);
         // int load_bin(const char* filename);

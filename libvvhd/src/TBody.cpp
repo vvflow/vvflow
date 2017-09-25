@@ -6,6 +6,7 @@
 TBody::TBody():
     label(),
     alist(),
+    root_body(),
     speed_x(),
     speed_y(),
     speed_o()
@@ -32,6 +33,48 @@ TBody::TBody():
     collision_detected = false;
     bounce = 0;
 }
+
+TBody::TBody(const TBody& copy):
+    TBody()
+{
+    *this = copy;
+}
+
+TBody& TBody::operator= (const TBody& copy)
+{
+    label = copy.label;
+    alist = copy.alist;
+    root_body = copy.root_body;
+    holder = copy.holder;
+    dpos = copy.dpos;
+    kspring = copy.kspring;
+    damping = copy.damping;
+    speed_slae = copy.speed_slae;
+    speed_slae_prev = copy.speed_slae_prev;
+    collision_detected = copy.collision_detected;
+    collision_min = copy.collision_min;
+    collision_max = copy.collision_max;
+    bounce = copy.bounce;
+    density = copy.density;
+    special_segment_no = copy.special_segment_no;
+    boundary_condition = copy.boundary_condition;
+    heat_condition = copy.heat_condition;
+    friction = copy.friction;
+    friction_prev = copy.friction_prev;
+    force_hydro = copy.force_hydro;
+    force_holder = copy.force_holder;
+    nusselt = copy.nusselt;
+    fdt_dead = copy.fdt_dead;
+    g_dead = copy.g_dead;
+    speed_x = copy.speed_x;
+    speed_y = copy.speed_y;
+    speed_o = copy.speed_o;
+    eq_forces_no = copy.eq_forces_no;
+    doUpdateSegments();
+    doFillProperties();
+    return *this;
+}
+
 
 TVec3D TBody::speed(double t) const
 {
