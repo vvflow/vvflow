@@ -6,7 +6,9 @@ include_directories(${LIBVVHD_INCLUDE_DIR})
 find_package(GTest REQUIRED)
 include_directories(${GTEST_INCLUDE_DIRS})
 
-add_executable(libvvhd.test main.cpp)
+add_executable(libvvhd.test
+	main.cpp
+)
 target_link_libraries(libvvhd.test vvhd ${GTEST_LIBRARIES} pthread)
 
 if(NOT NO_SELFTEST)

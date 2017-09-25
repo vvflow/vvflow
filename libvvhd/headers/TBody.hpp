@@ -34,13 +34,17 @@ class TAtt : public TObj
         double Fr; // computed by S->CalcForces;
         double Nu; // computed by S->CalcForces;
 
-        TAtt():TObj(), heat_layer_obj_no(-1), heat_const(0.0), slip(0)
-        {
-            gsum = hsum = fric = 0.0;
-            Cp = Fr = Nu = 0.0;
-        }
-        //TAtt(TBody *body, int eq_no);
-        //void zero() { r.x = r.y = g = gsum = hsum = /*FIXME fric?*/ Cp = Fr = Nu = 0; heat_layer_obj_no = -1; }
+        TAtt() = delete;
+        TAtt(double x, double y, bool slip = false):
+            TObj(),
+            corner(x, y),
+            heat_layer_obj_no(-1),
+            heat_const(),
+            slip(slip),
+            gsum(), hsum(), fric(),
+            Cp(), Fr(), Nu() {}
+        TAtt(TVec corner, bool slip = false):
+            TAtt(corner.x, corner.y, slip) {}
 
     public:
         // TBody* body;

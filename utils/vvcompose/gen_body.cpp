@@ -52,11 +52,8 @@ void gen_seg_N(
     size_t N,
     uint32_t slip
 ) {
-    TAtt att;
-    att.slip = slip;
     for (size_t i=0; i<N; i++) {
-        att.corner = p1 + (p2-p1)*i/N;
-        alist.push_back(att);
+        alist.emplace_back(p1 + (p2-p1)*i/N, slip);
     }
 }
 
@@ -85,12 +82,10 @@ void gen_arc_N(
     size_t N,
     uint32_t slip
 ) {
-    TAtt att;
-    att.slip = slip;
     for (size_t i=0; i<N; i++) {
         double ai = a1 + (a2-a1)*double(i)/double(N);
-        att.corner = c + TVec(R*cos(ai), R*sin(ai));
-        alist.push_back(att);
+        TVec p = c + TVec(R*cos(ai), R*sin(ai));
+        alist.emplace_back(p, slip);
     }
 }
 

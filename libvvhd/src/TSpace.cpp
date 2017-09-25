@@ -95,7 +95,7 @@ void Space::dataset_write_body(const char* name, const TBody& body)
     float *heat_array = (float*)malloc(dims[0] * sizeof(float));
     for(hsize_t i=0; i<dims[0]; i++)
     {
-        TAtt att = body.alist[i];
+        const TAtt& att = body.alist[i];
         att_array[i].x = att.corner.x;
         att_array[i].y = att.corner.y;
         att_array[i].g = att.g;
@@ -397,15 +397,12 @@ herr_t dataset_read_body(hid_t g_id, const char* name, const H5L_info_t*, void *
 
     for(hsize_t i=0; i<dims[0]; i++)
     {
-        TAtt latt; // latt.body = body;
-        latt.corner.x = att_array[i].x;
-        latt.corner.y = att_array[i].y;
+        body->alist.emplace_back(att_array[i].x, att_array[i].y);
+        TAtt& latt = body->alist.back();
         latt.g = att_array[i].g;
         latt.gsum = att_array[i].gsum;
-
         latt.slip = slip_array ? slip_array[i] : general_slip;
-        latt.heat_const = heat_const;
-        body->alist.push_back(latt);
+        latt.heat_const = heat_const;        
     }
 
     body->doUpdateSegments();
@@ -599,7 +596,7 @@ void Space::Load_v1_3(const char* fname)
         {
             auto body = BodyList.back();
 
-            TAtt att; // att.body = body; // FIXME
+            TAtt att(0.0, 0.0);
             int64_t size; fread(&size, 8, 1, fin);
             for (int64_t i=0; i<size; i++)
             {

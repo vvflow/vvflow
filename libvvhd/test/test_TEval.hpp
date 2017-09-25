@@ -38,7 +38,7 @@ TEST_F(TEvalTest, ConstructWithString)
     EXPECT_EQ(3, eval.eval(1));
     
     // copy and move compile
-    const TEval e1("sin(t)");
+    TEval e1("sin(t)");
     TEval e2(e1);
     EXPECT_EQ(e2.eval(0.1), std::sin(0.1));
 

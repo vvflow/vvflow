@@ -202,13 +202,14 @@ int TBody::load_txt(const char* filename)
     FILE *fin = fopen(filename, "r");
     if (!fin) { return errno; }
 
-    TAtt att;
+    TVec corner;
+    uint32_t slip = false;
     int  err = 0;
     char line[128];
     while ( !err && !feof(fin) && !ferror(fin) && fgets(line, sizeof(line), fin) )
     {
-        err |= sscanf(line, "%lf %lf %u", &att.corner.x, &att.corner.y, &att.slip) < 2;
-        alist.push_back(att);
+        err |= sscanf(line, "%lf %lf %u", &corner.x, &corner.y, &slip) < 2;
+        alist.emplace_back(corner, slip);
     }
 
     err |= ferror(fin);
