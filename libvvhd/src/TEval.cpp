@@ -2,15 +2,19 @@
 
 #include <matheval.h>
 #include <cstring> // strcmp
-#include <limits>
+#include <cmath>
 #include <stdexcept>
 
 static const char* evaluator_names[] = {(char*)"t"};
+static const double NaN = std::nan("");
 
 TEval::TEval():
-    evaluator(nullptr)
+    evaluator(nullptr),
+    cacheTime1(NaN),
+    cacheTime2(NaN),
+    cacheValue1(),
+    cacheValue2()
 {
-    dropCache();
 }
 
 TEval::TEval(const TEval& copy):
@@ -20,9 +24,12 @@ TEval::TEval(const TEval& copy):
 
 
 TEval::TEval(const std::string& str):
-    evaluator(nullptr)
+    evaluator(nullptr),
+    cacheTime1(NaN),
+    cacheTime2(NaN),
+    cacheValue1(),
+    cacheValue2()
 {
-    dropCache();
     if (str.empty())
         return;
 
@@ -55,7 +62,7 @@ TEval& TEval::operator=(const std::string& str)
         throw std::invalid_argument("evaluator_create(): invalid expression");
     }
 
-    dropCache();
+    cacheTime1 = cacheTime2 = NaN;
     if (evaluator) {
         evaluator_destroy(evaluator);
     }
@@ -78,14 +85,6 @@ TEval::operator std::string() const
     } else {
         return std::string();
     }
-}
-
-
-void TEval::dropCache() {
-    cacheTime1 = std::numeric_limits<double>::quiet_NaN();
-    cacheTime2 = std::numeric_limits<double>::quiet_NaN();
-    cacheValue1 = 0.;
-    cacheValue2 = 0.;
 }
 
 bool TEval::validate(void *evaluator) {

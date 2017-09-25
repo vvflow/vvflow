@@ -19,23 +19,31 @@ using std::fstream;
 using std::ios;
 using std::vector;
 using std::shared_ptr;
+using std::numeric_limits;
 
 Space::Space():
     caption(),
+    BodyList(),
+    VortexList(),
+    HeatList(),
+    SourceList(),
+    StreakSourceList(),
+    StreakList(),
+
     InfSpeedX(),
     InfSpeedY(),
+    InfMarker(),
+    InfCirculation(),
+    gravitation(),
     Time(), dt(1, 1),
-    dt_save(), dt_streak(), dt_profile()
+    dt_save(), dt_streak(), dt_profile(),
+    Re(numeric_limits<double>::infinity()),
+    Pr(0),
+    Finish(numeric_limits<double>::max())    
 {
     // static_assert(std::is_pod<TVec>::value, "TVec is not POD");
     // static_assert(std::is_pod<TObj>::value, "TObj is not POD");
     // static_assert(std::is_pod<TAtt>::value, "TAtt is not POD");
-    InfCirculation = 0.;
-    gravitation = TVec(0., 0.);
-    Finish = std::numeric_limits<double>::max();
-    Re = std::numeric_limits<double>::infinity();
-    Pr = 0.;
-    InfMarker = TVec(0., 0.);
 }
 
     inline
@@ -565,7 +573,7 @@ void Space::Load_v1_3(const char* fname)
             fread(&gravitation, 16, 1, fin);
             fread(&Finish, 8, 1, fin);
 
-            int64_t rawtime; fread(&rawtime, 8, 1, fin); realtime = rawtime;
+            int64_t rawtime; fread(&rawtime, 8, 1, fin);
         }
         else if (eq(comment, "Vortexes")>8) LoadList(VortexList, fin);
         else if (eq(comment, "Heat    ")>8) LoadList(HeatList, fin);

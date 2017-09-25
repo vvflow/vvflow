@@ -13,8 +13,8 @@ class range
     public:
         TObj *first, *last;
     public:
-        range() { first = last = NULL;}
-        range(TObj *f, TObj *l) { first = f; last = l; }
+        range():first(), last() {}
+        range(TObj *f, TObj *l):first(f), last(l) {}
         void set(TObj *f, TObj *l) { first = f; last = l; }
         size_t size() { return last-first; }
 };
@@ -23,6 +23,10 @@ class snode
 {
     public:
         snode(stree *sParent);
+
+        snode() = delete;
+        snode(const snode&) = delete;
+        snode& operator=(const snode&) = delete;
         ~snode();
 
         double x, y, h, w;
@@ -56,7 +60,15 @@ class snode
 class stree
 {
     public:
-        stree(Space *sS, int sFarCriteria, double sMinNodeSize, double sMaxNodeSize = std::numeric_limits<double>::max());
+        stree(
+            Space *sS,
+            int sFarCriteria,
+            double sMinNodeSize,
+            double sMaxNodeSize = std::numeric_limits<double>::max()
+        );
+        stree() = delete;
+        stree(const stree&) = delete;
+        stree& operator=(const stree&) = delete;
         //~tree();
 
         void build(bool IncludeVortexes = true, bool IncludeBody = true, bool IncludeHeat = true);

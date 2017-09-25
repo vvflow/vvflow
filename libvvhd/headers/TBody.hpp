@@ -41,6 +41,7 @@ class TAtt : public TObj
             heat_layer_obj_no(-1),
             heat_const(),
             slip(slip),
+            dl(),
             gsum(), hsum(), fric(),
             Cp(), Fr(), Nu(),
             eq_no() {}

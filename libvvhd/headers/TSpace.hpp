@@ -18,7 +18,6 @@ class Space
     public:
         Space();
         std::string caption;
-        time_t realtime;
 
         //FIXME make all lists initialized
         std::vector<std::shared_ptr<TBody>> BodyList; // FIXME rename to body_list
@@ -33,7 +32,7 @@ class Space
 
         TEval InfSpeedX;
         TEval InfSpeedY;
-        TVec InfSpeed() {return TVec(InfSpeedX.eval(Time), InfSpeedY.eval(Time));}
+        TVec InfSpeed() const {return TVec(InfSpeedX.eval(Time), InfSpeedY.eval(Time));}
         TVec InfMarker;
         void ZeroSpeed();
         double InfCirculation;

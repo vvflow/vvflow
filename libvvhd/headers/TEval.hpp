@@ -18,7 +18,6 @@ class TEval
         operator std::string() const;
 
     private:
-        void dropCache();
         bool validate(void* evaluator);
         void* evaluator;
         mutable double cacheTime1;

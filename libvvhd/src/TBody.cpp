@@ -3,35 +3,53 @@
 #include <cstdio>
 #include <limits>
 
+using std::numeric_limits;
+static const double inf = numeric_limits<double>::infinity();
+static const double NaN = numeric_limits<double>::quiet_NaN();
+
 TBody::TBody():
     label(),
     alist(),
     root_body(),
+
+    holder(),
+    dpos(),
+    kspring(inf, inf, inf),
+    damping(0.0, 0.0, 0.0),
+    speed_slae(),
+    speed_slae_prev(),
+
+    collision_detected(false),
+    collision_min(NaN, NaN, NaN),
+    collision_max(NaN, NaN, NaN),
+    bounce(),
+    
+    density(1.0),
+    special_segment_no(0),
+    boundary_condition(bc_t::steady),
+    heat_condition(hc_t::neglect),
+    
+    friction(), friction_prev(),
+    force_hydro(),
+    force_holder(),
+    nusselt(),
+    fdt_dead(),
+    g_dead(),
+
     speed_x(),
     speed_y(),
-    speed_o()
+    speed_o(),
+    
+    eq_forces_no(),
+    _slen(),
+    _area(),
+    _cofm(),
+    _moi_cofm(),
+    _min_disc_r2(),
+    _min_rect_bl(),
+    _min_rect_tr(),
+    heat_layer()
 {
-    double inf = std::numeric_limits<double>::infinity();
-    double nan = std::numeric_limits<double>::quiet_NaN();
-
-    holder = dpos = TVec3D(0., 0., 0.);
-    g_dead = 0;
-    fdt_dead = TVec3D(0,0,0);
-    friction = friction_prev = TVec3D(0,0,0);
-    force_hydro = force_holder = TVec3D(0,0,0);
-    _slen = _area = 0;
-    _cofm = TVec(0., 0.);
-    _moi_cofm = 0;
-    kspring = TVec3D(inf,inf,inf);
-    damping = TVec3D(0., 0., 0.);
-    density = 1.;
-    special_segment_no = 0;
-    boundary_condition = bc_t::steady;
-    heat_condition = hc_t::neglect;
-
-    collision_min = collision_max = TVec3D(nan, nan, nan);
-    collision_detected = false;
-    bounce = 0;
 }
 
 TBody::TBody(const TBody& copy):

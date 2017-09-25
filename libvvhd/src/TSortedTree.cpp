@@ -10,13 +10,17 @@ const int Tree_MaxListSize = 16;
 
 /********************* TSortedNode class *****************************/
 
-snode::snode(stree *sParent)
+snode::snode(stree *parent):
+    x(), y(), h(), w(), i(), j(),
+    CMp(), CMm(),
+    bllist(),
+    vRange(),
+    hRange(),
+    sRange(),
+    NearNodes(), FarNodes(),
+    ch1(), ch2(),
+    parent(parent)
 {
-    parent = sParent;
-
-    NearNodes = FarNodes = NULL;
-    ch1 = ch2 = NULL;
-    CMp = CMm = TObj(0., 0., 0.);
     CMp._1_eps = CMm._1_eps = std::numeric_limits<double>::infinity();
 }
 
@@ -214,13 +218,14 @@ void TSortedNode::FindNearNodes(TSortedNode* top)
 
 /************************** TTree SOURCE **************************************/
 
-stree::stree(Space *sS, int sFarCriteria, double sMinNodeSize, double sMaxNodeSize)
+stree::stree(Space *S, int sFarCriteria, double sMinNodeSize, double sMaxNodeSize):
+    S(S),
+    farCriteria(sFarCriteria),
+    minNodeSize(sMinNodeSize),
+    maxNodeSize(sMaxNodeSize),
+    rootNode(NULL),
+    bottomNodes()
 {
-    S = sS;
-    farCriteria = sFarCriteria;
-    minNodeSize = sMinNodeSize;
-    maxNodeSize = sMaxNodeSize;
-    rootNode = NULL;
 }
 
 void stree::build(bool includeV, bool includeB, bool includeH)
