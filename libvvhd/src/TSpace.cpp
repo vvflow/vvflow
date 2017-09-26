@@ -779,35 +779,35 @@ void Space::ZeroSpeed()
     for (auto& lobj: HeatList) lobj.v = TVec();
 }
 
-double Space::integral()
+double Space::integral() const
 {
     double res = 0;
     for (const auto& obj: VortexList) res += obj.g * obj.r.abs2();
     return res;
 }
 
-double Space::gsum()
+double Space::gsum() const
 {
     double res = 0;
     for (const auto& obj: VortexList) res += obj.g;
     return res;
 }
 
-double Space::gmax()
+double Space::gmax() const
 {
     double res = 0;
     for (const auto& obj: VortexList) res = ( fabs(obj.g) > fabs(res) ) ? obj.g : res;
     return res;
 }
 
-TVec Space::HydroDynamicMomentum()
+TVec Space::HydroDynamicMomentum() const
 {
     TVec res(0., 0.);
     for (const auto& obj: VortexList) res += obj.g * obj.r;
     return res;
 }
 
-double Space::AverageSegmentLength()
+double Space::AverageSegmentLength() const
 {
     if (!BodyList.size()) return std::numeric_limits<double>::lowest();
 
@@ -817,7 +817,7 @@ double Space::AverageSegmentLength()
     return SurfaceLength / N;
 }
 
-int Space::TotalSegmentsCount()
+int Space::TotalSegmentsCount() const
 {
     int res = 0;
     for (const auto& lbody: BodyList)
@@ -828,7 +828,7 @@ int Space::TotalSegmentsCount()
     return res;
 }
 
-bool Space::PointIsInBody(TVec p)
+bool Space::PointIsInBody(TVec p) const
 {
     for (const auto& lbody: BodyList)
     {

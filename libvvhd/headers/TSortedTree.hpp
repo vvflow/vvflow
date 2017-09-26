@@ -74,7 +74,7 @@ class stree
         void build(bool IncludeVortexes = true, bool IncludeBody = true, bool IncludeHeat = true);
         void destroy();
 
-        std::vector<TSortedNode*> const& getBottomNodes() const;
+        const std::vector<TSortedNode*>& getBottomNodes() const;
         const TSortedNode* findNode(TVec p) const;
 
         void printBottomNodes(FILE* f, bool PrintDepth = false) const; // prints lines such "x y w h [i]"

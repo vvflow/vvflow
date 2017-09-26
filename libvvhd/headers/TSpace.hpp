@@ -57,13 +57,13 @@ class Space
         void ZeroBodies(); //zero Cp, Fr, Nu variables.
 
         /***************** INTEGRALS ******************/
-        double integral();
-        double gsum();
-        double gmax();
-        TVec HydroDynamicMomentum();
-        double AverageSegmentLength();
-        int TotalSegmentsCount();
-        bool PointIsInBody(TVec p);
+        double integral() const;
+        double gsum() const;
+        double gmax() const;
+        TVec HydroDynamicMomentum() const;
+        double AverageSegmentLength() const;
+        int TotalSegmentsCount() const;
+        bool PointIsInBody(TVec p) const;
         int get_body_index(const TBody* body) const;
         std::string get_body_name(const TBody* body) const;
         std::shared_ptr<TBody> collision_detected() const;

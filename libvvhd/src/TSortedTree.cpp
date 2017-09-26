@@ -271,7 +271,7 @@ void stree::destroy()
     bottomNodes.clear();
 }
 
-vector<TSortedNode*> const& stree::getBottomNodes() const
+const vector<TSortedNode*>& stree::getBottomNodes() const
 {
     if (bottomNodes.empty())
     {
