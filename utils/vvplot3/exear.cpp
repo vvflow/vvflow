@@ -11,7 +11,9 @@ const char* Exear::exear_header =
 "exit 0\n";
 
 Exear::Exear(std::string filename):
-    filename(filename)
+    filename(filename),
+    a(nullptr),
+    e(nullptr)
 {
     a = archive_write_new();
     archive_write_set_format_pax_restricted(a);

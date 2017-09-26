@@ -8,7 +8,10 @@ using std::vector;
 class sensors
 {
 	public:
+		sensors() = delete;
 		sensors(Space* sS, convectivefast *sconv, const char* sensors_file, const char* output);
+		sensors(const sensors&) = delete;
+		sensors& operator=(const sensors&) = delete;
 		~sensors();
 		void loadFile(const char* file);
 		void output();
@@ -20,12 +23,12 @@ class sensors
 		vector <TVec> slist;
 };
 
-sensors::sensors(Space* sS, convectivefast *sconv, const char* sensors_file, const char* output)
+sensors::sensors(Space* S, convectivefast *conv, const char* sensors_file, const char* output):
+	S(S),
+	conv(conv),
+	fout(nullptr),
+	slist()
 {
-	S = sS;
-	conv = sconv;
-	fout = NULL;
-
 	loadFile(sensors_file);
 	if (slist.size()) fout = fopen(output, "a");
 }

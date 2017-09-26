@@ -8,9 +8,11 @@
 class convectivefast
 {
     public:
-        convectivefast(Space *S, const TSortedTree *Tree):
-            S(S),
-            Tree(Tree) {}
+        convectivefast() = delete;
+        convectivefast(Space *S, const TSortedTree *Tree);
+        convectivefast(const convectivefast&) = delete;
+        convectivefast& operator=(const convectivefast&) = delete;
+
         void CalcConvectiveFast();
         void CalcBoundaryConvective();
         TVec SpeedSumFast(TVec p);

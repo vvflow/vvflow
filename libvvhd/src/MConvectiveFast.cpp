@@ -8,6 +8,14 @@ using std::complex;
 
 /****************************** MAIN FUNCTIONS ********************************/
 
+convectivefast::convectivefast(Space *S, const TSortedTree *Tree):
+    S(S),
+    Tree(Tree),
+    MatrixSize(),
+    matrix()
+{
+}
+
 TVec convectivefast::SpeedSumFast(TVec p)
 {
     TVec res(0, 0);

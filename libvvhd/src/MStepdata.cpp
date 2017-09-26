@@ -9,18 +9,29 @@
     std::exit(5); \
 }
 
-Stepdata::Stepdata(Space* s_, const char *fname, bool b_save_profile)
+Stepdata::Stepdata(Space* S, const char *fname, bool b_save_profile):
+    S(S),
+    blsize(S->BodyList.size()),
+    b_save_profile(b_save_profile),
+    last_flush_time(0),
+    h5f(),
+    string_h5t(),
+    scalar_h5s(),
+    time_h5d(-1),
+    force_hydro_h5d(blsize),
+    force_holder_h5d(blsize),
+    force_friction_h5d(blsize),
+    nusselt_h5d(blsize),
+    position_h5d(blsize),
+    spring_h5d(blsize),
+    speed_h5d(blsize),
+    pressure_h5d(blsize),
+    friction_h5d(blsize)
 {
-    S = s_;
-    blsize = S->BodyList.size();
-    this->b_save_profile = b_save_profile;
-    last_flush_time = 0;
-
     scalar_h5s = H5Screate(H5S_SCALAR);
     string_h5t = H5Tcopy(H5T_C_S1);
     H5Tset_size(string_h5t, H5T_VARIABLE);
 
-    time_h5d = -1;
     force_hydro_h5d.resize(blsize, -1);
     force_holder_h5d.resize(blsize, -1);
     force_friction_h5d.resize(blsize, -1);

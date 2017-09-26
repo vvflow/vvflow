@@ -14,7 +14,7 @@ class epsfast
         Space *S;
         const TSortedTree *Tree;
         //double merge_criteria_sq; // = (0.3*AverageSegmentLenght)^2
-        double eps_restriction; // = 0.6*AverageSegmentLenght 
+        // double eps_restriction; // = 0.6*AverageSegmentLenght 
         int merged_;
 
         void MergeVortexes(TObj *lv1, TObj *lv2);

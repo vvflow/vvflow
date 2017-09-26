@@ -8,6 +8,8 @@ class Stepdata
 {
     public:
         Stepdata(Space* s_, const char* fname, bool b_save_profile);
+        Stepdata(const Stepdata&) = delete;
+        Stepdata& operator=(const Stepdata&) = delete;
         ~Stepdata();
         void write();
         void flush();
@@ -27,7 +29,6 @@ class Stepdata
         int scalar_h5s;
 
         int time_h5d;
-        std::vector<int> force_born_h5d;
         std::vector<int> force_hydro_h5d;
         std::vector<int> force_holder_h5d;
         std::vector<int> force_friction_h5d;

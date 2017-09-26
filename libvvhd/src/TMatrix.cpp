@@ -14,13 +14,17 @@
     }
 #endif
 
-Matrix::Matrix()
+Matrix::Matrix():
+    N(0),
+    BodyMatrix(),
+    InverseMatrix(),
+    RightCol(),
+    ipvt(),
+    solution_idx(),
+    solution_ptr(),
+    bodyMatrixHash_(),
+    bodyMatrixIsOk_()
 {
-    N = 0;
-
-    BodyMatrix = InverseMatrix = RightCol = NULL;
-    ipvt = NULL;
-    bodyMatrixIsOk_ = false;
 }
 
 Matrix::~Matrix()

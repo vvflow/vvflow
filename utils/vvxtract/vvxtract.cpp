@@ -17,6 +17,14 @@ struct dataset_t {
     size_t rows;
     const char* label;
     std::vector<double> mem;
+
+    dataset_t() = delete;
+    dataset_t(const char* label):
+        cols(), rows(),
+        label(label),
+        mem() {}
+    dataset_t(const dataset_t&) = default;
+    dataset_t& operator=(const dataset_t&) = default;
 };
 
 int main(int argc, char **argv)
@@ -196,9 +204,8 @@ int main(int argc, char **argv)
     std::vector<dataset_t> datasets;
     size_t max_rows = 0;
     for (int i=optind+1; i<argc; i++) {
-        datasets.emplace_back();
+        datasets.emplace_back(argv[i]);
         dataset_t& dat = datasets.back();
-        dat.label = argv[i];
 
         hid_t dataset = H5Dopen2(fid, dat.label, H5P_DEFAULT);
         if (dataset < 0)

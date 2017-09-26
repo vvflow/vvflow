@@ -18,6 +18,10 @@
 // |_________|
 
 class TBodyTest : public ::testing::Test {
+public:
+    TBodyTest():
+        dummy(),
+        jimmy() {}
 protected:
     std::shared_ptr<TBody> dummy;
     std::shared_ptr<TBody> jimmy;
