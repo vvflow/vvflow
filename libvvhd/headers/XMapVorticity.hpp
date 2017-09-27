@@ -8,7 +8,10 @@ class XMapVorticity : private Space {
 public:
     XMapVorticity() = delete;
     XMapVorticity(const XMapVorticity&) = delete;
+    XMapVorticity(XMapVorticity&&) = delete;
     XMapVorticity& operator=(const XMapVorticity&) = delete;
+    XMapVorticity& operator=(XMapVorticity&&) = delete;
+
     XMapVorticity(
         const Space &S,
         double xmin, double ymin,

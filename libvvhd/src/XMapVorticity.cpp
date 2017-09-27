@@ -82,7 +82,8 @@ void XMapVorticity::evaluate()
             {
                 TVec p = TVec(xmin, ymin) + dxdy*TVec(xi, yj);
                 const TSortedNode* bnode = tree.findNode(p);
-                map[yj*xres+xi] = S.PointIsInBody(p) ? 0 : vorticity(*bnode, p); 
+                float value = S.PointIsInBody(p) ? 0 : vorticity(*bnode, p);
+                map.push_back(value);
             }
         }
     }
@@ -155,9 +156,25 @@ double XMapVorticity::vorticity(const TSortedNode &node, TVec p) const
 
 std::ostream& operator<< (std::ostream& os, const XMapVorticity& vrt)
 {
-    os.write(reinterpret_cast<const char*>(&vrt.xres), sizeof(vrt.xres));
-    for (int xi=0; xi<vrt.xres; xi++)
-    os.write(reinterpret_cast<const char*>(&vrt.xres), sizeof(vrt.xres));
+    const_cast<XMapVorticity&>(vrt).evaluate();
+
+    os.write(reinterpret_cast<const char*>(&vrt.yres), sizeof(float));
+    for (int yj=0; yj<vrt.yres; yj++) {
+        float y = vrt.ymin + vrt.dxdy*yj;
+        os.write(reinterpret_cast<const char*>(&y), sizeof(float));
+    }
+
+    for (int xi=0; xi<vrt.xres; xi++) {
+        float x = vrt.xmin + vrt.dxdy*xi;
+        os.write(
+            reinterpret_cast<const char*>(&x),
+            sizeof(float)
+        );
+        os.write(
+            reinterpret_cast<const char*>(&vrt.map[xi*vrt.yres]),
+            sizeof(float)*vrt.yres
+        );
+    }
 
     return os;
 }
