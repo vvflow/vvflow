@@ -27,7 +27,7 @@ static const double d_inf = 1.0l/0.0l;
 
 // main options
 namespace opt {
-    bool   B = true;
+    bool   B = false;
 
     bool   V = false;
     int    Vsize = 6; // =0: plot dots; >0: plot circles
@@ -151,14 +151,17 @@ int main(int argc, char **argv)
         // map_vorticity(&S, bin, rect, mesh_hi);
         e->append("map_vorticity", bin.str());
 
+        main_gp << "set palette defined (-1 \"#000000\", 1 \"#ffffff\")" << std::endl;
         if (opt::Gmax > 0) {
-            main_gp << "set palette defined (-1 \"#000000\", 1 \"#ffffff\")" << std::endl
-            << strfmt( "set cbrange [%lg:%lg]\n", -opt::Gmax, opt::Gmax);
+            main_gp << strfmt( "set cbrange [%lg:%lg]\n", -opt::Gmax, opt::Gmax);
+        } else {
+            main_gp << "set cbrange []\n" << std::endl;
         }
 
         plot_cmd << DELIMITER;
-        plot_cmd << "'map_vorticity' binary matrix";
-        plot_cmd << " u 1:2:3";
+        plot_cmd << "'map_vorticity'";
+        plot_cmd << " binary matrix";
+        plot_cmd << " u 1:2:(color($3))";
         plot_cmd << " with image";
     }
 
