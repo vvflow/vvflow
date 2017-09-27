@@ -21,7 +21,7 @@ public:
     // x1  z11 z12 z1N
     // x2  z21 z22 z2N
     // xM  zM1 zM2 zMN
-    // friend std::ostream& operator<< (std::ostream& os, const XMapVorticity& p) { return os << p.x << " \t" << p.y; }
+    friend std::ostream& operator<< (std::ostream& os, const XMapVorticity& vrt);
 
 private:
     Space S;

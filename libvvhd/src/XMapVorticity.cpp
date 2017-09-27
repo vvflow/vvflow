@@ -152,3 +152,13 @@ double XMapVorticity::vorticity(const TSortedNode &node, TVec p) const
 
     return res;
 }
+
+std::ostream& operator<< (std::ostream& os, const XMapVorticity& vrt)
+{
+    os.write(reinterpret_cast<const char*>(&vrt.xres), sizeof(vrt.xres));
+    for (int xi=0; xi<vrt.xres; xi++)
+    os.write(reinterpret_cast<const char*>(&vrt.xres), sizeof(vrt.xres));
+
+    return os;
+}
+

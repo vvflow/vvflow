@@ -3,7 +3,7 @@
 
 /* vvhd */
 #include "TSpace.hpp"
-// #include <map_vorticity.h>
+#include "XMapVorticity.hpp"
 
 // #include <string.h> /* strerror */
 // #include <inttypes.h> /* PRIu32 */
@@ -143,7 +143,11 @@ int main(int argc, char **argv)
 
     if (opt::G) {
         std::stringstream bin;
-        // MapVorticity vrt = 
+        bin << XMapVorticity(S,
+            opt::rect.xmin, opt::rect.ymin,
+            opt::mesh_hi.dxdy,
+            opt::mesh_hi.xres, opt::mesh_hi.yres,
+            2);
         // map_vorticity(&S, bin, rect, mesh_hi);
         e->append("map_vorticity", bin.str());
 
