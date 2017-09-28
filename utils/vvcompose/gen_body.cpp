@@ -6,9 +6,6 @@
 #include <cstdio>
 #include <cstring>
 
-using std::isnan;
-using std::isfinite;
-
 lua_Number get_param(
     lua_State *L,
     const char* param,
@@ -24,7 +21,7 @@ lua_Number get_param(
     if (!lua_isnil(L, -1)) {
         result = lua_tonumberx(L, -1, &is_ok);
         lua_pop(L, 1);
-    } else if (!isnan(dflt)) {
+    } else if (!std::isnan(dflt)) {
         lua_pop(L, 1);
         return dflt;
     }
@@ -34,7 +31,7 @@ lua_Number get_param(
     
     if (!is_ok) {
         lua_pushfstring(L, "'%s' must be a number", param);
-    } else if (!isfinite(result)) {
+    } else if (!std::isfinite(result)) {
         lua_pushfstring(L, "'%s' must be finite", param);
     } else if (result < min || result > max) {
         lua_pushfstring(L, "'%s' must be %s", param, range_err);

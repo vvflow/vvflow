@@ -4,7 +4,6 @@
 // #include <limits>
 // #include <iostream>
 
-using std::isnan;
 using std::vector;
 
 void epsfast::CalcEpsilonFast(bool merge)
