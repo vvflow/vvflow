@@ -3,7 +3,7 @@
 #include "lua_tbody.h"
 #include "gen_body.h"
 
-int luavvd_gen_gis(lua_State *L) {
+int luavvd_gen_chamber_gpj(lua_State *L) {
     luaL_checktype(L, 1, LUA_TTABLE);
 
     lua_Number  dln=0.0;

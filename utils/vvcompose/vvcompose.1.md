@@ -49,7 +49,7 @@ Description of all types is given below.
 
   * S.*caption* (string) :
     simulation caption is used in results filenames:
-    stepdata_*caption*.h5, results_*caption*/
+    stepdata_*caption*.h5, results_*caption*
 
   * S.*re* (number) :
     *re* = 1/*nyu*, where *nyu* is the kinematic viscosity of fluid
@@ -541,7 +541,7 @@ Generate roundrect with origin in center.
   * `N`, `dl` :
     specify either number of segments or average segment length
 
-### gen_gis{R0, X0, X1, X2, X3, d, L, H, dln, dls}
+### gen_chamber_gpj{R0, X0, X1, X2, X3, d, L, H, dln, dls}
 
 This is a chamber for the generator of pulsating jets (GPJ).
 It consists of prechamber, straight channel, expanding channel, and a bounding box.
@@ -578,9 +578,33 @@ Regions with no-slip boundary condition have segment length `dln`, regions with 
     #                        ""--,
     #         ^x0   ^x1     ^x2  ^x3
 
+### gen_chamber_box{L, H, D, h, d, dln, dls}
+
+This is a box chamber.
+It consists of 4 thick walls with a hole on the bottom.
+
+Inner rect has dimensions `L`x`H`.
+with the centet of its bottom having coordinates {0, 0}.
+Size of the hole is `D`.
+Thickness of the left, right and top walls is `h`.
+Thickness of the bottom wall is `d`.
+
+Regions with no-slip boundary condition (inner bottom surface) have segment length `dln`,
+regions with slip - `dls`. 
+
+    #    ,-------------------,  - H+h
+    #    |   _____________   |  _ H
+    #    |  |             |  |
+    #    |  |             |  |
+    #    |  |___   .   ___|  |  _ 0
+    #    '------'     '------'  - 0-d
+    #              ^  ^   ^  ^
+    #              0 D/2 L/2 L/2+h
+
 ### gen_savonius{R, h, [N|dl]}
 
-Savonius is formed by 6 semi-circles.
+Savonius is formed by 2 thick semi-circles,
+which boundary is 6 semi-circle arcs.
 This is how it looks like:
 
     #        .-'""'-.

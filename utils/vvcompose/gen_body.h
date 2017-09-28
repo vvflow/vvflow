@@ -14,7 +14,8 @@ lua_Number get_param(
 
 int luavvd_gen_cylinder(lua_State *L);
 int luavvd_gen_plate(lua_State *L);
-int luavvd_gen_gis(lua_State *L);
+int luavvd_gen_chamber_gpj(lua_State *L);
+int luavvd_gen_chamber_box(lua_State *L);
 
 void gen_seg_N(std::vector<TAtt>& alist, TVec p1, TVec p2, size_t N, uint32_t slip = 0);
 void gen_seg_dl(std::vector<TAtt>& alist, TVec p1, TVec p2, double dl, uint32_t slip = 0);

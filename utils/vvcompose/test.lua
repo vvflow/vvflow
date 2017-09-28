@@ -418,6 +418,7 @@ plate = nil
 collectgarbage()
 
 -- gen_gis
+gen_gis = gen_chamber_gpj
 check_err(function() gen_gis() end, "bad argument #1 to 'gen_gis' (table expected, got no value)")
 check_err(function() gen_gis{ dln=nil } end, "bad argument #1 to 'gen_gis' ('dln' must be a number)")
 check_err(function() gen_gis{ dln=0.0 } end, "bad argument #1 to 'gen_gis' ('dln' must be positive)")
@@ -452,6 +453,40 @@ check_dev(function() return gis:get_area() end, 10000, 1)
 check_dev(function() return gis:get_cofm()[1] end, 0, 1e-4)
 check_dev(function() return gis:get_cofm()[2] end, 0, 1e-4)
 gis = nil
+collectgarbage()
+
+-- gen_box
+gen_box = gen_chamber_box
+check_err(function() gen_box() end, "bad argument #1 to 'gen_box' (table expected, got no value)")
+check_err(function() gen_box{ dln=nil } end, "bad argument #1 to 'gen_box' ('dln' must be a number)")
+check_err(function() gen_box{ dln=0.0 } end, "bad argument #1 to 'gen_box' ('dln' must be positive)")
+check_err(function() gen_box{ dln=0.1, dls=nil } end, "bad argument #1 to 'gen_box' ('dls' must be a number)")
+check_err(function() gen_box{ dln=0.1, dls={0} } end, "bad argument #1 to 'gen_box' ('dls' must be a number)")
+check_err(function() gen_box{ dln=0.1, dls=0.0 } end, "bad argument #1 to 'gen_box' ('dls' must be positive)")
+check_err(function() gen_box{ dln=0.1, dls=nan } end, "bad argument #1 to 'gen_box' ('dls' must be finite)")
+check_err(function() gen_box{ dln=0.1, dls=inf } end, "bad argument #1 to 'gen_box' ('dls' must be finite)")
+check_err(function() gen_box{ dln=0.1, dls=0.2, L=nil } end, "bad argument #1 to 'gen_box' ('L' must be a number)")
+check_err(function() gen_box{ dln=0.1, dls=0.2, L={0} } end, "bad argument #1 to 'gen_box' ('L' must be a number)")
+check_err(function() gen_box{ dln=0.1, dls=0.2, L=0.0 } end, "bad argument #1 to 'gen_box' ('L' must be positive)")
+check_err(function() gen_box{ dln=0.1, dls=0.2, L=nan } end, "bad argument #1 to 'gen_box' ('L' must be finite)")
+check_err(function() gen_box{ dln=0.1, dls=0.2, L=inf } end, "bad argument #1 to 'gen_box' ('L' must be finite)")
+check_err(function() gen_box{ dln=0.1, dls=0.2, L=0.5, H=nil } end, "bad argument #1 to 'gen_box' ('H' must be a number)")
+check_err(function() gen_box{ dln=0.1, dls=0.2, L=0.5, H=0.0 } end, "bad argument #1 to 'gen_box' ('H' must be positive)")
+check_err(function() gen_box{ dln=0.1, dls=0.2, L=0.5, H=inf } end, "bad argument #1 to 'gen_box' ('H' must be finite)")
+check_err(function() gen_box{ dln=0.1, dls=0.2, L=0.5, H=0.5, D=0.0} end, "bad argument #1 to 'gen_box' ('D' must be positive < L)")
+check_err(function() gen_box{ dln=0.1, dls=0.2, L=0.5, H=0.5, D=0.5} end, "bad argument #1 to 'gen_box' ('D' must be positive < L)")
+check_err(function() gen_box{ dln=0.1, dls=0.2, L=0.5, H=0.5, D=0.4, h=0.0 } end, "bad argument #1 to 'gen_box' ('h' must be positive)")
+check_err(function() gen_box{ dln=0.1, dls=0.2, L=0.5, H=0.5, D=0.4, h=0.1, d=0.00 } end, "bad argument #1 to 'gen_box' ('d' must be positive < L-D)")
+check_err(function() gen_box{ dln=0.1, dls=0.2, L=0.5, H=0.5, D=0.4, h=0.1, d=0.10 } end, "bad argument #1 to 'gen_box' ('d' must be positive < L-D)")
+check_err(function() gen_box{ dln=0.1, dls=0.2, L=0.5, H=0.5, D=0.4, h=0.1, d=0.05 } end, nil)
+local box = gen_box{
+    dln=0.01, dls=0.1,
+    L=10, H=10, D=1,
+    h=0.5, d=0.1
+}
+check_dev(function() return box:get_area() end, 0.5*31 + 0.1*9.9 + pi*0.1^2, 0.1)
+check_dev(function() return box:get_cofm()[1] end, 0, 1e-4)
+box = nil
 collectgarbage()
 
 -- TBodyList
