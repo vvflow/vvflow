@@ -158,9 +158,9 @@ double XMapVorticity::vorticity(const TSortedNode &node, TVec p) const
     return res;
 }
 
-std::ostream& operator<< (std::ostream& os, const XMapVorticity& vrt)
+std::ostream& operator<< (std::ostream& os, XMapVorticity& vrt)
 {
-    const_cast<XMapVorticity&>(vrt).evaluate();
+    vrt.evaluate();
 
     float N = vrt.xres;
     os.write(reinterpret_cast<const char*>(&N), sizeof(float));
@@ -186,4 +186,3 @@ std::ostream& operator<< (std::ostream& os, const XMapVorticity& vrt)
 
     return os;
 }
-

@@ -143,11 +143,12 @@ int main(int argc, char **argv)
 
     if (opt::G) {
         std::stringstream bin;
-        bin << XMapVorticity(S,
+        XMapVorticity vrt(S,
             opt::rect.xmin, opt::rect.ymin,
             opt::mesh_hi.dxdy,
             opt::mesh_hi.xres+1, opt::mesh_hi.yres+1,
             2);
+        bin << vrt;
         e->append("map_vorticity", bin.str());
 
         if (opt::gray) {
