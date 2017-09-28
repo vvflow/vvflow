@@ -19,6 +19,7 @@ public:
         int xres, int yres,
         double eps_mult
     );
+    ~XMapVorticity();
 
     //  N   y1  y2  yN
     // x1  z11 z12 z1N
@@ -32,7 +33,7 @@ private:
     double dxdy;
     int    xres, yres;
     double eps_mult;
-    std::vector<float> map;
+    float* map;
 
     bool evaluated;
     void evaluate();

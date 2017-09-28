@@ -30,7 +30,7 @@ namespace opt {
     bool   B = false;
 
     bool   V = false;
-    int    Vsize = 6; // =0: plot dots; >0: plot circles
+    int    Vsize = 4; // =0: plot dots; >0: plot circles
     double Vcirc = 0.; // circle size in Oxy scale
 
     bool   S = false;
@@ -146,12 +146,15 @@ int main(int argc, char **argv)
         bin << XMapVorticity(S,
             opt::rect.xmin, opt::rect.ymin,
             opt::mesh_hi.dxdy,
-            opt::mesh_hi.xres, opt::mesh_hi.yres,
+            opt::mesh_hi.xres+1, opt::mesh_hi.yres+1,
             2);
-        // map_vorticity(&S, bin, rect, mesh_hi);
         e->append("map_vorticity", bin.str());
 
-        main_gp << "set palette defined (-1 \"#000000\", 1 \"#ffffff\")" << std::endl;
+        if (opt::gray) {
+            main_gp << "set palette defined (-1 \"#000000\", 1 \"#ffffff\")" << std::endl;
+        } else {
+            main_gp << "set palette defined (-1 \"#0000ff\", 0 \"#ffffff\", 1 \"#ff0000\")" << std::endl;
+        }
         if (opt::Gmax > 0) {
             main_gp << strfmt( "set cbrange [%lg:%lg]\n", -opt::Gmax, opt::Gmax);
         } else {
@@ -161,7 +164,7 @@ int main(int argc, char **argv)
         plot_cmd << DELIMITER;
         plot_cmd << "'map_vorticity'";
         plot_cmd << " binary matrix";
-        plot_cmd << " u 1:2:(color($3))";
+        plot_cmd << " u 1:2:3";
         plot_cmd << " with image";
     }
 
@@ -186,27 +189,29 @@ int main(int argc, char **argv)
         }
     }
 
-    if (opt::B) {
-        for (auto& lbody: S.BodyList) {
+    for (auto& lbody: S.BodyList) {
+        if (opt::B) {
             plot_cmd << DELIMITER;
-            plot_cmd << "'" << lbody->label << "'";
-            plot_cmd << " binary format='%2float'";
-            plot_cmd << " with filledcurve lc rgb '#adadad' lw 2 fs solid border -1";
-
-            std::stringstream bin;
-            for (auto& latt: lbody->alist) {
-                TVec p = latt.corner;
-                float f[2] = {float(p.x), float(p.y)};
-                bin.write(reinterpret_cast<const char*>(f), sizeof(f));
-            }
-            { /* close the curve */
-                TVec p = lbody->alist.front().corner;
-                float f[2] = {float(p.x), float(p.y)};
-                bin.write(reinterpret_cast<const char*>(f), sizeof(f));
-            }
-
-            e->append(lbody->label.c_str(), bin.str());
+        } else {
+            plot_cmd << std::endl << "#   ";
         }
+        plot_cmd << "'" << lbody->label << "'";
+        plot_cmd << " binary format='%2float'";
+        plot_cmd << " with filledcurve lc rgb '#adadad' lw 2 fs solid border -1";
+
+        std::stringstream bin;
+        for (auto& latt: lbody->alist) {
+            TVec p = latt.corner;
+            float f[2] = {float(p.x), float(p.y)};
+            bin.write(reinterpret_cast<const char*>(f), sizeof(f));
+        }
+        { /* close the curve */
+            TVec p = lbody->alist.front().corner;
+            float f[2] = {float(p.x), float(p.y)};
+            bin.write(reinterpret_cast<const char*>(f), sizeof(f));
+        }
+
+        e->append(lbody->label.c_str(), bin.str());
     }
     #undef DELIMITER
 

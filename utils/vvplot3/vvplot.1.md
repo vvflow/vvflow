@@ -26,7 +26,7 @@ vvplot(1) -- plot Vvflow simulation results
   * -V, --V `SIZE` :
     plot vortex domains with circles of diameter SIZE;
     when SIZE is 0 dots are drawed instead of circles
-    (in pixels, default:6)
+    (in pixels, default:4)
   
   * -S, --S `SMIN`,`SMAX`,`SSTEP` :
     plot streamlines at given streamfunction constants

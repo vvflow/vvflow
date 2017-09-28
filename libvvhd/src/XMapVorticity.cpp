@@ -29,11 +29,10 @@ XMapVorticity::XMapVorticity(
     dxdy(dxdy),
     xres(xres), yres(yres),
     eps_mult(eps_mult),
-    map(),
+    map(new float[xres*yres]),
     evaluated(false),
     dl(S.AverageSegmentLength())
 {
-    map.reserve(xres*yres);
     if (xres <= 0)
         throw std::invalid_argument("XMapVorticity(): xres must be positive");
     if (yres <= 0)
@@ -43,6 +42,12 @@ XMapVorticity::XMapVorticity(
     if (eps_mult <= 0)
         throw std::invalid_argument("XMapVorticity(): eps_mult must be positive");
 }
+
+XMapVorticity::~XMapVorticity()
+{
+    delete[] map;
+}
+
 
 void XMapVorticity::evaluate()
 {
@@ -82,9 +87,7 @@ void XMapVorticity::evaluate()
             {
                 TVec p = TVec(xmin, ymin) + dxdy*TVec(xi, yj);
                 const TSortedNode* bnode = tree.findNode(p);
-                float value = S.PointIsInBody(p) ? 0 : p.abs(); //vorticity(*bnode, p);
-                map.push_back(value);
-                // printf("%lf,%lf -> %lf\n", p.x, p.y, value);
+                map[yj*xres+xi] = S.PointIsInBody(p) ? 0 : vorticity(*bnode, p);
             }
         }
     }
@@ -176,7 +179,7 @@ std::ostream& operator<< (std::ostream& os, const XMapVorticity& vrt)
             sizeof(float)
         );
         os.write(
-            reinterpret_cast<const char*>(&vrt.map[yj*vrt.xres]),
+            reinterpret_cast<const char*>(vrt.map+yj*vrt.xres),
             sizeof(float)*vrt.xres
         );
     }
