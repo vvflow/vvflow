@@ -68,6 +68,8 @@ int luaopen_vvd (lua_State *L) {
     lua_setglobal(L, "gen_cylinder"); // pop 1
     lua_pushcfunction(L, luavvd_gen_semicyl); // push 1
     lua_setglobal(L, "gen_semicyl"); // pop 1
+    lua_pushcfunction(L, luavvd_gen_ellipse); // push 1
+    lua_setglobal(L, "gen_ellipse"); // pop 1
     lua_pushcfunction(L, luavvd_gen_plate); // push 1
     lua_setglobal(L, "gen_plate"); // pop 1
     lua_pushcfunction(L, luavvd_gen_chamber_gpj); // push 1

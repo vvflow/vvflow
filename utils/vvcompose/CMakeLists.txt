@@ -24,6 +24,7 @@ add_executable(vvcompose
     lua_bodylist.cpp
     gen_body.cpp
     gen_cylinder.cpp
+    gen_ellipse.cpp
     gen_plate.cpp
     gen_gis.cpp
     gen_box.cpp
