@@ -55,8 +55,8 @@ int luavvd_gen_plate(lua_State *L) {
     double alpha = asin((R2-R1)/Ll);
     double phi = M_PI/2+alpha;
     if (!dl) {
-        double perimeter = 2 * ( (M_PI-phi)*R1 + (phi)*R2 + Ll*cos(alpha) );
-        dl = perimeter / N;
+        double slen = 2 * ( (M_PI-phi)*R1 + (phi)*R2 + Ll*cos(alpha) );
+        dl = slen / N;
     }
 
     double r1 = R1 + start*(R2-R1);

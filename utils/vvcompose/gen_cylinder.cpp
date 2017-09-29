@@ -72,7 +72,8 @@ int luavvd_gen_semicyl(lua_State *L) {
 
     std::shared_ptr<TBody> body = std::make_shared<TBody>();
     if (!dl) {
-        dl = (M_PI*R + 2*R) / double(N);
+        double slen = M_PI*R + 2*R;
+        dl = slen / N;
     }
 
     gen_seg_dl(body->alist, TVec(0., 0.), TVec(+R, 0.), dl);

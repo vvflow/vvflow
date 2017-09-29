@@ -32,6 +32,13 @@ int luavvd_gen_chamber_gpj(lua_State *L) {
     X4 = X3 - _L;
     Y4 = _H/2;
 
+    lua_pushnil(L);
+    if (lua_next(L, 1)) {
+        const char* param = lua_tostring(L, -2);
+        lua_pushfstring(L, "excess parameter '%s'", param);
+        luaL_argerror(L, 1, lua_tostring(L, -1));
+    }
+
     // # some calculations
     lua_Number dls2 = std::min(dls, (Y4-Y3)/5);
 

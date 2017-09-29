@@ -449,7 +449,7 @@ check_err(function() gen_gis{ dln=0.1, dls=0.2, R0=0.5, d= 15, X0=-1, X1=-2 } en
 check_err(function() gen_gis{ dln=0.1, dls=0.2, R0=0.5, d= 15, X0=-9, X1=-1, X2=-2 } end, "bad argument #1 to 'gen_gis' ('X2' must be >= X1)")
 check_err(function() gen_gis{ dln=0.1, dls=0.2, R0=0.5, d= 15, X0=-5, X1=-4, X2=-3, X3=0, L=5.5} end, "bad argument #1 to 'gen_gis' ('L' must be greater than chamber length)")
 check_err(function() gen_gis{ dln=0.1, dls=0.2, R0=0.5, d= 30, X0=-5, X1=-4, X2=-3, X3=0, L=5.6, H=1.00+2*math.sqrt(3)} end, "bad argument #1 to 'gen_gis' ('H' must be greater than chamber width)")
-check_err(function() gen_gis{ dln=0.1, dls=0.2, R0=0.5, d= 30, X0=-5, X1=-4, X2=-3, X3=0, L=5.6, H=1.01+2*math.sqrt(3), foo=1 } end, nil)
+check_err(function() gen_gis{ dln=0.1, dls=0.2, R0=0.5, d= 30, X0=-5, X1=-4, X2=-3, X3=0, L=5.6, H=1.01+2*math.sqrt(3), foo=1 } end, "bad argument #1 to 'gen_gis' (excess parameter 'foo')")
 check_err(function() gen_gis{ dln=0.1, dls=0.2, R0=0.5, d= 30, X0=-5, X1=-4, X2=-3, X3=0, L=5.6, H=1.01+2*math.sqrt(3)} end, nil)
 local gis = gen_gis{
     dln=0.1, dls=0.2,
@@ -489,7 +489,7 @@ check_err(function() gen_box{ dln=0.1, dls=0.2, L=0.5, H=0.5, D=0.5} end, "bad a
 check_err(function() gen_box{ dln=0.1, dls=0.2, L=0.5, H=0.5, D=0.4, h=0.0 } end, "bad argument #1 to 'gen_box' ('h' must be positive)")
 check_err(function() gen_box{ dln=0.1, dls=0.2, L=0.5, H=0.5, D=0.4, h=0.1, d=0.00 } end, "bad argument #1 to 'gen_box' ('d' must be positive < L-D)")
 check_err(function() gen_box{ dln=0.1, dls=0.2, L=0.5, H=0.5, D=0.4, h=0.1, d=0.10 } end, "bad argument #1 to 'gen_box' ('d' must be positive < L-D)")
-check_err(function() gen_box{ dln=0.1, dls=0.2, L=0.5, H=0.5, D=0.4, h=0.1, d=0.05, foo=1 } end, nil)
+check_err(function() gen_box{ dln=0.1, dls=0.2, L=0.5, H=0.5, D=0.4, h=0.1, d=0.05, foo=1 } end, "bad argument #1 to 'gen_box' (excess parameter 'foo')")
 check_err(function() gen_box{ dln=0.1, dls=0.2, L=0.5, H=0.5, D=0.4, h=0.1, d=0.05 } end, nil)
 local box = gen_box{
     dln=0.01, dls=0.1,

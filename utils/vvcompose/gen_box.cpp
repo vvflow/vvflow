@@ -26,6 +26,13 @@ int luavvd_gen_chamber_box(lua_State *L) {
     h  =  get_param(L, "h",   "positive", dblmin);
     d  =  get_param(L, "d",   "positive < L-D", dblmin, (_L-_D)*(1-dbleps));
 
+    lua_pushnil(L);
+    if (lua_next(L, 1)) {
+        const char* param = lua_tostring(L, -2);
+        lua_pushfstring(L, "excess parameter '%s'", param);
+        luaL_argerror(L, 1, lua_tostring(L, -1));
+    }
+
     std::shared_ptr<TBody> body = std::make_shared<TBody>();
     lua_Number D2 = _D/2+d/2;
     lua_Number L2 = _L/2;
