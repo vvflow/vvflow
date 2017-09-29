@@ -52,6 +52,7 @@ void gen_seg_N(
     size_t N,
     uint32_t slip
 ) {
+
     for (size_t i=0; i<N; i++) {
         alist.emplace_back(p1 + (p2-p1)*i/N, slip);
     }
@@ -104,7 +105,7 @@ void gen_arc_dl(
         R,
         a1,
         a2,
-        floor(R*abs(a2-a1)/dl+0.5),
+        floor(R*fabs(a2-a1)/dl+0.5),
         slip
     );
 }

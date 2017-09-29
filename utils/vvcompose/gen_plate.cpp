@@ -54,15 +54,10 @@ int luavvd_gen_plate(lua_State *L) {
     // # some calculations
     double alpha = asin((R2-R1)/Ll);
     double phi = M_PI/2+alpha;
-    double perimeter = 2 * ( (M_PI-phi)*R1 + (phi)*R2 + Ll*cos(alpha) );
     if (!dl) {
+        double perimeter = 2 * ( (M_PI-phi)*R1 + (phi)*R2 + Ll*cos(alpha) );
         dl = perimeter / N;
-    } else {
-        N = int( perimeter/dl + 0.5);
     }
-    int N_start = 2*int( (M_PI-phi)*R1/dl +0.5);
-    int N_stop =  2*int(      (phi)*R2/dl +0.5);
-    int N_side =  (N - N_start - N_stop)/2;
 
     double r1 = R1 + start*(R2-R1);
     double r2 = R1 + stop*(R2-R1);
@@ -82,13 +77,14 @@ int luavvd_gen_plate(lua_State *L) {
 
     std::shared_ptr<TBody> body = std::make_shared<TBody>();
 
-    gen_arc_N(body->alist, TVec(c2, 0), r2, -phi1, -phi2,              N_stop/2, stop<1);
-    gen_seg_N(body->alist, TVec(c2, 0)+r2*TVec(cos(phi2), -sin(phi2)),
-                           TVec(c1, 0)+r1*TVec(cos(phi),  -sin(phi)),  N_side,   false);
-    gen_arc_N(body->alist, TVec(c1, 0), r1, 2*M_PI-phi, phi,           N_start,  start>0);
-    gen_seg_N(body->alist, TVec(c1, 0)+r1*TVec(cos(phi),  +sin(phi)),
-                           TVec(c2, 0)+r2*TVec(cos(phi2), +sin(phi2)), N_side,   false);
-    gen_arc_N(body->alist, TVec(c2, 0), r2, +phi2, +phi1,              N_stop/2, stop<1);
+    gen_arc_dl(body->alist, TVec(c2, 0), r2, -phi1, -phi2,              dl, stop<1);
+    gen_seg_dl(body->alist, TVec(c2, 0)+r2*TVec(cos(phi2), -sin(phi2)),
+                            TVec(c1, 0)+r1*TVec(cos(phi),  -sin(phi)),  dl, false);
+    gen_arc_dl(body->alist, TVec(c1, 0), r1, 2*M_PI-phi, M_PI,          dl, start>0);
+    gen_arc_dl(body->alist, TVec(c1, 0), r1,        M_PI, phi,          dl, start>0);
+    gen_seg_dl(body->alist, TVec(c1, 0)+r1*TVec(cos(phi),  +sin(phi)),
+                            TVec(c2, 0)+r2*TVec(cos(phi2), +sin(phi2)), dl, false);
+    gen_arc_dl(body->alist, TVec(c2, 0), r2, +phi2, +phi1,              dl, stop<1);
 
     body->doUpdateSegments();
     body->doFillProperties();

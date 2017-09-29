@@ -363,6 +363,16 @@ check_dev(function() return cyl:get_moi_axis() end, pi/2+cyl:get_area()*5, 1e-4)
 cyl = nil
 collectgarbage()
 
+-- gen_semicyl
+local sem = gen_semicyl{ R=1, N=500 }
+check_dev(function() return sem:get_slen() end, pi+2, 1e-4)
+check_dev(function() return sem:get_area() end, pi/2, 1e-4)
+check_dev(function() return sem:get_cofm()[1] end, 0, 1e-4)
+check_dev(function() return sem:get_cofm()[2] end, -4/(3*pi), 1e-4)
+check_val(function() return #sem end, 500)
+sem = nil
+collectgarbage()
+
 -- gen_plate
 check_err(function() gen_plate() end, "bad argument #1 to 'gen_plate' (table expected, got no value)")
 check_err(function() gen_plate{ N={0} } end, "bad argument #1 to 'gen_plate' ('N' must be a number)")
@@ -391,7 +401,7 @@ check_err(function() gen_plate{ R1= 1, R2= 1, L=5, N=1, start= 2 } end, "bad arg
 check_err(function() gen_plate{ R1= 1, R2= 1, L=5, N=1, stop=-1 } end, "bad argument #1 to 'gen_plate' ('stop' must be in range (0, 1])")
 check_err(function() gen_plate{ R1= 1, R2= 1, L=5, N=1, stop= 0 } end, "bad argument #1 to 'gen_plate' ('stop' must be in range (0, 1])")
 check_err(function() gen_plate{ R1= 1, R2= 1, L=5, N=1, stop= 2 } end, "bad argument #1 to 'gen_plate' ('stop' must be in range (0, 1])")
-check_val(function() return #gen_plate{ R1=0.5,    R2=0.5,    L=1, N=100 } end, 100)
+check_val(function() return #gen_plate{ R1=1, R2=1, L=1, N=100 } end, 100)
 collectgarbage()
 check_val(function() return #gen_plate{ R1=0.5/pi, R2=0.5/pi, L=1, dl=1/100 } end, 100+200)
 collectgarbage()
@@ -439,6 +449,7 @@ check_err(function() gen_gis{ dln=0.1, dls=0.2, R0=0.5, d= 15, X0=-1, X1=-2 } en
 check_err(function() gen_gis{ dln=0.1, dls=0.2, R0=0.5, d= 15, X0=-9, X1=-1, X2=-2 } end, "bad argument #1 to 'gen_gis' ('X2' must be >= X1)")
 check_err(function() gen_gis{ dln=0.1, dls=0.2, R0=0.5, d= 15, X0=-5, X1=-4, X2=-3, X3=0, L=5.5} end, "bad argument #1 to 'gen_gis' ('L' must be greater than chamber length)")
 check_err(function() gen_gis{ dln=0.1, dls=0.2, R0=0.5, d= 30, X0=-5, X1=-4, X2=-3, X3=0, L=5.6, H=1.00+2*math.sqrt(3)} end, "bad argument #1 to 'gen_gis' ('H' must be greater than chamber width)")
+check_err(function() gen_gis{ dln=0.1, dls=0.2, R0=0.5, d= 30, X0=-5, X1=-4, X2=-3, X3=0, L=5.6, H=1.01+2*math.sqrt(3), foo=1 } end, nil)
 check_err(function() gen_gis{ dln=0.1, dls=0.2, R0=0.5, d= 30, X0=-5, X1=-4, X2=-3, X3=0, L=5.6, H=1.01+2*math.sqrt(3)} end, nil)
 local gis = gen_gis{
     dln=0.1, dls=0.2,
@@ -478,6 +489,7 @@ check_err(function() gen_box{ dln=0.1, dls=0.2, L=0.5, H=0.5, D=0.5} end, "bad a
 check_err(function() gen_box{ dln=0.1, dls=0.2, L=0.5, H=0.5, D=0.4, h=0.0 } end, "bad argument #1 to 'gen_box' ('h' must be positive)")
 check_err(function() gen_box{ dln=0.1, dls=0.2, L=0.5, H=0.5, D=0.4, h=0.1, d=0.00 } end, "bad argument #1 to 'gen_box' ('d' must be positive < L-D)")
 check_err(function() gen_box{ dln=0.1, dls=0.2, L=0.5, H=0.5, D=0.4, h=0.1, d=0.10 } end, "bad argument #1 to 'gen_box' ('d' must be positive < L-D)")
+check_err(function() gen_box{ dln=0.1, dls=0.2, L=0.5, H=0.5, D=0.4, h=0.1, d=0.05, foo=1 } end, nil)
 check_err(function() gen_box{ dln=0.1, dls=0.2, L=0.5, H=0.5, D=0.4, h=0.1, d=0.05 } end, nil)
 local box = gen_box{
     dln=0.01, dls=0.1,
