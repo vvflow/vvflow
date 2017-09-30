@@ -24,7 +24,7 @@ int luavvd_gen_ellipse(lua_State *L) {
     luaL_argcheck(L, (N>0)^(dl>0), 1, "'N' and 'dl' are mutually exclusive");
 
     Rx = get_param(L, "Rx", "positive",      std::numeric_limits<double>::min());
-    Ry = get_param(L, "Ry", "positive < Rx", std::numeric_limits<double>::min(), Rx);
+    Ry = get_param(L, "Ry", "positive <= Rx", std::numeric_limits<double>::min(), Rx);
 
     lua_pushnil(L);
     if (lua_next(L, 1)) {
