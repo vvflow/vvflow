@@ -3,6 +3,7 @@
 // #include <string>
 #include <algorithm>
 #include <limits>
+#include <stdexcept>
 
 using std::vector;
 
@@ -282,6 +283,9 @@ const vector<TSortedNode*>& stree::getBottomNodes() const
 
 const TSortedNode* stree::findNode(TVec p) const
 {
+    if (!rootNode) {
+        throw std::invalid_argument("TTree::findNode(): tree is not built");
+    }
     TSortedNode *Node = rootNode;
 
     while (Node->ch1)

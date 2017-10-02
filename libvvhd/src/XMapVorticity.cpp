@@ -7,15 +7,9 @@
 #include <cmath>
 #include <limits>
 
-using std::min;
 using std::max;
 using std::exp;
-using std::isfinite;
 using std::vector;
-using std::numeric_limits;
-
-static const double inf = numeric_limits<double>::infinity();
-// static const double NaN = numeric_limits<double>::quiet_NaN();
 
 XMapVorticity::XMapVorticity(
     const Space &S,
@@ -72,7 +66,7 @@ void XMapVorticity::evaluate()
         {
             for (TObj *lobj = (**llbnode).vRange.first; lobj < (**llbnode).vRange.last; lobj++)
             {
-                lobj->v.x = 1./(sqr(eps_mult)*max(eps2h(**llbnode, lobj->r), sqr(0.6*dl)));
+                lobj->v.x = 1./(sqr(eps_mult)*max(epsfast::eps2h(**llbnode, lobj->r), sqr(0.6*dl)));
                 lobj->v.y = lobj->v.x * lobj->g;
             }
         }
@@ -95,48 +89,6 @@ void XMapVorticity::evaluate()
     evaluated = true;
 }
 
-double XMapVorticity::eps2h(const TSortedNode &node, TVec p) const
-{
-    double res[2] = {inf, inf};
-
-    for (const TSortedNode* lnnode: *node.NearNodes)
-    {
-        for (const TObj *lobj = lnnode->vRange.first; lobj < lnnode->vRange.last; lobj++)
-        {
-            double drabs2 = (p-lobj->r).abs2();
-            if ( !drabs2 ) {
-                continue;
-            } else if ( drabs2 < res[0]) {
-                res[1] = res[0];
-                res[0] = drabs2;
-            } else if ( drabs2 < res[1] ) {
-                res[1] = drabs2;
-            }
-        }
-    }
-
-    if ( isfinite(res[1]) )
-        return res[1];
-    if ( isfinite(res[0]) )
-        return res[0];
-    return numeric_limits<double>::lowest();
-}
-
-double XMapVorticity::h2(const TSortedNode &node, TVec p) const
-{
-    double res = inf;
-
-    for (const TSortedNode* lnnode: *node.NearNodes)
-    {
-        for (TObj* latt: lnnode->bllist)
-        {
-            res = min(res, (p-latt->r).abs2());
-        }
-    }
-
-    return res;
-}
-
 double XMapVorticity::vorticity(const TSortedNode &node, TVec p) const
 {
     double res = 0;
@@ -152,7 +104,7 @@ double XMapVorticity::vorticity(const TSortedNode &node, TVec p) const
 
     res *= C_1_PI;
 
-    double erfarg = h2(node, p)/sqr(dl*eps_mult);
+    double erfarg = epsfast::h2(node, p)/sqr(dl*eps_mult);
     res += (erfarg<3) ? 0.5*(1-erf(erfarg)) : 0;
 
     return res;

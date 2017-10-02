@@ -39,10 +39,5 @@ private:
     void evaluate();
 
     double dl; // = S.AverageSenmentLength()
-    // square distance from p to the second neighbouring domain
-    double eps2h(const TSortedNode &Node, TVec p) const;
-    // square distance from p to the body surface
-    double h2(const TSortedNode &Node, TVec p) const;
-
     double vorticity(const TSortedNode &node, TVec p) const;
 };

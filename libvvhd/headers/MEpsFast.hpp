@@ -10,6 +10,13 @@ class epsfast
         void CalcEpsilonFast(bool merge);
         int Merged(){return merged_;}
 
+        // square distance from p to the second neighbouring domain
+        // or double.lowest if there are no neighbours
+        static double eps2h(const TSortedNode &node, TVec p);
+        // square distance from p to the body surface
+        // or double.infinity if there are no bodies
+        static double h2(const TSortedNode &node, TVec p);
+
     private:
         Space *S;
         const TSortedTree *Tree;

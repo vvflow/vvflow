@@ -42,6 +42,10 @@ void opt::parse(int argc, char **argv) {
             {"res-hi", required_argument, 0, 0xff00},
             {"res-lo", required_argument, 0, 0xff01},
 
+            {"ref-xy", required_argument, 0, 0xfe10},
+            {"ref-S",  required_argument, 0, 0xfe11},
+            {"ref-P",  required_argument, 0, 0xfe12},
+
             {"B",       no_argument, NULL, 'B'},
             {"V", required_argument, NULL, 'V'},
             {"S", required_argument, NULL, 'S'},
@@ -166,6 +170,18 @@ void opt::parse(int argc, char **argv) {
             // if (!fail) {
             //     printf("RES_LO -> %d\n", opt::mesh_lo.xres);
             // }
+            break;
+        case 0xfe10: // --ref-xy
+            fail = sscanf(optarg, "%c %n", &opt::ref_xy, &optn) < 1;
+            fail = fail || !(opt::ref_xy=='o' || opt::ref_xy=='b' || opt::ref_xy=='f');
+            break;
+        case 0xfe11: // --ref-S
+            fail = sscanf(optarg, "%c %n", &opt::ref_S, &optn) < 1;
+            fail = fail || !(opt::ref_S=='o' || opt::ref_S=='b' || opt::ref_S=='f');
+            break;
+        case 0xfe12: // --ref-P
+            fail = sscanf(optarg, "%c %n", &opt::ref_P, &optn) < 1;
+            fail = fail || !(opt::ref_P=='o' || opt::ref_P=='b' || opt::ref_P=='f' || opt::ref_P=='s');
             break;
         case 0:
             if (long_options[option_index].flag != 0) {

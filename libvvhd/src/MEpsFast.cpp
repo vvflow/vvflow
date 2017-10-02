@@ -5,6 +5,8 @@
 // #include <iostream>
 
 using std::vector;
+using std::isfinite;
+using std::numeric_limits;
 
 void epsfast::CalcEpsilonFast(bool merge)
 {
@@ -58,6 +60,50 @@ void epsfast::CalcEpsilonFast(bool merge)
             //eps is bounded below (cant be less than restriction)
         }
     }
+}
+
+
+double epsfast::eps2h(const TSortedNode &node, TVec p)
+{
+    double res1 = numeric_limits<double>::infinity();
+    double res2 = numeric_limits<double>::infinity();
+
+    for (const TSortedNode* lnnode: *node.NearNodes)
+    {
+        for (const TObj *lobj = lnnode->vRange.first; lobj < lnnode->vRange.last; lobj++)
+        {
+            double drabs2 = (p-lobj->r).abs2();
+            if ( !drabs2 ) {
+                continue;
+            } else if ( drabs2 < res1) {
+                res2 = res1;
+                res1 = drabs2;
+            } else if ( drabs2 < res2 ) {
+                res2 = drabs2;
+            }
+        }
+    }
+
+    if ( isfinite(res2) )
+        return res2;
+    if ( isfinite(res1) )
+        return res1;
+    return numeric_limits<double>::lowest();
+}
+
+double epsfast::h2(const TSortedNode &node, TVec p)
+{
+    double res = numeric_limits<double>::infinity();
+
+    for (const TSortedNode* lnnode: *node.NearNodes)
+    {
+        for (TObj* latt: lnnode->bllist)
+        {
+            res = std::min(res, (p-latt->r).abs2());
+        }
+    }
+
+    return res;
 }
 
 /******************************** NAMESPACE ***********************************/

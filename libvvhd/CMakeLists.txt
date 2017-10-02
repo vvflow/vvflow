@@ -66,6 +66,7 @@ set (LIBVVHD_SOURCES ${LIBVVHD_SOURCES} src/MDiffusiveFast.cpp)
 set (LIBVVHD_SOURCES ${LIBVVHD_SOURCES} src/MEpsFast.cpp)
 set (LIBVVHD_SOURCES ${LIBVVHD_SOURCES} src/MFlowmove.cpp)
 set (LIBVVHD_SOURCES ${LIBVVHD_SOURCES} src/XMapVorticity.cpp)
+set (LIBVVHD_SOURCES ${LIBVVHD_SOURCES} src/XMapStreamline.cpp)
 add_library(vvhd SHARED ${LIBVVHD_SOURCES})
 target_link_libraries(vvhd ${HDF5_C_LIBRARIES} ${LAPACK_LIBRARIES} ${LIBMATHEVAL})
 

@@ -56,7 +56,9 @@ vvplot(1) -- plot Vvflow simulation results
     reference frame: original, body, fluid (default: 'o'); affects options -x, -y
   
   * --ref-S {o,b,f} :
-    streamlines reference frame: original, body, fluid (default: 'o'); affects option -S
+    streamlines reference frame: original, body, fluid;
+    affects option -S
+    (default: 'o')
   
   * --ref-P {s,o,b,f} :
     pressure calculation mode:

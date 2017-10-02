@@ -5,6 +5,7 @@
 #include "TSpace.hpp"
 #include "TSortedTree.hpp"
 #include "XMapVorticity.hpp"
+#include "XMapStreamline.hpp"
 
 // #include <string.h> /* strerror */
 // #include <inttypes.h> /* PRIu32 */
@@ -45,10 +46,11 @@ namespace opt {
     bool   P = false;
     double Pmin = -1.5;
     double Pmax = +1.0;
+
     // other options
-    // char   ref_xy;
-    // char   ref_S;
-    // char   ref_P;
+    char   ref_xy = 'o';
+    char   ref_S = 'o';
+    char   ref_P = 's';
 
     int width = 1280;
     int height = 720;
@@ -171,6 +173,34 @@ int main(int argc, char **argv)
         plot_cmd << " with image";
     }
 
+    if (opt::S) {
+        std::stringstream bin;
+        XMapStreamfunction psi(S,
+            opt::rect.xmin, opt::rect.ymin,
+            opt::mesh_lo.dxdy,
+            opt::mesh_lo.xres+1, opt::mesh_lo.yres+1,
+            2, opt::ref_S);
+        bin << psi;
+        e->append("map_streamfunction", bin.str());
+
+        if (opt::gray) {
+            main_gp << "set palette defined (-1 \"#000000\", 1 \"#ffffff\")" << std::endl;
+        } else {
+            main_gp << "set palette defined (-1 \"#0000ff\", 0 \"#ffffff\", 1 \"#ff0000\")" << std::endl;
+        }
+        if (opt::Gmax > 0) {
+            main_gp << strfmt( "set cbrange [%lg:%lg]\n", -opt::Gmax, opt::Gmax);
+        } else {
+            main_gp << "set cbrange []\n" << std::endl;
+        }
+
+        plot_cmd << DELIMITER;
+        plot_cmd << "'map_streamfunction'";
+        plot_cmd << " binary matrix";
+        plot_cmd << " u 1:2:3";
+        plot_cmd << " with image";
+    }
+
     if (opt::V) {
         std::stringstream bin;
         for (auto& lobj: S.VortexList) {
@@ -195,12 +225,10 @@ int main(int argc, char **argv)
     for (auto& lbody: S.BodyList) {
         if (opt::B) {
             plot_cmd << DELIMITER;
-        } else {
-            plot_cmd << std::endl << "#   ";
+            plot_cmd << "'" << lbody->label << "'";
+            plot_cmd << " binary format='%2float'";
+            plot_cmd << " with filledcurve lc rgb '#adadad' lw 2 fs solid border -1";
         }
-        plot_cmd << "'" << lbody->label << "'";
-        plot_cmd << " binary format='%2float'";
-        plot_cmd << " with filledcurve lc rgb '#adadad' lw 2 fs solid border -1";
 
         std::stringstream bin;
         for (auto& latt: lbody->alist) {

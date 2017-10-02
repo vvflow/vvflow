@@ -34,10 +34,11 @@ namespace opt {
     extern bool   P;
     extern double Pmin;
     extern double Pmax;
+
     // other options
-    // extern char   ref_xy;
-    // extern char   ref_S;
-    // extern char   ref_P;
+    extern char   ref_xy;
+    extern char   ref_S;
+    extern char   ref_P;
 
     extern int width;
     extern int height;
