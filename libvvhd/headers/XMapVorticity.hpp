@@ -4,7 +4,7 @@
 #include "TSpace.hpp"
 #include "TSortedTree.hpp"
 
-class XMapVorticity : private Space {
+class XMapVorticity {
 public:
     XMapVorticity() = delete;
     XMapVorticity(const XMapVorticity&) = delete;
