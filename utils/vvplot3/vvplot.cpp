@@ -3,6 +3,7 @@
 
 /* vvhd */
 #include "TSpace.hpp"
+#include "TSortedTree.hpp"
 #include "XMapVorticity.hpp"
 
 // #include <string.h> /* strerror */
@@ -56,6 +57,7 @@ namespace opt {
     int timelabel = true;
     int holder = false;
     int spring = false;
+    int ttree = true;
 
     int dry_run = false;
 
@@ -213,6 +215,32 @@ int main(int argc, char **argv)
         }
 
         e->append(lbody->label.c_str(), bin.str());
+    }
+
+    if (opt::ttree) {
+
+        double dl = S.AverageSegmentLength();
+        double min_node_size = dl>0 ? dl*5 : 0;
+        double max_node_size = dl>0 ? dl*100 : std::numeric_limits<double>::max();
+        TSortedTree tr(&S, 8, min_node_size, max_node_size);
+        tr.build();
+        std::stringstream bin;
+        for (auto& lbn: tr.getBottomNodes())
+        {
+            float f[4] = {0.};
+            f[0] = lbn->x;
+            f[1] = lbn->y;
+            f[2] = lbn->w/2;
+            f[3] = lbn->h/2;
+            bin.write(reinterpret_cast<const char*>(f), sizeof(f));
+        }
+        e->append("ttree", bin.str());
+
+        plot_cmd << DELIMITER;
+        plot_cmd << "'ttree'";
+        plot_cmd << " binary format='%4float'";
+        plot_cmd << " using 1:2:3:4";
+        plot_cmd << " with boxxy fill empty lc rgb 'black'";
     }
     #undef DELIMITER
 
