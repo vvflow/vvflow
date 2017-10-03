@@ -116,6 +116,46 @@ void XStreamfunction::evaluate()
     evaluated = true;
 }
 
+double XStreamfunction::streamfunction(const Space &S, TVec p)
+{
+    double tmp_4pi_psi_g = 0.0;
+    double tmp_2pi_psi_q = 0.0;
+
+    double dl = S.AverageSegmentLength();
+    double rd2 = sqr(0.2*dl);
+
+    for (auto& lbody: S.BodyList)
+    {
+        for (auto& latt: lbody->alist)
+        {
+            tmp_4pi_psi_g += _4pi_psi_g(p-latt.r, rd2, latt.g);
+        }
+
+        if (lbody->speed_slae.iszero()) continue;
+
+        for (TAtt& latt: lbody->alist)
+        {
+            TVec Vs = lbody->speed_slae.r + lbody->speed_slae.o * rotl(latt.r - lbody->get_axis());
+            double g = -Vs * latt.dl;
+            double q = -rotl(Vs) * latt.dl;
+            tmp_4pi_psi_g += _4pi_psi_g(p-latt.r, rd2, g);
+            tmp_2pi_psi_q += _2pi_psi_qatt(p, latt.r, lbody->get_cofm(), q);
+        }
+    }
+
+    for (const TObj& src: S.SourceList)
+    {
+        tmp_2pi_psi_q += _2pi_psi_q(p-src.r, src.g);
+    }
+
+    for (const TObj& vrt: S.VortexList)
+    {
+        tmp_4pi_psi_g += _4pi_psi_g(p-vrt.r, rd2, vrt.g);
+    }
+
+    return tmp_4pi_psi_g*C_1_4PI + tmp_2pi_psi_q*C_1_2PI + p*rotl(S.InfSpeed());
+}
+
 double XStreamfunction::streamfunction(const TSortedNode &node, TVec p, double* psi_gap) const
 {
     double tmp_4pi_psi_g = 0.0;

@@ -18,6 +18,7 @@ public:
     );
 
     void evaluate();
+    static double streamfunction(const Space &S, TVec p);
 private:
     Space S;
     double eps_mult;
