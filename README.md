@@ -3,7 +3,7 @@
 Программный комплекс устанавливается из deb-репозитория:
 ```
 # sudo apt-get install curl apt-transport-https
-TOKEN=c924a03ddb1308dfdd423f9735693041557bdb3300138134
+TOKEN=read_token # https://packagecloud.io/rosik/vvflow/token/default
 echo "deb https://$TOKEN:@packagecloud.io/rosik/vvflow/ubuntu/ xenial main" | sudo tee /etc/apt/sources.list.d/vvflow.list
 curl -sL "https://$TOKEN:@packagecloud.io/rosik/vvflow/gpgkey" | sudo apt-key add -
 sudo apt-get update

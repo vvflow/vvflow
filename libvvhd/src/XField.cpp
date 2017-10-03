@@ -1,5 +1,7 @@
 #include "XField.hpp"
 
+#include <stdexcept>
+
 XField::XField(
     double xmin, double ymin, double dxdy,
     int xres, int yres
