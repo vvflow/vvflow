@@ -4,8 +4,8 @@
 /* vvhd */
 #include "TSpace.hpp"
 #include "TSortedTree.hpp"
-#include "XMapVorticity.hpp"
-#include "XMapStreamline.hpp"
+#include "XVorticity.hpp"
+#include "XStreamline.hpp"
 
 // #include <string.h> /* strerror */
 // #include <inttypes.h> /* PRIu32 */
@@ -147,11 +147,12 @@ int main(int argc, char **argv)
 
     if (opt::G) {
         std::stringstream bin;
-        XMapVorticity vrt(S,
+        XVorticity vrt(S,
             opt::rect.xmin, opt::rect.ymin,
             opt::mesh_hi.dxdy,
             opt::mesh_hi.xres+1, opt::mesh_hi.yres+1,
             2);
+        vrt.evaluate();
         bin << vrt;
         e->append("map_vorticity", bin.str());
 
@@ -175,11 +176,12 @@ int main(int argc, char **argv)
 
     if (opt::S) {
         std::stringstream bin;
-        XMapStreamfunction psi(S,
+        XStreamfunction psi(S,
             opt::rect.xmin, opt::rect.ymin,
             opt::mesh_lo.dxdy,
             opt::mesh_lo.xres+1, opt::mesh_lo.yres+1,
             2, opt::ref_S);
+        psi.evaluate();
         bin << psi;
         e->append("map_streamfunction", bin.str());
 

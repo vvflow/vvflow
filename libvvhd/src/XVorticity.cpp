@@ -1,4 +1,4 @@
-#include "XMapVorticity.hpp"
+#include "XVorticity.hpp"
 
 #include "MFlowmove.hpp"
 #include "MEpsFast.hpp"
@@ -11,39 +11,23 @@ using std::max;
 using std::exp;
 using std::vector;
 
-XMapVorticity::XMapVorticity(
+XVorticity::XVorticity(
     const Space &S,
     double xmin, double ymin,
     double dxdy,
     int xres, int yres,
     double eps_mult
 ):
+    XField(xmin, ymin, dxdy, xres, yres),
     S(S),
-    xmin(xmin), ymin(ymin),
-    dxdy(dxdy),
-    xres(xres), yres(yres),
     eps_mult(eps_mult),
-    map(new float[xres*yres]),
-    evaluated(false),
     dl(S.AverageSegmentLength())
 {
-    if (xres <= 0)
-        throw std::invalid_argument("XMapVorticity(): xres must be positive");
-    if (yres <= 0)
-        throw std::invalid_argument("XMapVorticity(): yres must be positive");
-    if (dxdy <= 0)
-        throw std::invalid_argument("XMapVorticity(): dxdy must be positive");
     if (eps_mult <= 0)
-        throw std::invalid_argument("XMapVorticity(): eps_mult must be positive");
+        throw std::invalid_argument("XVorticity(): eps_mult must be positive");
 }
 
-XMapVorticity::~XMapVorticity()
-{
-    delete[] map;
-}
-
-
-void XMapVorticity::evaluate()
+void XVorticity::evaluate()
 {
     if (evaluated)
         return;
@@ -89,7 +73,7 @@ void XMapVorticity::evaluate()
     evaluated = true;
 }
 
-double XMapVorticity::vorticity(const TSortedNode &node, TVec p) const
+double XVorticity::vorticity(const TSortedNode &node, TVec p) const
 {
     double res = 0;
 
@@ -108,33 +92,4 @@ double XMapVorticity::vorticity(const TSortedNode &node, TVec p) const
     res += (erfarg<3) ? 0.5*(1-erf(erfarg)) : 0;
 
     return res;
-}
-
-std::ostream& operator<< (std::ostream& os, XMapVorticity& vrt)
-{
-    vrt.evaluate();
-
-    float N = vrt.xres;
-    os.write(reinterpret_cast<const char*>(&N), sizeof(float));
-    for (int xi=0; xi<vrt.xres; xi++) {
-        float x = vrt.xmin + vrt.dxdy*xi;
-        os.write(
-            reinterpret_cast<const char*>(&x),
-            sizeof(float)
-        );
-    }
-
-    for (int yj=0; yj<vrt.yres; yj++) {
-        float y = vrt.ymin + vrt.dxdy*yj;
-        os.write(
-            reinterpret_cast<const char*>(&y),
-            sizeof(float)
-        );
-        os.write(
-            reinterpret_cast<const char*>(vrt.map+yj*vrt.xres),
-            sizeof(float)*vrt.xres
-        );
-    }
-
-    return os;
 }

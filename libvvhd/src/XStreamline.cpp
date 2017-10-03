@@ -1,4 +1,4 @@
-#include "XMapStreamline.hpp"
+#include "XStreamline.hpp"
 
 #include "MFlowmove.hpp"
 #include "MEpsFast.hpp"
@@ -16,7 +16,7 @@ using std::numeric_limits;
 
 static const double inf = numeric_limits<double>::infinity();
 
-XMapStreamfunction::XMapStreamfunction(
+XStreamfunction::XStreamfunction(
     const Space &S,
     double xmin, double ymin,
     double dxdy,
@@ -24,26 +24,15 @@ XMapStreamfunction::XMapStreamfunction(
     double eps_mult,
     char ref_frame
 ):
+    XField(xmin, ymin, dxdy, xres, yres),
     S(S),
-    xmin(xmin), ymin(ymin),
-    dxdy(dxdy),
-    xres(xres), yres(yres),
     eps_mult(eps_mult),
     ref_frame_speed(),
-    map(new float[xres*yres]),
-    gap_list(),
-    evaluated(false),
     dl(S.AverageSegmentLength()),
     rd2(sqr(0.2*dl))
 {
-    if (xres <= 0)
-        throw std::invalid_argument("XMapStreamfunction(): xres must be positive");
-    if (yres <= 0)
-        throw std::invalid_argument("XMapStreamfunction(): yres must be positive");
-    if (dxdy <= 0)
-        throw std::invalid_argument("XMapStreamfunction(): dxdy must be positive");
     if (eps_mult <= 0)
-        throw std::invalid_argument("XMapStreamfunction(): eps_mult must be positive");
+        throw std::invalid_argument("XStreamfunction(): eps_mult must be positive");
 
     switch (ref_frame) {
     case 'o':
@@ -56,13 +45,8 @@ XMapStreamfunction::XMapStreamfunction(
         ref_frame_speed = S.BodyList[0]->speed_slae.r;
         break;
     default:
-        throw std::invalid_argument("XMapStreamfunction(): bad ref_frame");
+        throw std::invalid_argument("XStreamfunction(): bad ref_frame");
     }
-}
-
-XMapStreamfunction::~XMapStreamfunction()
-{
-    delete[] map;
 }
 
 inline static
@@ -85,7 +69,7 @@ double _2pi_psi_qatt(TVec p, TVec att, TVec cofm, double q)
     return q * atan2(rotl(v2)*v1, v2*v1);
 }
 
-void XMapStreamfunction::evaluate()
+void XStreamfunction::evaluate()
 {
     if (evaluated)
         return;
@@ -129,12 +113,8 @@ void XMapStreamfunction::evaluate()
                 map[yj*xres+xi] = streamfunction(bnode, p, &psi_gap);
                 if (psi_gap)
                 {
-                    gap_t gap = {0};
-                    gap.xi = static_cast<uint16_t>(xi);
-                    gap.yj = static_cast<uint16_t>(yj);
-                    gap.psi_gap = static_cast<float>(psi_gap);
                     #pragma omp critical
-                    gap_list.push_back(gap);
+                    gaps.emplace_back(xi, yj, psi_gap);
                 }
             }
         }
@@ -143,7 +123,7 @@ void XMapStreamfunction::evaluate()
     evaluated = true;
 }
 
-double XMapStreamfunction::streamfunction(const TSortedNode &node, TVec p, double* psi_gap) const
+double XStreamfunction::streamfunction(const TSortedNode &node, TVec p, double* psi_gap) const
 {
     double tmp_4pi_psi_g = 0.0;
     double tmp_2pi_psi_q = 0.0;
@@ -194,33 +174,4 @@ double XMapStreamfunction::streamfunction(const TSortedNode &node, TVec p, doubl
 
     // printf("GAP %lf\n", psi_gap);
     return tmp_4pi_psi_g*C_1_4PI + tmp_2pi_psi_q*C_1_2PI + p*rotl(S.InfSpeed() - ref_frame_speed);
-}
-
-std::ostream& operator<< (std::ostream& os, XMapStreamfunction& vrt)
-{
-    vrt.evaluate();
-
-    float N = vrt.xres;
-    os.write(reinterpret_cast<const char*>(&N), sizeof(float));
-    for (int xi=0; xi<vrt.xres; xi++) {
-        float x = vrt.xmin + vrt.dxdy*xi;
-        os.write(
-            reinterpret_cast<const char*>(&x),
-            sizeof(float)
-        );
-    }
-
-    for (int yj=0; yj<vrt.yres; yj++) {
-        float y = vrt.ymin + vrt.dxdy*yj;
-        os.write(
-            reinterpret_cast<const char*>(&y),
-            sizeof(float)
-        );
-        os.write(
-            reinterpret_cast<const char*>(vrt.map+yj*vrt.xres),
-            sizeof(float)*vrt.xres
-        );
-    }
-
-    return os;
 }
