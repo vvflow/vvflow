@@ -60,7 +60,10 @@ namespace opt {
     int timelabel = true;
     int holder = false;
     int spring = false;
-    int ttree = false;
+    
+    int ttree_bottom_nodes = false;
+    int ttree_near_nodes = false;
+    int ttree_find_node = false;
 
     int dry_run = false;
 
@@ -198,7 +201,7 @@ int main(int argc, char **argv)
     }
 
     if (opt::S) {
-        std::stringstream bin_streamfunc;
+        std::stringstream bin_streamfunction;
         XStreamfunction psi = {S,
             opt::rect.xmin, opt::rect.ymin,
             opt::mesh_lo.dxdy,
@@ -206,8 +209,8 @@ int main(int argc, char **argv)
             opt::mesh_lo.yres+1,
             2, opt::ref_S};
         psi.evaluate();
-        bin_streamfunc << psi;
-        e->append("map_streamfunction", bin_streamfunc.str());
+        bin_streamfunction << psi;
+        e->append("map_streamfunction", bin_streamfunction.str());
 
         // main_gp << "set palette defined (-1 \"#000000\", 1 \"#ffffff\")" << std::endl;
         // main_gp << "set cbrange []\n" << std::endl;
@@ -215,7 +218,6 @@ int main(int argc, char **argv)
         // plot_cmd << DELIMITER;
         // plot_cmd << "'map_streamfunction'";
         // plot_cmd << " binary matrix";
-        // // plot_cmd << " u 1:2:3";
         // plot_cmd << " with image";
 
         if (!(opt::Sstep>0)) {
@@ -257,30 +259,78 @@ int main(int argc, char **argv)
         e->append(lbody->label.c_str(), bin.str());
     }
 
-    if (opt::ttree) {
-
+    if (opt::ttree_bottom_nodes
+        || opt::ttree_near_nodes
+        || opt::ttree_find_node
+    ) {
         double dl = S.AverageSegmentLength();
-        double min_node_size = dl>0 ? dl*5 : 0;
-        double max_node_size = dl>0 ? dl*100 : std::numeric_limits<double>::max();
-        TSortedTree tr(&S, 8, min_node_size, max_node_size);
-        tr.build();
-        std::stringstream bin;
-        for (auto& lbn: tr.getBottomNodes())
-        {
-            float f[4] = {0.};
-            f[0] = lbn->x;
-            f[1] = lbn->y;
-            f[2] = lbn->w/2;
-            f[3] = lbn->h/2;
-            bin.write(reinterpret_cast<const char*>(f), sizeof(f));
-        }
-        e->append("ttree", bin.str());
+        double min_node_size = dl>0 ? dl*10 : 0;
+        double max_node_size = dl>0 ? dl*20 : std::numeric_limits<double>::max();
+        TSortedTree tree = {&S, 8, min_node_size, max_node_size};
+        tree.build();
 
-        plot_cmd << DELIMITER;
-        plot_cmd << "'ttree'";
-        plot_cmd << " binary format='%4float'";
-        plot_cmd << " using 1:2:3:4";
-        plot_cmd << " with boxxy fill empty lc rgb 'black'";
+        if (opt::ttree_bottom_nodes) {
+            std::stringstream bin_bottom_nodes;
+            for (TSortedNode* lbn: tree.getBottomNodes())
+            {
+                float f[4] = {0.};
+                f[0] = lbn->x;
+                f[1] = lbn->y;
+                f[2] = lbn->w/2;
+                f[3] = lbn->h/2;
+                bin_bottom_nodes.write(reinterpret_cast<const char*>(f), sizeof(f));
+            }
+            e->append("ttree_bottom_nodes", bin_bottom_nodes.str());
+
+            plot_cmd << DELIMITER;
+            plot_cmd << "'ttree_bottom_nodes'";
+            plot_cmd << " binary format='%4float'";
+            plot_cmd << " with boxxy fill empty lc rgb 'black'";
+        }
+
+        if (opt::ttree_near_nodes) {
+            std::stringstream bin_near_nodes;
+            for (TSortedNode* lbn: tree.getBottomNodes())
+            {
+                float f[4] = {0.};
+                for (TSortedNode* lnn: *lbn->NearNodes)
+                {
+                    f[0] = lnn->x;
+                    f[1] = lnn->y;
+                    f[2] = lbn->x - lnn->x;
+                    f[3] = lbn->y - lnn->y;
+                    bin_near_nodes.write(reinterpret_cast<const char*>(f), sizeof(f));
+                }
+            }
+            e->append("ttree_near_nodes", bin_near_nodes.str());
+
+            plot_cmd << DELIMITER;
+            plot_cmd << "'ttree_near_nodes'";
+            plot_cmd << " binary format='%4float'";
+            plot_cmd << " with vectors nohead lc rgb 'black'";
+        }        
+
+        if (opt::ttree_find_node) {
+            std::stringstream bin_find_node;
+            for (int yj=0; yj<opt::mesh_lo.yres; yj+=4) {
+                for (int xi=0; xi<opt::mesh_lo.xres; xi+=4) {
+                    TVec p = TVec(opt::rect.xmin, opt::rect.ymin) + opt::mesh_lo.dxdy*TVec(xi, yj);
+                    const TSortedNode& bnode = *tree.findNode(p);
+                    float f[4] = {0.};
+                    f[0] = p.x;
+                    f[1] = p.y;
+                    f[2] = bnode.x - p.x;
+                    f[3] = bnode.y - p.y;
+                    bin_find_node.write(reinterpret_cast<const char*>(f), sizeof(f));
+                }
+            }
+            e->append("ttree_find_node", bin_find_node.str());
+
+            plot_cmd << DELIMITER;
+            plot_cmd << "'ttree_find_node'";
+            plot_cmd << " binary format='%4float'";
+            plot_cmd << " with vectors nohead lc rgb 'black'";
+        }
     }
     #undef DELIMITER
 

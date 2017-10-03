@@ -47,7 +47,9 @@ namespace opt {
     extern int timelabel;
     extern int holder;
     extern int spring;
-    extern int ttree;
+    extern int ttree_bottom_nodes;
+    extern int ttree_near_nodes;
+    extern int ttree_find_node;
 
     extern int dry_run;
 

@@ -35,8 +35,9 @@ void opt::parse(int argc, char **argv) {
             {   "holder",    no_argument, &opt::holder, 1},
             {"no-spring",    no_argument, &opt::spring, 0},
             {   "spring",    no_argument, &opt::spring, 1},
-            {"no-ttree",     no_argument, &opt::ttree, 0},
-            {   "ttree",     no_argument, &opt::ttree, 1},
+            {"ttree-bottom-nodes", no_argument, &opt::ttree_bottom_nodes, 1},
+            {"ttree-near-nodes",   no_argument, &opt::ttree_near_nodes,   1},
+            {"ttree-find-node",    no_argument, &opt::ttree_find_node,    1},
 
             {"size",   required_argument, 0, 's'},
             {"res-hi", required_argument, 0, 0xff00},

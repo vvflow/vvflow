@@ -73,7 +73,9 @@ void XStreamfunction::evaluate()
     // flowmove fm(&S);
     // fm.VortexShed();
 
-    TSortedTree tree(&S, 8, dl*20);
+    double min_node_size = dl>0 ? dl*10 : 0;
+    double max_node_size = dl>0 ? dl*20 : 1.0l/0.0l;
+    TSortedTree tree(&S, 8, min_node_size, max_node_size);
     tree.build();
 
     const vector<TSortedNode*>& bnodes = tree.getBottomNodes();
