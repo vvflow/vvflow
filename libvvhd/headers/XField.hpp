@@ -23,8 +23,7 @@ public:
     XField& operator=(XField&&) = delete;
 
     XField(
-        double xmin, double ymin,
-        double dxdy,
+        double xmin, double ymin, double dxdy,
         int xres, int yres
     );
     virtual ~XField();
@@ -35,6 +34,9 @@ public:
         return map[yj*xres + xi];
     }
 
+    float min() const;
+    float max() const;
+
     //  N   y1  y2  yN
     // x1  z11 z12 z1N
     // x2  z21 z22 z2N
@@ -42,9 +44,8 @@ public:
     friend std::ostream& operator<< (std::ostream& os, const XField& field);
 
 protected:
-    double xmin, ymin;
-    double dxdy;
-    int    xres, yres;
+    double xmin, ymin, dxdy;
+    int xres, yres;
 
     float* map;
     std::vector<TGap> gaps;

@@ -17,9 +17,11 @@ public:
     Exear& operator= (const Exear&) = delete;
     Exear& operator= (Exear&&) = delete;
 
-    void append(const char* filename, std::string str, int perm = 0644);
     // void append(const char* filename, std::vector<char> data, int perm = 0644);
-    // void append(const char* filename, const uint8_t* data, size_t len, int perm = 0644);
+    void append(const char* filename, const void* data, size_t len, int perm = 0644);
+    void append(const char* filename, const std::string& str, int perm = 0644) {
+        append(filename, str.c_str(), str.size(), perm);
+    }
 
 private:
     std::string filename;

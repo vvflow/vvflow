@@ -18,7 +18,7 @@ void epsfast::CalcEpsilonFast(bool merge)
             decltype(bottom_nodes),
             const vector<TSortedNode*>&
         >::value,
-        "unexpected bottom_nodes must be reference"
+        "unexpected bottom_nodes type"
     );
 
     for (auto lbnode: bottom_nodes)

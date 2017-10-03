@@ -11,21 +11,25 @@ using std::min;
 using std::max;
 using std::exp;
 using std::isfinite;
-using std::vector;
+using std::deque;
+using std::list;
 using std::numeric_limits;
 
 static const double inf = numeric_limits<double>::infinity();
 
 XIsoline::XIsoline(
     const XField& field,
-    double vmin,
-    double vmax,
-    double dv
+    double vmin, double vmax, double dv
 ):
-    isolines()
+    isolines(),
+    xmin(field.xmin),
+    ymin(field.ymin),
+    dxdy(field.dxdy)
 {
+    if (!field.evaluated)
+        throw std::invalid_argument("XIsoline(): field is not evaluated");
     if (!isfinite(vmax))
-        throw std::invalid_argument("XIsoline(): vmax must finite");
+        throw std::invalid_argument("XIsoline(): vmax must be finite");
     if (!(vmin <= vmax))
         throw std::invalid_argument("XIsoline(): vmin must be <= vmax");
     if (!(dv > 0))
@@ -61,25 +65,6 @@ XIsoline::XIsoline(
                 process_rect(i, j, corners, v);
         }
     }
-
-    for (auto it = isolines->begin(); it!= isolines->end(); it++)
-    {
-        line_t *l = *it;
-        for (auto vec = l->begin(); vec!=l->end(); vec++)
-        {
-            float xy[2] = { static_cast<float>(xmin+vec->x*spacing), static_cast<float>(ymin+vec->y*spacing) };
-            fwrite(xy, sizeof(float), 2, stdout);
-        }
-        float nans[2] = {NaN, NaN};
-        fwrite(nans, sizeof(float), 2, stdout);
-    }
-    fflush(stdout);
-
-    delete isolines;
-    free(mem);
-    H5Sclose(map_h5s);
-    H5Dclose(map_h5d);
-    return 0;
 }
 
 inline static
@@ -92,43 +77,40 @@ void XIsoline::merge_lines(TLine* dst, bool dst_side)
 {
     TPoint p = dst_side ? dst->front() : dst->back();
 
-    for (auto lit = isolines->begin(); lit != isolines->end(); lit++)
+    for (TLine& l: isolines)
     {
-        TLine *l = *lit;
-        if (l == dst) continue;
-        else if (l->front() == p)
-        {
-            if (dst_side) dst->insert(dst->begin(), l->rbegin(), l->rend());
-            else          dst->insert(dst->end(),   l->begin(), l->end());
+        if (&l == dst) {
+            continue;
+        } else if (l.front() == p) {
+            if (dst_side) dst->insert(dst->begin(), l.rbegin(), l.rend());
+            else          dst->insert(dst->end(),   l.begin(), l.end());
+        } else if (l.back() == p) {
+            if (dst_side) dst->insert(dst->begin(), l.begin(), l.end());
+            else          dst->insert(dst->end(),   l.rbegin(), l.rend());
         }
-        else if (l->back() == p)
-        {
-            if (dst_side) dst->insert(dst->begin(), l->begin(), l->end());
-            else          dst->insert(dst->end(),   l->rbegin(), l->rend());
+        else {
+            continue;
         }
-        else continue;
 
-        delete *lit;
-        isolines->erase(lit);
+        l.clear();
         break;
     }
+    isolines.remove_if([](const TLine& l){ return l.empty(); });
 }
 
 void XIsoline::commit_segment(TPoint p1, TPoint p2)
 {
-    for (auto it = isolines->begin(); it!= isolines->end(); it++)
+    for (TLine& l: isolines)
     {
-        line_t *l = *it;
-
-        /**/ if (l->front() == p1) { l->insert(l->begin(), p2); merge_lines(l, 1); return; }
-        else if (l->front() == p2) { l->insert(l->begin(), p1); merge_lines(l, 1); return; }
-        else if (l->back()  == p1) { l->insert(l->end(),   p2); merge_lines(l, 0); return; }
-        else if (l->back()  == p2) { l->insert(l->end(),   p1); merge_lines(l, 0); return; }
+        /**/ if (l.front() == p1) { l.push_front(p2); merge_lines(&l, 1); return; }
+        else if (l.front() == p2) { l.push_front(p1); merge_lines(&l, 1); return; }
+        else if (l.back()  == p1) { l.push_back (p2); merge_lines(&l, 0); return; }
+        else if (l.back()  == p2) { l.push_back (p1); merge_lines(&l, 0); return; }
     }
-    line_t *new_line = new line_t();
-    new_line->push_back(p1);
-    new_line->push_back(p2);
-    isolines->push_back(new_line);
+
+    list<TLine>::iterator l = isolines.emplace(isolines.begin());
+    l->push_back(p1);
+    l->push_back(p2);
     return;
 }
 
@@ -145,109 +127,25 @@ void XIsoline::process_rect(float x, float y, float z[5], float C)
     if (N>=4) commit_segment(p[2], p[3]);
 }
 
-void XStreamfunction::evaluate()
+std::ostream& operator<< (std::ostream& os, const XIsoline& xiso)
 {
-    if (evaluated)
-        return;
-
-    S.HeatList.clear();
-    S.StreakList.clear();
-    S.StreakSourceList.clear();
-    // flowmove fm(&S);
-    // fm.VortexShed();
-
-    TSortedTree tree(&S, 8, dl*20);
-    tree.build();
-
-    const vector<TSortedNode*>& bnodes = tree.getBottomNodes();
-
-    #pragma omp parallel
+    for (const XIsoline::TLine& line: xiso.isolines)
     {
-        #pragma omp for
-        for (auto llbnode = bnodes.cbegin(); llbnode < bnodes.cend(); llbnode++)
+        for (const XIsoline::TPoint& pt: line)
         {
-            for (TObj *lobj = (**llbnode).vRange.first; lobj < (**llbnode).vRange.last; lobj++)
-            {
-                lobj->v.x = sqr(eps_mult)*max(epsfast::eps2h(**llbnode, lobj->r)*0.25, sqr(0.2*dl));
-            }
+            float xy[2] = {
+                static_cast<float>(xiso.xmin + pt.x * xiso.dxdy),
+                static_cast<float>(xiso.ymin + pt.y * xiso.dxdy)
+            };
+            os.write(
+                reinterpret_cast<const char*>(&xy),
+                2*sizeof(float)
+            );
         }
-
-        #pragma omp barrier
-        // Calculate field ********************************************************
-
-        #pragma omp for collapse(2) schedule(dynamic, 256)
-        for (int yj=0; yj<yres; yj++)
-        {
-            for (int xi=0; xi<xres; xi++)
-            {
-                TVec p = TVec(xmin, ymin) + dxdy*TVec(xi, yj);
-                // double x = xmin + double(xi)*spacing;
-                // double y = ymin + double(yj)*spacing;
-                double psi_gap = 0;
-                // mem[xi*dims[1]+yj] = streamfunction(S, &tree, TVec(x, y), spacing, psi_gap);
-                const TSortedNode& bnode = *tree.findNode(p);
-                map[yj*xres+xi] = streamfunction(bnode, p, &psi_gap);
-                if (psi_gap)
-                {
-                    #pragma omp critical
-                    gap_list.emplace_back(xi, yj, psi_gap);
-                }
-            }
-        }
+        const static float NaN = numeric_limits<double>::quiet_NaN();
+        float nans[2] = {NaN, NaN};
+        os.write(reinterpret_cast<const char*>(&nans), 2*sizeof(float));
     }
 
-    evaluated = true;
-}
-
-double XStreamfunction::streamfunction(const TSortedNode &node, TVec p, double* psi_gap) const
-{
-    double tmp_4pi_psi_g = 0.0;
-    double tmp_2pi_psi_q = 0.0;
-    *psi_gap = 0.0;
-
-    for (auto& lbody: S.BodyList)
-    {
-        for (auto& latt: lbody->alist)
-        {
-            tmp_4pi_psi_g += _4pi_psi_g(p-latt.r, rd2, latt.g);
-        }
-
-        if (lbody->speed_slae.iszero()) continue;
-
-        for (TAtt& latt: lbody->alist)
-        {
-            TVec Vs = lbody->speed_slae.r + lbody->speed_slae.o * rotl(latt.r - lbody->get_axis());
-            double g = -Vs * latt.dl;
-            double q = -rotl(Vs) * latt.dl;
-            tmp_4pi_psi_g += _4pi_psi_g(p-latt.r, rd2, g);
-            tmp_2pi_psi_q += _2pi_psi_qatt(p, latt.r, lbody->get_cofm(), q);
-        }
-    }
-
-    for (const auto& src: S.SourceList)
-    {
-        tmp_2pi_psi_q += _2pi_psi_q(p-src.r, src.g);
-
-        if (p.x < src.r.x && src.r.x <= p.x+dxdy &&
-            p.y < src.r.y && src.r.y <= p.y+dxdy)
-        {
-            *psi_gap += src.g;
-        }
-    }
-
-    for (TSortedNode* lfnode: *node.FarNodes)
-    {
-        tmp_4pi_psi_g += _4pi_psi_g(p-lfnode->CMp.r, rd2, lfnode->CMp.g);
-        tmp_4pi_psi_g += _4pi_psi_g(p-lfnode->CMm.r, rd2, lfnode->CMm.g);
-    }
-    for (TSortedNode* lnnode: *node.NearNodes)
-    {
-        for (TObj *lobj = lnnode->vRange.first; lobj < lnnode->vRange.last; lobj++)
-        {
-            tmp_4pi_psi_g += _4pi_psi_g(p-lobj->r, lobj->v.x, lobj->g); // v.x stores eps^2
-        }
-    }
-
-    // printf("GAP %lf\n", psi_gap);
-    return tmp_4pi_psi_g*C_1_4PI + tmp_2pi_psi_q*C_1_2PI + p*rotl(S.InfSpeed() - ref_frame_speed);
+    return os;
 }

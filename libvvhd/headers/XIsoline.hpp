@@ -3,6 +3,7 @@
 #include "XField.hpp"
 
 #include <list>
+#include <deque>
 #include <sstream>
 
 class XIsoline {
@@ -32,12 +33,12 @@ private:
             return (v.x == x) && (v.y == y);
         }
     };
-    typedef std::vector<TPoint> TLine;
+    typedef std::deque<TPoint> TLine;
     std::list<TLine> isolines;
+    float xmin, ymin, dxdy;
 
 private:
-    static void merge_lines(TLine* dst, bool dst_side);
-    static void commit_segment(TPoint p1, TPoint p2);
-    static void process_rect(float x, float y, float z[5], float C);
-
+    void merge_lines(TLine* dst, bool dst_side);
+    void commit_segment(TPoint p1, TPoint p2);
+    void process_rect(float x, float y, float z[5], float C);
 };

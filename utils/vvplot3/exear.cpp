@@ -36,24 +36,13 @@ Exear::~Exear()
     chmod(filename.c_str(), 0755);
 }
 
-// void Exear::append(const char* filename, std::vector<char> data, int perm)
-// {
-//     archive_entry_set_pathname(e, filename);
-//     archive_entry_set_size(e, data.size());
-//     archive_entry_set_filetype(e, AE_IFREG);
-//     archive_entry_set_perm(e, perm);
-//     archive_write_header(a, e);
-//     archive_write_data(a, data.data(), data.size());
-//     archive_entry_clear(e);
-// }
-
-void Exear::append(const char* filename, std::string str, int perm)
+void Exear::append(const char* filename, const void* data, size_t len, int perm)
 {
     archive_entry_set_pathname(e, filename);
-    archive_entry_set_size(e, str.length());
+    archive_entry_set_size(e, len);
     archive_entry_set_filetype(e, AE_IFREG);
     archive_entry_set_perm(e, perm);
     archive_write_header(a, e);
-    archive_write_data(a, str.c_str(), str.length());
+    archive_write_data(a, data, len);
     archive_entry_clear(e);
 }

@@ -1,12 +1,10 @@
 #include "XField.hpp"
 
 XField::XField(
-    double xmin, double ymin,
-    double dxdy,
+    double xmin, double ymin, double dxdy,
     int xres, int yres
 ):
-    xmin(xmin), ymin(ymin),
-    dxdy(dxdy),
+    xmin(xmin), ymin(ymin), dxdy(dxdy),
     xres(xres), yres(yres),
     map(new float[xres*yres]),
     gaps(),
@@ -23,6 +21,32 @@ XField::XField(
 XField::~XField()
 {
     delete[] map;
+}
+
+float XField::min() const
+{
+    if (!evaluated) {
+        throw std::invalid_argument("XField::min(): not evaluated");
+    }
+
+    float result = *map;
+    for (int i=0; i<xres*yres; i++) {
+        result = std::min(result, map[i]);
+    }
+    return result;
+}
+
+float XField::max() const
+{
+    if (!evaluated) {
+        throw std::invalid_argument("XField::max(): not evaluated");
+    }
+
+    float result = *map;
+    for (int i=0; i<xres*yres; i++) {
+        result = std::max(result, map[i]);
+    }
+    return result;
 }
 
 std::ostream& operator<< (std::ostream& os, const XField& field)

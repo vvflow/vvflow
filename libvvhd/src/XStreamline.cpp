@@ -7,14 +7,9 @@
 #include <cmath>
 #include <limits>
 
-using std::min;
-using std::max;
-using std::exp;
-using std::isfinite;
 using std::vector;
-using std::numeric_limits;
 
-static const double inf = numeric_limits<double>::infinity();
+static const double d_inf = 1.0l/0.0l;
 
 XStreamfunction::XStreamfunction(
     const Space &S,
@@ -92,7 +87,7 @@ void XStreamfunction::evaluate()
         {
             for (TObj *lobj = (**llbnode).vRange.first; lobj < (**llbnode).vRange.last; lobj++)
             {
-                lobj->v.x = sqr(eps_mult)*max(epsfast::eps2h(**llbnode, lobj->r)*0.25, sqr(0.2*dl));
+                lobj->v.x = sqr(eps_mult)*std::max(epsfast::eps2h(**llbnode, lobj->r)*0.25, sqr(0.2*dl));
             }
         }
 

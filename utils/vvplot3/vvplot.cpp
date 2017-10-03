@@ -6,6 +6,7 @@
 #include "TSortedTree.hpp"
 #include "XVorticity.hpp"
 #include "XStreamline.hpp"
+#include "XIsoline.hpp"
 
 // #include <string.h> /* strerror */
 // #include <inttypes.h> /* PRIu32 */
@@ -49,8 +50,8 @@ namespace opt {
 
     // other options
     char   ref_xy = 'o';
-    char   ref_S = 'o';
-    char   ref_P = 's';
+    char   ref_S =  'o';
+    char   ref_P =  's';
 
     int width = 1280;
     int height = 720;
@@ -59,7 +60,7 @@ namespace opt {
     int timelabel = true;
     int holder = false;
     int spring = false;
-    int ttree = true;
+    int ttree = false;
 
     int dry_run = false;
 
@@ -147,11 +148,12 @@ int main(int argc, char **argv)
 
     if (opt::G) {
         std::stringstream bin;
-        XVorticity vrt(S,
+        XVorticity vrt = {S,
             opt::rect.xmin, opt::rect.ymin,
             opt::mesh_hi.dxdy,
-            opt::mesh_hi.xres+1, opt::mesh_hi.yres+1,
-            2);
+            opt::mesh_hi.xres+1,
+            opt::mesh_hi.yres+1,
+            2};
         vrt.evaluate();
         bin << vrt;
         e->append("map_vorticity", bin.str());
@@ -169,35 +171,6 @@ int main(int argc, char **argv)
 
         plot_cmd << DELIMITER;
         plot_cmd << "'map_vorticity'";
-        plot_cmd << " binary matrix";
-        plot_cmd << " u 1:2:3";
-        plot_cmd << " with image";
-    }
-
-    if (opt::S) {
-        std::stringstream bin;
-        XStreamfunction psi(S,
-            opt::rect.xmin, opt::rect.ymin,
-            opt::mesh_lo.dxdy,
-            opt::mesh_lo.xres+1, opt::mesh_lo.yres+1,
-            2, opt::ref_S);
-        psi.evaluate();
-        bin << psi;
-        e->append("map_streamfunction", bin.str());
-
-        if (opt::gray) {
-            main_gp << "set palette defined (-1 \"#000000\", 1 \"#ffffff\")" << std::endl;
-        } else {
-            main_gp << "set palette defined (-1 \"#0000ff\", 0 \"#ffffff\", 1 \"#ff0000\")" << std::endl;
-        }
-        if (opt::Gmax > 0) {
-            main_gp << strfmt( "set cbrange [%lg:%lg]\n", -opt::Gmax, opt::Gmax);
-        } else {
-            main_gp << "set cbrange []\n" << std::endl;
-        }
-
-        plot_cmd << DELIMITER;
-        plot_cmd << "'map_streamfunction'";
         plot_cmd << " binary matrix";
         plot_cmd << " u 1:2:3";
         plot_cmd << " with image";
@@ -222,6 +195,43 @@ int main(int argc, char **argv)
             plot_cmd << " u 1:2:(color($3))"
             << " with dots lc rgb variable";
         }
+    }
+
+    if (opt::S) {
+        std::stringstream bin_streamfunc;
+        XStreamfunction psi = {S,
+            opt::rect.xmin, opt::rect.ymin,
+            opt::mesh_lo.dxdy,
+            opt::mesh_lo.xres+1,
+            opt::mesh_lo.yres+1,
+            2, opt::ref_S};
+        psi.evaluate();
+        bin_streamfunc << psi;
+        e->append("map_streamfunction", bin_streamfunc.str());
+
+        // main_gp << "set palette defined (-1 \"#000000\", 1 \"#ffffff\")" << std::endl;
+        // main_gp << "set cbrange []\n" << std::endl;
+
+        // plot_cmd << DELIMITER;
+        // plot_cmd << "'map_streamfunction'";
+        // plot_cmd << " binary matrix";
+        // // plot_cmd << " u 1:2:3";
+        // plot_cmd << " with image";
+
+        if (!(opt::Sstep>0)) {
+            opt::Smin = psi.min();
+            opt::Smax = psi.max();
+            opt::Sstep = (opt::Smax - opt::Smin)/33.;
+        }
+
+        std::stringstream bin_streamline;
+        bin_streamline << XIsoline(psi, opt::Smin, opt::Smax, opt::Sstep);
+        e->append("streamlines", bin_streamline.str());
+
+        plot_cmd << DELIMITER;
+        plot_cmd << "'streamlines'";
+        plot_cmd << " binary format='%2float'";
+        plot_cmd << " with lines lw 1 lc rgb 'black'";
     }
 
     for (auto& lbody: S.BodyList) {

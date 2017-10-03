@@ -50,7 +50,7 @@ void XVorticity::evaluate()
         {
             for (TObj *lobj = (**llbnode).vRange.first; lobj < (**llbnode).vRange.last; lobj++)
             {
-                lobj->v.x = 1./(sqr(eps_mult)*max(epsfast::eps2h(**llbnode, lobj->r), sqr(0.6*dl)));
+                lobj->v.x = 1./(sqr(eps_mult)*std::max(epsfast::eps2h(**llbnode, lobj->r), sqr(0.6*dl)));
                 lobj->v.y = lobj->v.x * lobj->g;
             }
         }
