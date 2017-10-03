@@ -236,7 +236,7 @@ int main(int argc, char **argv)
         plot_cmd << " with lines lw 1 lc rgb 'black'";
     }
 
-    for (auto& lbody: S.BodyList) {
+    for (const std::shared_ptr<TBody>& lbody: S.BodyList) {
         if (opt::B) {
             plot_cmd << DELIMITER;
             plot_cmd << "'" << lbody->label << "'";
@@ -245,7 +245,7 @@ int main(int argc, char **argv)
         }
 
         std::stringstream bin;
-        for (auto& latt: lbody->alist) {
+        for (const TAtt& latt: lbody->alist) {
             TVec p = latt.corner;
             float f[2] = {float(p.x), float(p.y)};
             bin.write(reinterpret_cast<const char*>(f), sizeof(f));
@@ -259,13 +259,43 @@ int main(int argc, char **argv)
         e->append(lbody->label.c_str(), bin.str());
     }
 
+    if (opt::holder || opt::spring) {
+        std::stringstream body_holders;
+        for (const std::shared_ptr<TBody>& lbody: S.BodyList) {
+            TVec p = lbody->holder.r;
+            body_holders << p.x << " " << p.y;
+            body_holders << " ";
+            p = lbody->get_axis();
+            body_holders << p.x << " " << p.y;
+            body_holders << std::endl;
+        }
+        e->append("body_holders", body_holders.str());
+
+        if (opt::holder) {
+            plot_cmd << DELIMITER;
+            plot_cmd << "'body_holders'";
+            plot_cmd << strfmt(  " u 1:2:(1.5*%lf)", opt::Vcirc);
+            plot_cmd << " w circles lc rgb 'black' fs solid noborder";
+        }
+        if (opt::spring) {
+            plot_cmd << DELIMITER;
+            plot_cmd << "'body_holders'";
+            plot_cmd << strfmt(  " u 3:4:(1.5*%lf)", opt::Vcirc);
+            plot_cmd << " w circles lc rgb 'black' fs solid noborder";
+            plot_cmd << DELIMITER;
+            plot_cmd << "'body_holders'";
+            plot_cmd << " u 1:2:($3-$1):($4-$2)";
+            plot_cmd << " w vectors nohead lc rgb 'black' lw 1.5";
+        }
+    }
+
     if (opt::ttree_bottom_nodes
         || opt::ttree_near_nodes
         || opt::ttree_find_node
     ) {
         double dl = S.AverageSegmentLength();
         double min_node_size = dl>0 ? dl*10 : 0;
-        double max_node_size = dl>0 ? dl*20 : std::numeric_limits<double>::max();
+        double max_node_size = dl>0 ? dl*20 : d_inf;
         TSortedTree tree = {&S, 8, min_node_size, max_node_size};
         tree.build();
 
