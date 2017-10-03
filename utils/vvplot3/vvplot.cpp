@@ -5,7 +5,7 @@
 #include "TSpace.hpp"
 #include "TSortedTree.hpp"
 #include "XVorticity.hpp"
-#include "XStreamline.hpp"
+#include "XStreamfunction.hpp"
 #include "XIsoline.hpp"
 
 // #include <string.h> /* strerror */

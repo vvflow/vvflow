@@ -1,4 +1,4 @@
-#include "XStreamline.hpp"
+#include "XStreamfunction.hpp"
 
 #include "MFlowmove.hpp"
 #include "MEpsFast.hpp"
@@ -8,8 +8,6 @@
 #include <limits>
 
 using std::vector;
-
-static const double d_inf = 1.0l/0.0l;
 
 XStreamfunction::XStreamfunction(
     const Space &S,
