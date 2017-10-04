@@ -143,7 +143,7 @@ int main(int argc, char **argv)
     }
 
     if (opt::timelabel) {
-        main_gp << strfmt("set label \"t = %lf\" at graph 0.05, 0.90 front", S.Time) << std::endl;
+        main_gp << strfmt("set label \"t = %lf\" at graph 0.05, 0.90 front", double(S.Time)) << std::endl;
     }
 
     std::stringstream plot_cmd;
@@ -191,12 +191,14 @@ int main(int argc, char **argv)
         plot_cmd << DELIMITER;
         plot_cmd << "'vortex_list'";
         plot_cmd << " binary format='%3float'";
+        plot_cmd << " u 1:2:(color($3))";
+        plot_cmd << " with dots lc rgb variable";
         if (opt::Vsize > 0) {
-            plot_cmd << strfmt(  " u 1:2:(%lf):(color($3))", opt::Vcirc)
-            << " with circles lc rgb variable fs transparent solid 0.3 noborder";
-        } else {
-            plot_cmd << " u 1:2:(color($3))"
-            << " with dots lc rgb variable";
+            plot_cmd << DELIMITER;
+            plot_cmd << "''";
+            plot_cmd << " binary format='%3float'";
+            plot_cmd << strfmt(  " u 1:2:(%lf):(color($3))", opt::Vcirc);
+            plot_cmd << " with circles lc rgb variable fs transparent solid 0.3 noborder";
         }
     }
 
@@ -233,7 +235,7 @@ int main(int argc, char **argv)
         plot_cmd << DELIMITER;
         plot_cmd << "'streamlines'";
         plot_cmd << " binary format='%2float'";
-        plot_cmd << " with lines lw 1 lc rgb 'black'";
+        plot_cmd << " with lines lw 1.5 lc rgb 'black'";
     }
 
     for (const std::shared_ptr<TBody>& lbody: S.BodyList) {
