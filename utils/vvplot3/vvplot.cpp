@@ -239,26 +239,34 @@ int main(int argc, char **argv)
     }
 
     for (const std::shared_ptr<TBody>& lbody: S.BodyList) {
+        const TBody& b = *lbody;
+        const char* blabel;
+        if (!b.label.empty()){
+            blabel = b.label.c_str();
+        } else {
+            blabel = S.get_body_name(&b).c_str();
+        }
+
         if (opt::B) {
             plot_cmd << DELIMITER;
-            plot_cmd << "'" << lbody->label << "'";
+            plot_cmd << "'" << blabel << "'";
             plot_cmd << " binary format='%2float'";
             plot_cmd << " with filledcurve lc rgb '#adadad' lw 2 fs solid border -1";
         }
 
         std::stringstream bin;
-        for (const TAtt& latt: lbody->alist) {
+        for (const TAtt& latt: b.alist) {
             TVec p = latt.corner;
             float f[2] = {float(p.x), float(p.y)};
             bin.write(reinterpret_cast<const char*>(f), sizeof(f));
         }
         { /* close the curve */
-            TVec p = lbody->alist.front().corner;
+            TVec p = b.alist.front().corner;
             float f[2] = {float(p.x), float(p.y)};
             bin.write(reinterpret_cast<const char*>(f), sizeof(f));
         }
 
-        e->append(lbody->label.c_str(), bin.str());
+        e->append(blabel, bin.str());
     }
 
     if (opt::holder || opt::spring) {
