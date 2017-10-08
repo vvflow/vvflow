@@ -1,4 +1,6 @@
 #include "lua_space.h"
+#include "TSpace.hpp"
+#include "XStreamfunction.hpp"
 #include "getset.h"
 
 #include <cstring>
@@ -18,6 +20,25 @@ static int space_save(lua_State *L) {
     S->Save(fname);
     return 0;
 }
+
+static int space_xstreamfunction(lua_State *L) {
+    Space **ptr = (Space**)luaL_checkudata(L, 1, "S");
+    Space *S = *ptr;
+
+    TVec vec = {};
+    lua_pushcfunction(L, luavvd_setTVec);
+    lua_pushlightuserdata(L, (char*)&vec);
+    lua_pushvalue(L, 2);
+    lua_call(L, 2, 1);
+    if (!lua_isnil(L, -1)) {
+        luaL_error(L, "bad argument #1 for TSpace.XStreamfunction (%s)", lua_tostring(L, -1));
+    }
+
+    double ret = XStreamfunction::streamfunction(*S, vec);
+    lua_pushnumber(L, ret);
+    return 1;
+}
+
 static const struct luavvd_member space_members[] = {
     {"caption", luavvd_getstring,      luavvd_setstring,      offsetof(Space, caption) },
     {"re",      luavvd_getdouble,      luavvd_setdouble,      offsetof(Space, Re) },
@@ -45,6 +66,7 @@ static const struct luavvd_member space_members[] = {
 static const struct luavvd_method space_methods[] = {
     {"load", space_load},
     {"save", space_save},
+    {"XStreamfunction", space_xstreamfunction},
     {NULL, NULL}
 } ;
 
