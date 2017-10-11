@@ -40,6 +40,30 @@ This manual will not discuss the Lua syntax in all details, although it will cov
 
 ## SYNTAX
 
+`vvcompose` implements binding for the following types:
+
+  * [Space](#Space)
+  * [TVec](#TVec)
+  * [TVec3D](#TVec3D)
+  * [TTime](#TTime)
+  * [TEval](#TEval)
+  * [TBody](#TBody)
+  * [TBodyList](#TBodyList)
+  * [TObj](#TObj)
+  * [TObjList](#TObjList)
+
+`vvcompose` also implements some body generators:
+
+  * [gen_cylinder](#gen_cylinder)
+  * [gen_semicyl](#gen_semicyl)
+  * [gen_ellipse](#gen_ellipse)
+  * [gen_plate](#gen_plate)
+  * [gen_parallelogram](#gen_parallelogram)
+  * [gen_roundrect](#gen_roundrect)
+  * [gen_chamber_gpj](#gen_chamber_gpj)
+  * [gen_chamber_box](#gen_chamber_box)
+  * [gen_savonius](#gen_savonius)
+
 ### Space
 
 The general concept in Vvflow CFD Suite is the _Space_ `S`.
@@ -420,7 +444,10 @@ _Example_:
 
 ## BODY GENERATORS
 
-### gen_cylinder{R, [N|dl]}
+### gen_cylinder
+
+    gen_cylinder{R, [N|dl]}
+    -- b = gen_cylinder{R=0.5, N=500}
 
 Generate a cylinder with center at {0, 0}
 
@@ -439,10 +466,11 @@ Generate a cylinder with center at {0, 0}
   * `N`, `dl` :
     specify either number of segments or average segment length
 
-_Example_:
-cyl = gen_cylinder{R=0.5, N=500}
 
-### gen_semicyl{R, [N|dl]}
+### gen_semicyl
+
+    gen_semicyl{R, [N|dl]}
+    -- b = gen_semicyl{R=0.5, N=500}
 
 The bottom half of a cylinder with center at {0, 0}
 
@@ -455,7 +483,10 @@ The bottom half of a cylinder with center at {0, 0}
     #          `-.______.-'
     #
 
-### gen_ellipse{Rx, Ry, [N|dl]}
+### gen_ellipse
+
+    gen_ellipse{Rx, Ry, [N|dl]}
+    -- b = gen_ellipse{Rx=4, Ry=0.5, N=600}
 
 Generate an ellipse with center at {0, 0}
 
@@ -473,7 +504,9 @@ Generate an ellipse with center at {0, 0}
   * `N`, `dl` :
     specify either number of segments or average segment length
 
-### gen_plate{R1, R2, L, [N|dl]}
+### gen_plate
+
+    gen_plate{R1, R2, L, [N|dl]}
 
 Shape of a plate is formed by two circles and two tangents.
 Circles radius are `R1` and `R2`, their centers are {0, 0} and {0, `L`}.
@@ -497,7 +530,9 @@ Circles radius are `R1` and `R2`, their centers are {0, 0} and {0, `L`}.
   * `N`, `dl` :
     specify either number of segments or average segment length
 
-### gen_parallelogram{L, H, d, [N|dl]}
+### gen_parallelogram
+
+    gen_parallelogram{L, H, d, [N|dl]}
 
 Generate parallelogram with origin is in bottom left corner.
 
@@ -522,7 +557,9 @@ Generate parallelogram with origin is in bottom left corner.
   * `N`, `dl` :
     specify either number of segments or average segment length
 
-### gen_roundrect{L, H, R, [N|dl]}
+### gen_roundrect
+
+    gen_roundrect{L, H, R, [N|dl]}
 
 Generate roundrect with origin in center.
 
@@ -547,7 +584,9 @@ Generate roundrect with origin in center.
   * `N`, `dl` :
     specify either number of segments or average segment length
 
-### gen_chamber_gpj{R0, X0, X1, X2, X3, d, L, H, dln, dls}
+### gen_chamber_gpj
+
+    gen_chamber_gpj{R0, X0, X1, X2, X3, d, L, H, dln, dls}
 
 This is a chamber for the generator of pulsating jets (GPJ).
 It consists of prechamber, straight channel, expanding channel, and a bounding box.
@@ -584,7 +623,9 @@ Regions with no-slip boundary condition have segment length `dln`, regions with 
     #                        ""--,
     #         ^x0   ^x1     ^x2  ^x3
 
-### gen_chamber_box{L, H, D, h, d, dln, dls}
+### gen_chamber_box
+
+    gen_chamber_box{L, H, D, h, d, dln, dls}
 
 This is a box chamber.
 It consists of 4 thick walls with a hole on the bottom.
@@ -607,7 +648,9 @@ regions with slip - `dls`.
     #              ^  ^   ^  ^
     #              0 D/2 L/2 L/2+h
 
-### gen_savonius{R, h, [N|dl]}
+### gen_savonius
+
+    gen_savonius{R, h, [N|dl]}
 
 Savonius is formed by 2 thick semi-circles,
 which boundary is 6 semi-circle arcs.
