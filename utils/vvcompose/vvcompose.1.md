@@ -99,6 +99,9 @@ Description of all types is given below.
   * S`:save`(*FILE*), S`:load`(*FILE*) :
     save or load the Space in HDF5 format
 
+  * S`:XStreamfunction`(*TVec*) :
+    calculate streamfunction in point
+
 _Examples_:
 
     S.re = 140
@@ -113,6 +116,9 @@ _Examples_:
     S.body_list:insert(cyl)
     S.caption = string.format("example_re%f", S.re)
     S:save(S.caption..".h5")
+
+    -- calculate fluid flow rate between two points
+    print( S:XStreamfunction{2, -1} - S:XStreamfunction{2, 1} )
 
 ### TVec
 
