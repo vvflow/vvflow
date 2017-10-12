@@ -404,6 +404,71 @@ check_val(function() return #gen_ellipse{ Rx=1, Ry=0.2, N=800 } end, 800)
 check_dev(function() e = gen_ellipse{ Rx=1, Ry=0.04, dl=0.02 } return e:get_slen()/#e end, 0.02, 2e-4)
 collectgarbage()
 
+-- gen_parallelogram
+gen_pgram = gen_parallelogram
+check_err(function() gen_pgram() end, "bad argument #1 to 'gen_pgram' (table expected, got no value)")
+check_err(function() gen_pgram{ N={0} } end, "bad argument #1 to 'gen_pgram' ('N' must be a number)")
+check_err(function() gen_pgram{ N=nan } end, "bad argument #1 to 'gen_pgram' ('N' must be finite)")
+check_err(function() gen_pgram{ N=inf } end, "bad argument #1 to 'gen_pgram' ('N' must be finite)")
+check_err(function() gen_pgram{ N=-11 } end, "bad argument #1 to 'gen_pgram' ('N' must be positive)")
+check_err(function() gen_pgram{ dl={0} } end, "bad argument #1 to 'gen_pgram' ('dl' must be a number)")
+check_err(function() gen_pgram{ dl=nan } end, "bad argument #1 to 'gen_pgram' ('dl' must be finite)")
+check_err(function() gen_pgram{ dl=inf } end, "bad argument #1 to 'gen_pgram' ('dl' must be finite)")
+check_err(function() gen_pgram{ dl=-11 } end, "bad argument #1 to 'gen_pgram' ('dl' must be positive)")
+check_err(function() gen_pgram{ N=1, dl=1 } end, "bad argument #1 to 'gen_pgram' ('N' and 'dl' are mutually exclusive)")
+check_err(function() gen_pgram{ L=1.0,     } end, "bad argument #1 to 'gen_pgram' (either 'N' or dl' must be specified)")
+check_err(function() gen_pgram{ L={0}, N=1 } end, "bad argument #1 to 'gen_pgram' ('L' must be a number)")
+check_err(function() gen_pgram{ L=inf, N=1 } end, "bad argument #1 to 'gen_pgram' ('L' must be finite)")
+check_err(function() gen_pgram{ L=nan, N=1 } end, "bad argument #1 to 'gen_pgram' ('L' must be finite)")
+check_err(function() gen_pgram{ L=-11, N=1 } end, "bad argument #1 to 'gen_pgram' ('L' must be positive)")
+check_err(function() gen_pgram{ L=1.0, H={0}, N=1 } end, "bad argument #1 to 'gen_pgram' ('H' must be a number)")
+check_err(function() gen_pgram{ L=1.0, H=inf, N=1 } end, "bad argument #1 to 'gen_pgram' ('H' must be finite)")
+check_err(function() gen_pgram{ L=1.0, H=nan, N=1 } end, "bad argument #1 to 'gen_pgram' ('H' must be finite)")
+check_err(function() gen_pgram{ L=1.0, H=-11, N=1 } end, "bad argument #1 to 'gen_pgram' ('H' must be positive)")
+check_err(function() gen_pgram{ L=1.0, H=1.0, d={0}, N=1 } end, "bad argument #1 to 'gen_pgram' ('d' must be a number)")
+check_err(function() gen_pgram{ L=1.0, H=1.0, d=inf, N=1 } end, "bad argument #1 to 'gen_pgram' ('d' must be finite)")
+check_err(function() gen_pgram{ L=1.0, H=1.0, d=nan, N=1 } end, "bad argument #1 to 'gen_pgram' ('d' must be finite)")
+check_err(function() gen_pgram{ L=1.0, H=1.0, d=0.0, N=1 } end, "bad argument #1 to 'gen_pgram' ('d' must be in range (0, 180))")
+check_err(function() gen_pgram{ L=1.0, H=1.0, d=180, N=1 } end, "bad argument #1 to 'gen_pgram' ('d' must be in range (0, 180))")
+check_err(function() gen_pgram{ L=1.0, H=1.0, d=90, N=1, foo=5 } end, "bad argument #1 to 'gen_pgram' (excess parameter 'foo')")
+check_err(function() gen_pgram{ L=1.0, H=1.0, d=30, dl=0.04 } end, nil)
+collectgarbage()
+
+pgram_30 = gen_pgram{ L=1, H=1, d=30, N=400 }
+check_val(function() return #pgram_30 end, 400)
+check_dev(function() return pgram_30:get_area() end, 1, 1e-5)
+check_dev(function() return pgram_30:get_cofm()[1] end, 0.5*(1+1/math.tan(pi/6)), 1e-5)
+check_dev(function() return pgram_30:get_cofm()[2] end, 0.5, 1e-5)
+pgram_30 = nil
+collectgarbage()
+
+pgram_45 = gen_pgram{ L=1, H=1, d=45, N=500 }
+check_val(function() return #pgram_45 end, 500)
+check_dev(function() return pgram_45:get_area() end, 1, 1e-5)
+check_dev(function() return pgram_45:get_slen() end, 2*(1+math.sqrt(2)), 1e-5)
+check_dev(function() return pgram_45:get_cofm()[1] end, 1.0, 1e-5)
+check_dev(function() return pgram_45:get_cofm()[2] end, 0.5, 1e-5)
+pgram_45 = nil
+collectgarbage()
+
+pgram_90 = gen_pgram{ L=1, H=1, d=90, N=600 }
+check_val(function() return #pgram_90 end, 600)
+check_dev(function() return pgram_90:get_area() end, 1, 1e-5)
+check_dev(function() return pgram_90:get_slen() end, 4, 1e-5)
+check_dev(function() return pgram_90:get_cofm()[1] end, 0.5, 1e-5)
+check_dev(function() return pgram_90:get_cofm()[2] end, 0.5, 1e-5)
+pgram_90 = nil
+collectgarbage()
+
+pgram_135 = gen_pgram{ L=1, H=1, d=135, N=700 }
+check_val(function() return #pgram_135 end, 700)
+check_dev(function() return pgram_135:get_area() end, 1, 1e-5)
+check_dev(function() return pgram_135:get_slen() end, 2*(1+math.sqrt(2)), 1e-5)
+check_dev(function() return pgram_135:get_cofm()[1] end, 0.0, 1e-5)
+check_dev(function() return pgram_135:get_cofm()[2] end, 0.5, 1e-5)
+pgram_135 = nil
+collectgarbage()
+
 -- gen_plate
 check_err(function() gen_plate() end, "bad argument #1 to 'gen_plate' (table expected, got no value)")
 check_err(function() gen_plate{ N={0} } end, "bad argument #1 to 'gen_plate' ('N' must be a number)")

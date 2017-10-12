@@ -25,6 +25,7 @@ add_executable(vvcompose
     gen_body.cpp
     gen_cylinder.cpp
     gen_ellipse.cpp
+    gen_parallelogram.cpp
     gen_plate.cpp
     gen_gis.cpp
     gen_box.cpp

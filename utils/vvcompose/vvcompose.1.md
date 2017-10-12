@@ -534,7 +534,7 @@ Circles radius are `R1` and `R2`, their centers are {0, 0} and {0, `L`}.
 
     gen_parallelogram{L, H, d, [N|dl]}
 
-Generate parallelogram with origin is in bottom left corner.
+Generate parallelogram with origin in bottom left corner.
 
     #          _______________
     #         /|            d /
@@ -552,7 +552,7 @@ Generate parallelogram with origin is in bottom left corner.
     height
 
   * `d` :
-    angle in degrees
+    angle in degrees (from 0 to 180)
 
   * `N`, `dl` :
     specify either number of segments or average segment length

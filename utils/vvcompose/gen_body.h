@@ -16,6 +16,7 @@ int luavvd_gen_cylinder(lua_State *L);
 int luavvd_gen_semicyl(lua_State *L);
 int luavvd_gen_ellipse(lua_State *L);
 int luavvd_gen_plate(lua_State *L);
+int luavvd_gen_parallelogram(lua_State *L);
 int luavvd_gen_chamber_gpj(lua_State *L);
 int luavvd_gen_chamber_box(lua_State *L);
 
