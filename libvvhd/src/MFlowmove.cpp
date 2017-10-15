@@ -1,6 +1,7 @@
 #include "MFlowmove.hpp"
 
 #include <ctime>
+#include <cmath>
 #include <map>
 
 using std::shared_ptr;
@@ -13,18 +14,15 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
     // Detect collision
     // If required, shorten dt and set collision state
     TBody* collision_body = NULL;
-    for (auto& lbody: S->BodyList)
+    for (std::shared_ptr<TBody>& lbody: S->BodyList)
     {
-        static_assert(std::is_same<decltype(lbody), shared_ptr<TBody>&>::value, "lbody should be shared_ptr<TBody>");
-
         TVec3D new_pos = lbody->holder + lbody->dpos + current_dt*lbody->speed_slae;
-        /**/ if (new_pos.o > lbody->collision_max.o /* may be nan*/)
-        {
+        if (!(std::isfinite(lbody->kspring.o) && lbody->kspring.o >= 0)) {
+            /* do nothing */
+        } else if (new_pos.o > lbody->collision_max.o /* may be nan*/) {
             current_dt = (lbody->collision_max.o - lbody->holder.o - lbody->dpos.o) / lbody->speed_slae.o;
             collision_body = lbody.get();
-        }
-        else if (new_pos.o < lbody->collision_min.o /* may be nan*/)
-        {
+        } else if (new_pos.o < lbody->collision_min.o /* may be nan*/) {
             current_dt = (lbody->collision_min.o - lbody->holder.o - lbody->dpos.o) / lbody->speed_slae.o;
             collision_body = lbody.get();
         }
@@ -40,14 +38,12 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
     std::map<TBody*,TVec3D> deltaHolder;
     std::map<TBody*,TVec3D> deltaBody;
     // to prevent bodies from separating, fix tangential velocities
-    for (auto& lbody: S->BodyList)
+    for (std::shared_ptr<TBody>& lbody: S->BodyList)
     {
-        static_assert(std::is_same<decltype(lbody), shared_ptr<TBody>&>::value, "lbody should be shared_ptr<TBody>");
-
         TVec3D dHolder = lbody->speed(S->Time);
         TVec3D dBody = lbody->speed_slae;
 
-        auto root = lbody->root_body.lock();
+        std::shared_ptr<TBody> root = lbody->root_body.lock();
         if (root) {
             TVec dr = lbody->holder.r - root->get_axis();
             dHolder.r += root->speed_slae.r + rotl(dr)*root->speed_slae.o;
