@@ -18,13 +18,21 @@ class convectivefast
         TVec SpeedSumFast(TVec p);
 
     public:
-        void CalcCirculationFast();
+        void CalcCirculationFast(
+            // 1) during collision
+            // pointer to body.kspring.?.?
+            // for which the collision equation will be filled
+            // 2) after collision
+            // pointer to body.force_holder.?.?
+            // which is added to Hooke equation as (1+bounce)*force
+            const void** collision
+        );
         //void fillSlae();
         //void solveSlae();
 
     private:
         bool canUseInverse();
-        void FillMatrix(bool rightColOnly = false);
+        void FillMatrix(bool rightColOnly, const void** collision);
         Matrix* getMatrix() {return &matrix;}
 
     private:
@@ -64,7 +72,6 @@ class convectivefast
         void fillNewtonXEquation(unsigned eq_no, TBody* ibody, bool rightColOnly);
         void fillNewtonYEquation(unsigned eq_no, TBody* ibody, bool rightColOnly);
         void fillNewtonOEquation(unsigned eq_no, TBody* ibody, bool rightColOnly);
-        void fillCollisionOEquation(unsigned eq_no, TBody* ibody);
 
         void fillHookeXEquation(unsigned eq_no, TBody* ibody, bool rightColOnly);
         void fillHookeYEquation(unsigned eq_no, TBody* ibody, bool rightColOnly);

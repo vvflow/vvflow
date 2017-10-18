@@ -19,7 +19,6 @@ TBody::TBody():
     speed_slae(),
     speed_slae_prev(),
 
-    collision_detected(false),
     collision_min(NaN, NaN, NaN),
     collision_max(NaN, NaN, NaN),
     bounce(),
@@ -69,7 +68,6 @@ TBody& TBody::operator= (const TBody& copy)
     damping = copy.damping;
     speed_slae = copy.speed_slae;
     speed_slae_prev = copy.speed_slae_prev;
-    collision_detected = copy.collision_detected;
     collision_min = copy.collision_min;
     collision_max = copy.collision_max;
     bounce = copy.bounce;

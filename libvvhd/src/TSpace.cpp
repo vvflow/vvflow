@@ -663,16 +663,15 @@ void Space::CalcForces()
 {
     const double C_NyuDt_Pi = dt/(M_PI*Re);
     const double C_Nyu_Pi = 1./(M_PI*Re);
-    for (auto& lbody: BodyList)
+    for (shared_ptr<TBody>& lbody: BodyList)
     {
         double tmp_gsum = 0;
         //TObj tmp_fric(0,0,0);
         lbody->friction_prev = lbody->friction;
         lbody->friction = TVec3D();
 
-        for (auto& latt: lbody->alist)
+        for (TAtt& latt: lbody->alist)
         {
-            static_assert(std::is_same<decltype(latt), TAtt&>::value, "latt is not a reference");
             tmp_gsum+= latt.gsum;
             latt.Cp += tmp_gsum;
             latt.Fr += latt.fric * C_NyuDt_Pi;
@@ -855,16 +854,3 @@ std::string Space::get_body_name(const TBody* body) const
     sprintf(name, "body%02d", get_body_index(body));
     return std::string(name);
 }
-
-shared_ptr<TBody> Space::collision_detected() const
-{
-    for (auto lbody: BodyList)
-    {
-        if (lbody->collision_detected)
-            return lbody;
-    }
-
-    return nullptr;
-}
-
-

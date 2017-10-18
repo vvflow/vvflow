@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 #include <memory> // weak_ptr
+#include <cmath>
 
 //boundary condition
 enum class bc_t { steady, kutta };
@@ -80,7 +81,6 @@ class TBody
         TVec3D speed_slae;
         TVec3D speed_slae_prev;
 
-        bool collision_detected;
         // coordinates of collision
         TVec3D collision_min;
         TVec3D collision_max;
@@ -126,6 +126,9 @@ class TBody
 
         int eq_forces_no; // starting number of forces equations
 
+        static bool isrigid(double k) {
+            return !( k>=0 && std::isfinite(k) );
+        }
         //Heat layer
         //void CleanHeatLayer();
         //int *ObjectIsInHeatLayer(TObj &obj); //link to element of HeatLayer array

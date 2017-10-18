@@ -2,34 +2,56 @@
 
 #include <ctime>
 #include <cmath>
+#include <limits>
 #include <map>
 
 using std::shared_ptr;
+using std::numeric_limits;
 
-void flowmove::MoveAndClean(bool remove, bool zero_speed)
+static const double dNaN = numeric_limits<double>::quiet_NaN();
+
+void flowmove::MoveAndClean(bool remove, const void** collision)
 {
     CleanedV_ = 0;
+
     double current_dt = dt;
+    if (collision == nullptr) {
+        throw std::invalid_argument("MFlowmove::MoveAndClean(): invalid collision pointer");
+    }
+    *collision = nullptr;
 
     // Detect collision
     // If required, shorten dt and set collision state
-    TBody* collision_body = NULL;
     for (std::shared_ptr<TBody>& lbody: S->BodyList)
     {
-        TVec3D new_pos = lbody->holder + lbody->dpos + current_dt*lbody->speed_slae;
-        if (!(std::isfinite(lbody->kspring.o) && lbody->kspring.o >= 0)) {
-            /* do nothing */
-        } else if (new_pos.o > lbody->collision_max.o /* may be nan*/) {
-            current_dt = (lbody->collision_max.o - lbody->holder.o - lbody->dpos.o) / lbody->speed_slae.o;
-            collision_body = lbody.get();
-        } else if (new_pos.o < lbody->collision_min.o /* may be nan*/) {
-            current_dt = (lbody->collision_min.o - lbody->holder.o - lbody->dpos.o) / lbody->speed_slae.o;
-            collision_body = lbody.get();
+        TVec3D cur_pos_ = lbody->holder + lbody->dpos;
+        TVec3D new_pos_ = cur_pos_ + dt*lbody->speed_slae;
+
+        #define COMPONENTS(vec) {vec.r.x, vec.r.y, vec.o};
+
+        double cur_pos[] = COMPONENTS(cur_pos_);
+        double new_pos[] = COMPONENTS(new_pos_);
+        double speed[]   = COMPONENTS(lbody->speed_slae);
+        double max[] = COMPONENTS(lbody->collision_max);
+        double min[] = COMPONENTS(lbody->collision_min);
+        const double* kspring_[] = COMPONENTS(&lbody->kspring);
+
+        for (int i=0; i<3; i++) {
+            double dt_ = dNaN;
+            if (TBody::isrigid(*kspring_[i])) {
+                /* do nothing */
+            } else if (new_pos[i] > max[i]) {
+                dt_ = (max[i] - cur_pos[i]) / speed[i];
+            } else if (new_pos[i] < min[i]) {
+                dt_ = (min[i] - cur_pos[i]) / speed[i];
+            }
+
+            if (dt_ < current_dt) {
+                current_dt = dt_;
+                *collision = kspring_[i];
+            }
         }
-    }
-    if (collision_body)
-    {
-        collision_body->collision_detected = true;
+        #undef COMPONENTS
     }
 
     S->InfMarker+= S->InfSpeed()*current_dt;
@@ -167,7 +189,7 @@ void flowmove::MoveAndClean(bool remove, bool zero_speed)
         else lobj++;
     }
 
-    if (zero_speed)
+    if (true)
     {
         for (auto& lobj: S->VortexList) lobj.v = TVec(0., 0.);
         for (auto& lobj: S->HeatList)   lobj.v = TVec(0., 0.);

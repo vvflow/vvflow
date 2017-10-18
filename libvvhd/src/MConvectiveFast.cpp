@@ -3,7 +3,6 @@
 
 #include <complex>
 
-using std::isfinite;
 using std::complex;
 
 /****************************** MAIN FUNCTIONS ********************************/
@@ -233,58 +232,33 @@ bool convectivefast::canUseInverse()
 {
     //Algorithm:
 
+    if (S->BodyList.size() <= 1) {
+        return true;
+    }
+
     for (auto& lbody1: S->BodyList)
     {
         if (!lbody1->speed(S->Time).iszero()) return false;
-        if (isfinite(lbody1->kspring.r.x) && lbody1->kspring.r.x >= 0) return false;
-        if (isfinite(lbody1->kspring.r.y) && lbody1->kspring.r.y >= 0) return false;
-        if (isfinite(lbody1->kspring.o  ) && lbody1->kspring.o   >= 0) return false;
-        if (lbody1->collision_detected) return false;
+        if (!TBody::isrigid(lbody1->kspring.r.x)) return false;
+        if (!TBody::isrigid(lbody1->kspring.r.y)) return false;
+        if (!TBody::isrigid(lbody1->kspring.o  )) return false;
     }
-
-    return true;
-
-    /*
-    // if Nb <= 1 -> use_inverse=TRUE
-    // else check bodies
-    //     if any kx, ky, ka >= 0 -> use_inverse=FALSE
-    //     else if for any pair of bodies (Vo!=0) and (Vo or R*) differ -> use_inverse=FALSE
-    //     else if for any pair of bodies Vx or Vy differ -> use_inverse=FALSE
-    //     else use_inverse=TRUE
-    if (S->BodyList->size() <= 1) return true;
-
-    const_for(S->BodyList, llbody1)
-    {
-    TBody *lbody1 = *llbody1;
-
-    if (lbody1->k.r.x >= 0) return false;
-    if (lbody1->k.r.y >= 0) return false;
-    if (lbody1->k.o >= 0) return false;
-
-    const_for(S->BodyList, llbody2)
-    {
-    TBody *lbody2 = *llbody2;
-    if ((lbody1->getSpeed().o!=0) || (lbody2->getSpeed().o!=0))
-    {
-    if (lbody1->getSpeed().o != lbody2->getSpeed().o) return false;
-    if ((lbody1->pos.r+lbody1->dPos.r) != (lbody2->pos.r+lbody2->dPos.r)) return false;
-    }
-
-    if (lbody1->getSpeed().r != lbody2->getSpeed().r) return false;
-    }
-    }*/
 
     return true;
 }
 
-void convectivefast::CalcCirculationFast()
+void convectivefast::CalcCirculationFast(const void** collision)
 {
-    bool use_inverse = canUseInverse() && S->Time>0;
+    if (collision == nullptr) {
+        throw std::invalid_argument("MConvectiveFast::CalcCirculationFast(): invalid collision pointer");
+    }
+
+    bool use_inverse = (*collision == nullptr) && canUseInverse() && S->Time>0;
 
     matrix.resize(S->TotalSegmentsCount()+S->BodyList.size()*9);
 
-    if (matrix.bodyMatrixIsOk())
-        FillMatrix(/*rightColOnly=*/true);
+    if (matrix.bodyMatrixIsOk() && use_inverse)
+        FillMatrix(/*rightColOnly=*/true, collision);
     else
     {
         unsigned eq_no = 0;
@@ -307,7 +281,7 @@ void convectivefast::CalcCirculationFast()
             matrix.setSolutionForCol(eq_no++, &libody->force_holder.r.y);
             matrix.setSolutionForCol(eq_no++, &libody->force_holder.o);
         }
-        FillMatrix(/*rightColOnly=*/false);
+        FillMatrix(/*rightColOnly=*/false, collision);
     }
 
     matrix.solveUsingInverseMatrix(use_inverse);
@@ -418,7 +392,7 @@ void convectivefast::_2PI_A123(const TAtt &seg, const TBody* ibody, const TBody 
     *_2PI_A1 = (ibody == &b)?  C_2PI * seg.dl.y : 0;
     *_2PI_A2 = (ibody == &b)? -C_2PI * seg.dl.x : 0;
     *_2PI_A3 = 0;
-    if (!(isfinite(b.kspring.o) && b.kspring.o>=0) && (!b.speed_o.eval(S->Time)) && !b.root_body.lock())
+    if (TBody::isrigid(b.kspring.o) && (b.speed_o.eval(S->Time) == 0) && b.root_body.expired())
     {
         // в этом случае угловая скорость и так обратится в ноль
         // поэтому ради экономии времени коэффициент при ней не вычисляем
@@ -778,24 +752,6 @@ void convectivefast::fillNewtonOEquation(unsigned eq_no, TBody* ibody, bool righ
     }
 }
 
-void convectivefast::fillCollisionOEquation(unsigned eq_no, TBody* ibody)
-{
-    if (!ibody->collision_detected)
-    {
-        fprintf(stderr, "Trying to fill collision equetion without the need\n");
-        exit(-2);
-    }
-
-    //right column
-    *matrix.getRightCol(eq_no) = 0;
-
-    // self
-    {
-        // speed_slae
-        *matrix.getCell(eq_no, &ibody->speed_slae.o)   = 1;
-    }
-}
-
 //   888    888  .d88888b.   .d88888b.  888    d8P  8888888888
 //   888    888 d88P" "Y88b d88P" "Y88b 888   d8P   888
 //   888    888 888     888 888     888 888  d8P    888
@@ -935,8 +891,12 @@ typedef struct {
 } equationJob;
 
 
-void convectivefast::FillMatrix(bool rightColOnly)
+void convectivefast::FillMatrix(bool rightColOnly, const void** collision)
 {
+    if (collision == nullptr) {
+        throw std::invalid_argument("MConvectiveFast::FillMatrix(): invalid collision pointer");
+    }
+
     if (!rightColOnly) matrix.fillWithZeros();
 
     std::vector<equationJob> jobs;
@@ -965,28 +925,65 @@ void convectivefast::FillMatrix(bool rightColOnly)
             }
         }
 
-        if (isfinite(libody->kspring.r.x) && libody->kspring.r.x >= 0 && S->Time>0)
-            addJob(HookeXEquation, eq_no++, NULL, libody.get());
-        else
-            addJob(SpeedXEquation, eq_no++, NULL, libody.get());
+        if (TBody::isrigid(libody->kspring.r.x) || !(S->Time > 0) )
+            fillSpeedXEquation(eq_no, libody.get(), rightColOnly);
+        else if (*collision == &libody->kspring.r.x) {
+            *matrix.getCell(eq_no, &libody->speed_slae.r.x) = 1;
+            *matrix.getRightCol(eq_no) = 0;
+            *collision = &libody->force_holder.r.x;
+        } else {
+            fillHookeXEquation(eq_no, libody.get(), rightColOnly);
+            if (*collision == &libody->force_holder.r.x) {
+                *matrix.getRightCol(eq_no) +=
+                    (1+libody->bounce)
+                    * libody->force_holder.r.x;
+            }
+            *collision = nullptr;
+        }
+        eq_no++;
 
-        if (isfinite(libody->kspring.r.y) && libody->kspring.r.y >= 0 && S->Time>0)
-            addJob(HookeYEquation, eq_no++, NULL, libody.get());
-        else
-            addJob(SpeedYEquation, eq_no++, NULL, libody.get());
+        if (TBody::isrigid(libody->kspring.r.y) || !(S->Time > 0) )
+            fillSpeedYEquation(eq_no, libody.get(), rightColOnly);
+        else if (*collision == &libody->kspring.r.y) {
+            *matrix.getCell(eq_no, &libody->speed_slae.r.y) = 1;
+            *matrix.getRightCol(eq_no) = 0;
+            *collision = &libody->force_holder.r.y;
+        } else {
+            fillHookeYEquation(eq_no, libody.get(), rightColOnly);
+            if (*collision == &libody->force_holder.r.y) {
+                *matrix.getRightCol(eq_no) +=
+                    (1+libody->bounce)
+                    * libody->force_holder.r.y;
+            }
+            *collision = nullptr;
+        }
+        eq_no++;
 
-        if (isfinite(libody->kspring.o  ) && libody->kspring.o   >= 0 && S->Time>0)
-            addJob(HookeOEquation, eq_no++, NULL, libody.get());
-        else
-            addJob(SpeedOEquation, eq_no++, NULL, libody.get());
+        if (TBody::isrigid(libody->kspring.o) || !(S->Time > 0) )
+            fillSpeedOEquation(eq_no, libody.get(), rightColOnly);
+        else if (*collision == &libody->kspring.o) {
+            *matrix.getCell(eq_no, &libody->speed_slae.o) = 1;
+            *matrix.getRightCol(eq_no) = 0;
+            *collision = &libody->force_holder.o;
+        }
+        else {
+            fillHookeOEquation(eq_no, libody.get(), rightColOnly);
+            if (*collision == &libody->force_holder.o) {
+                *matrix.getRightCol(eq_no) +=
+                    (1+libody->bounce)
+                    * libody->force_holder.o;
+            }
+            *collision = nullptr;
+        }
+        eq_no++;
 
-        addJob(HydroXEquation, eq_no++, NULL, libody.get());
-        addJob(HydroYEquation, eq_no++, NULL, libody.get());
-        addJob(HydroOEquation, eq_no++, NULL, libody.get());
+        addJob(HydroXEquation, eq_no++, nullptr, libody.get());
+        addJob(HydroYEquation, eq_no++, nullptr, libody.get());
+        addJob(HydroOEquation, eq_no++, nullptr, libody.get());
 
-        addJob(NewtonXEquation, eq_no++, NULL, libody.get());
-        addJob(NewtonYEquation, eq_no++, NULL, libody.get());
-        addJob(NewtonOEquation, eq_no++, NULL, libody.get());
+        addJob(NewtonXEquation, eq_no++, nullptr, libody.get());
+        addJob(NewtonYEquation, eq_no++, nullptr, libody.get());
+        addJob(NewtonOEquation, eq_no++, nullptr, libody.get());
     }
 #undef addJob
 
@@ -1010,22 +1007,6 @@ void convectivefast::FillMatrix(bool rightColOnly)
         CASE(NewtonXEquation) FILL_EQ_FOR_BODY(NewtonXEquation);
         CASE(NewtonYEquation) FILL_EQ_FOR_BODY(NewtonYEquation);
         CASE(NewtonOEquation) FILL_EQ_FOR_BODY(NewtonOEquation);
-        CASE(SpeedXEquation) FILL_EQ_FOR_BODY(SpeedXEquation);
-        CASE(SpeedYEquation) FILL_EQ_FOR_BODY(SpeedYEquation);
-        CASE(SpeedOEquation) FILL_EQ_FOR_BODY(SpeedOEquation);
-        CASE(HookeXEquation) FILL_EQ_FOR_BODY(HookeXEquation);
-        CASE(HookeYEquation) FILL_EQ_FOR_BODY(HookeYEquation);
-        CASE(HookeOEquation)
-        {
-            if (!job->ibody->collision_detected) {
-                FILL_EQ_FOR_BODY(HookeOEquation);
-                *matrix.getRightCol(job->eq_no) +=
-                    (1+job->ibody->bounce)
-                    * job->ibody->force_holder.o;
-            } else {
-                fillCollisionOEquation(job->eq_no, job->ibody);
-            }
-        }
 #undef CASE
 #undef FILL_EQ_FOR_SEG
 #undef FILL_EQ_FOR_BODY

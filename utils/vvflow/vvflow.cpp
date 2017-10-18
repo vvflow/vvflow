@@ -81,6 +81,7 @@ int main(int argc, char** argv)
         S->BodyList->at(0)->overrideMoi_c(OVERRIDEMOI);
     #endif
 
+    const void* collision = nullptr;
     while (S->Time < S->Finish + S->dt/2)
     {
         if (S->BodyList.size())
@@ -88,13 +89,10 @@ int main(int argc, char** argv)
             dbg(tr.build());
 
             // решаем слау
-            conv.CalcCirculationFast();
-            shared_ptr<TBody> cbody = S->collision_detected();
-            if (cbody.get() != nullptr)
-            {
-                cbody->collision_detected = false;
-                conv.CalcCirculationFast();
+            if (collision != nullptr) {
+                conv.CalcCirculationFast(&collision);
             }
+            conv.CalcCirculationFast(&collision);
 
             dbg(tr.destroy());
         }
@@ -127,7 +125,7 @@ int main(int argc, char** argv)
         }
         dbg(tr.destroy());
 
-        dbg(fm.MoveAndClean(true));
+        dbg(fm.MoveAndClean(true, &collision));
             #ifdef OVERRIDEMOI
                     S->BodyList->at(0)->overrideMoi_c(OVERRIDEMOI);
             #endif
