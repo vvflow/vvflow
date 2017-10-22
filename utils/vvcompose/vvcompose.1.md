@@ -269,17 +269,17 @@ _Example_:
 
   * body.*spring_const* (TVec3D) :
     rate of elastic connections.
-    Negative and `inf` values correspond to the rigid connection.
+    Value `inf` corresponds to the rigid connection.
 
   * body.*spring_damping* (TVec3D) :
     viscous damping coefficient
 
     Force acting on a body can be expressed as
-    `F = -`*spring_const*`*`*delta_pos* `+` *spring_damping*`*`*speed*.
-    Due to the mistake in code the damping should be negative (the author will fix it later).
+    `F = -`*spring_const*`*`*delta_pos* `-` *spring_damping*`*`*speed*.
 
   * body.*collision_min*, body.*collision_max* (TVec3D) :
-    boundaries for body movement (concerning the *axis*)
+    boundaries of body movement (concerning the *axis*).
+    Value `nan` correspond to the absence of boubdaries.
 
   * body.*bounce* (number) :
     coefficient of restitution (considering collisions)

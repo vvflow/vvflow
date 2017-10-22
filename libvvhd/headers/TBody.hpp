@@ -129,6 +129,7 @@ class TBody
         static bool isrigid(double k) {
             return !( k>=0 && std::isfinite(k) );
         }
+        void validate(bool critical);
         //Heat layer
         //void CleanHeatLayer();
         //int *ObjectIsInHeatLayer(TObj &obj); //link to element of HeatLayer array

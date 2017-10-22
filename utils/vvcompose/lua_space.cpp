@@ -17,7 +17,11 @@ static int space_save(lua_State *L) {
     Space **ptr = (Space**)luaL_checkudata(L, 1, "S");
     Space *S = *ptr;
     const char* fname = luaL_checkstring(L, 2);
-    S->Save(fname);
+    try {
+        S->Save(fname);
+    } catch (const std::invalid_argument &e) {
+        return luaL_error(L, e.what());
+    }
     return 0;
 }
 

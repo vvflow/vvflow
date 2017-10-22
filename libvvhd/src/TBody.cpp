@@ -91,6 +91,87 @@ TBody& TBody::operator= (const TBody& copy)
     return *this;
 }
 
+void TBody::validate(bool critical)
+{
+    auto validate_damping = [](
+        bool critical,
+        double* val,
+        const char* str
+    ) {
+        auto estr = std::string("TBody::validate(): spring_damping.") + str + " must be ";
+        if (!std::isfinite(*val)) {
+            estr += "finite";
+            if (critical)
+                throw std::invalid_argument(estr);
+            else {
+                fprintf(stderr, "%s\n", estr.c_str());
+            }
+        }
+        if ( *val < 0 ) {
+            estr += "non-negative";
+            if (critical)
+                throw std::invalid_argument(estr);
+            else {
+                *val = std::fabs(*val);
+                fprintf(stderr, "warning: %s, changing to %lf\n", estr.c_str(), *val);
+            }
+        }
+    };
+
+    validate_damping(critical, &damping.r.x, "r.x");
+    validate_damping(critical, &damping.r.y, "r.y");
+    validate_damping(critical, &damping.o,   "o");
+
+    auto validate_kspring = [](
+        bool critical,
+        double* val,
+        const char* str
+    ) {
+        auto estr = std::string("TBody::validate(): spring_const.") + str + " must be ";
+        if (std::isnan(*val)) {
+            estr += "a number";
+            if (critical)
+                throw std::invalid_argument(estr);
+            else {
+                fprintf(stderr, "%s\n", estr.c_str());
+            }
+        }
+        if ( *val < 0 ) {
+            estr += "non-negative";
+            if (critical)
+                throw std::invalid_argument(estr);
+            else {
+                *val = inf;
+                fprintf(stderr, "warning: %s, changing to %lf\n", estr.c_str(), *val);
+            }
+        }
+    };
+
+    validate_kspring(critical, &kspring.r.x, "r.x");
+    validate_kspring(critical, &kspring.r.y, "r.y");
+    validate_kspring(critical, &kspring.o,   "o");
+
+    auto validate_collision_minmax = [](
+        bool critical,
+        double* val_min,
+        double* val_max,
+        const char* str
+    ) {
+        if ( *val_min >= *val_max ) {
+            auto estr = std::string("TBody::validate(): collision_max.") + str;
+            estr = estr + " must be greater than collision_min." + str;
+            if (critical)
+                throw std::invalid_argument(estr);
+            else {
+                fprintf(stderr, "%s\n", estr.c_str());
+            }
+        }
+    };
+
+    validate_collision_minmax(critical, &collision_min.r.x, &collision_max.r.x, "r.x");
+    validate_collision_minmax(critical, &collision_min.r.y, &collision_max.r.y, "r.y");
+    validate_collision_minmax(critical, &collision_min.o,   &collision_max.o,   "o");
+}
 
 TVec3D TBody::speed(double t) const
 {

@@ -769,7 +769,7 @@ void convectivefast::fillHookeXEquation(unsigned eq_no, TBody* ibody, bool right
     // self
     {
         // speed_slae
-        *matrix.getCell(eq_no, &ibody->speed_slae.r.x) = ibody->damping.r.x;
+        *matrix.getCell(eq_no, &ibody->speed_slae.r.x) = -ibody->damping.r.x;
         // force_holder
         *matrix.getCell(eq_no, &ibody->force_holder.r.x) = 1;
     }
@@ -783,7 +783,7 @@ void convectivefast::fillHookeYEquation(unsigned eq_no, TBody* ibody, bool right
     // self
     {
         // speed_slae
-        *matrix.getCell(eq_no, &ibody->speed_slae.r.y) = ibody->damping.r.y;
+        *matrix.getCell(eq_no, &ibody->speed_slae.r.y) = -ibody->damping.r.y;
         // force_holder
         *matrix.getCell(eq_no, &ibody->force_holder.r.y) = 1;
     }
@@ -797,7 +797,7 @@ void convectivefast::fillHookeOEquation(unsigned eq_no, TBody* ibody, bool right
     // self
     {
         // speed_slae
-        *matrix.getCell(eq_no, &ibody->speed_slae.o)   = ibody->damping.o;
+        *matrix.getCell(eq_no, &ibody->speed_slae.o)   = -ibody->damping.o;
         // force_holder
         *matrix.getCell(eq_no, &ibody->force_holder.o) = 1;
     }

@@ -248,7 +248,7 @@ check_val(function() return tostring(S.vort_list[2]) end, "TObj(20,200,2000)")
 check_val(function() return tostring(S.vort_list[3]) end, "TObj(inf,nan,0)")
 check_val(function() return #S.vort_list:totable()   end, 3)
 check_err(function() S.vort_list:load("/nowhere")    end, "can not load '/nowhere' (No such file or directory)")
-check_err(function() S.vort_list:load("/proc/1/mem") end, "can not load '/proc/1/mem' (Permission denied)")
+check_err(function() S.vort_list:load("/sys/bus/cpu/uevent") end, "can not load '/sys/bus/cpu/uevent' (Permission denied)")
 file = io.open(fname, "w")
 file:write("txt txt txt\n")
 file:write("3.1 3.2 3.3\n")
@@ -636,6 +636,32 @@ for i, b in ipairs({"cyl1", "cyl2"}) do
 end
 collectgarbage()
 S:save("/tmp/vvlua.test.h5")
+
+S.body_list[1].spring_damping.o = -1
+check_err(function() S:save("/tmp/vvlua.test.h5") end, "TBody::validate(): spring_damping.o must be non-negative")
+S.body_list[1].spring_damping.o = nan
+check_err(function() S:save("/tmp/vvlua.test.h5") end, "TBody::validate(): spring_damping.o must be finite")
+S.body_list[1].spring_damping.o = inf
+check_err(function() S:save("/tmp/vvlua.test.h5") end, "TBody::validate(): spring_damping.o must be finite")
+S.body_list[1].spring_damping.o = 0
+check_err(function() S:save("/tmp/vvlua.test.h5") end, nil)
+
+S.body_list[1].spring_const.r.x = -1
+check_err(function() S:save("/tmp/vvlua.test.h5") end, "TBody::validate(): spring_const.r.x must be non-negative")
+S.body_list[1].spring_const.r.x = nan
+check_err(function() S:save("/tmp/vvlua.test.h5") end, "TBody::validate(): spring_const.r.x must be a number")
+S.body_list[1].spring_const.r.x = inf
+check_err(function() S:save("/tmp/vvlua.test.h5") end, nil)
+S.body_list[1].spring_const.r.x = 0
+check_err(function() S:save("/tmp/vvlua.test.h5") end, nil)
+
+S.body_list[1].collision_min.r.y = 0
+S.body_list[1].collision_max.r.y = 0
+check_err(function() S:save("/tmp/vvlua.test.h5") end,
+    "TBody::validate(): collision_max.r.y must be greater than collision_min.r.y"
+)
+S.body_list[1].collision_min.r.y = nan
+check_err(function() S:save("/tmp/vvlua.test.h5") end, nil)
 
 if FAIL ~= 0 then
     error("There were errors")

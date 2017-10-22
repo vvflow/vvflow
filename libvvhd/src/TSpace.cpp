@@ -91,7 +91,6 @@ void Space::dataset_write_list(const char *name, const vector<TObj>& list)
 
 void Space::dataset_write_body(const char* name, const TBody& body)
 {
-
     float heat_const = body.alist.front().heat_const;
     uint32_t general_slip = body.alist.front().slip;
     bool can_simplify_slip = true;
@@ -198,6 +197,11 @@ void Space::dataset_write_body(const char* name, const TBody& body)
 
 void Space::Save(const char* format)
 {
+    for (shared_ptr<TBody>& lbody: BodyList)
+    {
+        lbody->validate(/*critical=*/true);
+    }
+
     char fname[64]; sprintf(fname, format, int(Time/dt+0.5));
     fid = H5Fcreate(fname, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
     if (fid < 0)
@@ -237,7 +241,7 @@ void Space::Save(const char* format)
     dataset_write_list("ink_source", StreakSourceList);
     dataset_write_list("source", SourceList);
 
-    for (auto& lbody: BodyList)
+    for (shared_ptr<TBody>& lbody: BodyList)
     {
         dataset_write_body(get_body_name(lbody.get()).c_str(), *lbody);
     }
@@ -487,6 +491,9 @@ void Space::Load(hid_t fid, std::string *info)
 
     H5Literate(fid, H5_INDEX_NAME, H5_ITER_NATIVE, NULL, dataset_read_body, this);
     EnumerateBodies();
+    for (shared_ptr<TBody>& lbody: BodyList) {
+        lbody->validate(/*critical=*/false);
+    }
 
     datatypes_close_all();
 }
