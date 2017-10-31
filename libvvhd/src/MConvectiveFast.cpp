@@ -33,7 +33,7 @@ TVec convectivefast::SpeedSumFast(TVec p)
     res *= C_1_2PI;
     res += SpeedSum(*Node, p);
     res += SrcSpeed(p);
-    res += S->InfSpeed();
+    res += S->inf_speed();
 
     return res;
 }
@@ -123,7 +123,7 @@ void convectivefast::CalcConvectiveFast()
         {
             if (!lobj->g) {continue;}
             dr_local = lobj->r - nodeCenter;
-            lobj->v += S->InfSpeed() + SrcSpeed(lobj->r) + SpeedSum(*lbnode, lobj->r) +
+            lobj->v += S->inf_speed() + SrcSpeed(lobj->r) + SpeedSum(*lbnode, lobj->r) +
                 TVec(Teilor1, Teilor2) +
                 TVec(TVec(Teilor3,  Teilor4)*dr_local, TVec(Teilor4, -Teilor3)*dr_local);
         }
@@ -133,7 +133,7 @@ void convectivefast::CalcConvectiveFast()
         {
             if (!lobj->g) {continue;}
             dr_local = lobj->r - nodeCenter;
-            lobj->v += S->InfSpeed() + SrcSpeed(lobj->r) + SpeedSum(*lbnode, lobj->r) +
+            lobj->v += S->inf_speed() + SrcSpeed(lobj->r) + SpeedSum(*lbnode, lobj->r) +
                 TVec(Teilor1, Teilor2) +
                 TVec(TVec(Teilor3,  Teilor4)*dr_local, TVec(Teilor4, -Teilor3)*dr_local);
         }
@@ -142,7 +142,7 @@ void convectivefast::CalcConvectiveFast()
         for (TObj *lobj = lbnode->sRange.first; lobj < lbnode->sRange.last; lobj++)
         {
             dr_local = lobj->r - nodeCenter;
-            lobj->v += S->InfSpeed() + SrcSpeed(lobj->r) + SpeedSum(*lbnode, lobj->r) +
+            lobj->v += S->inf_speed() + SrcSpeed(lobj->r) + SpeedSum(*lbnode, lobj->r) +
                 TVec(Teilor1, Teilor2) +
                 TVec(TVec(Teilor3,  Teilor4)*dr_local, TVec(Teilor4, -Teilor3)*dr_local);
         }
@@ -238,7 +238,7 @@ bool convectivefast::canUseInverse()
 
     for (auto& lbody1: S->BodyList)
     {
-        if (!lbody1->speed(S->Time).iszero()) return false;
+        if (!lbody1->speed(S->time).iszero()) return false;
         if (!TBody::isrigid(lbody1->kspring.r.x)) return false;
         if (!TBody::isrigid(lbody1->kspring.r.y)) return false;
         if (!TBody::isrigid(lbody1->kspring.o  )) return false;
@@ -253,9 +253,9 @@ void convectivefast::CalcCirculationFast(const void** collision)
         throw std::invalid_argument("MConvectiveFast::CalcCirculationFast(): invalid collision pointer");
     }
 
-    bool use_inverse = (*collision == nullptr) && canUseInverse() && S->Time>0;
+    bool use_inverse = (*collision == nullptr) && canUseInverse() && S->time>0;
 
-    matrix.resize(S->TotalSegmentsCount()+S->BodyList.size()*9);
+    matrix.resize(S->total_segment_count()+S->BodyList.size()*9);
 
     if (matrix.bodyMatrixIsOk() && use_inverse)
         FillMatrix(/*rightColOnly=*/true, collision);
@@ -392,7 +392,7 @@ void convectivefast::_2PI_A123(const TAtt &seg, const TBody* ibody, const TBody 
     *_2PI_A1 = (ibody == &b)?  C_2PI * seg.dl.y : 0;
     *_2PI_A2 = (ibody == &b)? -C_2PI * seg.dl.x : 0;
     *_2PI_A3 = 0;
-    if (TBody::isrigid(b.kspring.o) && (b.speed_o.eval(S->Time) == 0) && b.root_body.expired())
+    if (TBody::isrigid(b.kspring.o) && (b.speed_o.eval(S->time) == 0) && b.root_body.expired())
     {
         // в этом случае угловая скорость и так обратится в ноль
         // поэтому ради экономии времени коэффициент при ней не вычисляем
@@ -474,7 +474,7 @@ TVec convectivefast::SegmentInfluence_linear_source(TVec p, const TAtt &seg, dou
 void convectivefast::fillSlipEquationForSegment(unsigned eq_no, TAtt* seg, TBody* ibody, bool rightColOnly)
 {
     //influence of infinite speed
-    *matrix.getRightCol(eq_no) = rotl(S->InfSpeed())*seg->dl;
+    *matrix.getRightCol(eq_no) = rotl(S->inf_speed())*seg->dl;
     *matrix.getRightCol(eq_no) += rotl(SrcSpeed(seg->r))*seg->dl;
     //influence of all free vortices
     const TSortedNode* Node = Tree->findNode(seg->r);
@@ -523,7 +523,7 @@ void convectivefast::fillSteadyEquationForSegment(unsigned eq_no, TAtt* seg, TBo
 void convectivefast::fillInfSteadyEquationForSegment(unsigned eq_no, TAtt* seg, TBody* ibody, bool rightColOnly)
 {
     //right column
-    *matrix.getRightCol(eq_no) = -S->gsum() - S->InfCirculation;
+    *matrix.getRightCol(eq_no) = -S->gsum() - S->inf_g;
     if (rightColOnly) return;
 
     // FIXME везде, где используется auto напихать статик асертов
@@ -652,7 +652,7 @@ void convectivefast::fillNewtonXEquation(unsigned eq_no, TBody* ibody, bool righ
         - ibody->get_area()*_1_dt*ibody->density * ibody->speed_slae_prev.r.x
         + ibody->get_area()*_1_dt*ibody->density * r_c_com.y * ibody->speed_slae_prev.o
         + ibody->get_area()*ibody->density * r_c_com.x * sqr(ibody->speed_slae_prev.o)
-        - (ibody->density-1.0) * S->gravitation.x * ibody->get_area()
+        - (ibody->density-1.0) * S->gravity.x * ibody->get_area()
         - ibody->friction_prev.r.x;
     if (rightColOnly) return;
 
@@ -688,7 +688,7 @@ void convectivefast::fillNewtonYEquation(unsigned eq_no, TBody* ibody, bool righ
         - ibody->get_area()*_1_dt*ibody->density * ibody->speed_slae_prev.r.y
         - ibody->get_area()*_1_dt*ibody->density * r_c_com.x * ibody->speed_slae_prev.o
         + ibody->get_area()*ibody->density * r_c_com.y * sqr(ibody->speed_slae_prev.o)
-        - (ibody->density-1.0) * S->gravitation.y * ibody->get_area()
+        - (ibody->density-1.0) * S->gravity.y * ibody->get_area()
         - ibody->friction_prev.r.y;
     if (rightColOnly) return;
 
@@ -723,7 +723,7 @@ void convectivefast::fillNewtonOEquation(unsigned eq_no, TBody* ibody, bool righ
     *matrix.getRightCol(eq_no) =
         - ibody->get_area()*_1_dt*ibody->density * (rotl(r_c_com)*ibody->speed_slae_prev.r)
         - ibody->get_moi_axis()*_1_dt*ibody->density * ibody->speed_slae_prev.o
-        - (ibody->density-1.0) * (rotl(r_c_com)*S->gravitation) * ibody->get_area()
+        - (ibody->density-1.0) * (rotl(r_c_com)*S->gravity) * ibody->get_area()
         - ibody->friction_prev.o;
     if (rightColOnly) return;
 
@@ -814,7 +814,7 @@ void convectivefast::fillHookeOEquation(unsigned eq_no, TBody* ibody, bool right
 
 void convectivefast::fillSpeedXEquation(unsigned eq_no, TBody* ibody, bool rightColOnly)
 {
-    *matrix.getRightCol(eq_no) = ibody->speed_x.eval(S->Time);
+    *matrix.getRightCol(eq_no) = ibody->speed_x.eval(S->time);
     if (rightColOnly) return;
 
     // self
@@ -835,7 +835,7 @@ void convectivefast::fillSpeedXEquation(unsigned eq_no, TBody* ibody, bool right
 
 void convectivefast::fillSpeedYEquation(unsigned eq_no, TBody* ibody, bool rightColOnly)
 {
-    *matrix.getRightCol(eq_no) = ibody->speed_y.eval(S->Time);
+    *matrix.getRightCol(eq_no) = ibody->speed_y.eval(S->time);
     if (rightColOnly) return;
 
     // self
@@ -856,7 +856,7 @@ void convectivefast::fillSpeedYEquation(unsigned eq_no, TBody* ibody, bool right
 
 void convectivefast::fillSpeedOEquation(unsigned eq_no, TBody* ibody, bool rightColOnly)
 {
-    *matrix.getRightCol(eq_no) = ibody->speed_o.eval(S->Time);
+    *matrix.getRightCol(eq_no) = ibody->speed_o.eval(S->time);
     if (rightColOnly) return;
 
     // self
@@ -925,7 +925,7 @@ void convectivefast::FillMatrix(bool rightColOnly, const void** collision)
             }
         }
 
-        if (TBody::isrigid(libody->kspring.r.x) || !(S->Time > 0) )
+        if (TBody::isrigid(libody->kspring.r.x) || !(S->time > 0) )
             fillSpeedXEquation(eq_no, libody.get(), rightColOnly);
         else if (*collision == &libody->kspring.r.x) {
             *matrix.getCell(eq_no, &libody->speed_slae.r.x) = 1;
@@ -942,7 +942,7 @@ void convectivefast::FillMatrix(bool rightColOnly, const void** collision)
         }
         eq_no++;
 
-        if (TBody::isrigid(libody->kspring.r.y) || !(S->Time > 0) )
+        if (TBody::isrigid(libody->kspring.r.y) || !(S->time > 0) )
             fillSpeedYEquation(eq_no, libody.get(), rightColOnly);
         else if (*collision == &libody->kspring.r.y) {
             *matrix.getCell(eq_no, &libody->speed_slae.r.y) = 1;
@@ -959,7 +959,7 @@ void convectivefast::FillMatrix(bool rightColOnly, const void** collision)
         }
         eq_no++;
 
-        if (TBody::isrigid(libody->kspring.o) || !(S->Time > 0) )
+        if (TBody::isrigid(libody->kspring.o) || !(S->time > 0) )
             fillSpeedOEquation(eq_no, libody.get(), rightColOnly);
         else if (*collision == &libody->kspring.o) {
             *matrix.getCell(eq_no, &libody->speed_slae.o) = 1;

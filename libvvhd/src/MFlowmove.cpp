@@ -2,21 +2,23 @@
 
 #include <ctime>
 #include <cmath>
-#include <limits>
 #include <map>
 
 using std::shared_ptr;
-using std::numeric_limits;
 
-static const double dNaN = numeric_limits<double>::quiet_NaN();
+const double d_nan = 0.0l/0.0l;
 
-void flowmove::MoveAndClean(bool remove, const void** collision)
+void MFlowmove::move_and_clean(bool remove, const void** collision, size_t* cleaned_v)
 {
-    CleanedV_ = 0;
+    size_t _tmp = 0;
+    if (cleaned_v == nullptr) {
+        cleaned_v = &_tmp;
+    }
+    *cleaned_v = 0;
 
-    double current_dt = dt;
+    double current_dt = S->dt;
     if (collision == nullptr) {
-        throw std::invalid_argument("MFlowmove::MoveAndClean(): invalid collision pointer");
+        throw std::invalid_argument("MFlowmove::move_and_clean(): invalid collision pointer");
     }
     *collision = nullptr;
 
@@ -25,7 +27,7 @@ void flowmove::MoveAndClean(bool remove, const void** collision)
     for (std::shared_ptr<TBody>& lbody: S->BodyList)
     {
         TVec3D cur_pos_ = lbody->holder + lbody->dpos;
-        TVec3D new_pos_ = cur_pos_ + dt*lbody->speed_slae;
+        TVec3D new_pos_ = cur_pos_ + S->dt*lbody->speed_slae;
 
         #define COMPONENTS(vec) {vec.r.x, vec.r.y, vec.o};
 
@@ -37,7 +39,7 @@ void flowmove::MoveAndClean(bool remove, const void** collision)
         const double* kspring_[] = COMPONENTS(&lbody->kspring);
 
         for (int i=0; i<3; i++) {
-            double dt_ = dNaN;
+            double dt_ = d_nan;
             if (TBody::isrigid(*kspring_[i])) {
                 /* do nothing */
             } else if (new_pos[i] > max[i]) {
@@ -54,7 +56,7 @@ void flowmove::MoveAndClean(bool remove, const void** collision)
         #undef COMPONENTS
     }
 
-    S->InfMarker+= S->InfSpeed()*current_dt;
+    S->inf_marker+= S->inf_speed()*current_dt;
 
     // Move bodies
     std::map<TBody*,TVec3D> deltaHolder;
@@ -62,7 +64,7 @@ void flowmove::MoveAndClean(bool remove, const void** collision)
     // to prevent bodies from separating, fix tangential velocities
     for (std::shared_ptr<TBody>& lbody: S->BodyList)
     {
-        TVec3D dHolder = lbody->speed(S->Time);
+        TVec3D dHolder = lbody->speed(S->time);
         TVec3D dBody = lbody->speed_slae;
 
         std::shared_ptr<TBody> root = lbody->root_body.lock();
@@ -110,12 +112,12 @@ void flowmove::MoveAndClean(bool remove, const void** collision)
     // FIXME попробовать переписать с std::remoe_if() и лямбдой
     for (auto lobj = S->VortexList.begin(); lobj < S->VortexList.end(); )
     {
-        if ( fabs(lobj->g) < RemoveEps ) S->VortexList.erase(lobj);
+        if ( fabs(lobj->g) < remove_eps ) S->VortexList.erase(lobj);
         else lobj++;
     }
     for (auto lobj = S->HeatList.begin(); lobj < S->HeatList.end(); )
     {
-        if ( fabs(lobj->g) < RemoveEps ) S->HeatList.erase(lobj);
+        if ( fabs(lobj->g) < remove_eps ) S->HeatList.erase(lobj);
         else lobj++;
     }
 
@@ -136,7 +138,7 @@ void flowmove::MoveAndClean(bool remove, const void** collision)
             bad_body->fdt_dead.o += (lobj->r - bad_body->get_axis()).abs2() * lobj->g;
             bad_segment->gsum -= lobj->g;
             bad_body->g_dead += lobj->g;
-            CleanedV_++;
+            *cleaned_v += 1;
             S->VortexList.erase(lobj);
         }
     }
@@ -185,7 +187,7 @@ void flowmove::MoveAndClean(bool remove, const void** collision)
 
     for (auto lobj = S->StreakList.begin(); lobj < S->StreakList.end(); )
     {
-        if ( S->PointIsInBody(lobj->r) ) S->StreakList.erase(lobj);
+        if ( S->point_is_in_body(lobj->r) ) S->StreakList.erase(lobj);
         else lobj++;
     }
 
@@ -201,7 +203,7 @@ void flowmove::MoveAndClean(bool remove, const void** collision)
         TVec axis = lbody->get_axis();
         for (auto& latt: lbody->alist)
         {
-            if (fabs(latt.g) < RemoveEps || latt.slip)
+            if (fabs(latt.g) < remove_eps || latt.slip)
             {
                 lbody->fdt_dead.r += rotl(latt.corner) * latt.g;
                 lbody->fdt_dead.o += (latt.corner - axis).abs2() * latt.g;
@@ -212,7 +214,7 @@ void flowmove::MoveAndClean(bool remove, const void** collision)
     }
 }
 
-void flowmove::VortexShed()
+void MFlowmove::vortex_shed()
 {
     for (auto& lbody: S->BodyList)
     {
@@ -224,7 +226,7 @@ void flowmove::VortexShed()
             // что бы правильно считались силы и распред давления.
             latt.gsum+= latt.g;
 
-            if (fabs(latt.g) >= RemoveEps && !latt.slip)
+            if (fabs(latt.g) >= remove_eps && !latt.slip)
             {
                 S->VortexList.push_back(TObj(latt.corner + rotl(latt.dl)*1e-4, latt.g));
             }
@@ -232,7 +234,7 @@ void flowmove::VortexShed()
     }
 }
 
-void flowmove::HeatShed()
+void MFlowmove::heat_shed()
 {
     for (auto& lbody: S->BodyList)
     {
@@ -270,7 +272,7 @@ void flowmove::HeatShed()
     }
 }
 
-void flowmove::CropHeat(double scale)
+void MFlowmove::heat_crop(double scale)
 {
     for (auto lobj = S->HeatList.begin(); lobj < S->HeatList.end(); )
     {
@@ -279,9 +281,9 @@ void flowmove::CropHeat(double scale)
     }
 }
 
-void flowmove::StreakShed()
+void MFlowmove::streak_shed()
 {
-    if (!S->Time.divisibleBy(S->dt_streak)) return;
+    if (!S->time.divisibleBy(S->dt_streak)) return;
     for (auto& lobj: S->StreakSourceList)
     {
         S->StreakList.push_back(lobj);

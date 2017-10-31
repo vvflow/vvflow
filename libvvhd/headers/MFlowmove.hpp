@@ -2,23 +2,18 @@
 
 #include "TSpace.hpp"
 
-class flowmove
+class MFlowmove
 {
     public:
-        flowmove(Space *S, double RemoveEps = 1E-10):
-            S(S), dt(S->dt), RemoveEps(RemoveEps), CleanedV_(0) {}
-        void MoveAndClean(bool remove, const void** collision);
-        void VortexShed();
-        void StreakShed();
-        void HeatShed();
-        void CropHeat(double scale = 16);
+        MFlowmove(Space *S, double remove_eps = 1E-10):
+            S(S), remove_eps(remove_eps) {}
+        void move_and_clean(bool remove, const void** collision, size_t* cleaned_v = NULL);
+        void vortex_shed();
+        void streak_shed();
+        void heat_shed();
+        void heat_crop(double scale = 16);
 
-        int CleanedV() {return CleanedV_;}
-        //int CleanedH();
     private:
         Space *S;
-        double dt;
-        double RemoveEps;
-        int CleanedV_;
-        //int CleanedH_;
+        double remove_eps;
 };

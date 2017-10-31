@@ -59,13 +59,13 @@ double Pressure(Space* S, convectivefast *conv, TVec p, char RefFrame, double pr
     }
 
     TVec LocalSpeed = conv->SpeedSumFast(p);
-    double Cp_static = C_1_2PI * _2PI_Cp + 0.5*(S->InfSpeed().abs2() - LocalSpeed.abs2());
+    double Cp_static = C_1_2PI * _2PI_Cp + 0.5*(S->inf_speed().abs2() - LocalSpeed.abs2());
     switch (RefFrame)
     {
         case 's': return Cp_static;
         case 'o': return Cp_static + 0.5*(LocalSpeed.abs2());
-        case 'f': return Cp_static + 0.5*((LocalSpeed - S->InfSpeed()).abs2());
-        case 'b': return Cp_static + 0.5*((LocalSpeed - S->InfSpeed() + TVec(1, 0)).abs2());
+        case 'f': return Cp_static + 0.5*((LocalSpeed - S->inf_speed()).abs2());
+        case 'b': return Cp_static + 0.5*((LocalSpeed - S->inf_speed() + TVec(1, 0)).abs2());
         default: cerr << "Bad reference frame!!!" << endl; return -2;
     }
     return Cp_static; // not used
@@ -78,14 +78,14 @@ extern "C" {
 int map_pressure(hid_t fid, char RefFrame, double xmin, double xmax, double ymin, double ymax, double spacing)
 {
     Space *S = new Space();
-    S->Load(fid);
+    S->load(fid);
 
-    double dl = S->AverageSegmentLength();
+    double dl = S->average_segment_length();
     TSortedTree tr(S, 8, dl*20, 0.1);
     convectivefast conv(S, &tr);
     epsfast eps(S, &tr);
-    diffusivefast diff(S, &tr);
-    flowmove fm(S);
+    MDiffusiveFast diff(S, &tr);
+    MFlowmove fm(S);
 
     /**************************** LOAD ARGUMENTS ******************************/
 
@@ -101,7 +101,7 @@ int map_pressure(hid_t fid, char RefFrame, double xmin, double xmax, double ymin
         return -2;
     }
 
-    fm.VortexShed();
+    fm.vortex_shed();
 
     //дано: условие непротекания выполнено, неизвестные вихри найдены и рождены.
     //требуется: найти скорости вихрей (всех, включая присоединенные) и посчитать давление
@@ -109,7 +109,7 @@ int map_pressure(hid_t fid, char RefFrame, double xmin, double xmax, double ymin
     eps.CalcEpsilonFast(false);
     conv.CalcBoundaryConvective();
     conv.CalcConvectiveFast();
-    diff.CalcVortexDiffusiveFast();
+    diff.process_vort_list();
 
     hsize_t dims[2] = {
         static_cast<size_t>((xmax-xmin)/spacing) + 1, 
@@ -124,7 +124,7 @@ int map_pressure(hid_t fid, char RefFrame, double xmin, double xmax, double ymin
         for (size_t yj=0; yj<dims[1]; yj++)
         {
             double y = ymin + double(yj)*spacing;
-            mem[xi*dims[1]+yj] = S->PointIsInBody(TVec(x, y)) ? 
+            mem[xi*dims[1]+yj] = S->point_is_in_body(TVec(x, y)) ? 
                        0 : Pressure(S, &conv, TVec(x, y), RefFrame, NaN);
         }
     }
@@ -148,16 +148,16 @@ extern "C" {
 int pressure_print(hid_t fid, TVec* points, int count)
 {
     Space *S = new Space();
-    S->Load(fid);
+    S->load(fid);
 
-    double dl = S->AverageSegmentLength();
+    double dl = S->average_segment_length();
     TSortedTree tr(S, 8, dl*20, 0.1);
     convectivefast conv(S, &tr);
     epsfast eps(S, &tr);
-    diffusivefast diff(S, &tr);
-    flowmove fm(S);
+    MDiffusiveFast diff(S, &tr);
+    MFlowmove fm(S);
 
-    fm.VortexShed();
+    fm.vortex_shed();
 
     //дано: условие непротекания выполнено, неизвестные вихри найдены и рождены.
     //требуется: найти скорости вихрей (всех, включая присоединенные) и посчитать давление
@@ -165,12 +165,12 @@ int pressure_print(hid_t fid, TVec* points, int count)
     eps.CalcEpsilonFast(false);
     conv.CalcBoundaryConvective();
     conv.CalcConvectiveFast();
-    diff.CalcVortexDiffusiveFast();
+    diff.process_vort_list();
 
     for (int i=0; i<count; i++)
     {
         TVec p = points[i];
-        double P = S->PointIsInBody(p) ? 
+        double P = S->point_is_in_body(p) ? 
             NaN : Pressure(S, &conv, p, 's', NaN);
         printf("%.6le\n", P);
     }

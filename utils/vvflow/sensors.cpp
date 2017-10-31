@@ -59,7 +59,7 @@ void sensors::output()
 {
 	if (!fout) return;
 
-	fprintf(fout, "%lg", double(S->Time));
+	fprintf(fout, "%lg", double(S->time));
 	for (TVec vec: slist)
 	{
 		TVec tmp = conv->SpeedSumFast(vec);

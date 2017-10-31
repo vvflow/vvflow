@@ -96,7 +96,7 @@ double Psi(Space* S, const TSortedTree* tree, TVec p, double spacing, double& ps
     }
 
     // printf("GAP %lf\n", psi_gap);
-    return tmp_4pi_psi_g*C_1_4PI + tmp_2pi_psi_q*C_1_2PI + p*rotl(S->InfSpeed() - RefFrame_Speed);
+    return tmp_4pi_psi_g*C_1_4PI + tmp_2pi_psi_q*C_1_2PI + p*rotl(S->inf_speed() - RefFrame_Speed);
 }
 
 extern "C" {
@@ -110,7 +110,7 @@ int map_streamfunction(hid_t fid, char RefFrame, double xmin, double xmax, doubl
     switch (RefFrame)
     {
         case 'o': RefFrame_Speed = TVec(0, 0); break;
-        case 'f': RefFrame_Speed = S->InfSpeed(); break;
+        case 'f': RefFrame_Speed = S->inf_speed(); break;
         case 'b': RefFrame_Speed = S->BodyList[0]->speed_slae.r; break;
         default:
         fprintf(stderr, "Bad reference frame\n");
@@ -120,12 +120,12 @@ int map_streamfunction(hid_t fid, char RefFrame, double xmin, double xmax, doubl
         fprintf(stderr, " 'b' : body reference frame\n" );
     }
 
-    S->Load(fid);
+    S->load(fid);
     // что б не мешались
     S->HeatList.clear();
     S->StreakList.clear();
 
-    dl = S->AverageSegmentLength();
+    dl = S->average_segment_length();
     rd2_global = sqr(0.2*dl);
     TSortedTree tree(S, 8, dl*20, std::numeric_limits<double>::max());
     tree.build();

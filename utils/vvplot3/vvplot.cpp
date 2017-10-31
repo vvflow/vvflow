@@ -90,7 +90,7 @@ int main(int argc, char **argv)
     opt::parse(argc, argv);
 
     Space S;
-    S.Load(opt::input);
+    S.load(opt::input);
     Exear *e = new Exear(opt::target);
 
     {
@@ -143,7 +143,7 @@ int main(int argc, char **argv)
     }
 
     if (opt::timelabel) {
-        main_gp << strfmt("set label \"t = %lf\" at graph 0.05, 0.90 front", double(S.Time)) << std::endl;
+        main_gp << strfmt("set label \"t = %lf\" at graph 0.05, 0.90 front", double(S.time)) << std::endl;
     }
 
     std::stringstream plot_cmd;
@@ -303,7 +303,7 @@ int main(int argc, char **argv)
         || opt::ttree_near_nodes
         || opt::ttree_find_node
     ) {
-        double dl = S.AverageSegmentLength();
+        double dl = S.average_segment_length();
         double min_node_size = dl>0 ? dl*10 : 0;
         double max_node_size = dl>0 ? dl*20 : d_inf;
         TSortedTree tree = {&S, 8, min_node_size, max_node_size};

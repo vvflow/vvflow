@@ -66,7 +66,7 @@ Stepdata::Stepdata(Space* S, const char *fname, bool b_save_profile):
             H5Sget_simple_extent_dims(h5s, dims, NULL);
             float* tbuf = new float[dims[0]*dims[1]];
             H5Dread(h5d, H5T_NATIVE_FLOAT, h5s, h5s, H5P_DEFAULT, tbuf);
-            for (rows=0; rows<dims[0] && tbuf[rows*dims[1]] < float(S->Time); rows++)
+            for (rows=0; rows<dims[0] && tbuf[rows*dims[1]] < float(S->time); rows++)
             {
                 /* DO NOTHING */;
             }
@@ -150,7 +150,7 @@ void Stepdata::flush()
 
 void Stepdata::write()
 {
-    append(time_h5d, S->Time);
+    append(time_h5d, S->time);
 
     for (auto& lbody: S->BodyList)
     {

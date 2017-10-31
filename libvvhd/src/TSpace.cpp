@@ -20,37 +20,31 @@ using std::ios;
 using std::vector;
 using std::shared_ptr;
 using std::numeric_limits;
+static const double d_inf = 1.0l/0.0l; 
 
 Space::Space():
     caption(),
+    re(d_inf),
+    pr(0),
+    inf_g(),
+    inf_vx(),
+    inf_vy(),
+    inf_marker(),
+    gravity(),
+    time(),
+    dt(1, 1),
+    dt_save(),
+    dt_streak(),
+    dt_profile(),
+    finish(d_inf),
+
     BodyList(),
     VortexList(),
     HeatList(),
     SourceList(),
     StreakSourceList(),
-    StreakList(),
-
-    InfSpeedX(),
-    InfSpeedY(),
-    InfMarker(),
-    InfCirculation(),
-    gravitation(),
-    Time(), dt(1, 1),
-    dt_save(), dt_streak(), dt_profile(),
-    Re(numeric_limits<double>::infinity()),
-    Pr(0),
-    Finish(numeric_limits<double>::max())    
-{
-    // static_assert(std::is_pod<TVec>::value, "TVec is not POD");
-    // static_assert(std::is_pod<TObj>::value, "TObj is not POD");
-    // static_assert(std::is_pod<TAtt>::value, "TAtt is not POD");
-}
-
-    inline
-void Space::FinishStep()
-{
-    Time= TTime::add(Time, dt);
-}
+    StreakList()
+{}
 
 //  .d8888b.         d8888 888     888 8888888888     888    888 8888888b.  8888888888
 // d88P  Y88b       d88888 888     888 888            888    888 888  "Y88b 888
@@ -195,14 +189,14 @@ void Space::dataset_write_body(const char* name, const TBody& body)
     free(heat_array);
 }
 
-void Space::Save(const char* format)
+void Space::save(const char* format)
 {
     for (shared_ptr<TBody>& lbody: BodyList)
     {
         lbody->validate(/*critical=*/true);
     }
 
-    char fname[64]; sprintf(fname, format, int(Time/dt+0.5));
+    char fname[64]; sprintf(fname, format, int(time/dt+0.5));
     fid = H5Fcreate(fname, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
     if (fid < 0)
     {
@@ -214,24 +208,25 @@ void Space::Save(const char* format)
     datatypes_create_all();
 
     attribute_write(fid, "caption", caption);
-    attribute_write(fid, "time", Time);
+    attribute_write(fid, "time", time);
     attribute_write(fid, "dt", dt);
     attribute_write(fid, "dt_save", dt_save);
     attribute_write(fid, "dt_streak", dt_streak);
     attribute_write(fid, "dt_profile", dt_profile);
-    attribute_write(fid, "re", Re);
-    attribute_write(fid, "pr", Pr);
-    attribute_write(fid, "inf_marker", InfMarker);
-    attribute_write<std::string>(fid, "inf_speed_x", InfSpeedX);
-    attribute_write<std::string>(fid, "inf_speed_y", InfSpeedY);
-    attribute_write(fid, "inf_circulation", InfCirculation);
-    attribute_write(fid, "gravity", gravitation);
-    attribute_write(fid, "time_to_finish", Finish);
+    attribute_write(fid, "re", re);
+    attribute_write(fid, "pr", pr);
+    attribute_write(fid, "inf_marker", inf_marker);
+    attribute_write<std::string>(fid, "inf_speed_x", inf_vx);
+    attribute_write<std::string>(fid, "inf_speed_y", inf_vy);
+    attribute_write(fid, "inf_circulation", inf_g);
+    attribute_write(fid, "gravity", gravity);
+    attribute_write(fid, "time_to_finish", finish);
     attribute_write(fid, "git_rev",  std::string(libvvhd_gitrev));
     attribute_write(fid, "git_info", std::string(libvvhd_gitinfo));
     attribute_write(fid, "git_diff", std::string(libvvhd_gitdiff));
 
-    time_t rt; time(&rt);
+    time_t rt;
+    ::time(&rt);
     char *timestr = ctime(&rt); timestr[strlen(timestr)-1] = 0;
     attribute_write(fid, "time_local", std::string(timestr));
 
@@ -427,7 +422,7 @@ herr_t dataset_read_body(hid_t g_id, const char* name, const H5L_info_t*, void *
     return 0;
 }
 
-void Space::Load(const char* fname, std::string *info)
+void Space::load(const char* fname, std::string *info)
 {
     BodyList.clear();
     VortexList.clear();
@@ -451,29 +446,29 @@ void Space::Load(const char* fname, std::string *info)
         fprintf(stderr, "error: Space::Load: can't open file '%s'\n", fname);
         return;
     }
-    Load(fid, info);
+    load(fid, info);
 
     H5Fclose(fid);
 }
 
-void Space::Load(hid_t fid, std::string *info)
+void Space::load(hid_t fid, std::string *info)
 {
     datatypes_create_all();
 
     attribute_read(fid, "caption", caption);
-    attribute_read(fid, "time", Time);
+    attribute_read(fid, "time", time);
     attribute_read(fid, "dt", dt);
     attribute_read(fid, "dt_save", dt_save);
     attribute_read(fid, "dt_streak", dt_streak);
     attribute_read(fid, "dt_profile", dt_profile);
-    attribute_read(fid, "re", Re);
-    attribute_read(fid, "pr", Pr);
-    attribute_read(fid, "inf_marker", InfMarker);
-    attribute_read(fid, "inf_speed_x", InfSpeedX);
-    attribute_read(fid, "inf_speed_y", InfSpeedY);
-    attribute_read(fid, "inf_circulation", InfCirculation);
-    attribute_read(fid, "gravity", gravitation);
-    attribute_read(fid, "time_to_finish", Finish);
+    attribute_read(fid, "re", re);
+    attribute_read(fid, "pr", pr);
+    attribute_read(fid, "inf_marker", inf_marker);
+    attribute_read(fid, "inf_speed_x", inf_vx);
+    attribute_read(fid, "inf_speed_y", inf_vy);
+    attribute_read(fid, "inf_circulation", inf_g);
+    attribute_read(fid, "gravity", gravity);
+    attribute_read(fid, "time_to_finish", finish);
 
     if (info)
     {
@@ -566,19 +561,19 @@ void Space::Load_v1_3(const char* fname)
             char name[64];
             fread(name, 1, 64, fin);
             caption = name;
-            fread(&Time, 8, 1, fin);
+            fread(&time, 8, 1, fin);
             fread(&dt, 8, 1, fin);
             fread(&dt_save, 8, 1, fin);
             fread(&dt_streak, 8, 1, fin);
             fread(&dt_profile, 8, 1, fin);
-            fread(&Re, 8, 1, fin);
-            fread(&Pr, 8, 1, fin);
-            fread(&InfMarker, 16, 1, fin);
-            read_shell_script(fin, InfSpeedX);
-            read_shell_script(fin, InfSpeedY);
-            fread(&InfCirculation, 8, 1, fin);
-            fread(&gravitation, 16, 1, fin);
-            fread(&Finish, 8, 1, fin);
+            fread(&re, 8, 1, fin);
+            fread(&pr, 8, 1, fin);
+            fread(&inf_marker, 16, 1, fin);
+            read_shell_script(fin, inf_vx);
+            read_shell_script(fin, inf_vy);
+            fread(&inf_g, 8, 1, fin);
+            fread(&gravity, 16, 1, fin);
+            fread(&finish, 8, 1, fin);
 
             int64_t rawtime; fread(&rawtime, 8, 1, fin);
         }
@@ -657,19 +652,19 @@ void Space::Load_v1_3(const char* fname)
     return;
 }
 
-FILE* Space::OpenFile(const char* format)
+FILE* Space::open_file(const char* format)
 {
-    char fname[64]; sprintf(fname, format, int(Time/dt+0.5));
+    char fname[64]; sprintf(fname, format, int(time/dt+0.5));
     FILE *fout;
     fout = fopen(fname, "w");
     if (!fout) { perror("Error opening file"); return NULL; }
     return fout;
 }
 
-void Space::CalcForces()
+void Space::calc_forces()
 {
-    const double C_NyuDt_Pi = dt/(M_PI*Re);
-    const double C_Nyu_Pi = 1./(M_PI*Re);
+    const double C_NyuDt_Pi = dt/(M_PI*re);
+    const double C_Nyu_Pi = 1./(M_PI*re);
     for (shared_ptr<TBody>& lbody: BodyList)
     {
         double tmp_gsum = 0;
@@ -682,11 +677,11 @@ void Space::CalcForces()
             tmp_gsum+= latt.gsum;
             latt.Cp += tmp_gsum;
             latt.Fr += latt.fric * C_NyuDt_Pi;
-            latt.Nu += latt.hsum * (Re*Pr / latt.dl.abs());
+            latt.Nu += latt.hsum * (re*pr / latt.dl.abs());
 
             lbody->friction.r -= latt.dl * (latt.fric * C_Nyu_Pi / latt.dl.abs());
             lbody->friction.o -= (rotl(latt.r)* latt.dl) * (latt.fric  * C_Nyu_Pi / latt.dl.abs());
-            lbody->nusselt += latt.hsum * (Re*Pr);
+            lbody->nusselt += latt.hsum * (re*pr);
         }
 
         lbody->nusselt /= dt;
@@ -695,7 +690,7 @@ void Space::CalcForces()
     //FIXME calculate total pressure
 }
 
-void Space::ZeroForces()
+void Space::zero_forces()
 {
     for (auto& lbody: BodyList)
     {
@@ -778,70 +773,6 @@ void Space::EnumerateBodies()
 }
 
 /********************************* INTEGRALS **********************************/
-
-void Space::ZeroSpeed()
-{
-    for (auto& lobj: VortexList) lobj.v = TVec();
-    for (auto& lobj: HeatList) lobj.v = TVec();
-}
-
-double Space::integral() const
-{
-    double res = 0;
-    for (const auto& obj: VortexList) res += obj.g * obj.r.abs2();
-    return res;
-}
-
-double Space::gsum() const
-{
-    double res = 0;
-    for (const auto& obj: VortexList) res += obj.g;
-    return res;
-}
-
-double Space::gmax() const
-{
-    double res = 0;
-    for (const auto& obj: VortexList) res = ( fabs(obj.g) > fabs(res) ) ? obj.g : res;
-    return res;
-}
-
-TVec Space::HydroDynamicMomentum() const
-{
-    TVec res(0., 0.);
-    for (const auto& obj: VortexList) res += obj.g * obj.r;
-    return res;
-}
-
-double Space::AverageSegmentLength() const
-{
-    if (!BodyList.size()) return std::numeric_limits<double>::lowest();
-
-    double SurfaceLength = BodyList.front()->get_slen();
-    int N = BodyList.front()->size() - 1;
-    if (N<=0) return std::numeric_limits<double>::lowest();
-    return SurfaceLength / N;
-}
-
-int Space::TotalSegmentsCount() const
-{
-    int res = 0;
-    for (const auto& lbody: BodyList)
-    {
-        res += lbody->alist.size();
-    }
-
-    return res;
-}
-
-bool Space::PointIsInBody(TVec p) const
-{
-    for (const auto& lbody: BodyList)
-    {
-        if (lbody->isPointInvalid(p)) return true;
-    }
-    return false;
-}
 
 int Space::get_body_index(const TBody* body) const
 {
