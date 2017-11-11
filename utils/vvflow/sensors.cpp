@@ -9,7 +9,7 @@ class sensors
 {
 	public:
 		sensors() = delete;
-		sensors(Space* sS, convectivefast *sconv, const char* sensors_file, const char* output);
+		sensors(Space* S, MConvectiveFast *conv, const char* sensors_file, const char* output);
 		sensors(const sensors&) = delete;
 		sensors& operator=(const sensors&) = delete;
 		~sensors();
@@ -18,12 +18,12 @@ class sensors
 
 	private:
 		Space *S;
-		convectivefast *conv;
+		MConvectiveFast *conv;
 		FILE *fout;
 		vector <TVec> slist;
 };
 
-sensors::sensors(Space* S, convectivefast *conv, const char* sensors_file, const char* output):
+sensors::sensors(Space* S, MConvectiveFast *conv, const char* sensors_file, const char* output):
 	S(S),
 	conv(conv),
 	fout(nullptr),
@@ -62,7 +62,7 @@ void sensors::output()
 	fprintf(fout, "%lg", double(S->time));
 	for (TVec vec: slist)
 	{
-		TVec tmp = conv->SpeedSumFast(vec);
+		TVec tmp = conv->velocity(vec);
 		fprintf(fout, " \t%lg \t%lg", tmp.x, tmp.y);
 	}
 	fprintf(fout, "\n");

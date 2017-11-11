@@ -72,7 +72,7 @@ int main(int argc, char** argv)
     double min_node_size = dl>0 ? dl*5 : 0;
     double max_node_size = dl>0 ? dl*100 : std::numeric_limits<double>::max();
     TSortedTree tr = {&S, 8, min_node_size, max_node_size};
-    convectivefast conv(&S, &tr);
+    MConvectiveFast conv(&S, &tr);
     epsfast eps(&S, &tr);
     MDiffusiveFast diff = {&S, &tr};
     MFlowmove flowmove = {&S};
@@ -90,9 +90,9 @@ int main(int argc, char** argv)
 
             // решаем слау
             if (collision != nullptr) {
-                conv.CalcCirculationFast(&collision);
+                conv.calc_circulation(&collision);
             }
-            conv.CalcCirculationFast(&collision);
+            conv.calc_circulation(&collision);
 
             dbg(tr.destroy());
         }
@@ -115,8 +115,7 @@ int main(int argc, char** argv)
 
         dbg(tr.build());
         dbg(eps.CalcEpsilonFast(/*merge=*/is_viscous));
-        dbg(conv.CalcBoundaryConvective());
-        dbg(conv.CalcConvectiveFast());
+        dbg(conv.process_all_lists());
         dbg(sens.output());
         if (is_viscous)
         {

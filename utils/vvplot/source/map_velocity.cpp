@@ -26,7 +26,7 @@ int velocity_print(hid_t fid, TVec* points, int count)
     bool is_viscous = (S->re != std::numeric_limits<double>::infinity());
     double dl = S->average_segment_length(); Rd2 = dl*dl/25;
     TSortedTree tree(S, 8, dl*20, 0.3);
-    convectivefast conv(S, &tree);
+    MConvectiveFast conv(S, &tree);
     MFlowmove flow(S);
     epsfast eps(S, &tree);
     flow.vortex_shed();
@@ -36,7 +36,7 @@ int velocity_print(hid_t fid, TVec* points, int count)
     for (int i=0; i<count; i++)
     {
         TVec p = points[i];
-        TVec v = conv.SpeedSumFast(p);
+        TVec v = conv.velocity(p);
         printf("%.6le\t %.6le\n", v.x, v.y);
     }
 

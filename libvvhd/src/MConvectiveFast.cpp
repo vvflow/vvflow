@@ -4,86 +4,36 @@
 #include <complex>
 
 using std::complex;
+using std::shared_ptr;
 
 /****************************** MAIN FUNCTIONS ********************************/
 
-convectivefast::convectivefast(Space *S, const TSortedTree *Tree):
+MConvectiveFast::MConvectiveFast(Space *S, const TSortedTree *tree):
     S(S),
-    Tree(Tree),
-    MatrixSize(),
+    tree(tree),
     matrix()
 {
 }
 
-TVec convectivefast::SpeedSumFast(TVec p)
+TVec MConvectiveFast::velocity(TVec p)
 {
-    TVec res(0, 0);
-    const TSortedNode* Node = Tree->findNode(p);
-    if (!Node) return res;
+    TVec res = {0, 0};
+    const TSortedNode* node = tree->findNode(p);
+    if (!node)
+        return res;
 
-    for (const TSortedNode* lfnode: *Node->FarNodes)
-    {
-        res+= BioSavar(lfnode->CMp, p) + BioSavar(lfnode->CMm, p);
-    }
-
-    for (auto& lbody: S->BodyList)
-    {
-        res += BoundaryConvective(*lbody.get(), p);
-    }
-    res *= C_1_2PI;
-    res += SpeedSum(*Node, p);
-    res += SrcSpeed(p);
+    res += near_nodes_influence(*node, p);
+    res += far_nodes_influence(*node, p);
+    res += sink_list_influence(p);
+    res += body_list_influence(p);
     res += S->inf_speed();
 
     return res;
 }
 
-    inline
-TVec convectivefast::BioSavar(const TObj &obj, const TVec &p)
+void MConvectiveFast::process_all_lists()
 {
-    TVec dr = p - obj.r;
-    return rotl(dr)*(obj.g / (dr.abs2() + sqr(1./obj._1_eps)) );
-}
-
-TVec convectivefast::SpeedSum(const TSortedNode &Node, const TVec &p)
-{
-    TVec res(0, 0);
-
-    for (TSortedNode* lnnode: *Node.NearNodes)
-    {
-        for (TObj *lobj = lnnode->vRange.first; lobj < lnnode->vRange.last; lobj++)
-        {
-            if (!lobj->g) continue;
-            res+= BioSavar(*lobj, p); 
-        }
-    }
-
-    res *= C_1_2PI;
-    return res;
-}
-
-TVec convectivefast::SrcSpeed(const TVec &p)
-{
-    TVec res(0, 0);
-    // что бы избежать неустойчивости при использовании стока
-    // эпсилон динамически определяется из шага по времени
-    // условием устойчивости для точечного стока является V(r)*dt < r
-    // отсюда sqr(eps) > g*dt/2pi
-    // мы используем sqr(eps) = 2*g*dt/2pi = g*dt/pi
-    const double eps2_div_srcg = S->dt * C_1_PI;
-    for (const auto& src: S->SourceList)
-    {
-        TVec dr = p - src.r;
-        res += dr*(src.g / (dr.abs2() + eps2_div_srcg*abs(src.g)) );
-    }
-
-    res *= C_1_2PI;
-    return res;
-}
-
-void convectivefast::CalcConvectiveFast()
-{
-    auto& bnodes = Tree->getBottomNodes();
+    auto& bnodes = tree->getBottomNodes();
 
     //FIXME omp here
     for (auto llbnode = bnodes.begin(); llbnode < bnodes.end(); llbnode++)
@@ -116,122 +66,155 @@ void convectivefast::CalcConvectiveFast()
         Teilor3 *= C_1_PI;
         Teilor4 *= C_1_2PI;
 
-        TVec dr_local, nodeCenter = TVec(lbnode->x, lbnode->y);
+        TVec nodeCenter = TVec(lbnode->x, lbnode->y);
 
-    	#pragma omp parallel for schedule(dynamic, 10)
-        for (TObj *lobj = lbnode->vRange.first; lobj < lbnode->vRange.last; lobj++)
+        #pragma omp parallel
         {
-            if (!lobj->g) {continue;}
-            dr_local = lobj->r - nodeCenter;
-            lobj->v += S->inf_speed() + SrcSpeed(lobj->r) + SpeedSum(*lbnode, lobj->r) +
-                TVec(Teilor1, Teilor2) +
-                TVec(TVec(Teilor3,  Teilor4)*dr_local, TVec(Teilor4, -Teilor3)*dr_local);
-        }
+            #pragma omp for schedule(dynamic, 256)
+            for (TObj *lobj = lbnode->vRange.first; lobj < lbnode->vRange.last; lobj++)
+            {
+                if (!lobj->g) {continue;}
+                TVec dr_local = lobj->r - nodeCenter;
+                lobj->v += S->inf_speed();
+                lobj->v += near_nodes_influence(*lbnode, lobj->r);
+                lobj->v += sink_list_influence(lobj->r);
+                lobj->v += body_list_influence(lobj->r);
+                lobj->v += TVec(Teilor1, Teilor2);
+                lobj->v += TVec(TVec(Teilor3,  Teilor4)*dr_local, TVec(Teilor4, -Teilor3)*dr_local);
+            }
 
-    	#pragma omp parallel for schedule(dynamic, 10)
-        for (TObj *lobj = lbnode->hRange.first; lobj < lbnode->hRange.last; lobj++)
-        {
-            if (!lobj->g) {continue;}
-            dr_local = lobj->r - nodeCenter;
-            lobj->v += S->inf_speed() + SrcSpeed(lobj->r) + SpeedSum(*lbnode, lobj->r) +
-                TVec(Teilor1, Teilor2) +
-                TVec(TVec(Teilor3,  Teilor4)*dr_local, TVec(Teilor4, -Teilor3)*dr_local);
-        }
+        	#pragma omp for schedule(dynamic, 256)
+            for (TObj *lobj = lbnode->hRange.first; lobj < lbnode->hRange.last; lobj++)
+            {
+                if (!lobj->g) {continue;}
+                TVec dr_local = lobj->r - nodeCenter;
+                lobj->v += S->inf_speed();
+                lobj->v += near_nodes_influence(*lbnode, lobj->r);
+                lobj->v += sink_list_influence(lobj->r);
+                lobj->v += body_list_influence(lobj->r);
+                lobj->v += TVec(Teilor1, Teilor2);
+                lobj->v += TVec(TVec(Teilor3,  Teilor4)*dr_local, TVec(Teilor4, -Teilor3)*dr_local);
+            }
 
-    	#pragma omp parallel for schedule(dynamic, 10)
-        for (TObj *lobj = lbnode->sRange.first; lobj < lbnode->sRange.last; lobj++)
-        {
-            dr_local = lobj->r - nodeCenter;
-            lobj->v += S->inf_speed() + SrcSpeed(lobj->r) + SpeedSum(*lbnode, lobj->r) +
-                TVec(Teilor1, Teilor2) +
-                TVec(TVec(Teilor3,  Teilor4)*dr_local, TVec(Teilor4, -Teilor3)*dr_local);
-        }
-    }
-}
-
-void convectivefast::CalcBoundaryConvective()
-{
-    for (auto& lbody: S->BodyList)
-    {
-        bool calcBC = !lbody->speed_slae.iszero();
-        bool calcBCS = false;
-        for (auto& latt: lbody->alist) { if (latt.slip) {calcBCS = true; break;} }
-
-        if (!calcBC && !calcBCS) continue;
-
-#pragma omp parallel for
-        for (auto lobj = S->VortexList.begin(); lobj < S->VortexList.end(); lobj++)
-        {
-            if (calcBC) lobj->v += BoundaryConvective(*lbody, lobj->r)*C_1_2PI;
-            if (calcBCS) lobj->v += BoundaryConvectiveSlip(*lbody, lobj->r)*C_1_2PI;
-        }
-
-#pragma omp parallel for
-        for (auto lobj = S->HeatList.begin(); lobj < S->HeatList.end(); lobj++)
-        {
-            if (calcBC) lobj->v += BoundaryConvective(*lbody, lobj->r)*C_1_2PI;
-            if (calcBCS) lobj->v += BoundaryConvectiveSlip(*lbody, lobj->r)*C_1_2PI;
-        }
-
-#pragma omp parallel for
-        for (auto lobj = S->StreakList.begin(); lobj < S->StreakList.end(); lobj++)
-        {
-            if (calcBC) lobj->v += BoundaryConvective(*lbody, lobj->r)*C_1_2PI;
-            if (calcBCS) lobj->v += BoundaryConvectiveSlip(*lbody, lobj->r)*C_1_2PI;
+        	#pragma omp for schedule(dynamic, 256)
+            for (TObj *lobj = lbnode->sRange.first; lobj < lbnode->sRange.last; lobj++)
+            {
+                TVec dr_local = lobj->r - nodeCenter;
+                lobj->v += S->inf_speed();
+                lobj->v += near_nodes_influence(*lbnode, lobj->r);
+                lobj->v += sink_list_influence(lobj->r);
+                lobj->v += body_list_influence(lobj->r);
+                lobj->v += TVec(Teilor1, Teilor2);
+                lobj->v += TVec(TVec(Teilor3,  Teilor4)*dr_local, TVec(Teilor4, -Teilor3)*dr_local);
+            }
         }
     }
 }
 
-TVec convectivefast::BoundaryConvective(const TBody &b, const TVec &p)
+TVec MConvectiveFast::biot_savart(const TObj &obj, const TVec &p)
 {
-    TVec res = TVec(0, 0);
+    TVec dr = p - obj.r;
+    return rotl(dr)*(obj.g / (dr.abs2() + sqr(1./obj._1_eps)) );
+}
 
-    for (auto& latt: b.alist)
+TVec MConvectiveFast::near_nodes_influence(const TSortedNode &Node, const TVec &p)
+{
+    TVec res = {0, 0};
+
+    for (TSortedNode* lnnode: *Node.NearNodes)
     {
-        double drabs2 = (p-latt.r).abs2();
-        if (drabs2 < latt.dl.abs2())
+        for (TObj *lobj = lnnode->vRange.first; lobj < lnnode->vRange.last; lobj++)
         {
-            TVec Vs1 = b.speed_slae.r + b.speed_slae.o * rotl(latt.corner - b.get_axis());
-            double g1 = -Vs1 * latt.dl;
-            double q1 = -rotl(Vs1) * latt.dl; 
-
-            TVec Vs2 = b.speed_slae.r + b.speed_slae.o * rotl(latt.corner + latt.dl - b.get_axis());
-            double g2 = -Vs2 * latt.dl;
-            double q2 = -rotl(Vs2) * latt.dl;
-
-            res+= (rotl(SegmentInfluence_linear_source(p, latt, g1, g2)) + SegmentInfluence_linear_source(p, latt, q1, q2));
-        } else
-        {
-            TVec Vs = b.speed_slae.r + b.speed_slae.o * rotl(latt.r - b.get_axis());
-            double g = -Vs * latt.dl;
-            double q = -rotl(Vs) * latt.dl; 
-            TVec dr = p - latt.r;
-            res += (dr*q + rotl(dr)*g) / drabs2;
+            if (!lobj->g) continue;
+            res+= biot_savart(*lobj, p); 
         }
-        //res+= SegmentInfluence(p, *latt, latt->g, latt->q, 1E-6);
     }
 
+    res *= C_1_2PI;
     return res;
 }
 
-
-TVec convectivefast::BoundaryConvectiveSlip(const TBody &b, const TVec &p)
+TVec MConvectiveFast::far_nodes_influence(const TSortedNode &node, const TVec &p)
 {
-    TVec dr, res = TVec(0, 0);
+    TVec res = {0, 0};
 
-    for (auto& latt: b.alist)
+    for (TSortedNode* lfnode: *node.FarNodes)
     {
-        if (latt.slip) res += BioSavar(latt, p);
+        res += biot_savart(lfnode->CMp, p);
+        res += biot_savart(lfnode->CMm, p);
     }
 
+    res *= C_1_2PI;
     return res;
 }
 
-
-bool convectivefast::canUseInverse()
+TVec MConvectiveFast::sink_list_influence(const TVec &p)
 {
-    //Algorithm:
+    TVec res = {0, 0};
+    // что бы избежать неустойчивости при использовании стока
+    // эпсилон динамически определяется из шага по времени
+    // условием устойчивости для точечного стока является V(r)*dt < r
+    // отсюда sqr(eps) > g*dt/2pi
+    // мы используем sqr(eps) = 2*g*dt/2pi = g*dt/pi
+    const double eps2_div_srcg = S->dt * C_1_PI;
+    for (const auto& src: S->SourceList)
+    {
+        TVec dr = p - src.r;
+        res += dr*(src.g / (dr.abs2() + eps2_div_srcg*abs(src.g)) );
+    }
 
+    res *= C_1_2PI;
+    return res;
+}
+
+TVec MConvectiveFast::body_list_influence(const TVec &p)
+{
+    TVec res = {0, 0};
+
+    for (shared_ptr<TBody>& lbody: S->BodyList) {
+        if (lbody->get_slip()) {
+            for (TAtt& latt: lbody->alist) {
+                if (latt.slip) {
+                    res += biot_savart(latt, p);
+                }
+            }
+        }
+
+        if (!lbody->speed_slae.iszero()) {
+            for (TAtt& latt: lbody->alist) {
+                double drabs2 = (p-latt.r).abs2();
+                if (drabs2 < latt.dl.abs2())
+                {
+                    TVec Vs1 = lbody->speed_slae.r + lbody->speed_slae.o * rotl(latt.corner - lbody->get_axis());
+                    double g1 = -Vs1 * latt.dl;
+                    double q1 = -rotl(Vs1) * latt.dl; 
+
+                    TVec Vs2 = lbody->speed_slae.r + lbody->speed_slae.o * rotl(latt.corner + latt.dl - lbody->get_axis());
+                    double g2 = -Vs2 * latt.dl;
+                    double q2 = -rotl(Vs2) * latt.dl;
+
+                    res += rotl(SegmentInfluence_linear_source(p, latt, g1, g2));
+                    res += SegmentInfluence_linear_source(p, latt, q1, q2);
+                } else
+                {
+                    TVec Vs = lbody->speed_slae.r + lbody->speed_slae.o * rotl(latt.r - lbody->get_axis());
+                    double g = -Vs * latt.dl;
+                    double q = -rotl(Vs) * latt.dl; 
+                    TVec dr = p - latt.r;
+                    res += (dr*q + rotl(dr)*g) / drabs2;
+                }
+                //res+= SegmentInfluence(p, *latt, latt->g, latt->q, 1E-6);
+            }
+        }
+
+    }
+    
+    return res * C_1_2PI;
+}
+
+
+bool MConvectiveFast::can_use_inverse()
+{
     if (S->BodyList.size() <= 1) {
         return true;
     }
@@ -247,18 +230,18 @@ bool convectivefast::canUseInverse()
     return true;
 }
 
-void convectivefast::CalcCirculationFast(const void** collision)
+void MConvectiveFast::calc_circulation(const void** collision)
 {
     if (collision == nullptr) {
-        throw std::invalid_argument("MConvectiveFast::CalcCirculationFast(): invalid collision pointer");
+        throw std::invalid_argument("MConvectiveFast::calc_circulation(): invalid collision pointer");
     }
 
-    bool use_inverse = (*collision == nullptr) && canUseInverse() && S->time>0;
+    bool use_inverse = (*collision == nullptr) && can_use_inverse() && S->time>0;
 
     matrix.resize(S->total_segment_count()+S->BodyList.size()*9);
 
     if (matrix.bodyMatrixIsOk() && use_inverse)
-        FillMatrix(/*rightColOnly=*/true, collision);
+        fill_matrix(/*rightColOnly=*/true, collision);
     else
     {
         unsigned eq_no = 0;
@@ -281,24 +264,24 @@ void convectivefast::CalcCirculationFast(const void** collision)
             matrix.setSolutionForCol(eq_no++, &libody->force_holder.r.y);
             matrix.setSolutionForCol(eq_no++, &libody->force_holder.o);
         }
-        FillMatrix(/*rightColOnly=*/false, collision);
+        fill_matrix(/*rightColOnly=*/false, collision);
     }
 
     matrix.solveUsingInverseMatrix(use_inverse);
 }
 
-static inline double _2PI_Xi_g_near(TVec p, TVec pc, TVec dl, double rd)
+double MConvectiveFast::_2PI_Xi_g_near(TVec p, TVec pc, TVec dl, double rd)
 {
     // pc - center of segment (seg.r)
     return (pc-p)*dl/sqr(rd);
 }
 
-static inline double _2PI_Xi_g_dist(TVec p, TVec p1, TVec p2)
+double MConvectiveFast::_2PI_Xi_g_dist(TVec p, TVec p1, TVec p2)
 {
     return 0.5*log( (p-p2).abs2() / (p-p1).abs2() );
 }
 
-double convectivefast::_2PI_Xi_g(TVec p, const TAtt &seg, double rd) // in doc 2\pi\Xi_\gamma (1.7)
+double MConvectiveFast::_2PI_Xi_g(TVec p, const TAtt &seg, double rd) // in doc 2\pi\Xi_\gamma (1.7)
 {
     double rd_sqr = sqr(rd);
     double dr1_sqr = (p-seg.corner).abs2();
@@ -324,19 +307,19 @@ double convectivefast::_2PI_Xi_g(TVec p, const TAtt &seg, double rd) // in doc 2
     }
 }
 
-static inline double _2PI_Xi_q_near(TVec p, TVec pc, TVec dl, double rd)
+double MConvectiveFast::_2PI_Xi_q_near(TVec p, TVec pc, TVec dl, double rd)
 {
     return (pc-p)*rotl(dl)/sqr(rd);
 }
 
-static inline double _2PI_Xi_q_dist(TVec p, TVec p1, TVec p2)
+double MConvectiveFast::_2PI_Xi_q_dist(TVec p, TVec p1, TVec p2)
 {
     TVec dp1 = p-p1;
     TVec dp2 = p-p2;
     return atan2(dp1*rotl(dp2), dp1*dp2);
 }
 
-TVec convectivefast::_2PI_Xi(const TVec &p, const TAtt &seg, double rd)
+TVec MConvectiveFast::_2PI_Xi(const TVec &p, const TAtt &seg, double rd)
 {
     if (&p == &seg.r) { TVec pnew = p+rotl(seg.dl)*0.001; return _2PI_Xi(pnew, seg, rd); }
 
@@ -387,7 +370,7 @@ TVec convectivefast::_2PI_Xi(const TVec &p, const TAtt &seg, double rd)
     }
 }
 
-void convectivefast::_2PI_A123(const TAtt &seg, const TBody* ibody, const TBody &b, double *_2PI_A1, double *_2PI_A2, double *_2PI_A3)
+void MConvectiveFast::_2PI_A123(const TAtt &seg, const TBody* ibody, const TBody &b, double *_2PI_A1, double *_2PI_A2, double *_2PI_A3)
 {
     *_2PI_A1 = (ibody == &b)?  C_2PI * seg.dl.y : 0;
     *_2PI_A2 = (ibody == &b)? -C_2PI * seg.dl.x : 0;
@@ -410,7 +393,7 @@ void convectivefast::_2PI_A123(const TAtt &seg, const TBody* ibody, const TBody 
     }
 }
 
-double convectivefast::NodeInfluence(const TSortedNode &Node, const TAtt &seg)
+double MConvectiveFast::NodeInfluence(const TSortedNode &Node, const TAtt &seg)
 {
     double res = 0;
 
@@ -432,7 +415,7 @@ double convectivefast::NodeInfluence(const TSortedNode &Node, const TAtt &seg)
     return res*C_1_2PI;
 }
 
-double convectivefast::AttachInfluence(const TAtt &seg, double rd)
+double MConvectiveFast::AttachInfluence(const TAtt &seg, double rd)
 {
     double res = 0;
 
@@ -452,7 +435,7 @@ double convectivefast::AttachInfluence(const TAtt &seg, double rd)
     return res * C_1_2PI;
 }
 
-TVec convectivefast::SegmentInfluence_linear_source(TVec p, const TAtt &seg, double q1, double q2)
+TVec MConvectiveFast::SegmentInfluence_linear_source(TVec p, const TAtt &seg, double q1, double q2)
 {
     //	cerr << "orly?" << endl;
     complex<double> z(p.x, p.y);
@@ -471,13 +454,13 @@ TVec convectivefast::SegmentInfluence_linear_source(TVec p, const TAtt &seg, dou
     return TVec(zV.real(), zV.imag());
 }
 
-void convectivefast::fillSlipEquationForSegment(unsigned eq_no, TAtt* seg, TBody* ibody, bool rightColOnly)
+void MConvectiveFast::fillSlipEquationForSegment(unsigned eq_no, TAtt* seg, TBody* ibody, bool rightColOnly)
 {
     //influence of infinite speed
     *matrix.getRightCol(eq_no) = rotl(S->inf_speed())*seg->dl;
-    *matrix.getRightCol(eq_no) += rotl(SrcSpeed(seg->r))*seg->dl;
+    *matrix.getRightCol(eq_no) += rotl(sink_list_influence(seg->r))*seg->dl;
     //influence of all free vortices
-    const TSortedNode* Node = Tree->findNode(seg->r);
+    const TSortedNode* Node = tree->findNode(seg->r);
     *matrix.getRightCol(eq_no) -= NodeInfluence(*Node, *seg);
     if (rightColOnly) return;
 
@@ -496,7 +479,7 @@ void convectivefast::fillSlipEquationForSegment(unsigned eq_no, TAtt* seg, TBody
     }
 }
 
-void convectivefast::fillZeroEquationForSegment(unsigned eq_no, TAtt* seg, TBody* ibody, bool rightColOnly)
+void MConvectiveFast::fillZeroEquationForSegment(unsigned eq_no, TAtt* seg, TBody* ibody, bool rightColOnly)
 {
     //right column
     *matrix.getRightCol(eq_no) = 0;
@@ -506,7 +489,7 @@ void convectivefast::fillZeroEquationForSegment(unsigned eq_no, TAtt* seg, TBody
     *matrix.getCell(eq_no, &seg->g) = 1;
 }
 
-void convectivefast::fillSteadyEquationForSegment(unsigned eq_no, TAtt* seg, TBody* ibody, bool rightColOnly)
+void MConvectiveFast::fillSteadyEquationForSegment(unsigned eq_no, TAtt* seg, TBody* ibody, bool rightColOnly)
 {
     //right column
     *matrix.getRightCol(eq_no) = ibody->g_dead + 2*ibody->get_area()*ibody->speed_slae_prev.o;
@@ -520,7 +503,7 @@ void convectivefast::fillSteadyEquationForSegment(unsigned eq_no, TAtt* seg, TBo
     }
 }
 
-void convectivefast::fillInfSteadyEquationForSegment(unsigned eq_no, TAtt* seg, TBody* ibody, bool rightColOnly)
+void MConvectiveFast::fillInfSteadyEquationForSegment(unsigned eq_no, TAtt* seg, TBody* ibody, bool rightColOnly)
 {
     //right column
     *matrix.getRightCol(eq_no) = -S->gsum() - S->inf_g;
@@ -545,7 +528,7 @@ void convectivefast::fillInfSteadyEquationForSegment(unsigned eq_no, TAtt* seg, 
 //   888    888     888     888  .d88P 888  T88b  Y88b. .d88P
 //   888    888     888     8888888P"  888   T88b  "Y88888P"
 
-void convectivefast::fillHydroXEquation(unsigned eq_no, TBody* ibody, bool rightColOnly)
+void MConvectiveFast::fillHydroXEquation(unsigned eq_no, TBody* ibody, bool rightColOnly)
 {
     const double _1_dt = 1/S->dt;
     const TVec r_c_com = ibody->get_cofm() - ibody->get_axis();
@@ -575,7 +558,7 @@ void convectivefast::fillHydroXEquation(unsigned eq_no, TBody* ibody, bool right
     }
 }
 
-void convectivefast::fillHydroYEquation(unsigned eq_no, TBody* ibody, bool rightColOnly)
+void MConvectiveFast::fillHydroYEquation(unsigned eq_no, TBody* ibody, bool rightColOnly)
 {
     const double _1_dt = 1/S->dt;
     const TVec r_c_com = ibody->get_cofm() - ibody->get_axis();
@@ -604,7 +587,7 @@ void convectivefast::fillHydroYEquation(unsigned eq_no, TBody* ibody, bool right
     }
 }
 
-void convectivefast::fillHydroOEquation(unsigned eq_no, TBody* ibody, bool rightColOnly)
+void MConvectiveFast::fillHydroOEquation(unsigned eq_no, TBody* ibody, bool rightColOnly)
 {
     const double _1_dt = 1/S->dt;
     const double _1_2dt = 0.5/S->dt;
@@ -642,7 +625,7 @@ void convectivefast::fillHydroOEquation(unsigned eq_no, TBody* ibody, bool right
 //   888   Y8888 888        8888P   Y8888     888     Y88b. .d88P 888   Y8888
 //   888    Y888 8888888888 888P     Y888     888      "Y88888P"  888    Y888
 
-void convectivefast::fillNewtonXEquation(unsigned eq_no, TBody* ibody, bool rightColOnly)
+void MConvectiveFast::fillNewtonXEquation(unsigned eq_no, TBody* ibody, bool rightColOnly)
 {
     const double _1_dt = 1/S->dt;
     const TVec r_c_com = ibody->get_cofm() - ibody->get_axis();
@@ -678,7 +661,7 @@ void convectivefast::fillNewtonXEquation(unsigned eq_no, TBody* ibody, bool righ
     }
 }
 
-void convectivefast::fillNewtonYEquation(unsigned eq_no, TBody* ibody, bool rightColOnly)
+void MConvectiveFast::fillNewtonYEquation(unsigned eq_no, TBody* ibody, bool rightColOnly)
 {
     const double _1_dt = 1/S->dt;
     const TVec r_c_com = ibody->get_cofm() - ibody->get_axis();
@@ -714,7 +697,7 @@ void convectivefast::fillNewtonYEquation(unsigned eq_no, TBody* ibody, bool righ
     }
 }
 
-void convectivefast::fillNewtonOEquation(unsigned eq_no, TBody* ibody, bool rightColOnly)
+void MConvectiveFast::fillNewtonOEquation(unsigned eq_no, TBody* ibody, bool rightColOnly)
 {
     const double _1_dt = 1/S->dt;
     const TVec r_c_com = ibody->get_cofm() - ibody->get_axis();
@@ -761,7 +744,7 @@ void convectivefast::fillNewtonOEquation(unsigned eq_no, TBody* ibody, bool righ
 //   888    888 Y88b. .d88P Y88b. .d88P 888   Y88b  888
 //   888    888  "Y88888P"   "Y88888P"  888    Y88b 8888888888
 
-void convectivefast::fillHookeXEquation(unsigned eq_no, TBody* ibody, bool rightColOnly)
+void MConvectiveFast::fillHookeXEquation(unsigned eq_no, TBody* ibody, bool rightColOnly)
 {
     *matrix.getRightCol(eq_no) = ibody->kspring.r.x * ibody->dpos.r.x;
     if (rightColOnly) return;
@@ -775,7 +758,7 @@ void convectivefast::fillHookeXEquation(unsigned eq_no, TBody* ibody, bool right
     }
 }
 
-void convectivefast::fillHookeYEquation(unsigned eq_no, TBody* ibody, bool rightColOnly)
+void MConvectiveFast::fillHookeYEquation(unsigned eq_no, TBody* ibody, bool rightColOnly)
 {
     *matrix.getRightCol(eq_no) = ibody->kspring.r.y * ibody->dpos.r.y;
     if (rightColOnly) return;
@@ -789,7 +772,7 @@ void convectivefast::fillHookeYEquation(unsigned eq_no, TBody* ibody, bool right
     }
 }
 
-void convectivefast::fillHookeOEquation(unsigned eq_no, TBody* ibody, bool rightColOnly)
+void MConvectiveFast::fillHookeOEquation(unsigned eq_no, TBody* ibody, bool rightColOnly)
 {
     *matrix.getRightCol(eq_no) = ibody->kspring.o * ibody->dpos.o;
     if (rightColOnly) return;
@@ -812,7 +795,7 @@ void convectivefast::fillHookeOEquation(unsigned eq_no, TBody* ibody, bool right
 //   Y88b  d88P 888        888        888        888  .d88P
 //    "Y8888P"  888        8888888888 8888888888 8888888P"
 
-void convectivefast::fillSpeedXEquation(unsigned eq_no, TBody* ibody, bool rightColOnly)
+void MConvectiveFast::fillSpeedXEquation(unsigned eq_no, TBody* ibody, bool rightColOnly)
 {
     *matrix.getRightCol(eq_no) = ibody->speed_x.eval(S->time);
     if (rightColOnly) return;
@@ -833,7 +816,7 @@ void convectivefast::fillSpeedXEquation(unsigned eq_no, TBody* ibody, bool right
     }
 }
 
-void convectivefast::fillSpeedYEquation(unsigned eq_no, TBody* ibody, bool rightColOnly)
+void MConvectiveFast::fillSpeedYEquation(unsigned eq_no, TBody* ibody, bool rightColOnly)
 {
     *matrix.getRightCol(eq_no) = ibody->speed_y.eval(S->time);
     if (rightColOnly) return;
@@ -854,7 +837,7 @@ void convectivefast::fillSpeedYEquation(unsigned eq_no, TBody* ibody, bool right
     }
 }
 
-void convectivefast::fillSpeedOEquation(unsigned eq_no, TBody* ibody, bool rightColOnly)
+void MConvectiveFast::fillSpeedOEquation(unsigned eq_no, TBody* ibody, bool rightColOnly)
 {
     *matrix.getRightCol(eq_no) = ibody->speed_o.eval(S->time);
     if (rightColOnly) return;
@@ -882,7 +865,7 @@ void convectivefast::fillSpeedOEquation(unsigned eq_no, TBody* ibody, bool right
 //   888   "   888  d8888888888     888     888  T88b    888    d88P Y88b
 //   888       888 d88P     888     888     888   T88b 8888888 d88P   Y88b
 
-typedef void (convectivefast::*fptr)(); 
+typedef void (MConvectiveFast::*fptr)(); 
 typedef struct {
     fptr eq_type;
     int eq_no;
@@ -891,10 +874,10 @@ typedef struct {
 } equationJob;
 
 
-void convectivefast::FillMatrix(bool rightColOnly, const void** collision)
+void MConvectiveFast::fill_matrix(bool rightColOnly, const void** collision)
 {
     if (collision == nullptr) {
-        throw std::invalid_argument("MConvectiveFast::FillMatrix(): invalid collision pointer");
+        throw std::invalid_argument("MMConvectiveFast::fill_matrix(): invalid collision pointer");
     }
 
     if (!rightColOnly) matrix.fillWithZeros();
@@ -902,7 +885,7 @@ void convectivefast::FillMatrix(bool rightColOnly, const void** collision)
     std::vector<equationJob> jobs;
 #define addJob(TYPE, EQNO, SEG, IBODY) \
     jobs.push_back( \
-        (equationJob){(fptr)&convectivefast::fill##TYPE, EQNO, SEG, IBODY} \
+        (equationJob){(fptr)&MConvectiveFast::fill##TYPE, EQNO, SEG, IBODY} \
     )
 
     int eq_no = 0;
@@ -992,7 +975,7 @@ void convectivefast::FillMatrix(bool rightColOnly, const void** collision)
     {
         if (0) {}
 #define CASE(TYPE) \
-        else if (job->eq_type == (fptr)&convectivefast::fill##TYPE)
+        else if (job->eq_type == (fptr)&MConvectiveFast::fill##TYPE)
 #define FILL_EQ_FOR_SEG(TYPE)  fill##TYPE(job->eq_no, job->seg, job->ibody, rightColOnly)
 #define FILL_EQ_FOR_BODY(TYPE) fill##TYPE(job->eq_no, job->ibody, rightColOnly)
 

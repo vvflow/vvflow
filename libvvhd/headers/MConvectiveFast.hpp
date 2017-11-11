@@ -5,20 +5,17 @@
 
 // #include <cmath>
 
-class convectivefast
+class MConvectiveFast
 {
     public:
-        convectivefast() = delete;
-        convectivefast(Space *S, const TSortedTree *Tree);
-        convectivefast(const convectivefast&) = delete;
-        convectivefast& operator=(const convectivefast&) = delete;
+        MConvectiveFast() = delete;
+        MConvectiveFast(Space *S, const TSortedTree *tree);
+        MConvectiveFast(const MConvectiveFast&) = delete;
+        MConvectiveFast& operator=(const MConvectiveFast&) = delete;
 
-        void CalcConvectiveFast();
-        void CalcBoundaryConvective();
-        TVec SpeedSumFast(TVec p);
-
-    public:
-        void CalcCirculationFast(
+        void process_all_lists();
+        TVec velocity(TVec p);
+        void calc_circulation(
             // 1) during collision
             // pointer to body.kspring.?.?
             // for which the collision equation will be filled
@@ -27,32 +24,27 @@ class convectivefast
             // which is added to Hooke equation as (1+bounce)*force
             const void** collision
         );
-        //void fillSlae();
-        //void solveSlae();
-
-    private:
-        bool canUseInverse();
-        void FillMatrix(bool rightColOnly, const void** collision);
-        Matrix* getMatrix() {return &matrix;}
-
-    private:
-        TVec BioSavar(const TObj &obj, const TVec &p);
-        TVec SpeedSum(const TSortedNode &Node, const TVec &p);
-        TVec SrcSpeed(const TVec &p); // indeuced by S->SourceList in point p
-
-        TVec BoundaryConvective(const TBody &b, const TVec &p);
-        TVec BoundaryConvectiveSlip(const TBody &b, const TVec &p);
 
     private:
         Space *S;
-        const TSortedTree *Tree;
-
-        int MatrixSize;
+        const TSortedTree *tree;
         Matrix matrix;
 
-        double _2PI_Xi_g(TVec p, const TAtt &seg, double rd); // in doc 2\pi\Xi_\gamma (1.7)
+        bool can_use_inverse();
+        void fill_matrix(bool rightColOnly, const void** collision);
+        TVec biot_savart(const TObj &obj, const TVec &p);
+        TVec near_nodes_influence(const TSortedNode &Node, const TVec &p);
+        TVec far_nodes_influence(const TSortedNode &Node, const TVec &p);
+        TVec sink_list_influence(const TVec &p);
+        TVec body_list_influence(const TVec &p);
+
+        static double _2PI_Xi_g_near(TVec p, TVec pc, TVec dl, double rd);
+        static double _2PI_Xi_g_dist(TVec p, TVec p1, TVec p2);
+        static double _2PI_Xi_g(TVec p, const TAtt &seg, double rd); // in doc 2\pi\Xi_\gamma (1.7)
+        static double _2PI_Xi_q_near(TVec p, TVec pc, TVec dl, double rd);
+        static double _2PI_Xi_q_dist(TVec p, TVec p1, TVec p2);
         //double _2PI_Xi_q(const TVec &p, const TAtt &seg, double rd); // in doc 2\pi\Xi_q (1.8)
-        TVec _2PI_Xi(const TVec &p, const TAtt &seg, double rd);
+        static TVec _2PI_Xi(const TVec &p, const TAtt &seg, double rd);
         void _2PI_A123(const TAtt &seg, const TBody* ibody, const TBody &b, double *_2PI_A1, double *_2PI_A2, double *_2PI_A3);
         double ConvectiveInfluence(TVec p, const TAtt &seg, double rd);
         double NodeInfluence(const TSortedNode &Node, const TAtt &seg);

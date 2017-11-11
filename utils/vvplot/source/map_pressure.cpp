@@ -28,7 +28,7 @@ TVec K(const TVec &obj, const TVec &p)
     return dr/(dr.abs2() + Rd2);
 }
 
-double Pressure(Space* S, convectivefast *conv, TVec p, char RefFrame, double precision)
+double Pressure(Space* S, MConvectiveFast *conv, TVec p, char RefFrame, double precision)
 {
     double _2PI_Cp=0;
 
@@ -58,7 +58,7 @@ double Pressure(Space* S, convectivefast *conv, TVec p, char RefFrame, double pr
         _2PI_Cp+= (lobj.v * rotl(K(lobj.r, p))) * lobj.g;
     }
 
-    TVec LocalSpeed = conv->SpeedSumFast(p);
+    TVec LocalSpeed = conv->velocity(p);
     double Cp_static = C_1_2PI * _2PI_Cp + 0.5*(S->inf_speed().abs2() - LocalSpeed.abs2());
     switch (RefFrame)
     {
@@ -82,7 +82,7 @@ int map_pressure(hid_t fid, char RefFrame, double xmin, double xmax, double ymin
 
     double dl = S->average_segment_length();
     TSortedTree tr(S, 8, dl*20, 0.1);
-    convectivefast conv(S, &tr);
+    MConvectiveFast conv(S, &tr);
     epsfast eps(S, &tr);
     MDiffusiveFast diff(S, &tr);
     MFlowmove fm(S);
@@ -107,8 +107,7 @@ int map_pressure(hid_t fid, char RefFrame, double xmin, double xmax, double ymin
     //требуется: найти скорости вихрей (всех, включая присоединенные) и посчитать давление
     tr.build();
     eps.CalcEpsilonFast(false);
-    conv.CalcBoundaryConvective();
-    conv.CalcConvectiveFast();
+    conv.process_all_lists();
     diff.process_vort_list();
 
     hsize_t dims[2] = {
@@ -152,7 +151,7 @@ int pressure_print(hid_t fid, TVec* points, int count)
 
     double dl = S->average_segment_length();
     TSortedTree tr(S, 8, dl*20, 0.1);
-    convectivefast conv(S, &tr);
+    MConvectiveFast conv(S, &tr);
     epsfast eps(S, &tr);
     MDiffusiveFast diff(S, &tr);
     MFlowmove fm(S);
@@ -163,8 +162,7 @@ int pressure_print(hid_t fid, TVec* points, int count)
     //требуется: найти скорости вихрей (всех, включая присоединенные) и посчитать давление
     tr.build();
     eps.CalcEpsilonFast(false);
-    conv.CalcBoundaryConvective();
-    conv.CalcConvectiveFast();
+    conv.process_all_lists();
     diff.process_vort_list();
 
     for (int i=0; i<count; i++)
