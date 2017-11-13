@@ -116,12 +116,19 @@ class TBody
         bool isInsideValid() {return _area<=0;}
 
         void doFillProperties();
+        bool   get_slip() const {return _slip;} // true if at least one segment states slip condition
         double get_slen() const {return _slen;} // surface arc length
         double get_area() const {return _area;} // body area
-        TVec   get_cofm() const {return _cofm;} // center of mass
+        TVec   get_cofm() const {return _cofm;} // center of mass (in global ref frame)
         TVec   get_axis() const {return holder.r + dpos.r;}
-        double get_moi_cofm() const {return _moi_cofm;} // moment of inertia about center of mass
-        double get_moi_axis() const {return _moi_cofm + (get_axis()-_cofm).abs2()*_area;} // moment of inertia about rotation axis
+        double get_moi_cofm() const {
+            // moment of inertia about center of mass
+            return _moi_cofm;
+        }
+        double get_moi_axis() const {
+            // moment of inertia about rotation axis
+            return _moi_cofm + (get_axis()-_cofm).abs2()*_area;
+        }
         size_t size() const    {return alist.size();}
 
         int eq_forces_no; // starting number of forces equations
@@ -135,6 +142,7 @@ class TBody
         //int *ObjectIsInHeatLayer(TObj &obj); //link to element of HeatLayer array
 
     private:
+        bool   _slip;
         double _slen;
         double _area;
         TVec   _cofm; //center of mass (in global ref frame)

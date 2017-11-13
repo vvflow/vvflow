@@ -127,13 +127,13 @@ int map_vorticity(hid_t fid, double xmin, double xmax, double ymin, double ymax,
     **************************************************************************/
 
     Space *S = new Space();
-    S->Load(fid);
-    flowmove fm(S);
-    fm.VortexShed();
+    S->load(fid);
+    MFlowmove fm(S);
+    fm.vortex_shed();
     S->HeatList.clear();
     S->StreakList.clear();
 
-    dl = S->AverageSegmentLength();
+    dl = S->average_segment_length();
     TSortedTree tree(S, 8, dl*20, std::numeric_limits<double>::max());
     tree.build();
 
@@ -164,7 +164,7 @@ int map_vorticity(hid_t fid, double xmin, double xmax, double ymin, double ymax,
         {
             double y = ymin + double(yj)*spacing;
             TVec xy(x,y);
-            mem[xi*dims[1]+yj] = S->PointIsInBody(xy) ? 0 : Vorticity(tree, xy);
+            mem[xi*dims[1]+yj] = S->point_is_in_body(xy) ? 0 : Vorticity(tree, xy);
         }
     }
 

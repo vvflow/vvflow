@@ -21,7 +21,7 @@ XVorticity::XVorticity(
     XField(xmin, ymin, dxdy, xres, yres),
     S(S),
     eps_mult(eps_mult),
-    dl(S.AverageSegmentLength())
+    dl(S.average_segment_length())
 {
     if (eps_mult <= 0)
         throw std::invalid_argument("XVorticity(): eps_mult must be positive");
@@ -35,8 +35,8 @@ void XVorticity::evaluate()
     S.HeatList.clear();
     S.StreakList.clear();
     S.StreakSourceList.clear();
-    flowmove fm(&S);
-    fm.VortexShed();
+    MFlowmove flowmove = {&S};
+    flowmove.vortex_shed();
 
     TSortedTree tree(&S, 8, dl*20);
     tree.build();
@@ -65,7 +65,7 @@ void XVorticity::evaluate()
             {
                 TVec p = TVec(xmin, ymin) + dxdy*TVec(xi, yj);
                 const TSortedNode* bnode = tree.findNode(p);
-                map[yj*xres+xi] = S.PointIsInBody(p) ? 0 : vorticity(*bnode, p);
+                map[yj*xres+xi] = S.point_is_in_body(p) ? 0 : vorticity(*bnode, p);
             }
         }
     }

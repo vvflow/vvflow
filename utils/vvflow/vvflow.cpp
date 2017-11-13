@@ -52,88 +52,87 @@ int main(int argc, char** argv)
         return -1;
     }
 
-    Space *S = new Space();
-    S->Load(argv[1]);
+    Space S;
+    S.load(argv[1]);
 
     // error checking
     #define RAISE(STR) { cerr << "vvflow ERROR: " << STR << endl; return -1; }
-    if (S->Re <= 0) RAISE("invalid value re<=0");
+    if (S.re <= 0) RAISE("invalid value re<=0");
     #undef RAISE
-    bool is_viscous = (S->Re != std::numeric_limits<double>::infinity());
+    bool is_viscous = (S.re != std::numeric_limits<double>::infinity());
 
-    char f_stepdata[256]; snprintf(f_stepdata, 256, "stepdata_%s.h5", S->caption.c_str());
-    char f_results[256]; snprintf(f_results, 256, "results_%s", S->caption.c_str());
-    char f_sensors_output[256]; snprintf(f_sensors_output, 256, "velocity_%s", S->caption.c_str());
+    char f_stepdata[256]; snprintf(f_stepdata, 256, "stepdata_%s.h5", S.caption.c_str());
+    char f_results[256]; snprintf(f_results, 256, "results_%s", S.caption.c_str());
+    char f_sensors_output[256]; snprintf(f_sensors_output, 256, "velocity_%s", S.caption.c_str());
     mkdir(f_results, 0777);
 
-    Stepdata *stepdata = new Stepdata(S, f_stepdata, b_save_profile);
+    Stepdata stepdata = {&S, f_stepdata, b_save_profile};
 
-    double dl = S->AverageSegmentLength();
+    double dl = S.average_segment_length();
     double min_node_size = dl>0 ? dl*5 : 0;
     double max_node_size = dl>0 ? dl*100 : std::numeric_limits<double>::max();
-    TSortedTree tr(S, 8, min_node_size, max_node_size);
-    convectivefast conv(S, &tr);
-    epsfast eps(S, &tr);
-    diffusivefast diff(S, &tr);
-    flowmove fm(S);
-    sensors sens(S, &conv, (argc>2)?argv[2]:NULL, f_sensors_output);
+    TSortedTree tr = {&S, 8, min_node_size, max_node_size};
+    MConvectiveFast conv(&S, &tr);
+    epsfast eps(&S, &tr);
+    MDiffusiveFast diff = {&S, &tr};
+    MFlowmove flowmove = {&S};
+    sensors sens(&S, &conv, (argc>2)?argv[2]:NULL, f_sensors_output);
     #ifdef OVERRIDEMOI
-        S->BodyList->at(0)->overrideMoi_c(OVERRIDEMOI);
+        S.BodyList->at(0)->overrideMoi_c(OVERRIDEMOI);
     #endif
 
     const void* collision = nullptr;
-    while (S->Time < S->Finish + S->dt/2)
+    while (S.time < S.finish + S.dt/2)
     {
-        if (S->BodyList.size())
+        if (S.BodyList.size())
         {
             dbg(tr.build());
 
             // решаем слау
             if (collision != nullptr) {
-                conv.CalcCirculationFast(&collision);
+                conv.calc_circulation(&collision);
             }
-            conv.CalcCirculationFast(&collision);
+            conv.calc_circulation(&collision);
 
             dbg(tr.destroy());
         }
 
-        dbg(fm.HeatShed());
+        dbg(flowmove.heat_shed());
 
-        if (S->Time.divisibleBy(S->dt_save)  && (double(S->Time) > 0))
+        if (S.time.divisibleBy(S.dt_save)  && (double(S.time) > 0))
         {
             char tmp_filename[256]; snprintf(tmp_filename, 256, "%s/%%06d.h5", f_results);
-            S->Save(tmp_filename);
-            stepdata->flush();
+            S.save(tmp_filename);
+            stepdata.flush();
         }
 
-        dbg(fm.VortexShed());
-        dbg(fm.StreakShed());
+        dbg(flowmove.vortex_shed());
+        dbg(flowmove.streak_shed());
 
-        dbg(S->CalcForces());
-        stepdata->write();
-        S->ZeroForces();
+        dbg(S.calc_forces());
+        stepdata.write();
+        S.zero_forces();
 
         dbg(tr.build());
         dbg(eps.CalcEpsilonFast(/*merge=*/is_viscous));
-        dbg(conv.CalcBoundaryConvective());
-        dbg(conv.CalcConvectiveFast());
+        dbg(conv.process_all_lists());
         dbg(sens.output());
         if (is_viscous)
         {
-            dbg(diff.CalcVortexDiffusiveFast());
-            dbg(diff.CalcHeatDiffusiveFast());
+            dbg(diff.process_vort_list());
+            dbg(diff.process_heat_list());
         }
         dbg(tr.destroy());
 
-        dbg(fm.MoveAndClean(true, &collision));
+        dbg(flowmove.move_and_clean(true, &collision));
             #ifdef OVERRIDEMOI
-                    S->BodyList->at(0)->overrideMoi_c(OVERRIDEMOI);
+                    S.BodyList->at(0)->overrideMoi_c(OVERRIDEMOI);
             #endif
-        dbg(fm.CropHeat());
-        S->Time = TTime::add(S->Time, S->dt);
+        dbg(flowmove.heat_crop());
+        S.time = TTime::add(S.time, S.dt);
 
         if (b_progress)
-            fprintf(stderr, "\r%-10g \t%-10zd \t%-10zd", double(S->Time), S->VortexList.size(), S->HeatList.size());
+            fprintf(stderr, "\r%-10g \t%-10zd \t%-10zd", double(S.time), S.VortexList.size(), S.HeatList.size());
     }
 
     if (b_progress)

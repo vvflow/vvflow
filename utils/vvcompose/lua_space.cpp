@@ -9,7 +9,7 @@ static int space_load(lua_State *L) {
     Space **ptr = (Space**)luaL_checkudata(L, 1, "S");
     Space *S = *ptr;
     const char* fname = luaL_checkstring(L, 2);
-    S->Load(fname);
+    S->load(fname);
     return 0;
 }
 
@@ -18,7 +18,7 @@ static int space_save(lua_State *L) {
     Space *S = *ptr;
     const char* fname = luaL_checkstring(L, 2);
     try {
-        S->Save(fname);
+        S->save(fname);
     } catch (const std::invalid_argument &e) {
         return luaL_error(L, e.what());
     }
@@ -45,14 +45,14 @@ static int space_xstreamfunction(lua_State *L) {
 
 static const struct luavvd_member space_members[] = {
     {"caption", luavvd_getstring,      luavvd_setstring,      offsetof(Space, caption) },
-    {"re",      luavvd_getdouble,      luavvd_setdouble,      offsetof(Space, Re) },
-    {"finish",  luavvd_getdouble,      luavvd_setdouble,      offsetof(Space, Finish) },
-    {"inf_g",   luavvd_getdouble,      luavvd_setdouble,      offsetof(Space, InfCirculation) },
-    {"inf_vx",  luavvd_getTEval,       luavvd_setTEval,       offsetof(Space, InfSpeedX) },
-    {"inf_vy",  luavvd_getTEval,       luavvd_setTEval,       offsetof(Space, InfSpeedY) },
-    {"gravity", luavvd_getTVec,        luavvd_setTVec,        offsetof(Space, gravitation) },
+    {"re",      luavvd_getdouble,      luavvd_setdouble,      offsetof(Space, re) },
+    {"finish",  luavvd_getdouble,      luavvd_setdouble,      offsetof(Space, finish) },
+    {"inf_g",   luavvd_getdouble,      luavvd_setdouble,      offsetof(Space, inf_g) },
+    {"inf_vx",  luavvd_getTEval,       luavvd_setTEval,       offsetof(Space, inf_vx) },
+    {"inf_vy",  luavvd_getTEval,       luavvd_setTEval,       offsetof(Space, inf_vy) },
+    {"gravity", luavvd_getTVec,        luavvd_setTVec,        offsetof(Space, gravity) },
 
-    {"time",       luavvd_getTTime, luavvd_setTTime, offsetof(Space, Time) },
+    {"time",       luavvd_getTTime, luavvd_setTTime, offsetof(Space, time) },
     {"dt",         luavvd_getTTime, luavvd_setTTime, offsetof(Space, dt) },
     {"dt_save",    luavvd_getTTime, luavvd_setTTime, offsetof(Space, dt_save) },
     {"dt_streak",  luavvd_getTTime, luavvd_setTTime, offsetof(Space, dt_streak) },

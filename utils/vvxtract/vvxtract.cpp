@@ -117,21 +117,21 @@ int main(int argc, char **argv)
 
     if (b_info && H5Aexists(fid, "dt")) {
         Space S;
-        S.Load(fid);
+        S.load(fid);
 
         printf("\n");
         printf("-- space\n");
-        printf("S.re = %lg\n", S.Re);
-        printf("S.inf_g = %lg\n", S.InfCirculation);
-        printf("S.inf_vx = '%s'\n", std::string(S.InfSpeedX).c_str());
-        printf("S.inf_vy = '%s'\n", std::string(S.InfSpeedY).c_str());
-        printf("S.gravity = {%lg, %lg}\n", S.gravitation.x, S.gravitation.y);
-        printf("S.time = '%d/%u' -- %lg\n", S.Time.value, S.Time.timescale, double(S.Time));
+        printf("S.re = %lg\n", S.re);
+        printf("S.inf_g = %lg\n", S.inf_g);
+        printf("S.inf_vx = '%s'\n", std::string(S.inf_vx).c_str());
+        printf("S.inf_vy = '%s'\n", std::string(S.inf_vy).c_str());
+        printf("S.gravity = {%lg, %lg}\n", S.gravity.x, S.gravity.y);
+        printf("S.time = '%d/%u' -- %lg\n", S.time.value, S.time.timescale, double(S.time));
         printf("S.dt = '%d/%u' -- %lg\n", S.dt.value, S.dt.timescale, double(S.dt));
         printf("S.dt_save = '%d/%u'\n", S.dt_save.value, S.dt_save.timescale);
         printf("S.dt_streak = '%d/%u'\n", S.dt_streak.value, S.dt_streak.timescale);
         printf("S.dt_profile = '%d/%u'\n", S.dt_profile.value, S.dt_profile.timescale);
-        printf("S.finish = %lg\n", S.Finish);
+        printf("S.finish = %lg\n", S.finish);
         printf("-- #S.body_list = %zd -- number of elements\n", long(S.BodyList.size()));
         printf("-- #S.vort_list = %zd\n", long(S.VortexList.size()));
         printf("-- #S.sink_list = %zd\n", long(S.SourceList.size()));

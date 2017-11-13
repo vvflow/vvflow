@@ -21,8 +21,8 @@ XStreamfunction::XStreamfunction(
     S(S),
     eps_mult(eps_mult),
     ref_frame_speed(),
-    dl(S.AverageSegmentLength()),
-    rd2(sqr(0.2*dl))
+    dl(),
+    rd2()
 {
     if (eps_mult <= 0)
         throw std::invalid_argument("XStreamfunction(): eps_mult must be positive");
@@ -32,7 +32,7 @@ XStreamfunction::XStreamfunction(
         ref_frame_speed = TVec(0, 0);
         break;
     case 'f':
-        ref_frame_speed = S.InfSpeed();
+        ref_frame_speed = S.inf_speed();
         break;
     case 'b':
         ref_frame_speed = S.BodyList[0]->speed_slae.r;
@@ -73,6 +73,8 @@ void XStreamfunction::evaluate()
     // flowmove fm(&S);
     // fm.VortexShed();
 
+    dl = S.average_segment_length();
+    rd2 = sqr(0.2*dl);
     double min_node_size = dl>0 ? dl*10 : 0;
     double max_node_size = dl>0 ? dl*20 : 1.0l/0.0l;
     TSortedTree tree(&S, 8, min_node_size, max_node_size);
@@ -118,13 +120,14 @@ void XStreamfunction::evaluate()
     evaluated = true;
 }
 
+// static
 double XStreamfunction::streamfunction(const Space &S, TVec p)
 {
     double tmp_4pi_psi_g = 0.0;
     double tmp_2pi_psi_q = 0.0;
 
-    double dl = S.AverageSegmentLength();
-    double rd2 = sqr(0.2*dl);
+    const double dl = S.average_segment_length();
+    const double rd2 = sqr(0.2*dl);
 
     for (auto& lbody: S.BodyList)
     {
@@ -155,7 +158,7 @@ double XStreamfunction::streamfunction(const Space &S, TVec p)
         tmp_4pi_psi_g += _4pi_psi_g(p-vrt.r, rd2, vrt.g);
     }
 
-    return tmp_4pi_psi_g*C_1_4PI + tmp_2pi_psi_q*C_1_2PI + p*rotl(S.InfSpeed());
+    return tmp_4pi_psi_g*C_1_4PI + tmp_2pi_psi_q*C_1_2PI + p*rotl(S.inf_speed());
 }
 
 double XStreamfunction::streamfunction(const TSortedNode &node, TVec p, double* psi_gap) const
@@ -208,5 +211,5 @@ double XStreamfunction::streamfunction(const TSortedNode &node, TVec p, double* 
     }
 
     // printf("GAP %lf\n", psi_gap);
-    return tmp_4pi_psi_g*C_1_4PI + tmp_2pi_psi_q*C_1_2PI + p*rotl(S.InfSpeed() - ref_frame_speed);
+    return tmp_4pi_psi_g*C_1_4PI + tmp_2pi_psi_q*C_1_2PI + p*rotl(S.inf_speed() - ref_frame_speed);
 }

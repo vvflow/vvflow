@@ -40,6 +40,7 @@ TBody::TBody():
     speed_o(),
     
     eq_forces_no(),
+    _slip(),
     _slen(),
     _area(),
     _cofm(),
@@ -288,6 +289,7 @@ TAtt* TBody::isPointInContour(TVec p, std::vector<T> &list)
 
 void TBody::doFillProperties()
 {
+    _slip = false;
     _slen = 0;
     _area = 0;
     TVec _3S_cofm = TVec(0., 0.);
@@ -300,6 +302,7 @@ void TBody::doFillProperties()
     alist.push_back(alist.front());
     for (auto latt=alist.begin(); latt<alist.end()-1; latt++)
     {
+        _slip = _slip || latt->slip;
         _slen+= latt->dl.abs();
         _area+= latt->r.y*latt->dl.x;
         _3S_cofm-= latt->r * (rotl(latt->corner) * (latt+1)->corner);
