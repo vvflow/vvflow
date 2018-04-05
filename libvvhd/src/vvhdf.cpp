@@ -8,12 +8,9 @@ struct h5t{
     static hid_t id;
 };
 
-// template<> hid_t H5T<double>::id = H5T_NATIVE_DOUBLE;
-// template<> hid_t H5T<float>::id = H5T_NATIVE_FLOAT;
-// template<> hid_t H5T<int>::id = H5T_NATIVE_INT;
-// template<> hid_t H5T<long>::id = H5T_NATIVE_LONG;
 template<> hid_t h5t<int32_t>::id = H5T_NATIVE_INT32;
 template<> hid_t h5t<uint32_t>::id = H5T_NATIVE_UINT32;
+template<> hid_t h5t<double>::id = H5T_NATIVE_DOUBLE;
 
 template<typename T>
 T h5a_read(hid_t hid, const char* name) {
@@ -59,4 +56,5 @@ std::string h5a_read(hid_t hid, const char* name)
 // Explicit instantiation:
 template int32_t h5a_read(hid_t, const char*);
 template uint32_t h5a_read(hid_t, const char*);
+template double h5a_read(hid_t, const char*);
 template std::string h5a_read(hid_t, const char*);
