@@ -1,6 +1,7 @@
 #include "TSpace.hpp"
 #include "elementary.h"
 #include "space_hdf.cpp"
+#include "vvhdf.h"
 
 #include <cmath>
 // #include <float.h>
@@ -309,46 +310,43 @@ herr_t dataset_read_body(hid_t g_id, const char* name, const H5L_info_t*, void *
     hid_t file_dataspace = H5Dget_space(dataset);
     H5ASSERT(file_dataspace, "H5Dget_space");
     hsize_t dims[2]; H5Sget_simple_extent_dims(file_dataspace, dims, dims);
+    hsize_t N = dims[0];
 
+    body-> label = h5a_read<std::string> (dataset, "label");
+    body->holder = h5a_read<TVec3D> (dataset, "holder_position");
+    body->dpos = h5a_read<TVec3D> (dataset, "delta_position");
+    body->speed_x = h5a_read<std::string> (dataset, "speed_x");
+    body->speed_y = h5a_read<std::string> (dataset, "speed_y");
+    body->speed_o = h5a_read<std::string> (dataset, "speed_o");
+    body->speed_slae = h5a_read<TVec3D> (dataset, "speed_slae");
+    body->speed_slae_prev = h5a_read<TVec3D> (dataset, "speed_slae_prev");
+    body->kspring = h5a_read<TVec3D> (dataset, "spring_const");
+    body->damping = h5a_read<TVec3D> (dataset, "spring_damping");
+    body->density = h5a_read<double> (dataset, "density");
+    body->force_hydro = h5a_read<TVec3D> (dataset, "force_hydro");
+    body->force_holder = h5a_read<TVec3D> (dataset, "force_holder");
+    body->friction_prev = h5a_read<TVec3D> (dataset, "friction_prev");
 
-    attribute_read(dataset, "label", body->label);
-    attribute_read(dataset, "holder_position", body->holder);
-    attribute_read(dataset, "delta_position", body->dpos);
-    attribute_read(dataset, "speed_x", body->speed_x);
-    attribute_read(dataset, "speed_y", body->speed_y);
-    attribute_read(dataset, "speed_o", body->speed_o);
-    attribute_read(dataset, "speed_slae", body->speed_slae);
-    attribute_read(dataset, "speed_slae_prev", body->speed_slae_prev);
-    attribute_read(dataset, "spring_const", body->kspring);
-    attribute_read(dataset, "spring_damping", body->damping);
-    attribute_read(dataset, "density", body->density);
-    attribute_read(dataset, "force_hydro", body->force_hydro);
-    attribute_read(dataset, "force_holder", body->force_holder);
-    attribute_read(dataset, "friction_prev", body->friction_prev);
+    body->fdt_dead = h5a_read<TVec3D> (dataset, "fdt_dead");
+    body->g_dead = h5a_read<double> (dataset, "g_dead");
 
-    attribute_read(dataset, "fdt_dead", body->fdt_dead);
-    attribute_read(dataset, "g_dead", body->g_dead);
+    body->collision_min = h5a_read<TVec3D> (dataset, "collision_min");
+    body->collision_max = h5a_read<TVec3D> (dataset, "collision_max");
+    body->bounce = h5a_read<double> (dataset, "bounce");
 
-    attribute_read(dataset, "collision_min", body->collision_min);
-    attribute_read(dataset, "collision_max", body->collision_max);
-    attribute_read(dataset, "bounce", body->bounce);
-
-    std::string root_body_name;
+    std::string root_body_name = h5a_read<std::string> (dataset, "root_body");
     int root_body_idx;
-    attribute_read(dataset, "root_body", root_body_name);
     if (sscanf(root_body_name.c_str(), "body%d", &root_body_idx) == 1)
         body->root_body = S->BodyList[root_body_idx];
     else
         body->root_body.reset();
 
     struct ATT *att_array = (struct ATT*)malloc(dims[0] * sizeof(struct ATT));
-    uint32_t *slip_array = NULL;
+    uint32_t slip_array[N] = {0};
     H5ASSERT(H5Dread(dataset, H5T_NATIVE_DOUBLE, H5S_ALL, file_dataspace, H5P_DEFAULT, att_array), "H5Dread");
 
-    uint32_t simplified_dataset;
-    int32_t general_slip;
     double heat_const;
-    attribute_read(dataset, "simplified_dataset", simplified_dataset);
+    uint32_t simplified_dataset = h5a_read<uint32_t> (dataset, "simplified_dataset");
 
     // simplified_dataset по хорошему должен называться dataset_version,
     // но исторически я теперь привязан именно к этому названию.
@@ -359,22 +357,19 @@ herr_t dataset_read_body(hid_t g_id, const char* name, const H5L_info_t*, void *
     // Новая версия полноценного датасета имеет номер 3.
     if (simplified_dataset < 2)
     {
-        attribute_read(dataset, "general_bc", general_slip);
-        attribute_read(dataset, "heat_const", heat_const);
-        general_slip = general_slip == 'l';
+        uint32_t general_slip = h5a_read<uint32_t> (dataset, "general_bc") == 'l';
+        for(hsize_t i=0; i<N; i++)
+            slip_array[i] = general_slip;
+        heat_const = h5a_read<double> (dataset, "heat_const");
 
-        int32_t special_bc, special_bc_segment, heat_condition;
-        attribute_read(dataset, "special_bc", special_bc);
-        attribute_read(dataset, "special_bc_segment", special_bc_segment);
-        attribute_read(dataset, "heat_condition", heat_condition);
-        body->special_segment_no = special_bc_segment;
-        switch (special_bc)
+        body->special_segment_no = h5a_read<int32_t> (dataset, "special_bc_segment");
+        switch (h5a_read<int32_t> (dataset, "special_bc"))
         {
             case 's': 
             case 'i': body->boundary_condition = bc_t::steady; break;
             case 'z': body->boundary_condition = bc_t::kutta; break;
         }
-        switch (heat_condition)
+        switch (h5a_read<int32_t>(dataset, "heat_condition"))
         {
             case 'n': body->heat_condition = hc_t::neglect; break;
             case 'i': body->heat_condition = hc_t::isolate; break;
@@ -386,36 +381,40 @@ herr_t dataset_read_body(hid_t g_id, const char* name, const H5L_info_t*, void *
     {
         if (H5Aexists(dataset, "slip"))
         {
-            slip_array = (uint32_t*)malloc(dims[0] * sizeof(uint32_t));
+            // slip_array = (uint32_t*)malloc(dims[0] * sizeof(uint32_t));
             hid_t aid = H5Aopen(dataset, "slip", H5P_DEFAULT);
             H5Aread(aid, H5T_NATIVE_UINT32, slip_array);
             H5Aclose(aid);
         }
         else
         {
-            attribute_read(dataset, "general_slip", general_slip);
+            uint32_t general_slip = h5a_read<uint32_t> (dataset, "general_slip");
+            for(hsize_t i=0; i<N; i++)
+                slip_array[i] = general_slip;
         }
-        attribute_read(dataset, "general_heat_const", heat_const);
-        attribute_read(dataset, "boundary_condition", body->boundary_condition);
-        attribute_read(dataset, "special_segment_no", body->special_segment_no);
-        attribute_read(dataset, "heat_condition", body->heat_condition);
+        body->special_segment_no = h5a_read<int32_t> (dataset, "special_segment_no");
+        // body->boundary_condition = h5a_read<bc_t> (dataset, "boundary_condition");
+        // body->heat_condition     = h5a_read<hc_t> (dataset, "heat_condition");
+        heat_const = h5a_read<double> (dataset, "general_heat_const");
     }
 
 
-    for(hsize_t i=0; i<dims[0]; i++)
+    for(hsize_t i=0; i<N; i++)
     {
         body->alist.emplace_back(att_array[i].x, att_array[i].y);
         TAtt& latt = body->alist.back();
         latt.g = att_array[i].g;
         latt.gsum = att_array[i].gsum;
-        latt.slip = slip_array ? slip_array[i] : general_slip;
+        latt.slip = slip_array[i];
         latt.heat_const = heat_const;        
     }
 
     body->doUpdateSegments();
     body->doFillProperties();
 
-    H5ASSERT(H5Dclose(dataset), "H5Dclose");
+    herr_t err = H5Dclose(dataset);
+    if (err < 0)
+        throw std::runtime_error("H5Dclose failed");
     free(att_array);
     free(slip_array);
     S->BodyList.push_back(body);
