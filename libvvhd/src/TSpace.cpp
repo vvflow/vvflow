@@ -393,8 +393,8 @@ herr_t dataset_read_body(hid_t g_id, const char* name, const H5L_info_t*, void *
                 slip_array[i] = general_slip;
         }
         body->special_segment_no = h5a_read<int32_t> (dataset, "special_segment_no");
-        // body->boundary_condition = h5a_read<bc_t> (dataset, "boundary_condition");
-        // body->heat_condition     = h5a_read<hc_t> (dataset, "heat_condition");
+        body->boundary_condition = h5a_read<bc_t> (dataset, "boundary_condition");
+        body->heat_condition     = h5a_read<hc_t> (dataset, "heat_condition");
         heat_const = h5a_read<double> (dataset, "general_heat_const");
     }
 

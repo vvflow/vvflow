@@ -5,9 +5,9 @@
 #include "TVec.hpp"
 #include "TObj.hpp"
 #include "TVec3D.hpp"
+#include "TBody.hpp"
 #include "TTime.hpp"
 
-#include <limits>
 #include <string>
 
 template<typename T>
@@ -37,6 +37,40 @@ std::string h5a_read(hid_t hid, const char* name)
     std::string ret = buf?:"";
     free(buf);
     return ret;
+}
+
+template<>
+bc_t h5a_read(hid_t hid, const char* name)
+{
+    uint32_t bc_raw = h5a_read<uint32_t>(hid, name);
+    switch (bc_raw) {
+    case 0:
+        return bc_t::steady;
+    case 1:
+        return bc_t::kutta;
+    default:
+        fprintf(stderr, "Warning: bad boundary condition (%d), using bc::steady\n", bc_raw);
+        return bc_t::steady;
+    }
+}
+
+template<>
+hc_t h5a_read(hid_t hid, const char* name)
+{
+    uint32_t hc_raw = h5a_read<uint32_t>(hid, name);
+    switch (hc_raw) {
+    case 0:
+        return hc_t::neglect;
+    case 1:
+        return hc_t::isolate;
+    case 2:
+        return hc_t::const_t;
+    case 3:
+        return hc_t::const_w;
+    default:
+        fprintf(stderr, "Warning: bad heat condition (%d), using hc::neglect\n", hc_raw);
+        return hc_t::neglect;
+    }
 }
 
 // Explicit instantiation:

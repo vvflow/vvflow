@@ -24,4 +24,6 @@ template<typename T>
 // <uint32_t>
 // <double>
 // <std::string>
+// <bc_t>
+// <hc_t>
 T h5a_read(hid_t hid, const char* name);
