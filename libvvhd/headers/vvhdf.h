@@ -1,15 +1,15 @@
 #pragma once
 
-#include "elementary.h"
-
 #include <hdf5.h>
-#include <string>
 
 template<typename T>
 // <int32_t>
 // <uint32_t>
 // <double>
-// <std::string>
+// <TVec>
+// <TVec3D>
+// <char*>
+// <TTime>
 struct h5t{
     static hid_t id;
     static hid_t init();
@@ -25,8 +25,3 @@ template<typename T>
 // <double>
 // <std::string>
 T h5a_read(hid_t hid, const char* name);
-
-// Available instantiations:
-
-// template<typename T>
-// void h5a_write(hid_t hid, const char* name, T value);

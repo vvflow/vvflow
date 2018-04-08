@@ -1,4 +1,5 @@
 #include "TSpace.hpp"
+#include "elementary.h"
 #include "vvhdf.h"
 
 #include <cstdio>

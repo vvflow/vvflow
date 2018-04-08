@@ -454,27 +454,27 @@ void Space::load(hid_t fid, std::string *info)
 {
     datatypes_create_all();
 
-    attribute_read(fid, "caption", caption);
-    attribute_read(fid, "time", time);
-    attribute_read(fid, "dt", dt);
-    attribute_read(fid, "dt_save", dt_save);
-    attribute_read(fid, "dt_streak", dt_streak);
-    attribute_read(fid, "dt_profile", dt_profile);
-    attribute_read(fid, "re", re);
-    attribute_read(fid, "pr", pr);
-    attribute_read(fid, "inf_marker", inf_marker);
-    attribute_read(fid, "inf_speed_x", inf_vx);
-    attribute_read(fid, "inf_speed_y", inf_vy);
-    attribute_read(fid, "inf_circulation", inf_g);
-    attribute_read(fid, "gravity", gravity);
-    attribute_read(fid, "time_to_finish", finish);
+    caption = h5a_read<std::string> (fid, "caption");
+    time = h5a_read<TTime> (fid, "time");
+    dt = h5a_read<TTime> (fid, "dt");
+    dt_save = h5a_read<TTime> (fid, "dt_save");
+    dt_streak = h5a_read<TTime> (fid, "dt_streak");
+    dt_profile = h5a_read<TTime> (fid, "dt_profile");
+    re = h5a_read<double> (fid, "re");
+    pr = h5a_read<double> (fid, "pr");
+    inf_marker = h5a_read<TVec> (fid, "inf_marker");
+    inf_vx = h5a_read<std::string> (fid, "inf_speed_x");
+    inf_vy = h5a_read<std::string> (fid, "inf_speed_y");
+    inf_g = h5a_read<double> (fid, "inf_circulation");
+    gravity = h5a_read<TVec> (fid, "gravity");
+    finish = h5a_read<double> (fid, "time_to_finish");
 
     if (info)
     {
-        attribute_read(fid, "git_rev", info[0]);
-        attribute_read(fid, "git_info", info[1]);
-        attribute_read(fid, "git_diff", info[2]);
-        attribute_read(fid, "time_local", info[3]);
+        info[0] = h5a_read<std::string>(fid, "git_rev");
+        info[1] = h5a_read<std::string>(fid, "git_info");
+        info[2] = h5a_read<std::string>(fid, "git_diff");
+        info[3] = h5a_read<std::string>(fid, "time_local");
     }
 
     dataset_read_list(fid, "vort", VortexList);
