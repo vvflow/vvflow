@@ -141,7 +141,7 @@ class Space
         std::string get_body_name(const TBody* body) const;
 
     private:
-        void Load_v1_3(const char* filename);
+        void load_v13(const char* filename);
         herr_t dataset_read_list(hid_t fid, const char *name, std::vector<TObj>& list);
         void dataset_write_list(const char* name, const std::vector<TObj>& list);
         void dataset_write_body(const char* name, const TBody& body);
