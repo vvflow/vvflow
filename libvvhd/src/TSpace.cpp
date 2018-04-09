@@ -1,3 +1,6 @@
+#define H5_USE_18_API
+#include <hdf5.h>
+
 #include "TSpace.hpp"
 #include "elementary.h"
 #include "space_hdf.cpp"
@@ -86,22 +89,26 @@ void Space::dataset_write_list(const char *name, const vector<TObj>& list)
 
 void Space::dataset_write_body(const char* name, const TBody& body)
 {
-    float heat_const = body.alist.front().heat_const;
-    uint32_t general_slip = body.alist.front().slip;
     bool can_simplify_slip = true;
     bool can_simplify_heat = true;
 
-    hsize_t dims[2] = {body.size(), 4};
-    struct ATT *att_array = (struct ATT*)malloc(dims[0] * sizeof(struct ATT));
-    uint32_t *slip_array = (uint32_t*)malloc(dims[0] * sizeof(uint32_t));
-    float *heat_array = (float*)malloc(dims[0] * sizeof(float));
-    for(hsize_t i=0; i<dims[0]; i++)
-    {
+    hsize_t N = body.size();
+    hsize_t dims[2] = {N, 4};
+
+    double att_array[N][4] = {0};
+    
+    uint32_t general_slip = body.alist.front().slip;
+    uint32_t slip_array[N] = {0};
+    
+    float heat_const = body.alist.front().heat_const;
+    float heat_array[N] = {0};
+    
+    for (hsize_t i=0; i<N; i++) {
         const TAtt& att = body.alist[i];
-        att_array[i].x = att.corner.x;
-        att_array[i].y = att.corner.y;
-        att_array[i].g = att.g;
-        att_array[i].gsum = att.gsum;
+        att_array[i][0] = att.corner.x;
+        att_array[i][1] = att.corner.y;
+        att_array[i][2] = att.g;
+        att_array[i][3] = att.gsum;
         slip_array[i] = att.slip;
         heat_array[i] = att.heat_const;
 
@@ -109,85 +116,92 @@ void Space::dataset_write_body(const char* name, const TBody& body)
         can_simplify_heat &= (att.heat_const == heat_const);
     }
 
-    hsize_t chunkdims[2] = {std::min<hsize_t>(512, dims[0]), 4};
+    hsize_t chunkdims[2] = {std::min<hsize_t>(512, N), 4};
     hid_t prop = H5Pcreate(H5P_DATASET_CREATE);
     H5Pset_chunk(prop, 2, chunkdims);
     H5Pset_deflate(prop, 9);
 
-    hid_t file_dataspace = H5Screate_simple(2, dims, dims);
-    H5ASSERT(file_dataspace, "H5Screate_simple");
+    hid_t h5s_file = H5Screate_simple(2, dims, dims);
+    if (h5s_file < 0)
+        throw std::runtime_error("H5Screate_simple (" + std::string(name) + ") failed");
 
-    hid_t file_dataset = H5Dcreate2(fid, name, H5T_NATIVE_DOUBLE, file_dataspace, H5P_DEFAULT, prop, H5P_DEFAULT);
-    H5ASSERT(file_dataset, "H5Dcreate");
+    hid_t h5d = H5Dcreate(fid, name, H5T_NATIVE_DOUBLE, h5s_file, H5P_DEFAULT, prop, H5P_DEFAULT);
+    if (h5d < 0)
+        throw std::runtime_error("H5Dcreate (" + std::string(name) + ") failed");
 
-    if (!can_simplify_slip)
-    {
-        hid_t slip_dataspace = H5Screate_simple(1, dims, dims);
-        H5ASSERT(slip_dataspace, "H5Screate_simple");
+    if (!can_simplify_slip) {
+        h5t<uint32_t>::init();
+        
+        hid_t h5s_slip = H5Screate_simple(1, dims, dims);
+        if (h5s_slip < 0)
+            throw std::runtime_error("H5Screate_simple (" + std::string(name) + ".slip) failed");
 
-        hid_t aid = H5Acreate(file_dataset, "slip", H5T_NATIVE_UINT32, slip_dataspace, H5P_DEFAULT, H5P_DEFAULT);
-        if (H5Awrite(aid, H5T_NATIVE_UINT32, slip_array)<0) return;
-        if (H5Aclose(aid)<0) return;
+        hid_t aid = H5Acreate(h5d, "slip", h5t<uint32_t>::id, h5s_slip, H5P_DEFAULT, H5P_DEFAULT);
+        if (aid < 0)
+            throw std::runtime_error("H5Acreate (" + std::string(name) + ".slip) failed");
+
+        herr_t err = H5Awrite(aid, h5t<uint32_t>::id, slip_array);
+        if (err < 0)
+            throw std::runtime_error("H5Awrite (" + std::string(name) + ".slip) failed");
+
+        err = H5Aclose(aid);
+        if (err < 0)
+            throw std::runtime_error("H5Aclose (" + std::string(name) + ".slip) failed");
+    } else {
+        h5a_write<uint32_t> (h5d, "general_slip", general_slip);
     }
-    else
-    {
-        h5a_write<uint32_t> (file_dataset, "general_slip", general_slip);
+
+    if (!can_simplify_heat) {
+        throw std::runtime_error("Non-simplified heat not implemented");
+    } else {
+        h5a_write<double> (h5d, "general_heat_const", heat_const);
     }
 
-    if (!can_simplify_heat)
-    {
-        fprintf(stderr, "Can not save simplified heat in %s\n", get_body_name(&body).c_str());
-        exit(1);
-    }
-    else
-    {
-        h5a_write<double> (file_dataset, "general_heat_const", heat_const);
-    }
-
-    h5a_write<uint32_t> (file_dataset, "simplified_dataset", 2);
+    h5a_write<uint32_t> (h5d, "simplified_dataset", 2);
         
     if (!body.root_body.expired())
     {
         auto root_body = body.root_body.lock();
-        h5a_write<std::string const&> (file_dataset, "root_body", get_body_name(root_body.get()));
+        h5a_write<std::string const&> (h5d, "root_body", get_body_name(root_body.get()));
     }
 
-    h5a_write<std::string const&> (file_dataset, "label", body.label);
-    h5a_write<TVec3D> (file_dataset, "holder_position", body.holder);
-    h5a_write<TVec3D> (file_dataset, "delta_position", body.dpos);
-    h5a_write<std::string const&> (file_dataset, "speed_x", body.speed_x);
-    h5a_write<std::string const&> (file_dataset, "speed_y", body.speed_y);
-    h5a_write<std::string const&> (file_dataset, "speed_o", body.speed_o);
-    h5a_write<TVec3D> (file_dataset, "speed_slae", body.speed_slae);
-    h5a_write<TVec3D> (file_dataset, "speed_slae_prev", body.speed_slae_prev);
-    h5a_write<TVec3D> (file_dataset, "spring_const", body.kspring);
-    h5a_write<TVec3D> (file_dataset, "spring_damping", body.damping);
-    h5a_write<double> (file_dataset, "density", body.density);
-    h5a_write<TVec3D> (file_dataset, "force_hydro", body.force_hydro);
-    h5a_write<TVec3D> (file_dataset, "force_holder", body.force_holder);
-    h5a_write<TVec3D> (file_dataset, "friction_prev", body.friction_prev);
+    h5a_write<std::string const&> (h5d, "label", body.label);
+    h5a_write<TVec3D> (h5d, "holder_position", body.holder);
+    h5a_write<TVec3D> (h5d, "delta_position", body.dpos);
+    h5a_write<std::string const&> (h5d, "speed_x", body.speed_x);
+    h5a_write<std::string const&> (h5d, "speed_y", body.speed_y);
+    h5a_write<std::string const&> (h5d, "speed_o", body.speed_o);
+    h5a_write<TVec3D> (h5d, "speed_slae", body.speed_slae);
+    h5a_write<TVec3D> (h5d, "speed_slae_prev", body.speed_slae_prev);
+    h5a_write<TVec3D> (h5d, "spring_const", body.kspring);
+    h5a_write<TVec3D> (h5d, "spring_damping", body.damping);
+    h5a_write<double> (h5d, "density", body.density);
+    h5a_write<TVec3D> (h5d, "force_hydro", body.force_hydro);
+    h5a_write<TVec3D> (h5d, "force_holder", body.force_holder);
+    h5a_write<TVec3D> (h5d, "friction_prev", body.friction_prev);
 
-    h5a_write<TVec3D> (file_dataset, "fdt_dead", body.fdt_dead);
-    h5a_write<double> (file_dataset, "g_dead", body.g_dead);
+    h5a_write<TVec3D> (h5d, "fdt_dead", body.fdt_dead);
+    h5a_write<double> (h5d, "g_dead", body.g_dead);
 
-    h5a_write<TVec3D> (file_dataset, "collision_min", body.collision_min);
-    h5a_write<TVec3D> (file_dataset, "collision_max", body.collision_max);
-    h5a_write<double> (file_dataset, "bounce", body.bounce);
+    h5a_write<TVec3D> (h5d, "collision_min", body.collision_min);
+    h5a_write<TVec3D> (h5d, "collision_max", body.collision_max);
+    h5a_write<double> (h5d, "bounce", body.bounce);
 
-    h5a_write<double> (file_dataset, "area", body.get_area());
-    h5a_write<TVec> (file_dataset, "cofm", body.get_cofm());
-    h5a_write<double> (file_dataset, "moi_cofm", body.get_moi_cofm());
-    h5a_write<double> (file_dataset, "moi_axis", body.get_moi_axis());
+    h5a_write<double> (h5d, "area", body.get_area());
+    h5a_write<TVec> (h5d, "cofm", body.get_cofm());
+    h5a_write<double> (h5d, "moi_cofm", body.get_moi_cofm());
+    h5a_write<double> (h5d, "moi_axis", body.get_moi_axis());
 
-    h5a_write<int32_t> (file_dataset, "special_segment_no", body.special_segment_no);
-    h5a_write<bc_t> (file_dataset, "boundary_condition", body.boundary_condition);
-    h5a_write<hc_t> (file_dataset, "heat_condition", body.heat_condition);
+    h5a_write<int32_t> (h5d, "special_segment_no", body.special_segment_no);
+    h5a_write<bc_t> (h5d, "boundary_condition", body.boundary_condition);
+    h5a_write<hc_t> (h5d, "heat_condition", body.heat_condition);
 
-    H5ASSERT(H5Dwrite(file_dataset, H5T_NATIVE_DOUBLE, H5S_ALL, file_dataspace, H5P_DEFAULT, att_array), "H5Dwrite");
-    H5ASSERT(H5Dclose(file_dataset), "H5Dclose");
-    free(att_array);
-    free(slip_array);
-    free(heat_array);
+    herr_t err = H5Dwrite(h5d, H5T_NATIVE_DOUBLE, H5S_ALL, h5s_file, H5P_DEFAULT, att_array);
+    if (err < 0)
+        throw std::runtime_error("H5Dwrite (" + std::string(name) + ") failed");
+    err = H5Dclose(h5d);
+    if (err < 0)
+        throw std::runtime_error("H5Dclose (" + std::string(name) + ") failed");
 }
 
 void Space::save(const char* format)

@@ -19,16 +19,16 @@ T h5a_read(hid_t hid, const char* name) {
 
     hid_t aid = H5Aopen(hid, name, H5P_DEFAULT);
     if (aid < 0)
-        throw std::runtime_error("H5Aopen ('" + std::string(name) + "') failed");
+        throw std::runtime_error("H5Aopen (" + std::string(name) + ") failed");
 
     T ret = T();
     herr_t err = H5Aread(aid, h5t<T>::id, &ret);
     if (err < 0)
-        throw std::runtime_error("H5Aread ('" + std::string(name) + "') failed");
+        throw std::runtime_error("H5Aread (" + std::string(name) + ") failed");
 
     err = H5Aclose(aid);
     if (err < 0)
-        throw std::runtime_error("H5Aclose ('" + std::string(name) + "') failed");
+        throw std::runtime_error("H5Aclose (" + std::string(name) + ") failed");
     return ret;
 }
 
@@ -103,15 +103,15 @@ void h5a_write(hid_t hid, const char* name, T val)
 
     hid_t aid = H5Acreate(hid, name, h5t<T>::id, h5s_scalar(), H5P_DEFAULT, H5P_DEFAULT);
     if (aid < 0)
-        throw std::runtime_error("H5Acreate ('" + std::string(name) + "') failed");
+        throw std::runtime_error("H5Acreate (" + std::string(name) + ") failed");
     
     herr_t err = H5Awrite(aid, h5t<T>::id, &val);
     if (err < 0)
-        throw std::runtime_error("H5Awrite ('" + std::string(name) + "') failed");
+        throw std::runtime_error("H5Awrite (" + std::string(name) + ") failed");
 
     err = H5Aclose(aid);
     if (err < 0)
-        throw std::runtime_error("H5Aclose ('" + std::string(name) + "') failed");
+        throw std::runtime_error("H5Aclose (" + std::string(name) + ") failed");
 }
 
 template<>
