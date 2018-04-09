@@ -1,6 +1,9 @@
 #pragma once
 
 #include <hdf5.h>
+#include <string>
+
+void h5_throw(std::string fn, std::string arg);
 
 template<typename T>
 // <int32_t>

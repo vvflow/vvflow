@@ -230,13 +230,7 @@ void Space::save(const char* format)
 
     char fname[64]; sprintf(fname, format, int(time/dt+0.5));
     fid = H5Fcreate(fname, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-    if (fid < 0)
-    {
-        H5Epop(H5E_DEFAULT, H5Eget_num(H5E_DEFAULT)-1);
-        H5Eprint2(H5E_DEFAULT, stderr);
-        fprintf(stderr, "error: Space::Save: can't open file '%s'\n", fname);
-        return;
-    }
+    if (fid < 0) h5_throw("H5Fcreate", fname);
 
     h5a_write<std::string const&> (fid, "caption", caption);
     h5a_write<TTime> (fid, "time", time);
@@ -276,7 +270,7 @@ void Space::save(const char* format)
     h5t_close_all();
     herr_t err = H5Fclose(fid);
     if (err < 0)
-        throw std::runtime_error("H5Fclose (" + std::string(fname) + ") failed");
+        h5_throw("H5Fclose", fname);
 }
 
 // 888       .d88888b.         d8888 8888888b.      888    888 8888888b.  8888888888
@@ -290,37 +284,38 @@ void Space::save(const char* format)
 
 herr_t Space::dataset_read_list(hid_t fid, const char *name, vector<TObj>& list)
 {
-    if (!H5Lexists(fid, name, H5P_DEFAULT)) return 0;
+    if (!H5Lexists(fid, name, H5P_DEFAULT))
+        return 0;
 
-    hid_t dataset = H5Dopen2(fid, name, H5P_DEFAULT);
-    if (dataset < 0)
-    {
-        H5Epop(H5E_DEFAULT, H5Eget_num(H5E_DEFAULT)-1);
-        H5Eprint2(H5E_DEFAULT, stderr);
-        fprintf(stderr, "error: dataset_read_list: can't open dataset '%s'\n", name);
-        return -1;
-    }
+    hid_t h5d = H5Dopen(fid, name, H5P_DEFAULT);
+    if (h5d < 0)
+        h5_throw("H5Dopen", name);
 
-    hid_t file_dataspace = H5Dget_space(dataset);
-    H5ASSERT(file_dataspace, "H5Dget_space");
-    hsize_t dims[2]; H5Sget_simple_extent_dims(file_dataspace, dims, dims);
-    hsize_t dims2[2] = {dims[0]*2, dims[1]};
-    hid_t mem_dataspace = H5Screate_simple(2, dims2, dims2);
-    H5ASSERT(mem_dataspace, "H5Screate_simple");
-    list.resize(dims[0], TObj());
+    hid_t h5s_file = H5Dget_space(h5d);
+    if (h5s_file < 0)
+        h5_throw("H5Dget_space", name);
+
+    hsize_t dims1[2];
+    H5Sget_simple_extent_dims(h5s_file, dims1, dims1);    
+
+    hsize_t dims2[2] = {dims1[0]*2, dims1[1]};
+    hid_t h5s_mem = H5Screate_simple(2, dims2, dims2);
+    if (h5s_mem < 0)
+        h5_throw("H5Screate_simple", name);
+
+    list.resize(dims1[0], TObj());
     hsize_t offset[2] = {0, 0};
     hsize_t stride[2] = {2, 1};
-    H5ASSERT(H5Sselect_hyperslab(mem_dataspace, H5S_SELECT_SET, offset, stride, dims, NULL), "H5Sselect_hyperslab");
-
-    herr_t err = H5Dread(dataset, H5T_NATIVE_DOUBLE, mem_dataspace, file_dataspace, H5P_DEFAULT, list.data());
+    herr_t err = H5Sselect_hyperslab(h5s_mem, H5S_SELECT_SET, offset, stride, dims1, NULL);
     if (err < 0)
-    {
-        H5Epop(H5E_DEFAULT, H5Eget_num(H5E_DEFAULT)-1);
-        H5Eprint2(H5E_DEFAULT, stderr);
-        fprintf(stderr, "error: dataset_read_list: can't read dataset '%s'\n", name);
-        return -1;
-    }
-    H5ASSERT(H5Dclose(dataset), "H5Dclose");
+        h5_throw("H5Sselect_hyperslab", name);
+
+    err = H5Dread(h5d, H5T_NATIVE_DOUBLE, h5s_mem, h5s_file, H5P_DEFAULT, list.data());
+    if (err < 0)
+        h5_throw("H5Dread", name);
+    err = H5Dclose(h5d);
+    if (err < 0)
+        h5_throw("H5Dclose", name);
     return 0;
 }
 

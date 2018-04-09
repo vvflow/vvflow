@@ -10,6 +10,17 @@
 
 #include <string>
 
+void h5_throw(std::string fn, std::string arg)
+{
+    H5Epop(H5E_DEFAULT, H5Eget_num(H5E_DEFAULT)-1);
+    H5Eprint(H5E_DEFAULT, stderr);
+    throw std::runtime_error( fn + " (" + arg + ") failed");
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// H5A_READ ///////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
 template<typename T>
 T h5a_read(hid_t hid, const char* name) {
     if (!H5Aexists(hid, name))
