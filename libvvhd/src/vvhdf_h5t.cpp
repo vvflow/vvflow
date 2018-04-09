@@ -6,13 +6,25 @@
 #include "TVec3D.hpp"
 #include "TTime.hpp"
 
+#include <stdexcept>
+
+// ID
 template<> hid_t h5t<int32_t>::id = H5T_NATIVE_INT32;
 template<> hid_t h5t<uint32_t>::id = H5T_NATIVE_UINT32;
 template<> hid_t h5t<double>::id = H5T_NATIVE_DOUBLE;
 template<> hid_t h5t<TVec>::id = -1;
 template<> hid_t h5t<TVec3D>::id = -1;
-template<> hid_t h5t<char*>::id = -1;
+template<> hid_t h5t<const char*>::id = -1;
 template<> hid_t h5t<TTime>::id = -1;
+
+// NAME
+template<> const char* h5t<int32_t>::name = "int32_t";
+template<> const char* h5t<uint32_t>::name = "uint32_t";
+template<> const char* h5t<double>::name = "double";
+template<> const char* h5t<TVec>::name = "vec_t";
+template<> const char* h5t<TVec3D>::name = "vec3d_t";
+template<> const char* h5t<const char*>::name = "string_t";
+template<> const char* h5t<TTime>::name = "fraction_t";
 
 // INIT
 template<> hid_t h5t<int32_t>::init() {return id;}
@@ -37,7 +49,7 @@ template<> hid_t h5t<TVec3D>::init()
     H5Tpack(id);
     return id;
 }
-template<> hid_t h5t<char*>::init()
+template<> hid_t h5t<const char*>::init()
 {
     if (id >= 0) return id;
     id = H5Tcopy(H5T_C_S1);
@@ -54,35 +66,41 @@ template<> hid_t h5t<TTime>::init()
 }
 
 // COMMIT
-static void __commit(hid_t hid, hid_t id, const char* name)
+template<typename T>
+void h5t<T>::commit(hid_t hid)
 {
-    if (H5Tcommitted(id))
-        return; 
-    H5Tcommit(hid, name, id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    if (id < 0 || H5Tcommitted(id))
+        return;
+    herr_t err = H5Tcommit(hid, name, id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    if (err < 0)
+        throw std::runtime_error("H5Tcommit (" + std::string(name) + ") failed");
 }
-template<> void h5t<int32_t>::commit(hid_t hid) {}
-template<> void h5t<uint32_t>::commit(hid_t hid) {}
-template<> void h5t<double>::commit(hid_t hid) {}
-template<> void h5t<TVec>::commit(hid_t hid) {__commit(hid, id, "vec_t");}
-template<> void h5t<TVec3D>::commit(hid_t hid) {__commit(hid, id, "vec3d_t");}
-template<> void h5t<char*>::commit(hid_t hid) {__commit(hid, id, "string_t");}
-template<> void h5t<TTime>::commit(hid_t hid) {__commit(hid, id, "fraction_t");}
+
+void h5t_commit_all(hid_t hid)
+{
+    h5t<TVec>::commit(hid);
+    h5t<TVec3D>::commit(hid);
+    h5t<const char*>::commit(hid);
+    h5t<TTime>::commit(hid);
+}
+
 
 // CLOSE
-static void __close(hid_t& id)
+template<typename T>
+void h5t<T>::close()
 {
-    H5Tclose(id);
+    if (id < 0)
+        return;
+    herr_t err = H5Tclose(id);
     id = -1;
+    if (err < 0)
+        throw std::runtime_error("H5Tclose (" + std::string(name) + ") failed");
 }
-template<> void h5t<TVec>::close() {__close(id);}
-template<> void h5t<TVec3D>::close() {__close(id);}
-template<> void h5t<char*>::close() {__close(id);}
-template<> void h5t<TTime>::close() {__close(id);}
 
 void h5t_close_all()
 {
     h5t<TVec>::close();
     h5t<TVec3D>::close();
-    h5t<char*>::close();
+    h5t<const char*>::close();
     h5t<TTime>::close();
 }

@@ -72,7 +72,7 @@ check_val(function() return S.inf_vy:tostring() end, "")
 check_val(function() return S.inf_g             end, 0)
 check_val(function() return S.gravity:tostring() end, "TVec(0,0)")
 S:load("/dev/null")
-S:save("/dev/null")
+S:save("/tmp/vvlua.test.h5")
 
 -- std::string
 S.caption = "good_caption"

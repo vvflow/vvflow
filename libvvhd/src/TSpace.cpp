@@ -131,7 +131,7 @@ void Space::dataset_write_body(const char* name, const TBody& body)
     }
     else
     {
-        attribute_write(file_dataset, "general_slip", general_slip);
+        h5a_write<uint32_t> (file_dataset, "general_slip", general_slip);
     }
 
     if (!can_simplify_heat)
@@ -141,47 +141,47 @@ void Space::dataset_write_body(const char* name, const TBody& body)
     }
     else
     {
-        attribute_write(file_dataset, "general_heat_const", double(heat_const));
+        h5a_write<double> (file_dataset, "general_heat_const", heat_const);
     }
 
-    attribute_write(file_dataset, "simplified_dataset", uint32_t(2));
+    h5a_write<uint32_t> (file_dataset, "simplified_dataset", 2);
         
     if (!body.root_body.expired())
     {
         auto root_body = body.root_body.lock();
-        attribute_write(file_dataset, "root_body", get_body_name(root_body.get()));
+        h5a_write<std::string const&> (file_dataset, "root_body", get_body_name(root_body.get()));
     }
 
-    attribute_write(file_dataset, "label", body.label);
-    attribute_write(file_dataset, "holder_position", body.holder);
-    attribute_write(file_dataset, "delta_position", body.dpos);
-    attribute_write<std::string>(file_dataset, "speed_x", body.speed_x);
-    attribute_write<std::string>(file_dataset, "speed_y", body.speed_y);
-    attribute_write<std::string>(file_dataset, "speed_o", body.speed_o);
-    attribute_write(file_dataset, "speed_slae", body.speed_slae);
-    attribute_write(file_dataset, "speed_slae_prev", body.speed_slae_prev);
-    attribute_write(file_dataset, "spring_const", body.kspring);
-    attribute_write(file_dataset, "spring_damping", body.damping);
-    attribute_write(file_dataset, "density", body.density);
-    attribute_write(file_dataset, "force_hydro", body.force_hydro);
-    attribute_write(file_dataset, "force_holder", body.force_holder);
-    attribute_write(file_dataset, "friction_prev", body.friction_prev);
+    h5a_write<std::string const&> (file_dataset, "label", body.label);
+    h5a_write<TVec3D> (file_dataset, "holder_position", body.holder);
+    h5a_write<TVec3D> (file_dataset, "delta_position", body.dpos);
+    h5a_write<std::string const&> (file_dataset, "speed_x", body.speed_x);
+    h5a_write<std::string const&> (file_dataset, "speed_y", body.speed_y);
+    h5a_write<std::string const&> (file_dataset, "speed_o", body.speed_o);
+    h5a_write<TVec3D> (file_dataset, "speed_slae", body.speed_slae);
+    h5a_write<TVec3D> (file_dataset, "speed_slae_prev", body.speed_slae_prev);
+    h5a_write<TVec3D> (file_dataset, "spring_const", body.kspring);
+    h5a_write<TVec3D> (file_dataset, "spring_damping", body.damping);
+    h5a_write<double> (file_dataset, "density", body.density);
+    h5a_write<TVec3D> (file_dataset, "force_hydro", body.force_hydro);
+    h5a_write<TVec3D> (file_dataset, "force_holder", body.force_holder);
+    h5a_write<TVec3D> (file_dataset, "friction_prev", body.friction_prev);
 
-    attribute_write(file_dataset, "fdt_dead", body.fdt_dead);
-    attribute_write(file_dataset, "g_dead", body.g_dead);
+    h5a_write<TVec3D> (file_dataset, "fdt_dead", body.fdt_dead);
+    h5a_write<double> (file_dataset, "g_dead", body.g_dead);
 
-    attribute_write(file_dataset, "collision_min", body.collision_min);
-    attribute_write(file_dataset, "collision_max", body.collision_max);
-    attribute_write(file_dataset, "bounce", body.bounce);
+    h5a_write<TVec3D> (file_dataset, "collision_min", body.collision_min);
+    h5a_write<TVec3D> (file_dataset, "collision_max", body.collision_max);
+    h5a_write<double> (file_dataset, "bounce", body.bounce);
 
-    attribute_write(file_dataset, "area", body.get_area());
-    attribute_write(file_dataset, "cofm", body.get_cofm());
-    attribute_write(file_dataset, "moi_cofm", body.get_moi_cofm());
-    attribute_write(file_dataset, "moi_axis", body.get_moi_axis());
+    h5a_write<double> (file_dataset, "area", body.get_area());
+    h5a_write<TVec> (file_dataset, "cofm", body.get_cofm());
+    h5a_write<double> (file_dataset, "moi_cofm", body.get_moi_cofm());
+    h5a_write<double> (file_dataset, "moi_axis", body.get_moi_axis());
 
-    attribute_write(file_dataset, "boundary_condition", body.boundary_condition);
-    attribute_write(file_dataset, "special_segment_no", body.special_segment_no);
-    attribute_write(file_dataset, "heat_condition", body.heat_condition);
+    h5a_write<int32_t> (file_dataset, "special_segment_no", body.special_segment_no);
+    h5a_write<bc_t> (file_dataset, "boundary_condition", body.boundary_condition);
+    h5a_write<hc_t> (file_dataset, "heat_condition", body.heat_condition);
 
     H5ASSERT(H5Dwrite(file_dataset, H5T_NATIVE_DOUBLE, H5S_ALL, file_dataspace, H5P_DEFAULT, att_array), "H5Dwrite");
     H5ASSERT(H5Dclose(file_dataset), "H5Dclose");
@@ -206,30 +206,29 @@ void Space::save(const char* format)
         fprintf(stderr, "error: Space::Save: can't open file '%s'\n", fname);
         return;
     }
-    datatypes_create_all();
 
-    attribute_write(fid, "caption", caption);
-    attribute_write(fid, "time", time);
-    attribute_write(fid, "dt", dt);
-    attribute_write(fid, "dt_save", dt_save);
-    attribute_write(fid, "dt_streak", dt_streak);
-    attribute_write(fid, "dt_profile", dt_profile);
-    attribute_write(fid, "re", re);
-    attribute_write(fid, "pr", pr);
-    attribute_write(fid, "inf_marker", inf_marker);
-    attribute_write<std::string>(fid, "inf_speed_x", inf_vx);
-    attribute_write<std::string>(fid, "inf_speed_y", inf_vy);
-    attribute_write(fid, "inf_circulation", inf_g);
-    attribute_write(fid, "gravity", gravity);
-    attribute_write(fid, "time_to_finish", finish);
-    attribute_write(fid, "git_rev",  std::string(libvvhd_gitrev));
-    attribute_write(fid, "git_info", std::string(libvvhd_gitinfo));
-    attribute_write(fid, "git_diff", std::string(libvvhd_gitdiff));
+    h5a_write<std::string const&> (fid, "caption", caption);
+    h5a_write<TTime> (fid, "time", time);
+    h5a_write<TTime> (fid, "dt", dt);
+    h5a_write<TTime> (fid, "dt_save", dt_save);
+    h5a_write<TTime> (fid, "dt_streak", dt_streak);
+    h5a_write<TTime> (fid, "dt_profile", dt_profile);
+    h5a_write<double> (fid, "re", re);
+    h5a_write<double> (fid, "pr", pr);
+    h5a_write<TVec> (fid, "inf_marker", inf_marker);
+    h5a_write<std::string const&> (fid, "inf_speed_x", inf_vx);
+    h5a_write<std::string const&> (fid, "inf_speed_y", inf_vy);
+    h5a_write<double> (fid, "inf_circulation", inf_g);
+    h5a_write<TVec> (fid, "gravity", gravity);
+    h5a_write<double> (fid, "time_to_finish", finish);
+    h5a_write<const char*> (fid, "git_rev",  libvvhd_gitrev);
+    h5a_write<const char*> (fid, "git_info", libvvhd_gitinfo);
+    h5a_write<const char*> (fid, "git_diff", libvvhd_gitdiff);
 
     time_t rt;
     ::time(&rt);
     char *timestr = ctime(&rt); timestr[strlen(timestr)-1] = 0;
-    attribute_write(fid, "time_local", std::string(timestr));
+    h5a_write<const char*> (fid, "time_local", timestr);
 
     dataset_write_list("vort", VortexList);
     dataset_write_list("heat", HeatList);
@@ -242,8 +241,11 @@ void Space::save(const char* format)
         dataset_write_body(get_body_name(lbody.get()).c_str(), *lbody);
     }
 
-    datatypes_close_all();
-    H5ASSERT(H5Fclose(fid), "H5Fclose");
+    h5t_commit_all(fid);
+    h5t_close_all();
+    herr_t err = H5Fclose(fid);
+    if (err < 0)
+        throw std::runtime_error("H5Fclose (" + std::string(fname) + ") failed");
 }
 
 // 888       .d88888b.         d8888 8888888b.      888    888 8888888b.  8888888888
@@ -345,7 +347,7 @@ herr_t dataset_read_body(hid_t g_id, const char* name, const H5L_info_t*, void *
     uint32_t slip_array[N] = {0};
     H5ASSERT(H5Dread(dataset, H5T_NATIVE_DOUBLE, H5S_ALL, file_dataspace, H5P_DEFAULT, att_array), "H5Dread");
 
-    double heat_const;
+    double heat_const = 0;
     uint32_t simplified_dataset = h5a_read<uint32_t> (dataset, "simplified_dataset");
 
     // simplified_dataset по хорошему должен называться dataset_version,
@@ -447,13 +449,14 @@ void Space::load(const char* fname, std::string *info)
     }
     load(fid, info);
 
-    H5Fclose(fid);
+    h5t_close_all();
+    herr_t err = H5Fclose(fid);
+    if (err < 0)
+        throw std::runtime_error("H5Fclose (" + std::string(fname) + ") failed");
 }
 
 void Space::load(hid_t fid, std::string *info)
 {
-    datatypes_create_all();
-
     caption = h5a_read<std::string> (fid, "caption");
     time = h5a_read<TTime> (fid, "time");
     dt = h5a_read<TTime> (fid, "dt");
@@ -488,8 +491,6 @@ void Space::load(hid_t fid, std::string *info)
     for (shared_ptr<TBody>& lbody: BodyList) {
         lbody->validate(/*critical=*/false);
     }
-
-    datatypes_close_all();
 }
 
 //   888       .d88888b.         d8888 8888888b.       .d88888b.  888      8888888b.
