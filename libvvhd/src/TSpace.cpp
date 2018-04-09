@@ -59,11 +59,6 @@ Space::Space():
 // Y88b  d88P  d8888888888    Y888P    888            888    888 888  .d88P 888
 //  "Y8888P"  d88P     888     Y8P     8888888888     888    888 8888888P"  888
 
-#define H5ASSERT(expr, msg) if (expr<0) { \
-	fprintf(stderr, "%s failed (%s:%d). Aborting.", msg, __FILE__, __LINE__); \
-	std::exit(5); \
-}
-
 void Space::dataset_write_list(const char *name, const vector<TObj>& list)
 {
     if (list.empty())
@@ -80,28 +75,28 @@ void Space::dataset_write_list(const char *name, const vector<TObj>& list)
 
     hid_t h5s_file = H5Screate_simple(2, dims1, dims1);
     if (h5s_file < 0)
-        throw std::runtime_error("H5Screate_simple (" + std::string(name) + ")[1] failed");
+        h5_throw("H5Screate_simple", name);
 
     hid_t h5s_mem = H5Screate_simple(2, dims2, dims2);
     if (h5s_file < 0)
-        throw std::runtime_error("H5Screate_simple (" + std::string(name) + ")[2] failed");
+        h5_throw("H5Screate_simple", name);
     
     hsize_t start[2] = {0, 0};
     hsize_t stride[2] = {2, 1};
     herr_t err = H5Sselect_hyperslab(h5s_mem, H5S_SELECT_SET, start, stride, dims1, NULL);
     if (err < 0)
-        throw std::runtime_error("H5Sselect_hyperslab (" + std::string(name) + ") failed");
+        h5_throw("H5Sselect_hyperslab", name);
 
     hid_t h5d = H5Dcreate(fid, name, H5T_NATIVE_DOUBLE, h5s_file, H5P_DEFAULT, prop, H5P_DEFAULT);
     if (h5d < 0)
-        throw std::runtime_error("H5Dcreate (" + std::string(name) + ") failed");
+        h5_throw("H5Dcreate", name);
 
     err = H5Dwrite(h5d, H5T_NATIVE_DOUBLE, h5s_mem, h5s_file, H5P_DEFAULT, list.data());
     if (err < 0)
-        throw std::runtime_error("H5Dwrite (" + std::string(name) + ") failed");
+        h5_throw("H5Dwrite", name);
     err = H5Dclose(h5d);
     if (err < 0)
-        throw std::runtime_error("H5Dclose (" + std::string(name) + ") failed");
+        h5_throw("H5Dclose", name);
 }
 
 void Space::dataset_write_body(const char* name, const TBody& body)
@@ -140,30 +135,30 @@ void Space::dataset_write_body(const char* name, const TBody& body)
 
     hid_t h5s_file = H5Screate_simple(2, dims, dims);
     if (h5s_file < 0)
-        throw std::runtime_error("H5Screate_simple (" + std::string(name) + ") failed");
+        h5_throw("H5Screate_simple", name);
 
     hid_t h5d = H5Dcreate(fid, name, H5T_NATIVE_DOUBLE, h5s_file, H5P_DEFAULT, prop, H5P_DEFAULT);
     if (h5d < 0)
-        throw std::runtime_error("H5Dcreate (" + std::string(name) + ") failed");
+        h5_throw("H5Dcreate", name);
 
     if (!can_simplify_slip) {
         h5t<uint32_t>::init();
         
         hid_t h5s_slip = H5Screate_simple(1, dims, dims);
         if (h5s_slip < 0)
-            throw std::runtime_error("H5Screate_simple (" + std::string(name) + ".slip) failed");
+            h5_throw("H5Screate_simple", name);
 
         hid_t aid = H5Acreate(h5d, "slip", h5t<uint32_t>::id, h5s_slip, H5P_DEFAULT, H5P_DEFAULT);
         if (aid < 0)
-            throw std::runtime_error("H5Acreate (" + std::string(name) + ".slip) failed");
+            h5_throw("H5Acreate", name);
 
         herr_t err = H5Awrite(aid, h5t<uint32_t>::id, slip_array);
         if (err < 0)
-            throw std::runtime_error("H5Awrite (" + std::string(name) + ".slip) failed");
+            h5_throw("H5Awrite", name);
 
         err = H5Aclose(aid);
         if (err < 0)
-            throw std::runtime_error("H5Aclose (" + std::string(name) + ".slip) failed");
+            h5_throw("H5Aclose", name);
     } else {
         h5a_write<uint32_t> (h5d, "general_slip", general_slip);
     }
@@ -215,10 +210,10 @@ void Space::dataset_write_body(const char* name, const TBody& body)
 
     herr_t err = H5Dwrite(h5d, H5T_NATIVE_DOUBLE, H5S_ALL, h5s_file, H5P_DEFAULT, att_array);
     if (err < 0)
-        throw std::runtime_error("H5Dwrite (" + std::string(name) + ") failed");
+        h5_throw("H5Dwrite", name);
     err = H5Dclose(h5d);
     if (err < 0)
-        throw std::runtime_error("H5Dclose (" + std::string(name) + ") failed");
+        h5_throw("H5Dclose", name);
 }
 
 void Space::save(const char* format)
@@ -464,18 +459,13 @@ void Space::load(const char* fname, std::string *info)
     H5Eset_auto2(H5E_DEFAULT, NULL, NULL);
     hid_t fid = H5Fopen(fname, H5F_ACC_RDONLY, H5P_DEFAULT);
     if (fid < 0)
-    {
-        H5Epop(H5E_DEFAULT, H5Eget_num(H5E_DEFAULT)-1);
-        H5Eprint2(H5E_DEFAULT, stderr);
-        fprintf(stderr, "error: Space::Load: can't open file '%s'\n", fname);
-        return;
-    }
+        h5_throw("H5Fopen", fname);
     load(fid, info);
 
     h5t_close_all();
     herr_t err = H5Fclose(fid);
     if (err < 0)
-        throw std::runtime_error("H5Fclose (" + std::string(fname) + ") failed");
+        h5_throw("H5Fclose", fname);
 }
 
 void Space::load(hid_t fid, std::string *info)
