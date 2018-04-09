@@ -66,25 +66,42 @@ Space::Space():
 
 void Space::dataset_write_list(const char *name, const vector<TObj>& list)
 {
-    if (list.empty()) return;
+    if (list.empty())
+        return;
+    
     // 1D dataspace
-    hsize_t dims[2] = {list.size(), 3};
-    hsize_t dims2[2] = {dims[0]*2, dims[1]};
-    hsize_t chunkdims[2] = {std::min<hsize_t>(512, dims[0]), 3};
+    hsize_t N = list.size();
+    hsize_t dims1[2] = {N, 3};
+    hsize_t dims2[2] = {N*2, 3};
+    hsize_t chunkdims[2] = {std::min<hsize_t>(512, N), 3};
     hid_t prop = H5Pcreate(H5P_DATASET_CREATE);
     H5Pset_chunk(prop, 2, chunkdims);
     H5Pset_deflate(prop, 9);
 
-    hid_t file_dataspace = H5Screate_simple(2, dims, dims);
-    H5ASSERT(file_dataspace, "H5Screate_simple");
-    hid_t mem_dataspace = H5Screate_simple(2, dims2, dims2);
+    hid_t h5s_file = H5Screate_simple(2, dims1, dims1);
+    if (h5s_file < 0)
+        throw std::runtime_error("H5Screate_simple (" + std::string(name) + ")[1] failed");
+
+    hid_t h5s_mem = H5Screate_simple(2, dims2, dims2);
+    if (h5s_file < 0)
+        throw std::runtime_error("H5Screate_simple (" + std::string(name) + ")[2] failed");
+    
     hsize_t start[2] = {0, 0};
     hsize_t stride[2] = {2, 1};
-    H5ASSERT(H5Sselect_hyperslab(mem_dataspace, H5S_SELECT_SET, start, stride, dims, NULL), "H5Sselect_hyperslab");
-    hid_t file_dataset = H5Dcreate2(fid, name, H5T_NATIVE_DOUBLE, file_dataspace, H5P_DEFAULT, prop, H5P_DEFAULT);
-    H5ASSERT(file_dataset, "H5Dcreate");
-    H5ASSERT(H5Dwrite(file_dataset, H5T_NATIVE_DOUBLE, mem_dataspace, file_dataspace, H5P_DEFAULT, list.data()), "H5Dwrite");
-    H5ASSERT(H5Dclose(file_dataset), "H5Dclose");
+    herr_t err = H5Sselect_hyperslab(h5s_mem, H5S_SELECT_SET, start, stride, dims1, NULL);
+    if (err < 0)
+        throw std::runtime_error("H5Sselect_hyperslab (" + std::string(name) + ") failed");
+
+    hid_t h5d = H5Dcreate(fid, name, H5T_NATIVE_DOUBLE, h5s_file, H5P_DEFAULT, prop, H5P_DEFAULT);
+    if (h5d < 0)
+        throw std::runtime_error("H5Dcreate (" + std::string(name) + ") failed");
+
+    err = H5Dwrite(h5d, H5T_NATIVE_DOUBLE, h5s_mem, h5s_file, H5P_DEFAULT, list.data());
+    if (err < 0)
+        throw std::runtime_error("H5Dwrite (" + std::string(name) + ") failed");
+    err = H5Dclose(h5d);
+    if (err < 0)
+        throw std::runtime_error("H5Dclose (" + std::string(name) + ") failed");
 }
 
 void Space::dataset_write_body(const char* name, const TBody& body)
