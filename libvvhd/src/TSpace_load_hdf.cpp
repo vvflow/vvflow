@@ -175,22 +175,9 @@ static herr_t list_bodies(hid_t g_id, const char* name, const H5L_info_t*, void 
         body_map[name] = std::make_shared<TBody>();
     }
     return 0;
-    // Space *S = (Space*)op_data;
-    // if ("vort"s == name) {
-    //     dataset_read_list(fid, "vort", S->VortexList);
-    // } else if ("heat"s == name) {
-    //     dataset_read_list(fid, "heat", S->HeatList);
-    // } else if ("ink"s == name) {
-    //     dataset_read_list(fid, "ink", S->StreakList);
-    // } else if ("ink_source"s == name) {
-    //     dataset_read_list(fid, "ink_source", S->StreakSourceList);
-    // } else if ("source"s == name) {
-    //     dataset_read_list(fid, "source", S->SourceList);
-    // } else if ()
-
 }
 
-void Space::load_hdf(int64_t fid, std::string *info)
+void Space::load_hdf(int64_t fid, metainfo_t *info)
 {
     caption = h5a_read<std::string> (fid, "caption");
     time = h5a_read<TTime> (fid, "time");
@@ -209,10 +196,10 @@ void Space::load_hdf(int64_t fid, std::string *info)
 
     if (info)
     {
-        info[0] = h5a_read<std::string>(fid, "git_rev");
-        info[1] = h5a_read<std::string>(fid, "git_info");
-        info[2] = h5a_read<std::string>(fid, "git_diff");
-        info[3] = h5a_read<std::string>(fid, "time_local");
+        info->git_rev = h5a_read<std::string>(fid, "git_rev");
+        info->git_info = h5a_read<std::string>(fid, "git_info");
+        info->git_diff = h5a_read<std::string>(fid, "git_diff");
+        info->time_local = h5a_read<std::string>(fid, "time_local");
     }
 
     dataset_read_list(fid, "vort", VortexList);

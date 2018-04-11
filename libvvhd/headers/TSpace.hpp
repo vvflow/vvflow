@@ -9,6 +9,13 @@
 #include <string>
 #include <vector>
 
+struct metainfo_t {
+    std::string git_rev;
+    std::string git_info;
+    std::string git_diff;
+    std::string time_local;
+};
+
 class Space
 {
     public:
@@ -38,9 +45,9 @@ class Space
     public:
         /***************** SAVE/LOAD ******************/
         void save(const char* format);
-        void load(const char* filename, std::string *info = NULL);
+        void load(const char* filename, metainfo_t *info = NULL);
         void save_hdf(int64_t fid);
-        void load_hdf(int64_t fid, std::string *info = NULL);
+        void load_hdf(int64_t fid, metainfo_t *info = NULL);
         void load_v13(const char* filename); // deprecated format (for compatibility)
         FILE* open_file(const char* format);
     

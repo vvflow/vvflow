@@ -34,7 +34,7 @@ Space::Space():
     StreakList()
 {}
 
-void Space::load(const char* fname, std::string *info)
+void Space::load(const char* fname, metainfo_t *info)
 {
     BodyList.clear();
     VortexList.clear();
