@@ -5,18 +5,9 @@
 #include "elementary.h"
 #include "vvhdf.h"
 
-// #include <cmath>
-// #include <float.h>
-// #include <cstdio>
-// #include <cstdlib>
-#include <cstring>
 #include <map>
-// #include <fstream>
-// #include <ctime>
 
-using std::vector;
-
-static void dataset_write_list(hid_t fid, std::string name, const vector<TObj>& list)
+static void dataset_write_list(hid_t fid, std::string name, const std::vector<TObj>& list)
 {
     if (list.empty())
         return;
@@ -200,8 +191,9 @@ void Space::save(const char* format)
 
     time_t rt;
     ::time(&rt);
-    char *timestr = ctime(&rt); timestr[strlen(timestr)-1] = 0;
-    h5a_write<const char*> (fid, "time_local", timestr);
+    std::string timestr = ctime(&rt);
+    timestr.pop_back();
+    h5a_write<std::string const&> (fid, "time_local", timestr);
 
     dataset_write_list(fid, "vort", VortexList);
     dataset_write_list(fid, "heat", HeatList);
