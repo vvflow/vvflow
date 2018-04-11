@@ -120,7 +120,7 @@ int map_streamfunction(hid_t fid, char RefFrame, double xmin, double xmax, doubl
         fprintf(stderr, " 'b' : body reference frame\n" );
     }
 
-    S->load(fid);
+    S->load_hdf(fid);
     // что б не мешались
     S->HeatList.clear();
     S->StreakList.clear();

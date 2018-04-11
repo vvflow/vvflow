@@ -127,7 +127,7 @@ int map_vorticity(hid_t fid, double xmin, double xmax, double ymin, double ymax,
     **************************************************************************/
 
     Space *S = new Space();
-    S->load(fid);
+    S->load_hdf(fid);
     MFlowmove fm(S);
     fm.vortex_shed();
     S->HeatList.clear();

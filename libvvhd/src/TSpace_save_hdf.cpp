@@ -7,6 +7,7 @@
 
 #include <map>
 
+
 static void dataset_write_list(hid_t fid, std::string name, const std::vector<TObj>& list)
 {
     if (list.empty())
@@ -160,17 +161,8 @@ static void dataset_write_body(hid_t fid, std::string name, std::string root_nam
         h5_throw("H5Dclose", name);
 }
 
-void Space::save(const char* format)
+void Space::save_hdf(int64_t fid)
 {
-    for (std::shared_ptr<TBody>& lbody: BodyList)
-    {
-        lbody->validate(/*critical=*/true);
-    }
-
-    char fname[64]; sprintf(fname, format, int(time/dt+0.5));
-    hid_t fid = H5Fcreate(fname, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-    if (fid < 0) h5_throw("H5Fcreate", fname);
-
     h5a_write<std::string const&> (fid, "caption", caption);
     h5a_write<TTime> (fid, "time", time);
     h5a_write<TTime> (fid, "dt", dt);
@@ -214,7 +206,9 @@ void Space::save(const char* format)
         std::string root_name;
         if (!lbody->root_body.expired())
         {
-            auto root_body = lbody->root_body.lock();
+            std::shared_ptr<TBody> root_body = lbody->root_body.lock();
+            if (body_names.find(root_body.get()) == body_names.end())
+                throw std::invalid_argument("The root of a body must belong to the same space");
             root_name = body_names[root_body.get()];
         }
 
@@ -223,7 +217,4 @@ void Space::save(const char* format)
 
     h5t_commit_all(fid);
     h5t_close_all();
-    herr_t err = H5Fclose(fid);
-    if (err < 0)
-        h5_throw("H5Fclose", fname);
 }

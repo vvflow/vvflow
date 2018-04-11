@@ -21,7 +21,7 @@ extern "C" {
 int velocity_print(hid_t fid, TVec* points, int count)
 {
     Space *S = new Space();
-    S->load(fid);
+    S->load_hdf(fid);
 
     bool is_viscous = (S->re != std::numeric_limits<double>::infinity());
     double dl = S->average_segment_length(); Rd2 = dl*dl/25;

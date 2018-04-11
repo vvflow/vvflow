@@ -9,12 +9,10 @@
 #include <string>
 #include <vector>
 
-typedef int hid_t;
-typedef int herr_t;
-
 class Space
 {
     public:
+        Space();
         std::string caption;
         double re; // re = 1/nyu, where nyu is the kinematic viscosity of fluid
         double pr;
@@ -38,11 +36,19 @@ class Space
         std::vector<TObj> StreakList;       // FIXME rename to streak_points_list
 
     public:
-        Space();
+        /***************** SAVE/LOAD ******************/
         void save(const char* format);
         void load(const char* filename, std::string *info = NULL);
-        void load(hid_t fid, std::string *info = NULL);
+        void save_hdf(int64_t fid);
+        void load_hdf(int64_t fid, std::string *info = NULL);
+        void load_v13(const char* filename); // deprecated format (for compatibility)
         FILE* open_file(const char* format);
+    
+        static int load_list_txt(std::vector<TObj>& li, const char* filename);
+        static int load_list_bin(std::vector<TObj>& li, const char* filename);
+        int load_body_txt(const char* filename);
+
+    public:
         void calc_forces();
         void zero_forces(); //zero all att-> Cp, Fr, Nu, gsum, fric, hsum variables.
 
@@ -57,12 +63,6 @@ class Space
                 lobj.v = TVec();
             }
         }
-        
-
-        /***************** SAVE/LOAD ******************/
-        static int load_list_txt(std::vector<TObj>& li, const char* filename);
-        static int load_list_bin(std::vector<TObj>& li, const char* filename);
-        int load_body_txt(const char* filename);
 
         void EnumerateBodies();
         void ZeroBodies(); //zero Cp, Fr, Nu variables.
@@ -139,8 +139,4 @@ class Space
 
         int get_body_index(const TBody* body) const;
         std::string get_body_name(const TBody* body) const;
-
-    private:
-        void load_v13(const char* filename);
-        herr_t dataset_read_list(hid_t fid, const char *name, std::vector<TObj>& list);
 };
