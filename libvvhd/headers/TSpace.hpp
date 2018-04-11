@@ -143,6 +143,4 @@ class Space
     private:
         void load_v13(const char* filename);
         herr_t dataset_read_list(hid_t fid, const char *name, std::vector<TObj>& list);
-        void dataset_write_list(const char* name, const std::vector<TObj>& list);
-        void dataset_write_body(const char* name, const TBody& body);
 };
