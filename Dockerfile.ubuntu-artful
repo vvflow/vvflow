@@ -1,0 +1,34 @@
+FROM ubuntu:artful as builder
+# RUN echo "deb http://deb.debian.org/debian jessie contrib" >> /etc/apt/sources.list
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    cmake \
+    cmake-curses-gui \
+    git \
+    libarchive-dev \
+    libbz2-dev \
+    libfl-dev \
+    libgflags-dev \
+    libhdf5-dev \
+    liblapack-dev \
+    liblua5.2-dev \
+    libmatheval-dev \
+    make \
+    pkg-config \
+    python-pip \
+    ruby-ronn \
+    && pip install grip \
+    && apt-get clean
+
+RUN apt-get update && apt-get install -y \
+    libgtest-dev \
+    && mkdir /tmp/gtest \
+    && cd /tmp/gtest \
+    && cmake /usr/src/gtest \
+    && make \
+    && mv libgtest*.a /usr/lib \
+    && rm -rf /tmp/gtest \
+    && apt-get clean
+
+WORKDIR /root
+CMD grip /vvflow 0.0.0.0:1207 & python -m SimpleHTTPServer 1208 & /bin/bash

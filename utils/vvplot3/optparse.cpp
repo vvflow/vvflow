@@ -1,8 +1,10 @@
 #include "./optparse.hpp"
 #include "elementary.h"
 
+#include <string> /* std::string */
 #include <cerrno> /* errno */
 #include <cstdio> /* stderr */
+#include <cstdint> /* uintXX_t */
 #include <cstdlib> /* exit */
 #include <cstring> /* strerror */
 #include <cmath> /* isfinite */

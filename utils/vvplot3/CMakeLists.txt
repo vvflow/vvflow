@@ -9,10 +9,11 @@ add_executable(vvplot3
     # map_vorticity.cpp
 )
 
-# find_package(LibArchive REQUIRED)
-# include_directories(${LibArchive_INCLUDE_DIR})
-find_library(LIBARCHIVE libarchive.a)
-target_link_libraries(vvplot3 vvhd ${LIBARCHIVE})
+find_package(LibArchive REQUIRED)
+include_directories(${LibArchive_INCLUDE_DIR})
+# find_library(LIBARCHIVE archive)
+message(LIBARCHIVE ${LibArchive_LIBRARIES})
+target_link_libraries(vvplot3 vvhd ${LibArchive_LIBRARIES})
 
 if(NOT NO_MANPAGES)
 set(MAN_MD ${CMAKE_CURRENT_SOURCE_DIR}/vvplot.1.md)

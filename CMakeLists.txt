@@ -55,10 +55,10 @@ SET(CPACK_DEBIAN_PACKAGE_MAINTAINER "Yaroslav Dynnikov") #required
 SET(CPACK_DEBIAN_PACKAGE_SECTION "science")
 SET(CPACK_PACKAGE_CONTACT "yaroslav.dynnikov@gmail.com")
 
-# find_path(HDF5_PATH libhdf5.so)
 find_package(HDF5 REQUIRED)
+list(GET HDF5_C_LIBRARIES 0 HDF5_C_LIBRARY)
 execute_process(
-    COMMAND readlink -f ${HDF5_LIBRARY_DIRS}/libhdf5.so
+    COMMAND readlink -f ${HDF5_C_LIBRARY}
     OUTPUT_VARIABLE HDF5_LIBRARY
     OUTPUT_STRIP_TRAILING_WHITESPACE)
 execute_process(
