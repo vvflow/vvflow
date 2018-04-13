@@ -32,3 +32,7 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /root
 CMD grip /vvflow 0.0.0.0:1207 & python -m SimpleHTTPServer 1208 & /bin/bash
+
+FROM ubuntu:artful as tester
+WORKDIR /root
+CMD /bin/bash

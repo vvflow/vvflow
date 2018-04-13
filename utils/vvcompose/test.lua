@@ -666,3 +666,4 @@ check_err(function() S:save("/tmp/vvlua.test.h5") end, nil)
 if FAIL ~= 0 then
     error("There were errors")
 end
+print("Passed")

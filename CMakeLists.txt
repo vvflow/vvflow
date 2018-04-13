@@ -54,6 +54,7 @@ SET(CPACK_DEBIAN_PACKAGE_DEPENDS "liblua5.2-0, liblapack3, libmatheval1, libgomp
 SET(CPACK_DEBIAN_PACKAGE_MAINTAINER "Yaroslav Dynnikov") #required
 SET(CPACK_DEBIAN_PACKAGE_SECTION "science")
 SET(CPACK_PACKAGE_CONTACT "yaroslav.dynnikov@gmail.com")
+SET(CPACK_OUTPUT_FILE_PREFIX deb)
 
 find_package(HDF5 REQUIRED)
 list(GET HDF5_C_LIBRARIES 0 HDF5_C_LIBRARY)
