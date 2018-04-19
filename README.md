@@ -229,23 +229,22 @@ vvxtract stepdata_re600_n350.h5 time body00/force_hydro | vvawk.mavg -v span=100
 ## Development and compilation
 
 Сборку проекта удобнее всего выполнять внутри докер контейнера.
-Об установке самого докера можно почитать на [официальном сайте](https://docs.docker.com/engine/installation/linux/ubuntu/#install-docker).
-Для запуска контейнера удобнее используется `buildenv.sh` из репозитория:
+Об установке самого докера можно почитать
+на [официальном сайте](https://docs.docker.com/engine/installation/linux/ubuntu/#install-docker).
+Запуск девелоперского окружения делается при помощи [docker-compose](https://docs.docker.com/compose/install/):
 
-```
-. buildenv.sh
-# в качестве аргумента можно указать целевой дистрибутив
-# . buildenv.sh ubuntu-xenial # default
-# . buildenv.sh debian-jessie
+```bash
+sudo docker-compose build
+sudo docker-compose up --no-start
+sudo docker-compose start
+sudo docker-compose exec builder /bin/bash
 ```
 
 Внутри контейнера присутствуют все необходимые девелоперские либы (см. `Dockerfile`).
-Исходники vvflow примаунчены к директории `/vvflow`. И если в `/root` заняться компиляцией, то все бинарники окажутся на host'е в директории `./build`.
-
-Для сборки проекта используется cmake:
+Исходники vvflow примаунчены к директории `/vvflow`.
+Для сборки проекта используется `cmake`:
 
 ```
-cd /root
 cmake -D CMAKE_BUILD_TYPE=Release /vvflow
 make -j
 cpack
@@ -253,12 +252,12 @@ cpack
 
 Протестировать его можно в другом чистом контейнере:
 ```
-. testenv.sh
+sudo docker-compose exec tester /bin/bash
 ```
 
 В нём можно установить свеже собранный `deb`-пакет и потренироваться запускать отдельные утилиты:
 ```
-apt update && apt install -y ./vvflow-*.deb
+apt update && apt install -y ./deb/vvflow-*.deb
 vvcompose
 ```
 

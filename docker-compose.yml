@@ -1,0 +1,62 @@
+version: '3.4'
+services:
+    grip:
+        build:
+            context: .
+            dockerfile: Dockerfile.${OS}
+            target: doc
+        command: grip /vvflow 0.0.0.0:1207
+        ports: 
+          - "1207:1207"
+        volumes:
+          - type: bind
+            source: .
+            target: /vvflow
+            read_only: true
+
+    http:
+        build:
+            context: .
+            dockerfile: Dockerfile.${OS}
+            target: doc
+        command: python3 -m http.server 1208
+        ports: 
+          - "1208:1208"
+        volumes:
+          - type: volume
+            source: build
+            target: /root
+
+    builder:
+        build:
+            context: .
+            dockerfile: Dockerfile.${OS}
+            target: builder
+        command: /bin/sleep 2147483647
+        volumes:
+          - type: bind
+            source: .
+            target: /vvflow
+            read_only: true
+          - type: volume
+            source: build
+            target: /root
+
+    tester:
+        build:
+            context: .
+            dockerfile: Dockerfile.${OS}
+            target: tester
+        command: /bin/sleep 2147483647
+        volumes:
+          - type: bind
+            source: .
+            target: /vvflow
+            read_only: true
+          - type: volume
+            source: build
+            target: /root
+
+volumes:
+    build:
+        name: build.${OS}
