@@ -234,7 +234,7 @@ vvxtract stepdata_re600_n350.h5 time body00/force_hydro | vvawk.mavg -v span=100
 Запуск девелоперского окружения делается при помощи [docker-compose](https://docs.docker.com/compose/install/):
 
 ```bash
-sudo docker-compose build
+sudo docker-compose build --pull
 sudo docker-compose up --no-start
 sudo docker-compose start
 sudo docker-compose exec builder /bin/bash

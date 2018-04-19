@@ -1,14 +1,13 @@
 cmake_minimum_required (VERSION 3.0)
 project (vvcompose)
 
-include_directories(${LIBVVHD_INCLUDE_DIR})
+include(${CMAKE_SOURCE_DIR}/libvvhd/CPackDeps.cmake)
+include_directories(${LIBVVHD_INCLUDE_DIRS})
 
+find_path(LUA_INCLUDE_DIR lua.hpp PATH_SUFFIXES lua5.2)
 find_library(LUA_LIBRARY lua5.2)
-find_path(LUA_INCLUDE_DIR lua.hpp
-    PATH_SUFFIXES lua5.2
-)
-message("LUA_LIBRARY: " ${LUA_LIBRARY})
-message("LUA_INCLUDE_DIR: " ${LUA_INCLUDE_DIR})
+message("-- Found liblua5.2: " ${LUA_LIBRARY})
+add_dependency(${LUA_LIBRARY})
 include_directories(${LUA_INCLUDE_DIR})
 
 add_executable(vvcompose
@@ -58,3 +57,4 @@ endif()
 install (TARGETS vvcompose DESTINATION bin)
 install (FILES ${MAN_ROFF} DESTINATION share/man/man1)
 install (FILES ${MAN_HTML} DESTINATION share/doc/vvflow)
+set(DEPENDENCIES ${DEPENDENCIES} PARENT_SCOPE)

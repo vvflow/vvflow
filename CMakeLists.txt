@@ -50,25 +50,9 @@ execute_process(
 SET(CPACK_PACKAGE_VERSION_MAJOR "${MAJOR_VERSION}")
 SET(CPACK_PACKAGE_VERSION_MINOR "${MINOR_VERSION}")
 SET(CPACK_PACKAGE_VERSION_PATCH "${PATCH_VERSION}")
-SET(CPACK_DEBIAN_PACKAGE_DEPENDS "liblua5.2-0, liblapack3, libmatheval1, libgomp1")
 SET(CPACK_DEBIAN_PACKAGE_MAINTAINER "Yaroslav Dynnikov") #required
 SET(CPACK_DEBIAN_PACKAGE_SECTION "science")
 SET(CPACK_PACKAGE_CONTACT "yaroslav.dynnikov@gmail.com")
-SET(CPACK_OUTPUT_FILE_PREFIX deb)
-
-find_package(HDF5 REQUIRED)
-list(GET HDF5_C_LIBRARIES 0 HDF5_C_LIBRARY)
-execute_process(
-    COMMAND readlink -f ${HDF5_C_LIBRARY}
-    OUTPUT_VARIABLE HDF5_LIBRARY
-    OUTPUT_STRIP_TRAILING_WHITESPACE)
-execute_process(
-    COMMAND dpkg -S ${HDF5_LIBRARY}
-    COMMAND cut -d: -f1
-    OUTPUT_VARIABLE HDF5_PACKAGE
-    OUTPUT_STRIP_TRAILING_WHITESPACE)
-SET(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, ${HDF5_PACKAGE}")
-
 SET(CPACK_PACKAGE_DESCRIPTION "CFD simulation software")
 SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY
     "Viscous Vortex Domains (VVD) simulation software
@@ -76,5 +60,8 @@ SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY
     for directly numerically solving 2D Navier-Stokes equations in Lagrange coordinates.
     This package provides tools for performing numerical experiment:
     composing a problem, solving it, processing results and doing visualization.")
+SET(CPACK_OUTPUT_FILE_PREFIX deb)
+string(REPLACE ";" ", " CPACK_DEBIAN_PACKAGE_DEPENDS "${DEPENDENCIES}")
+message("-- Generating dpkg deps: " "${CPACK_DEBIAN_PACKAGE_DEPENDS}")
 
 INCLUDE(CPack)

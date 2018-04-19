@@ -1,6 +1,12 @@
 cmake_minimum_required (VERSION 3.0)
+project (vvplot3)
 
-include_directories(${LIBVVHD_INCLUDE_DIR})
+include(${CMAKE_SOURCE_DIR}/libvvhd/CPackDeps.cmake)
+include_directories(${LIBVVHD_INCLUDE_DIRS})
+
+find_package(LibArchive REQUIRED)
+add_dependency(${LibArchive_LIBRARY})
+include_directories(${LibArchive_INCLUDE_DIR})
 
 add_executable(vvplot3
     vvplot.cpp
@@ -8,11 +14,6 @@ add_executable(vvplot3
     exear.cpp
     # map_vorticity.cpp
 )
-
-find_package(LibArchive REQUIRED)
-include_directories(${LibArchive_INCLUDE_DIR})
-# find_library(LIBARCHIVE archive)
-message(LIBARCHIVE ${LibArchive_LIBRARIES})
 target_link_libraries(vvplot3 vvhd ${LibArchive_LIBRARIES})
 
 if(NOT NO_MANPAGES)
@@ -33,3 +34,4 @@ endif()
 install (TARGETS vvplot3 DESTINATION bin)
 install (FILES ${MAN_ROFF} DESTINATION share/man/man1)
 install (FILES ${MAN_HTML} DESTINATION share/doc/vvflow)
+set(DEPENDENCIES ${DEPENDENCIES} PARENT_SCOPE)
