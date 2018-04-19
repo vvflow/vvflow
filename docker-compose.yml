@@ -4,7 +4,7 @@ services:
         build:
             context: .
             dockerfile: Dockerfile.${OS}
-            target: doc
+            target: builder
         command: grip /vvflow 0.0.0.0:1207
         ports: 
           - "1207:1207"
@@ -18,7 +18,7 @@ services:
         build:
             context: .
             dockerfile: Dockerfile.${OS}
-            target: doc
+            target: builder
         command: python3 -m http.server 1208
         ports: 
           - "1208:1208"
@@ -26,6 +26,7 @@ services:
           - type: volume
             source: build
             target: /root
+            read_only: true
 
     builder:
         build:

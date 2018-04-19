@@ -1,22 +1,17 @@
-FROM ubuntu:artful as doc
-RUN apt-get update \
-    && apt-get install -y python3-pip \
-    && pip3 install grip \
-    && apt-get clean
-WORKDIR /root
-CMD /bin/sh
-
 FROM ubuntu:artful as tester
 WORKDIR /root
 CMD /bin/bash
 
 FROM ubuntu:artful as builder
+RUN apt-get update \
+    && apt-get install -y python3-pip \
+    && pip3 install grip \
+    && apt-get clean
 RUN apt-get update && apt-get install -y \
     build-essential \
     cmake \
     cmake-curses-gui \
     git \
-    grip \
     libarchive-dev \
     libbz2-dev \
     libfl-dev \
