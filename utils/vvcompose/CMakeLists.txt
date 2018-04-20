@@ -32,13 +32,6 @@ add_executable(vvcompose
 )
 target_link_libraries(vvcompose vvhd ${LUA_LIBRARY} dl)
 
-if(NOT NO_SELFTEST)
-add_custom_command(
-    TARGET vvcompose POST_BUILD
-    COMMAND vvcompose ${CMAKE_CURRENT_SOURCE_DIR}/test.lua
-)
-endif()
-
 if(NOT NO_MANPAGES)
 set(MAN_MD ${CMAKE_CURRENT_SOURCE_DIR}/vvcompose.1.md)
 set(MAN_ROFF ${CMAKE_CURRENT_BINARY_DIR}/vvcompose.1)
@@ -57,4 +50,9 @@ endif()
 install (TARGETS vvcompose DESTINATION bin)
 install (FILES ${MAN_ROFF} DESTINATION share/man/man1)
 install (FILES ${MAN_HTML} DESTINATION share/doc/vvflow)
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/vvcompose_test.lua
+    DESTINATION ${CMAKE_BINARY_DIR}/tests/
+    USE_SOURCE_PERMISSIONS
+)
+add_test(vvcompose_test vvcompose ${CMAKE_BINARY_DIR}/tests/vvcompose_test.lua)
 set(DEPENDENCIES ${DEPENDENCIES} PARENT_SCOPE)

@@ -2,6 +2,7 @@ cmake_minimum_required (VERSION 3.0)
 project (vvflow)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Weffc++")
+enable_testing()
 
 add_subdirectory(libvvhd)
 add_subdirectory(utils/vvflow)

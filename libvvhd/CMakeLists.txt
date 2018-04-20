@@ -2,8 +2,6 @@ cmake_minimum_required (VERSION 3.0)
 project (libvvhd)
 
 include(${CMAKE_SOURCE_DIR}/libvvhd/CPackDeps.cmake)
-set(LIBVVHD_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/headers)
-add_subdirectory(test)
 
 # HDF5
 find_package(HDF5 REQUIRED)
@@ -82,4 +80,6 @@ target_link_libraries(vvhd ${HDF5_C_LIBRARIES} ${LAPACK_LIBRARIES} ${MATHEVAL_LI
 
 install (TARGETS vvhd DESTINATION lib)
 set(DEPENDENCIES ${DEPENDENCIES} PARENT_SCOPE)
-set(LIBVVHD_INCLUDE_DIRS ${LIBVVHD_INCLUDE_DIR} ${HDF5_INCLUDE_DIRS} PARENT_SCOPE)
+set(LIBVVHD_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/headers ${HDF5_INCLUDE_DIRS})
+set(LIBVVHD_INCLUDE_DIRS ${LIBVVHD_INCLUDE_DIRS} PARENT_SCOPE)
+add_subdirectory(test)
