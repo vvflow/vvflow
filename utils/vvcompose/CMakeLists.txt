@@ -50,9 +50,14 @@ endif()
 install (TARGETS vvcompose DESTINATION bin)
 install (FILES ${MAN_ROFF} DESTINATION share/man/man1)
 install (FILES ${MAN_HTML} DESTINATION share/doc/vvflow)
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/vvcompose_test.lua
-    DESTINATION ${CMAKE_BINARY_DIR}/tests/
-    USE_SOURCE_PERMISSIONS
-)
+add_custom_command(
+    OUTPUT ${CMAKE_BINARY_DIR}/tests/vvcompose_test.lua
+    COMMAND ${CMAKE_COMMAND} -E copy
+            ${CMAKE_CURRENT_SOURCE_DIR}/vvcompose_test.lua
+            ${CMAKE_BINARY_DIR}/tests/vvcompose_test.lua
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/vvcompose_test.lua)
+add_custom_target(vvcompose_test.lua ALL
+    DEPENDS ${CMAKE_BINARY_DIR}/tests/vvcompose_test.lua)
+
 add_test(vvcompose_test vvcompose ${CMAKE_BINARY_DIR}/tests/vvcompose_test.lua)
 set(DEPENDENCIES ${DEPENDENCIES} PARENT_SCOPE)

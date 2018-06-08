@@ -206,7 +206,7 @@ vvencode 'images/*.png' re600_n350.mp4
 
  - `vvawk.avg`: вычисляет арифметическое среднее (average) от всей колонки.
  - `vvawk.sd`: вычисляет среднеквадратическое отклонение (standard deviation) от всей колонки.
- - `vvawk.zeros`: печатает нули функции. 
+ - `vvawk.zeros`: печатает нули функции.
  - `vvawk.mavg`: вычисляет бегущее среднее (moving average) в колонке.
  - `vvawk.drv`: вычисляет производную (derivative).
  - `vvawk.ampl`: вычисляет амплитуду (amplitude) колебаний значений в колонке
@@ -234,6 +234,7 @@ vvxtract stepdata_re600_n350.h5 time body00/force_hydro | vvawk.mavg -v span=100
 Запуск девелоперского окружения делается при помощи [docker-compose](https://docs.docker.com/compose/install/):
 
 ```bash
+export OS=ubuntu-artful
 sudo docker-compose build --pull
 sudo docker-compose up --no-start
 sudo docker-compose start
