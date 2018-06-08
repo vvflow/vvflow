@@ -248,6 +248,7 @@ sudo docker-compose exec builder /bin/bash
 ```
 cmake -D CMAKE_BUILD_TYPE=Release /vvflow
 make -j
+make test
 cpack
 ```
 
@@ -259,6 +260,7 @@ sudo docker-compose exec tester /bin/bash
 В нём можно установить свеже собранный `deb`-пакет и потренироваться запускать отдельные утилиты:
 ```
 apt update && apt install -y ./deb/vvflow-*.deb
+find ./tests -type f -exec {} \;
 vvcompose
 ```
 

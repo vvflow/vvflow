@@ -6,7 +6,7 @@ services:
             dockerfile: Dockerfile.${OS}
             target: builder
         command: grip /vvflow 0.0.0.0:1207
-        ports: 
+        ports:
           - "1207:1207"
         volumes:
           - type: bind
@@ -20,7 +20,7 @@ services:
             dockerfile: Dockerfile.${OS}
             target: builder
         command: python3 -m http.server 1208
-        ports: 
+        ports:
           - "1208:1208"
         volumes:
           - type: volume
@@ -34,6 +34,8 @@ services:
             dockerfile: Dockerfile.${OS}
             target: builder
         command: /bin/sleep 2147483647
+        environment:
+            CTEST_OUTPUT_ON_FAILURE: 1
         volumes:
           - type: bind
             source: .
@@ -49,6 +51,8 @@ services:
             dockerfile: Dockerfile.${OS}
             target: tester
         command: /bin/sleep 2147483647
+        environment:
+            CTEST_OUTPUT_ON_FAILURE: 1
         volumes:
           - type: bind
             source: .
