@@ -41,6 +41,9 @@ services:
             source: .
             target: /vvflow
             read_only: true
+          - type: bind
+            source: /tmp
+            target: /tmp
           - type: volume
             source: build
             target: /root

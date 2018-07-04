@@ -60,7 +60,7 @@ namespace opt {
     int timelabel = true;
     int holder = false;
     int spring = false;
-    
+
     int ttree_bottom_nodes = false;
     int ttree_near_nodes = false;
     int ttree_find_node = false;
@@ -348,7 +348,7 @@ int main(int argc, char **argv)
             plot_cmd << "'ttree_near_nodes'";
             plot_cmd << " binary format='%4float'";
             plot_cmd << " with vectors nohead lc rgb 'black'";
-        }        
+        }
 
         if (opt::ttree_find_node) {
             std::stringstream bin_find_node;

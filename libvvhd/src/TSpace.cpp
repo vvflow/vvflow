@@ -6,9 +6,10 @@
 #include "vvhdf.h"
 
 #include <fstream>
+#include <limits>
 using std::fstream;
 using std::ios;
-static const double d_inf = 1.0l/0.0l; 
+static const double d_inf = std::numeric_limits<double>::infinity();;
 
 Space::Space():
     caption(),
@@ -42,6 +43,7 @@ void Space::load(const char* fname, metainfo_t *info)
     StreakSourceList.clear();
     StreakList.clear();
 
+    H5Eset_auto(H5E_DEFAULT, NULL, NULL);
     if (H5Fis_hdf5(fname) == 0)
     {
         load_v13(fname);
@@ -68,6 +70,7 @@ void Space::save(const char* format)
 
     char fname[64];
     snprintf(fname, 64, format, int(time/dt+0.5));
+    H5Eset_auto(H5E_DEFAULT, NULL, NULL);
     hid_t fid = H5Fcreate(fname, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
     if (fid < 0)
         h5_throw("H5Fcreate", fname);
