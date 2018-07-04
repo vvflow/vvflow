@@ -48,7 +48,7 @@ Stepdata::Stepdata(Space* S, const char *fname, bool b_save_profile):
         h5a_write<const char*>(h5f, "git_rev",  libvvhd_gitrev);
         h5a_write<const char*>(h5f, "git_info", libvvhd_gitinfo);
         h5a_write<const char*>(h5f, "git_diff", libvvhd_gitdiff);
-        h5t<const char*>::commit(h5f);
+        h5t_commit<const char*>(h5f);
     } else {
         h5f = H5Fopen(fname, H5F_ACC_RDWR, H5P_DEFAULT);
         if (h5f < 0)
@@ -141,7 +141,7 @@ Stepdata::~Stepdata()
         if (friction_h5d[i]       >= 0) H5Dclose(friction_h5d[i]);
     }
 
-    h5t<const char*>::close();
+    h5t_close<const char*>();
     H5Fclose(h5f);
 }
 

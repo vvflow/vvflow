@@ -21,6 +21,12 @@ struct h5t{
     static void close();
 };
 
+template<typename T>
+void h5t_commit(hid_t hid);
+
+template<typename T>
+void h5t_close();
+
 void h5t_commit_all(hid_t hid);
 void h5t_close_all();
 

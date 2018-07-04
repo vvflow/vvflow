@@ -76,14 +76,25 @@ void h5t<T>::commit(hid_t hid)
         throw std::runtime_error("H5Tcommit (" + std::string(name) + ") failed");
 }
 
-void h5t_commit_all(hid_t hid)
+template<typename T>
+void h5t_commit(hid_t hid)
 {
-    h5t<TVec>::commit(hid);
-    h5t<TVec3D>::commit(hid);
-    h5t<const char*>::commit(hid);
-    h5t<TTime>::commit(hid);
+    h5t<T>::commit(hid);
 }
 
+// Explicit instantiation:
+template void h5t_commit<TVec>(hid_t);
+template void h5t_commit<TVec3D>(hid_t);
+template void h5t_commit<char const*>(hid_t);
+template void h5t_commit<TTime>(hid_t);
+
+void h5t_commit_all(hid_t hid)
+{
+    h5t_commit<TVec>(hid);
+    h5t_commit<TVec3D>(hid);
+    h5t_commit<const char*>(hid);
+    h5t_commit<TTime>(hid);
+}
 
 // CLOSE
 template<typename T>
@@ -97,10 +108,22 @@ void h5t<T>::close()
         throw std::runtime_error("H5Tclose (" + std::string(name) + ") failed");
 }
 
+template<typename T>
+void h5t_close()
+{
+    h5t<T>::close();
+}
+
+// Explicit instantiation:
+template void h5t_close<TVec>();
+template void h5t_close<TVec3D>();
+template void h5t_close<char const*>();
+template void h5t_close<TTime>();
+
 void h5t_close_all()
 {
-    h5t<TVec>::close();
-    h5t<TVec3D>::close();
-    h5t<const char*>::close();
-    h5t<TTime>::close();
+    h5t_close<TVec>();
+    h5t_close<TVec3D>();
+    h5t_close<const char*>();
+    h5t_close<TTime>();
 }
