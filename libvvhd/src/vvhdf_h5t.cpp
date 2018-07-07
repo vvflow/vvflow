@@ -73,7 +73,7 @@ void h5t<T>::commit(hid_t hid)
         return;
     herr_t err = H5Tcommit(hid, name, id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     if (err < 0)
-        throw std::runtime_error("H5Tcommit (" + std::string(name) + ") failed");
+        h5_throw("H5Tcommit", name);
 }
 
 template<typename T>
@@ -105,7 +105,7 @@ void h5t<T>::close()
     herr_t err = H5Tclose(id);
     id = -1;
     if (err < 0)
-        throw std::runtime_error("H5Tclose (" + std::string(name) + ") failed");
+        h5_throw("H5Tclose", name);
 }
 
 template<typename T>

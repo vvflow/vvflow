@@ -25,21 +25,21 @@ template<typename T>
 T h5a_read(hid_t hid, const char* name) {
     if (!H5Aexists(hid, name))
         return T();
-    
+
     h5t<T>::init();
 
     hid_t aid = H5Aopen(hid, name, H5P_DEFAULT);
     if (aid < 0)
-        throw std::runtime_error("H5Aopen (" + std::string(name) + ") failed");
+        h5_throw("H5Aopen", name);
 
     T ret = T();
     herr_t err = H5Aread(aid, h5t<T>::id, &ret);
     if (err < 0)
-        throw std::runtime_error("H5Aread (" + std::string(name) + ") failed");
+        h5_throw("H5Aread", name);
 
     err = H5Aclose(aid);
     if (err < 0)
-        throw std::runtime_error("H5Aclose (" + std::string(name) + ") failed");
+        h5_throw("H5Aclose", name);
     return ret;
 }
 
@@ -114,15 +114,15 @@ void h5a_write(hid_t hid, const char* name, T val)
 
     hid_t aid = H5Acreate(hid, name, h5t<T>::id, h5s_scalar(), H5P_DEFAULT, H5P_DEFAULT);
     if (aid < 0)
-        throw std::runtime_error("H5Acreate (" + std::string(name) + ") failed");
-    
+        h5_throw("H5Acreate", name);
+
     herr_t err = H5Awrite(aid, h5t<T>::id, &val);
     if (err < 0)
-        throw std::runtime_error("H5Awrite (" + std::string(name) + ") failed");
+        h5_throw("H5Awrite", name);
 
     err = H5Aclose(aid);
     if (err < 0)
-        throw std::runtime_error("H5Aclose (" + std::string(name) + ") failed");
+        h5_throw("H5Aclose", name);
 }
 
 template<>
