@@ -41,7 +41,7 @@ double _2pi_psi_qatt(TVec p, TVec att, TVec cofm, double q)
 {
     TVec v1 = cofm-p;
     TVec v2 = att-p;
-    return q * atan2(rotl(v2)*v1, v2*v1);
+    return -q * atan2(rotl(v2)*v1, v2*v1);
 }
 
 double Psi(Space* S, const TSortedTree* tree, TVec p, double spacing, double& psi_gap)
@@ -190,7 +190,7 @@ int map_streamfunction(hid_t fid, char RefFrame, double xmin, double xmax, doubl
     map_name[19] = RefFrame;
     map_save(fid, map_name, mem, dims, xmin, xmax, ymin, ymax, spacing);
     free(mem);
-    
+
     if (!gap_list.size())
         return 0;
 

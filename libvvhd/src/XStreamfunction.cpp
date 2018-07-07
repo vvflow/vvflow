@@ -59,7 +59,7 @@ double _2pi_psi_qatt(TVec p, TVec att, TVec cofm, double q)
 {
     TVec v1 = cofm-p;
     TVec v2 = att-p;
-    return q * atan2(rotl(v2)*v1, v2*v1);
+    return -q * atan2(rotl(v2)*v1, v2*v1);
 }
 
 void XStreamfunction::evaluate()
