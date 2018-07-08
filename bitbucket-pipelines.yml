@@ -1,0 +1,21 @@
+pipelines:
+  default:
+    - step:
+        name: Build on ubuntu bionic
+        image: vvflow/builder:ubuntu-bionic
+        script:
+          - pwd
+          - ls -al
+          - cmake ./
+          - make -j
+          - ctest -VV -E pytest
+          - cpack
+        artifacts:
+          - deb/vvflow-*.deb
+    - step:
+        name: Test on ubuntu bionic
+        image: vvflow/builder:ubuntu-bionic
+        script:
+          - ls -al
+          - dpkg -i deb/vvflow-*.deb
+          - pytest ./pytest
