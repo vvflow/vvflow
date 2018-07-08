@@ -11,6 +11,7 @@ add_subdirectory(utils/vvplot3)
 add_subdirectory(utils/vvxtract)
 add_subdirectory(utils/vvcompose)
 add_subdirectory(utils/scripts)
+add_subdirectory(pytest)
 
 if(NOT NO_MANPAGES)
 set(MAN_MD   ${CMAKE_CURRENT_SOURCE_DIR}/README.md)
