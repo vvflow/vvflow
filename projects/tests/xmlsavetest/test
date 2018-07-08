@@ -1,6 +1,0 @@
-#!/bin/bash
-
-rm -f test.xml test.out* test.vort.*
-vvhdplot --vorticity test.vort -2 2
-./exe
-vvhdplot --vorticity test.out -2 2
