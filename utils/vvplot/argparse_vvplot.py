@@ -198,6 +198,16 @@ parser.add_argument(
 	help='isolines values of streamfunction field (streamlines)'
 )
 
+parser.add_argument(
+	'--psi-range',
+	dest='psi_range',
+	nargs=2,
+	type=float,
+	default=[-1.5, 1],
+	metavar=('PSIMIN', 'PSIMAX'),
+	help='Pressure range to be plotted in colour'
+)
+
 ################################################################################
 def picture_size(string):
 	try:

@@ -51,7 +51,7 @@ if os.path.exists(fout_name) and args.mode_nooverride:
     exit()
 
 ################################################################################
-## WORK WITH CONSTRAINTS 
+## WORK WITH CONSTRAINTS
 
 xmin,xmax = args.size_x;
 ymin,ymax = args.size_y;
@@ -154,7 +154,7 @@ for b in datasets:
 lists = [str(l) for l in datasets if str(l) in ["vort", "heat", "ink", "ink_source"]]
 
 ################################################################################
-## 
+##
 
 if args.referenceframe == 'o':
     x_shift = y_shift = 0.;
@@ -285,10 +285,10 @@ else:
     gpw("""color(x) = (x>0) ? 0xFF0000 : 0x0000FF \n""")
 
 if args.plot_pressure or args.plot_isopressure:
-    gpw("""set cbrange [-1.5:1] \n""")
+    gpw("""set cbrange [{}:{}] \n""", *args.psi_range)
     if args.mode_colorbox:
-        gpw("""set label "-1.5" at graph 0.096, 0.039 right front \n""")
-        gpw("""set label "1" at graph 0.904, 0.039 left front \n""")
+        gpw("""set label "{}" at graph 0.096, 0.039 right front \n""", args.psi_range[0])
+        gpw("""set label "{}" at graph 0.904, 0.039 left front \n""", args.psi_range[1])
     if args.mode_bw:
         gpw("""set palette defined (-1.5 "#000000", 0 "#c8c8c8", 0.5 "#f0f0f0", 1 "#ffffff") \n""")
     else:
@@ -334,7 +334,7 @@ if args.plot_vortexes_bold and 'vort' in lists:
     gpw(""" binary format='%3double'""")
     gpw(""" u 1:2:({}):(color($3)) w @vortex_style""", vv_prec_hi)
 
-if args.plot_heat and 'heat' in lists:    
+if args.plot_heat and 'heat' in lists:
     gpw("""{plot} '< libvvplot -L {fin_name} heat'""")
     gpw(""" binary format='%3double'""")
     gpw(""" u 1:2:({}) w @heat_style""", vv_prec_hi)
