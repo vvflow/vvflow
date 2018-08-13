@@ -8,7 +8,7 @@ pipelines:
           - ls -al
           - cmake ./
           - make -j
-          - ctest -VV -E pytest
+          - ctest -VV
           - cpack
         artifacts:
           - deb/vvflow-*.deb

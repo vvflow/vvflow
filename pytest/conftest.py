@@ -8,6 +8,11 @@ import tempfile
 import subprocess
 logging.basicConfig(level=logging.INFO, format=' %(levelname)7s %(name)s > %(message)s')
 
+class ProcOutput:
+    def __init__(self, stdout, stderr):
+        self.stdout = stdout
+        self.stderr = stderr
+
 class Env:
     def __init__(self, cwd, tempdir):
         self.cwd = cwd
@@ -24,32 +29,44 @@ class Env:
         logging.warn('export PATH="%s"' % self.env['PATH'])
 
     def run(self, cmd, **kwargs):
+        timeout = 10
+        if "timeout" in kwargs.keys():
+            timeout = kwargs["timeout"]
+            del kwargs["timeout"]
 
-        logging.info('Running: ' + ' '.join(cmd))
-        proc = subprocess.run(cmd,
+        logging.info("Running: '{}'".format(cmd))
+        proc = subprocess.Popen(cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             env=self.env,
             **kwargs
             )
 
-        if proc.stdout:
+        try:
+            stdout, stderr = proc.communicate(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            raise
+
+        if stdout:
             logger = logging.getLogger('stdout:')
             try:
-                for l in iter(proc.stdout.splitlines()):
+                for l in iter(stdout.splitlines()):
                     logger.info(l.decode('utf-8'))
             except UnicodeError:
-                logger.info("not UTF-8 ({} B)".format(len(proc.stdout)))
+                logger.info("not UTF-8 ({} B)".format(len(stdout)))
             del logger
 
-        if proc.stderr:
+        if stderr:
             logger = logging.getLogger('stderr:')
-            for l in iter(proc.stderr.splitlines()):
+            for l in iter(stderr.splitlines()):
                 logger.error(l.decode('utf-8'))
             del logger
 
-        proc.check_returncode()
-        return proc
+        if proc.returncode != 0:
+            raise subprocess.CalledProcessError(returncode=proc.returncode, cmd=cmd)
+
+        return ProcOutput(stdout=stdout, stderr=stderr)
 
     def vvcompose(self, lua_script, hdf):
         return self.run([
