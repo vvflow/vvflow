@@ -1,10 +1,7 @@
 version: '3.4'
 services:
     grip:
-        build:
-            context: .
-            dockerfile: Dockerfile.${OS}
-            target: builder
+        image: vvflow/env:build-${OS}
         command: grip /vvflow 0.0.0.0:1207
         ports:
           - "1207:1207"
@@ -15,10 +12,7 @@ services:
             read_only: true
 
     http:
-        build:
-            context: .
-            dockerfile: Dockerfile.${OS}
-            target: builder
+        image: vvflow/env:build-${OS}
         command: python3 -m http.server 1208
         ports:
           - "1208:1208"
@@ -29,10 +23,7 @@ services:
             read_only: true
 
     builder:
-        build:
-            context: .
-            dockerfile: Dockerfile.${OS}
-            target: builder
+        image: vvflow/env:build-${OS}
         command: /bin/sleep 2147483647
         environment:
             CTEST_OUTPUT_ON_FAILURE: 1
@@ -49,10 +40,7 @@ services:
             target: /root
 
     tester:
-        build:
-            context: .
-            dockerfile: Dockerfile.${OS}
-            target: tester
+        image: vvflow/env:test-${OS}
         command: /bin/sleep 2147483647
         environment:
             CTEST_OUTPUT_ON_FAILURE: 1

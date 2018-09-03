@@ -5,7 +5,7 @@ pipelines:
   default:
     - step:
         name: Build on ubuntu bionic
-        image: vvflow/builder:ubuntu-bionic
+        image: vvflow/env:build-ubuntu-bionic
         script:
           - pwd
           - ls -al
@@ -17,8 +17,10 @@ pipelines:
           - deb/vvflow-*.deb
     - step:
         name: Test on ubuntu bionic
-        image: vvflow/builder:ubuntu-bionic
+        image: vvflow/env:test-ubuntu-bionic
         script:
           - ls -al
-          - dpkg -i deb/vvflow-*.deb
+          - apt-get update
+          - dpkg --force-depends -i deb/vvflow-*.deb
+          - apt-get --fix-broken -y install
           - pytest ./pytest
