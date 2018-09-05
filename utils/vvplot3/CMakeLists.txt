@@ -11,7 +11,7 @@ include_directories(${LibArchive_INCLUDE_DIR})
 add_executable(vvplot3
     vvplot.cpp
     optparse.cpp
-    exear.cpp
+    gnuplotter.cpp
     # map_vorticity.cpp
 )
 target_link_libraries(vvplot3 vvhd ${LibArchive_LIBRARIES})

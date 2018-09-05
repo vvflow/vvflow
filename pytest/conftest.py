@@ -8,11 +8,6 @@ import tempfile
 import subprocess
 logging.basicConfig(level=logging.INFO, format=' %(levelname)7s %(name)s > %(message)s')
 
-class ProcOutput:
-    def __init__(self, stdout, stderr):
-        self.stdout = stdout
-        self.stderr = stderr
-
 class Env:
     def __init__(self, cwd, tempdir):
         self.cwd = cwd
@@ -66,7 +61,12 @@ class Env:
         if proc.returncode != 0:
             raise subprocess.CalledProcessError(returncode=proc.returncode, cmd=cmd)
 
-        return ProcOutput(stdout=stdout, stderr=stderr)
+        class ProcOutput():
+            pass
+        output = ProcOutput()
+        output.stdout = stdout
+        output.stderr = stderr
+        return output
 
     def vvcompose(self, lua_script, hdf):
         return self.run([
@@ -85,20 +85,19 @@ class Env:
             cwd=self.tempdir
         )
 
-    def vvplot3(self, hdf, ear, png, args):
-        self.run([
-                'vvplot3', '-n',
-                self.tmp(hdf),
-                self.tmp(ear)
-            ] + args.split(' '),
+    def vvplot3(self, ifile, ofile, args=[]):
+        ifile = self.tmp(ifile)
+        ofile = self.tmp(ofile)
+        if type(args) is str:
+            args = args.split(' ')
+
+        output = self.run(
+            ['vvplot3', ifile, ofile] + args,
             cwd=self.tempdir
         )
-        self.run([
-                self.tmp(ear) + ' > ' + self.tmp(png)
-            ],
-            cwd=self.tempdir,
-            shell=True
-        )
+        output.ifile = ifile
+        output.ofile = ofile
+        return output
 
     def tmp(self, fname):
         return os.path.join(self.tempdir, fname)

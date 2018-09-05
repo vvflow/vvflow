@@ -13,6 +13,13 @@ typedef struct {
     int    yres;
 } mesh_t;
 
+enum ffmt {
+    unknown = 0,
+    png,
+    tar,
+    hdf
+};
+
 namespace opt {
     void parse(int argc, char **argv);
 
@@ -51,12 +58,12 @@ namespace opt {
     extern int ttree_near_nodes;
     extern int ttree_find_node;
 
-    extern int dry_run;
-
     extern rect_t rect;
     extern mesh_t mesh_hi;
     extern mesh_t mesh_lo;
 
     extern const char* input;
     extern const char* target;
+    extern int ifmt;
+    extern int ofmt;
 }

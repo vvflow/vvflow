@@ -1,6 +1,9 @@
 #include "./optparse.hpp"
 #include "elementary.h"
 
+#define H5_USE_18_API
+#include <hdf5.h>
+
 #include <string> /* std::string */
 #include <cerrno> /* errno */
 #include <cstdio> /* stderr */
@@ -23,9 +26,11 @@ void opt::parse(int argc, char **argv) {
 	while (1) {
         static struct option long_options[] =
         {
-            {"dry-run", no_argument, 0, 'n'},
             {"version", no_argument, 0, 'v'},
             {"help",    no_argument, 0, 'h'},
+
+            {"png",          no_argument, &opt::ofmt, ffmt::png},
+            {"tar",          no_argument, &opt::ofmt, ffmt::tar},
 
             {"no-gray",      no_argument, &opt::gray, 0},
             {   "gray",      no_argument, &opt::gray, 1},
@@ -71,9 +76,6 @@ void opt::parse(int argc, char **argv) {
         bool fail = false;
         int  optn = 0;
         switch (c) {
-        case 'n': // -n, --dry-run
-            opt::dry_run = true;
-            break;
         case 'v': // -v, --version
             fprintf(stderr, "vvplot %s\n", libvvhd_gitinfo);
             fprintf(stderr, "revision: %s\n", libvvhd_gitrev);
@@ -91,7 +93,7 @@ void opt::parse(int argc, char **argv) {
             opt::V = true;
             if (!optarg) break;
             fail = sscanf(optarg, "%d %n", &opt::Vsize, &optn) < 1;
-            fail = fail || !(opt::Vsize >= 0); 
+            fail = fail || !(opt::Vsize >= 0);
             // if (!fail) {
             //     printf("VSIZE -> %d\n", opt::Vsize);
             // }
@@ -116,7 +118,7 @@ void opt::parse(int argc, char **argv) {
             opt::G = true;
             if (!optarg) break;
             fail = sscanf(optarg, "%lf %n", &opt::Gmax, &optn) < 1;
-            fail = fail || !std::isfinite(opt::Gmax); 
+            fail = fail || !std::isfinite(opt::Gmax);
             fail = fail || !(opt::Gmax >= 0);
             // if (!fail) {
             //     printf("GAMMA -> %lf\n", opt::Gmax);
@@ -219,13 +221,19 @@ void opt::parse(int argc, char **argv) {
         if (argc-optind > 2) fprintf(stderr, "%s: too many command line arguments\n", argv[0]);
         fprintf(stderr, "Usage: vvplot [OPTIONS] INPUT TARGET. See `vvplot --help'.\n");
         exit(1);
+    } else {
+        opt::input = argv[optind+0];
+        opt::target = argv[optind+1];
+
+        if (opt::ofmt != ffmt::png || H5Fis_hdf5(opt::input) > 0)
+            opt::ifmt = ffmt::hdf;
     }
 
     /* XMIN, XMAX may be NaN, but NaNs are never swapped */
     if (xmin > xmax) { std::swap(xmin, xmax); }
     if (ymin > ymax) { std::swap(ymin, ymax); }
-    
-    if (1) {
+
+    if (opt::ifmt == ffmt::hdf) {
         /* Trying to adjust plot dimensions
         Exactly one parameter should be missing */
         uint8_t var_cnt = 0;
@@ -267,7 +275,4 @@ void opt::parse(int argc, char **argv) {
         opt::Vcirc = (xmax-xmin)/opt::width*opt::Vsize/2; // radius
         // fprintf(stderr, "VCIRC -> %lf\n", opt_Vcirc);
     }
-
-    opt::input = argv[optind+0];
-    opt::target = argv[optind+1];
 }

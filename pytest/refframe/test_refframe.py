@@ -10,30 +10,28 @@ tempdir = '/tmp/test_refframe'
 def test(env):
 	# ref_o
     hdf = 'ref_o.h5'
-    ear = env.tmp('ref_o.ear')
     env.vvcompose('compose_ref_o.lua', hdf)
     env.vvflow(hdf)
-    env.vvplot3(
-        hdf='results_ref_o/000001.h5',
-        ear='ref_o.ear',
-        png='ref_o.png',
-        args='-x -1.5,1.5 -B -S --ref-S o'
+    ret = env.vvplot3(
+        'results_ref_o/000001.h5',
+        'ref_o.tar',
+        args='-x -1.5,1.5 -B -S --ref-S o --tar'
     )
-    sf_o = env.run(['tar', '-xOf', env.tmp('ref_o.ear'), 'map_streamfunction']).stdout
+    env.vvplot3(ret.ofile, 'ref_o.png')
+    sf_o = env.run(['tar', '-xOf', ret.ofile, 'map_streamfunction']).stdout
     sf_o = struct.unpack('f'*int(len(sf_o)/4), sf_o)
 
     # ref_b
     hdf = 'ref_b.h5'
-    ear = env.tmp('ref_b.ear')
     env.vvcompose('compose_ref_b.lua', hdf)
     env.vvflow(hdf)
-    env.vvplot3(
-        hdf='results_ref_b/000001.h5',
-        ear='ref_b.ear',
-        png='ref_b.png',
-        args='-x -1.5,1.5 -B -S --ref-S b'
+    ret = env.vvplot3(
+        'results_ref_b/000001.h5',
+        'ref_b.tar',
+        args='-x -1.5,1.5 -B -S --ref-S b --tar'
     )
-    sf_b = env.run(['tar', '-xOf', env.tmp('ref_b.ear'), 'map_streamfunction']).stdout
+    env.vvplot3(ret.ofile, 'ref_b.png')
+    sf_b = env.run(['tar', '-xOf', ret.ofile, 'map_streamfunction']).stdout
     sf_b = struct.unpack('f'*int(len(sf_b)/4), sf_b)
 
     assert len(sf_o) == len(sf_b)
