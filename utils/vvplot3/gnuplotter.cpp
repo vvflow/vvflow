@@ -1,5 +1,8 @@
 #include "./gnuplotter.hpp"
-#include <sys/stat.h>
+#include <sys/syscall.h>
+#include <cstring>
+#include <errno.h>
+#include <fcntl.h> /* O_RDONLY */
 
 /* libarchive */
 #include <archive.h>
@@ -90,7 +93,40 @@ void Gnuplotter::load(const std::string& filename)
     archive_read_free(a);
 }
 
-void Gnuplotter::plot(const std::string& filename)
+void Gnuplotter::exec(const std::string& filename)
 {
-    // TODO
+    std::string script_str = script.str();
+
+    int fd = open(filename.c_str(), O_WRONLY|O_CREAT, 0644);
+    if (fd < 0) {
+        std::string err = "Error opening '" + filename + "': ";
+        err += strerror(errno);
+        throw std::runtime_error(err);
+    }
+    dup2(fd, 1);
+
+    for (auto& f: files) {
+        std::string name = f.first;
+        std::string content = f.second;
+
+        int memfd = syscall(SYS_memfd_create, name.c_str(), 0);
+        size_t ws = write(memfd, content.data(), content.size());
+
+        std::string old_str = strfmt("'%s'", name.c_str());
+        std::string new_str = strfmt("'/dev/fd/%d'", memfd);
+        size_t pos = script_str.find(old_str);
+        if (pos != std::string::npos) {
+            script_str.replace(pos, old_str.size(), new_str);
+        }
+    }
+
+    int memfd = syscall(SYS_memfd_create, "plot.gp", 0);
+    size_t ws = write(memfd, script_str.data(), script_str.size());
+
+    int rc = execlp("gnuplot", "gnuplot", strfmt("/dev/fd/%d", memfd).c_str(), NULL);
+    if (rc < 0) {
+        std::string err = "Error running gnuplot: ";
+        err += strerror(errno);
+        throw std::runtime_error(err);
+    }
 }

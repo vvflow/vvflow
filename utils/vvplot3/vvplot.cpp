@@ -23,7 +23,6 @@
 #include <limits>
 #include <iostream>
 #include <sstream>
-#include <memory> //unique_ptr
 
 static const double d_nan = nan("");
 static const double d_inf = 1.0l/0.0l;
@@ -73,15 +72,6 @@ namespace opt {
     const char* target;
     int ifmt = ffmt::unknown;
     int ofmt = ffmt::png;
-}
-
-template<typename ... Args>
-std::string strfmt(const char* format, Args ... args)
-{
-    size_t size = snprintf( nullptr, 0, format, args ... ) + 1;
-    std::unique_ptr<char[]> buf(new char[size]);
-    snprintf(buf.get(), size, format, args ...);
-    return std::string(buf.get(), buf.get() + size - 1);
 }
 
 int main_hdf(int argc, char **argv)
@@ -367,7 +357,7 @@ int main_hdf(int argc, char **argv)
     if (opt::ofmt == ffmt::tar) {
         gp.save(opt::target);
     } else if (opt::ofmt == ffmt::png) {
-        gp.plot(opt::target);
+        gp.exec(opt::target);
     }
 
     // if (!opt::dry_run) {
@@ -384,7 +374,7 @@ int main_tar(int argc, char **argv)
 {
     Gnuplotter gp;
     gp.load(opt::input);
-    gp.plot(opt::target);
+    gp.exec(opt::target);
     return 0;
 }
 
