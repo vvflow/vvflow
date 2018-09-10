@@ -17,7 +17,7 @@ def test(env):
         'ref_o.tar',
         args='-x -1.5,1.5 -B -S --ref-S o --tar'
     )
-    env.vvplot3(ret.ofile, 'ref_o.png')
+    env.vvplot3(ret.ofile, '.')
     sf_o = env.run(['tar', '-xOf', ret.ofile, 'map_streamfunction']).stdout
     sf_o = struct.unpack('f'*int(len(sf_o)/4), sf_o)
 
@@ -30,7 +30,7 @@ def test(env):
         'ref_b.tar',
         args='-x -1.5,1.5 -B -S --ref-S b --tar'
     )
-    env.vvplot3(ret.ofile, 'ref_b.png')
+    env.vvplot3(ret.ofile, '.')
     sf_b = env.run(['tar', '-xOf', ret.ofile, 'map_streamfunction']).stdout
     sf_b = struct.unpack('f'*int(len(sf_b)/4), sf_b)
 
@@ -46,4 +46,5 @@ def test(env):
 
     e = 2 * numpy.percentile(abserror, 80) / (spread_o + spread_b)
     logging.info('e = {}'.format(e))
+
     assert e < 0.001

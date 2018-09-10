@@ -10,8 +10,10 @@
 #include <cstdint> /* uintXX_t */
 #include <cstdlib> /* exit */
 #include <cstring> /* strerror */
+#include <sstream>
 #include <cmath> /* isfinite */
 #include <unistd.h> /* exec */
+#include <sys/stat.h>
 
 #include <algorithm>
 
@@ -225,8 +227,35 @@ void opt::parse(int argc, char **argv) {
         opt::input = argv[optind+0];
         opt::target = argv[optind+1];
 
-        if (opt::ofmt != ffmt::png || H5Fis_hdf5(opt::input) > 0)
+        H5Eset_auto(H5E_DEFAULT, NULL, NULL);
+        if (opt::ofmt != ffmt::png || H5Fis_hdf5(opt::input) > 0) {
             opt::ifmt = ffmt::hdf;
+        }
+
+        struct stat statbuf;
+        stat(opt::target, &statbuf);
+        if (S_ISDIR(statbuf.st_mode)) {
+            std::stringstream fout_name;
+
+            std::string target = opt::target;
+            fout_name << target;
+            if (*target.crbegin() != '/') {
+                fout_name << "/";
+            }
+
+            std::string input = basename(opt::input);
+            size_t ext = input.find_last_of(".");
+            if (ext != std::string::npos) {
+                input.erase(ext, std::string::npos);
+            }
+
+            switch (opt::ofmt) {
+                case ffmt::png: fout_name << input << ".png"; break;
+                case ffmt::tar: fout_name << input << ".tar"; break;
+            }
+
+            opt::target = strdup(fout_name.str().c_str());
+        }
     }
 
     /* XMIN, XMAX may be NaN, but NaNs are never swapped */
