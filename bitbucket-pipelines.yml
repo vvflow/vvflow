@@ -3,25 +3,68 @@ clone:
 
 pipelines:
   default:
+    # Ubuntu Bionic
     - step:
         name: Build on ubuntu bionic
         image: vvflow/env:build-ubuntu-bionic
         script:
-          - pwd
-          - ls -al
-          - cmake -DCMAKE_BUILD_TYPE=Release ./
+          - cmake -DCMAKE_BUILD_TYPE=Release -DCPACK_OUTPUT_FILE_PREFIX=ubuntu-bionic ./
           - make -j
           - ctest -VV
           - cpack
         artifacts:
-          - deb/vvflow-*.deb
+          - ubuntu-bionic/vvflow-*.deb
+    # Ubuntu Xenial
     - step:
-        name: Test and Push on ubuntu bionic
-        image: vvflow/env:test-ubuntu-bionic
+        name: Build on ubuntu xenial
+        image: vvflow/env:build-ubuntu-xenial
         script:
-          - ls -al
-          - apt-get update
-          - dpkg --force-depends -i deb/vvflow-*.deb
-          - apt-get --fix-broken -y install
-          - pytest ./pytest
-          - package_cloud push vvflow/nightly/ubuntu/bionic deb/vvflow-*.deb
+          - cmake -DCMAKE_BUILD_TYPE=Release -DCPACK_OUTPUT_FILE_PREFIX=ubuntu-xenial ./
+          - make -j
+          - ctest -VV
+          - cpack
+        artifacts:
+          - ubuntu-xenial/vvflow-*.deb
+    # Debian Jessie
+    - step:
+        name: Build on debian jessie
+        image: vvflow/env:build-debian-jessie
+        script:
+          - cmake -DCMAKE_BUILD_TYPE=Release -DCPACK_OUTPUT_FILE_PREFIX=debian-jessie ./
+          - make -j
+          - ctest -VV
+          - cpack
+        artifacts:
+          - debian-jessie/vvflow-*.deb
+
+    # Push all
+    - parallel:
+      - step:
+          name: Test and Push on ubuntu bionic
+          image: vvflow/env:test-ubuntu-bionic
+          script:
+            - apt-get update
+            - dpkg --force-depends -i ubuntu-bionic/vvflow-*.deb
+            - apt-get --fix-broken -y install
+            - pytest ./pytest
+            - package_cloud push vvflow/nightly/ubuntu/bionic ubuntu-bionic/vvflow-*.deb
+
+      - step:
+          name: Test and Push on ubuntu xenial
+          image: vvflow/env:test-ubuntu-xenial
+          script:
+            - apt-get update
+            - dpkg --force-depends -i ubuntu-xenial/vvflow-*.deb
+            - apt-get --fix-broken -y install
+            - pytest ./pytest
+            - package_cloud push vvflow/nightly/ubuntu/xenial ubuntu-xenial/vvflow-*.deb
+
+      - step:
+          name: Test and Push on debian jessie
+          image: vvflow/env:test-debian-jessie
+          script:
+            - apt-get update
+            - dpkg --force-depends -i debian-jessie/vvflow-*.deb
+            - apt-get --fix-broken -y install
+            - pytest ./pytest
+            - package_cloud push vvflow/nightly/debian/jessie debian-jessie/vvflow-*.deb

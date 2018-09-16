@@ -62,8 +62,11 @@ SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY
     for directly numerically solving 2D Navier-Stokes equations in Lagrange coordinates.
     This package provides tools for performing numerical experiment:
     composing a problem, solving it, processing results and doing visualization.")
-SET(CPACK_OUTPUT_FILE_PREFIX deb)
+if(NOT CPACK_OUTPUT_FILE_PREFIX)
+    SET(CPACK_OUTPUT_FILE_PREFIX deb)
+endif()
 string(REPLACE ";" ", " CPACK_DEBIAN_PACKAGE_DEPENDS "${DEPENDENCIES}")
 message("-- Generating dpkg deps: " "${CPACK_DEBIAN_PACKAGE_DEPENDS}")
+message("-- Will put deb package to: " "${CPACK_OUTPUT_FILE_PREFIX}")
 
 INCLUDE(CPack)
