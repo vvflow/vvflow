@@ -9,14 +9,14 @@ pipelines:
         script:
           - pwd
           - ls -al
-          - cmake ./
+          - cmake -DCMAKE_BUILD_TYPE=Release ./
           - make -j
           - ctest -VV
           - cpack
         artifacts:
           - deb/vvflow-*.deb
     - step:
-        name: Test on ubuntu bionic
+        name: Test and Push on ubuntu bionic
         image: vvflow/env:test-ubuntu-bionic
         script:
           - ls -al
@@ -24,3 +24,4 @@ pipelines:
           - dpkg --force-depends -i deb/vvflow-*.deb
           - apt-get --fix-broken -y install
           - pytest ./pytest
+          - package_cloud push vvflow/nightly/ubuntu/bionic deb/vvflow-*.deb
