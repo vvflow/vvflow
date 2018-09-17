@@ -1,29 +1,40 @@
 ## Installation
 
-Программный комплекс устанавливается из deb-репозитория:
+Platforms supported:
+
+* debian jessie
+* ubuntu xenial
+* ubuntu bionic
+
+Run in shell:
+
 ```
-# sudo apt-get install curl apt-transport-https
-TOKEN=read_token # https://packagecloud.io/rosik/vvflow/token/default
-echo "deb https://$TOKEN:@packagecloud.io/rosik/vvflow/ubuntu/ xenial main" | sudo tee /etc/apt/sources.list.d/vvflow.list
-curl -sL "https://$TOKEN:@packagecloud.io/rosik/vvflow/gpgkey" | sudo apt-key add -
-sudo apt-get update
-sudo apt-get install vvflow
+# sudo apt install curl apt-transport-https
+curl -L https://packagecloud.io/vvflow/nightly/gpgkey | sudo apt-key add -
+echo "deb https://packagecloud.io/vvflow/nightly/debian/ jessie main" | sudo tee /etc/apt/sources.list.d/vvflow.list
+sudo apt update
+sudo apt install vvflow
 ```
+
+## Documentation
+
+* [/usr/share/doc/vvflow/](file:///usr/share/doc/vvflow/)
+* `man vvcompose`
+* `man vvxtract`
+* `man vvplot`
 
 ## Flow simulation
 
 ### *vvcompose*
 
-Для того, что бы что-то посчитать, первым делом нужно
-создать файл расчёта и описать моделируемое пространство `Space`.
-Этим занимается программа `vvcompose`.
-Полную информацию о синтаксисе можно найти в мануале `man vvcompose`.
-Если коротко, то `vvcompose` представляет из себя
-интерпретатор [lua](https://learnxinyminutes.com/docs/lua/).
+Defining the CDF problem is handled by *vvcompose* tool.
+It is a [lua](https://learnxinyminutes.com/docs/lua/) interpreter,
+so it supports everything that lua supports, and even more.
 
-Например вот так выглядит расчет цилиндра:
+Flow around circular cylinder:
 
 ```
+#!/bin/bash
 vvcompose <<EOF
     S.inf_vx = "1"
     S.re = 600
@@ -40,34 +51,26 @@ vvcompose <<EOF
 EOF
 ```
 
-Геометрию тела можно не загружать из текстового файла,
-а сразу генерировать внутри `vvcompose`.
-Обо всём этом написано в мануале, поэтому обязательно его прочитайте: `man vvcompose`.
+More information is given in `man vvcompose`.
 
 ### *vvflow*
 
-Следующим этапом является непосредственно запуск расчёта.
-Этим занимается программа `vvflow`.
-Если не углубляться в подробности, то всё выглядит просто:
+The flow simulation itself is performed by *vvflow* tool:
+
 ```
 vvflow --progress --profile re600_n350.h5
 ```
 
-У команды `vvflow` есть две полезные опции:
+There is no manual entry for *vvflow*, but there is only two options:
 
- - `--progress`: печатать в консоль текущее время расчета. Это позволяет следить за процессом.
- - `--profile`: сохранять в файл stepdata распределение давления и трения по поверхности тела.
- Эта информация значительно увеличивает размер файла stepdata, поэтому без необходимости её лучше не включать.
+ - `--progress`: print current internal time to stdout.
+ - `--profile`: save pressure and friction profiles to file `stepdata`.
 
-Кулеры зажужжат, в текущей директории начнут появляться результаты, и через денёк другой можно будет заняться обработкой.
-Если перспектива ждать не радует, а под рукой есть кластер c [PBS](https://en.wikipedia.org/wiki/Portable_Batch_System),
-то запуск будет немного сложнее:
+The *vvflow* can be run on a [PBS](https://en.wikipedia.org/wiki/Portable_Batch_System) cluster:
 
 ```
+#!/bin/bash
 qsub -d. -l nodes=1:ppn=6 -N testrun <<EOF
-    export PATH="/home/user/.local/bin";
-    export LD_LIBRARY_PATH="/home/user/.local/lib";
-    ulimit -c unlimited;
     export OMP_NUM_THREADS=6;
     exec vvflow re600_n350.h5;
 EOF
@@ -75,12 +78,11 @@ EOF
 
 ### Postprocessing results
 
-После того, как расчёт завершится,
-в текущей директории будет лежать файл stepdata_re600_n350.h5
-и огромное количество результатов в поддиректории results_re600_n350.
+The results are saved to the current working directory during the simulation:
+* `stepdata_re600_n350.h5` - integral parameters (forces, dispositions) time series.
+* `results_re600_n350/*.h5` - vortex distributions over time.
 
-К счастью, в комплекте с комплексом есть несколько утилит,
-призванных упростить жизнь при обработке полученных результатов:
+Those are raw data, which can be processed using one of the following:
 * [vvxtract](#vvxtract)
 * [vvplot, vvencode](#vvplot-vvencode)
 * [vvawk](#vvawk)
@@ -88,11 +90,8 @@ EOF
 
 ### *vvxtract*
 
-`vvxtract` является прямой противоположностью программы `vvcompose`.
-Актуальную справку по опциям можно получить в мануале: `man vvxtract` (не пренебрегайте им).
-
-Применительно к файлам c пространством `Space` утилита выводит все атрибуты пространства
-примерно в том виде, как они выглядят в `vvcompose`:
+The *vvxtract* tool is the opposite to the *vvcompose*.
+It prints `.h5` file content in human readable form.
 
 ```
 $ vvxtract re600_n350.h5
@@ -119,7 +118,7 @@ cyl.slip = false -- no-slip
 -- cyl.get_moi_axis() = 0.0981642
 ```
 
-`vvxtract` можно также использовать для распаковки файлов `stepdata`:
+Stepdata files can be handled the same way:
 
 ```
 $ vvxtract stepdata_re600_n350.h5 time body00/force_hydro | less
@@ -133,95 +132,47 @@ $ vvxtract stepdata_re600_n350.h5 time body00/force_hydro | less
 
 ### *vvplot, vvencode*
 
-Самое простое, что можно сделать - нарисвать вихревую картину течения, или даже мультфильм.
-Для этих целей служит утилита `vvplot`.
-Здесь я привожу маленький кусочек справки, а полный набор аргументов можно узнать командой `vvplot --help`
+To plot the images use *vvplot* tool:
 
-```
-usage: vvplot [-h] [-b] [-g] [-H] [-i] [-p] [-P] [-s] [-v] [-V] [-w] [-f] [-n]
-              [--nooverride] [--colorbox] [--timelabel] [--spring]
-              [--blankbody N] -x XMIN XMAX [-y YMIN YMAX] [--size WxH]
-              [--referenceframe {o,b,f}] [--streamlines {o,b,f}]
-              [--pressure {s,o,b,f}] [--tree FILE] [--debug]
-              input_file output_file
-
-positional arguments:
-  input_file            input file
-  output_file           output file or directory
-
-optional arguments:
-  -h, --help            show this help message and exit
-  -b                    plot body
-  -g                    plot vorticity
-  -H                    plot heat particles
-  -i                    plot ink (streaklines)
-  -p                    plot pressure field
-  -P                    plot pressure isolines
-  -s                    plot streamlines
-  -v                    plot vortex domains with dots
-  -V                    plot vortex domains in bold
-  -w, --grayscale       plot in grayscale
-  --timelabel           draw time label in top left corner
-  --spring              draw body spring
-  --blankbody N         do not fill body (numeration starts with 1)
-```
-
-Пару слов о размерах картинки. `vvplot` всегда соблюдает масштаб по осям. Пользователь волен сам задавать два из трех параметров:
-
- - `-x XMIN XMAX`: границы картинки по оси абсцисс; допускается использовать одинаковые значения (`XMIN==XMAX`), в таком случае границы будут расчитаны автоматически, причем симметрично относительно прямой `X=XMIN`.
- - `-y YMIN YMAX`: границы картинки по оси ординат; аналогично можно задавать `YMIN==YMAX`.
- - `--size WxH`: размер картинки в пикселях; один из двух параметров можно не писать (например `--size 1280x` - высота изображения будет вычислена автоматически).
-
-Примеры использования:
-
-самый простой вариант
 ```
 vvplot re600_n350.h5 -b -x -2 20 ./
 ```
 
-немного красивее
 ```
 vvplot results_re600_n350/010000.h5 -bvV -x -2 20 ./images --timelabel --spring
 ```
 
-строим кадры для мультика
+Draw animation:
 ```
 for f in results_re600_n350/*.h5; do vvplot $f -bvV -x -2 20 ./images --timelabel --spring; done;
 ```
 
-кодируем кадры в единый видеофайл (с использованием ffmpeg)
+Encode video using ffmeg
 ```
 vvencode 'images/*.png' re600_n350.mp4
 ```
 
-### *h5xtract*
-
-`h5xtract` - отличный инструмент для извлечения данных из файла stepdata. Синтаксис не покажу, а покажу сразу пример использования.
-
-
 ### *vvawk*
 
-`vvawk` это целая пачка скриптов на языке awk, которая хорошо дополняет собой утилиту `vvxtract`.
-Для более подробного описания запускайте утилиты без аргументов.
+The *vvawk* tool is a bunch of helpful awk scripts, like command-line MS-Excel.
+It can be very useful in combination with *vvxtract*.
 
- - `vvawk.avg`: вычисляет арифметическое среднее (average) от всей колонки.
- - `vvawk.sd`: вычисляет среднеквадратическое отклонение (standard deviation) от всей колонки.
- - `vvawk.zeros`: печатает нули функции.
- - `vvawk.mavg`: вычисляет бегущее среднее (moving average) в колонке.
- - `vvawk.drv`: вычисляет производную (derivative).
- - `vvawk.ampl`: вычисляет амплитуду (amplitude) колебаний значений в колонке
- (разность между средним всех локальных минимумов и средним всех локальных максимумов).
+ - `vvawk.avg`: the arithmetic mean in a column.
+ - `vvawk.sd`: the standard deviation in a column.
+ - `vvawk.zeros`: find zeroes.
+ - `vvawk.mavg`: the moving average in a column.
+ - `vvawk.drv`: the derivative.
+ - `vvawk.ampl`: the amplitude in a column - avg(max) - avg(min).
 
 ### *gpquick*
 
-`gpquick` - это ултилита для быстрого предпросмотра графиков.
+The `gpquick` tool is used to preview plots.
 
-Например, мы хотим посмотреть на силу сопротивления из расчета выше:
 ```
 vvxtract stepdata_re600_n350.h5 time body00/force_hydro | gpquick --points > fx_raw.png
 ```
 
-А если нам не понравилась "шуба" на графике, можно отфильтровать ее с помощью moving average:
+In combination with *vvawk*:
 ```
 vvxtract stepdata_re600_n350.h5 time body00/force_hydro | vvawk.mavg -v span=100 - | gpquick --lines > fx_mavg.png
 ```
