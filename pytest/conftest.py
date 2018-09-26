@@ -77,12 +77,13 @@ class Env:
             cwd=self.tempdir
         )
 
-    def vvflow(self, hdf):
+    def vvflow(self, hdf, **kwargs):
         return self.run([
                 'vvflow',
                 self.tmp(hdf)
             ],
-            cwd=self.tempdir
+            cwd=self.tempdir,
+            **kwargs
         )
 
     def vvplot3(self, ifile, ofile, args=[]):

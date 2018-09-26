@@ -250,15 +250,19 @@ int main_hdf(int argc, char **argv)
 
     if (opt::holder || opt::spring) {
         std::stringstream body_holders;
+        std::stringstream body_springs;
         for (const std::shared_ptr<TBody>& lbody: S.BodyList) {
-            TVec p = lbody->holder.r;
-            body_holders << p.x << " " << p.y;
-            body_holders << " ";
-            p = lbody->get_axis();
-            body_holders << p.x << " " << p.y;
+            TVec p_h = lbody->holder.r;
+            body_holders << p_h.x << " " << p_h.y;
             body_holders << std::endl;
+
+            TVec p_s = lbody->get_axis();
+            body_springs << p_s.x << " " << p_s.y << " ";
+            body_springs << p_h.x - p_s.x << " " << p_h.y - p_s.y;
+            body_springs << std::endl;
         }
         gp.add("body_holders", body_holders.str());
+        gp.add("body_springs", body_springs.str());
 
         if (opt::holder) {
             plot_cmd << DELIMITER;
@@ -268,13 +272,15 @@ int main_hdf(int argc, char **argv)
         }
         if (opt::spring) {
             plot_cmd << DELIMITER;
-            plot_cmd << "'body_holders'";
-            plot_cmd << strfmt(  " u 3:4:(1.5*%lf)", opt::Vcirc);
+            plot_cmd << "'body_springs'";
+            plot_cmd << strfmt(  " u 1:2:(1.5*%lf)", opt::Vcirc);
             plot_cmd << " w circles lc rgb 'black' fs solid noborder";
             plot_cmd << DELIMITER;
-            plot_cmd << "'body_holders'";
-            plot_cmd << " u 1:2:($3-$1):($4-$2)";
-            plot_cmd << " w vectors nohead lc rgb 'black' lw 1.5";
+            plot_cmd << "''";
+            plot_cmd << " u 1:2:3:4";
+            plot_cmd << " w vectors";
+            plot_cmd << strfmt(" head size %lf,135", opt::Vcirc*3);
+            plot_cmd << " lc rgb 'black' lw 1.5";
         }
     }
 
