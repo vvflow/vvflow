@@ -73,6 +73,7 @@ add_library(vvhd SHARED
     src/MFlowmove.cpp
     src/XField.cpp
     src/XIsoline.cpp
+    src/XPressure.cpp
     src/XVorticity.cpp
     src/XStreamfunction.cpp
 )

@@ -4,6 +4,7 @@
 /* vvhd */
 #include "TSpace.hpp"
 #include "TSortedTree.hpp"
+#include "XPressure.hpp"
 #include "XVorticity.hpp"
 #include "XStreamfunction.hpp"
 #include "XIsoline.hpp"
@@ -161,6 +162,59 @@ int main_hdf(int argc, char **argv)
         plot_cmd << " binary matrix";
         plot_cmd << " u 1:2:3";
         plot_cmd << " with image";
+    }
+
+    if (opt::P) {
+        std::stringstream bin;
+        XPressure prs = {S,
+            opt::rect.xmin, opt::rect.ymin,
+            opt::mesh_hi.dxdy,
+            opt::mesh_hi.xres+1,
+            opt::mesh_hi.yres+1,
+        };
+        prs.eps_mult = 2;
+        prs.ref_frame = opt::ref_P;
+        prs.evaluate();
+        bin << prs;
+        gp.add("map_pressure", bin.str());
+
+        if (opt::gray) {
+            gp << "set palette defined (" <<
+                "-1.5 \"#000000\", " <<
+                "0.0 \"#c8c8c8\", " <<
+                "0.5 \"#f0f0f0\", " <<
+                "1.0 \"#ffffff\"" <<
+            ")" << std::endl;
+        } else {
+            gp << "set palette defined ("
+                "-1.5 \"#0829d5\", " <<
+                "-0.5 \"#1ffcff\", " <<
+                "0.0 \"#2ef62e\", " <<
+                "0.3 \"yellow\", " <<
+                "1.0 \"red\"" <<
+            ")" << std::endl;
+        }
+
+        gp << strfmt( "set cbrange [%lg:%lg]\n", opt::Pmin, opt::Pmax);
+        if (opt::colorbox) {
+            gp << strfmt("set label \"%.1lf\" at graph 0.096, 0.039 right front\n", opt::Pmin);
+            gp << strfmt("set label \"%.1lf\" at graph 0.904, 0.039 left front\n", opt::Pmax);
+        }
+
+        plot_cmd << DELIMITER;
+        plot_cmd << "'map_pressure'";
+        plot_cmd << " binary matrix";
+        plot_cmd << " u 1:2:3";
+        plot_cmd << " with image";
+
+        std::stringstream bin_isopressure;
+        bin_isopressure << XIsoline(prs, opt::Pmin, opt::Pmax, (opt::Pmax - opt::Pmin)/33.);
+        gp.add("isopressure", bin_isopressure.str());
+
+        plot_cmd << DELIMITER;
+        plot_cmd << "'isopressure'";
+        plot_cmd << " binary format='%2float'";
+        plot_cmd << " with lines lw 1 lc rgb '#9999cc'";
     }
 
     if (opt::V) {

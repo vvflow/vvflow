@@ -32,9 +32,8 @@ vvplot(1) -- plot Vvflow simulation results
     plot streamlines at given streamfunction constants
     (default: auto)
 
-  * -P, --P `PMIN`,`PMAX`[,`PSTEP`] :
-    plot pressure field with color range \[PMIN, PMAX\];
-    when PSTEP is specified, also plot isopressure lines with specified step
+  * -P, --P `PMIN`,`PMAX` :
+    plot pressure field with color range \[PMIN, PMAX\]
     (default: -1.5,1,0.125)
 
   * -G, --G `GMAX` :
