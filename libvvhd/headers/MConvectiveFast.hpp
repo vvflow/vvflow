@@ -14,7 +14,7 @@ class MConvectiveFast
         MConvectiveFast& operator=(const MConvectiveFast&) = delete;
 
         void process_all_lists();
-        TVec velocity(TVec p);
+        TVec velocity(TVec p) const;
         void calc_circulation(
             // 1) during collision
             // pointer to body.kspring.?.?
@@ -32,11 +32,11 @@ class MConvectiveFast
 
         bool can_use_inverse();
         void fill_matrix(bool rightColOnly, const void** collision);
-        TVec biot_savart(const TObj &obj, const TVec &p);
-        TVec near_nodes_influence(const TSortedNode &Node, const TVec &p);
-        TVec far_nodes_influence(const TSortedNode &Node, const TVec &p);
-        TVec sink_list_influence(const TVec &p);
-        TVec body_list_influence(const TVec &p);
+        TVec biot_savart(const TObj &obj, const TVec &p) const;
+        TVec near_nodes_influence(const TSortedNode &Node, const TVec &p) const;
+        TVec far_nodes_influence(const TSortedNode &Node, const TVec &p) const;
+        TVec sink_list_influence(const TVec &p) const;
+        TVec body_list_influence(const TVec &p) const;
 
         static double _2PI_Xi_g_near(TVec p, TVec pc, TVec dl, double rd);
         static double _2PI_Xi_g_dist(TVec p, TVec p1, TVec p2);
@@ -46,10 +46,10 @@ class MConvectiveFast
         //double _2PI_Xi_q(const TVec &p, const TAtt &seg, double rd); // in doc 2\pi\Xi_q (1.8)
         static TVec _2PI_Xi(const TVec &p, const TAtt &seg, double rd);
         void _2PI_A123(const TAtt &seg, const TBody* ibody, const TBody &b, double *_2PI_A1, double *_2PI_A2, double *_2PI_A3);
-        double ConvectiveInfluence(TVec p, const TAtt &seg, double rd);
-        double NodeInfluence(const TSortedNode &Node, const TAtt &seg);
-        double AttachInfluence(const TAtt &seg, double rd);
-        TVec SegmentInfluence_linear_source(TVec p, const TAtt &seg, double q1, double q2);
+        double ConvectiveInfluence(TVec p, const TAtt &seg, double rd) const;
+        double NodeInfluence(const TSortedNode &Node, const TAtt &seg) const;
+        double AttachInfluence(const TAtt &seg, double rd) const;
+        TVec SegmentInfluence_linear_source(TVec p, const TAtt &seg, double q1, double q2) const;
 
     private:
         void fillSlipEquationForSegment(unsigned eq_no, TAtt* seg, TBody* ibody, bool rightColOnly);

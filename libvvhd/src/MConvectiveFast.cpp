@@ -15,7 +15,7 @@ MConvectiveFast::MConvectiveFast(Space *S, const TSortedTree *tree):
 {
 }
 
-TVec MConvectiveFast::velocity(TVec p)
+TVec MConvectiveFast::velocity(TVec p) const
 {
     TVec res = {0, 0};
     const TSortedNode* node = tree->findNode(p);
@@ -111,13 +111,13 @@ void MConvectiveFast::process_all_lists()
     }
 }
 
-TVec MConvectiveFast::biot_savart(const TObj &obj, const TVec &p)
+TVec MConvectiveFast::biot_savart(const TObj &obj, const TVec &p) const
 {
     TVec dr = p - obj.r;
     return rotl(dr)*(obj.g / (dr.abs2() + sqr(1./obj._1_eps)) );
 }
 
-TVec MConvectiveFast::near_nodes_influence(const TSortedNode &Node, const TVec &p)
+TVec MConvectiveFast::near_nodes_influence(const TSortedNode &Node, const TVec &p) const
 {
     TVec res = {0, 0};
 
@@ -126,7 +126,7 @@ TVec MConvectiveFast::near_nodes_influence(const TSortedNode &Node, const TVec &
         for (TObj *lobj = lnnode->vRange.first; lobj < lnnode->vRange.last; lobj++)
         {
             if (!lobj->g) continue;
-            res+= biot_savart(*lobj, p); 
+            res+= biot_savart(*lobj, p);
         }
     }
 
@@ -134,7 +134,7 @@ TVec MConvectiveFast::near_nodes_influence(const TSortedNode &Node, const TVec &
     return res;
 }
 
-TVec MConvectiveFast::far_nodes_influence(const TSortedNode &node, const TVec &p)
+TVec MConvectiveFast::far_nodes_influence(const TSortedNode &node, const TVec &p) const
 {
     TVec res = {0, 0};
 
@@ -148,7 +148,7 @@ TVec MConvectiveFast::far_nodes_influence(const TSortedNode &node, const TVec &p
     return res;
 }
 
-TVec MConvectiveFast::sink_list_influence(const TVec &p)
+TVec MConvectiveFast::sink_list_influence(const TVec &p) const
 {
     TVec res = {0, 0};
     // что бы избежать неустойчивости при использовании стока
@@ -167,7 +167,7 @@ TVec MConvectiveFast::sink_list_influence(const TVec &p)
     return res;
 }
 
-TVec MConvectiveFast::body_list_influence(const TVec &p)
+TVec MConvectiveFast::body_list_influence(const TVec &p) const
 {
     TVec res = {0, 0};
 
@@ -187,7 +187,7 @@ TVec MConvectiveFast::body_list_influence(const TVec &p)
                 {
                     TVec Vs1 = lbody->speed_slae.r + lbody->speed_slae.o * rotl(latt.corner - lbody->get_axis());
                     double g1 = -Vs1 * latt.dl;
-                    double q1 = -rotl(Vs1) * latt.dl; 
+                    double q1 = -rotl(Vs1) * latt.dl;
 
                     TVec Vs2 = lbody->speed_slae.r + lbody->speed_slae.o * rotl(latt.corner + latt.dl - lbody->get_axis());
                     double g2 = -Vs2 * latt.dl;
@@ -199,7 +199,7 @@ TVec MConvectiveFast::body_list_influence(const TVec &p)
                 {
                     TVec Vs = lbody->speed_slae.r + lbody->speed_slae.o * rotl(latt.r - lbody->get_axis());
                     double g = -Vs * latt.dl;
-                    double q = -rotl(Vs) * latt.dl; 
+                    double q = -rotl(Vs) * latt.dl;
                     TVec dr = p - latt.r;
                     res += (dr*q + rotl(dr)*g) / drabs2;
                 }
@@ -208,7 +208,7 @@ TVec MConvectiveFast::body_list_influence(const TVec &p)
         }
 
     }
-    
+
     return res * C_1_2PI;
 }
 
@@ -393,7 +393,7 @@ void MConvectiveFast::_2PI_A123(const TAtt &seg, const TBody* ibody, const TBody
     }
 }
 
-double MConvectiveFast::NodeInfluence(const TSortedNode &Node, const TAtt &seg)
+double MConvectiveFast::NodeInfluence(const TSortedNode &Node, const TAtt &seg) const
 {
     double res = 0;
 
@@ -415,7 +415,7 @@ double MConvectiveFast::NodeInfluence(const TSortedNode &Node, const TAtt &seg)
     return res*C_1_2PI;
 }
 
-double MConvectiveFast::AttachInfluence(const TAtt &seg, double rd)
+double MConvectiveFast::AttachInfluence(const TAtt &seg, double rd) const
 {
     double res = 0;
 
@@ -435,7 +435,7 @@ double MConvectiveFast::AttachInfluence(const TAtt &seg, double rd)
     return res * C_1_2PI;
 }
 
-TVec MConvectiveFast::SegmentInfluence_linear_source(TVec p, const TAtt &seg, double q1, double q2)
+TVec MConvectiveFast::SegmentInfluence_linear_source(TVec p, const TAtt &seg, double q1, double q2) const
 {
     //	cerr << "orly?" << endl;
     complex<double> z(p.x, p.y);
@@ -865,7 +865,7 @@ void MConvectiveFast::fillSpeedOEquation(unsigned eq_no, TBody* ibody, bool righ
 //   888   "   888  d8888888888     888     888  T88b    888    d88P Y88b
 //   888       888 d88P     888     888     888   T88b 8888888 d88P   Y88b
 
-typedef void (MConvectiveFast::*fptr)(); 
+typedef void (MConvectiveFast::*fptr)();
 typedef struct {
     fptr eq_type;
     int eq_no;
