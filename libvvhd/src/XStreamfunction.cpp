@@ -1,7 +1,7 @@
 #include "XStreamfunction.hpp"
 
 #include "MFlowmove.hpp"
-#include "MEpsFast.hpp"
+#include "MEpsilonFast.hpp"
 #include "elementary.h"
 
 #include <cmath>
@@ -86,7 +86,7 @@ void XStreamfunction::evaluate()
         {
             for (TObj *lobj = (**llbnode).vRange.first; lobj < (**llbnode).vRange.last; lobj++)
             {
-                lobj->v.x = sqr(eps_mult)*std::max(epsfast::eps2h(**llbnode, lobj->r)*0.25, sqr(0.2*dl));
+                lobj->v.x = sqr(eps_mult)*std::max(MEpsilonFast::eps2h(**llbnode, lobj->r)*0.25, sqr(0.2*dl));
             }
         }
 

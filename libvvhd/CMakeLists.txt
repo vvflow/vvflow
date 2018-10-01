@@ -69,7 +69,7 @@ add_library(vvhd SHARED
     src/MStepdata.cpp
     src/MConvectiveFast.cpp
     src/MDiffusiveFast.cpp
-    src/MEpsFast.cpp
+    src/MEpsilonFast.cpp
     src/MFlowmove.cpp
     src/XField.cpp
     src/XIsoline.cpp

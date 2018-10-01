@@ -1,7 +1,7 @@
 #include "XIsoline.hpp"
 
 #include "MFlowmove.hpp"
-#include "MEpsFast.hpp"
+#include "MEpsilonFast.hpp"
 #include "elementary.h"
 
 #include <cmath>

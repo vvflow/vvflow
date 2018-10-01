@@ -7,7 +7,7 @@
 
 #include "libvvplot_api.h"
 #include "MConvectiveFast.hpp"
-#include "MEpsFast.hpp"
+#include "MEpsilonFast.hpp"
 #include "MFlowmove.hpp"
 
 static double Rd2;
@@ -28,7 +28,7 @@ int velocity_print(hid_t fid, TVec* points, int count)
     TSortedTree tree(S, 8, dl*20, 0.3);
     MConvectiveFast conv(S, &tree);
     MFlowmove flow(S);
-    epsfast eps(S, &tree);
+    MEpsilonFast eps(S, &tree);
     flow.vortex_shed();
     tree.build();
     eps.CalcEpsilonFast(/*merge=*/is_viscous);

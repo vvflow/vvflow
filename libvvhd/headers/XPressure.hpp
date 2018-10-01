@@ -5,7 +5,7 @@
 #include "MConvectiveFast.hpp"
 #include "MDiffusiveFast.hpp"
 #include "MFlowmove.hpp"
-#include "MEpsFast.hpp"
+#include "MEpsilonFast.hpp"
 #include "XField.hpp"
 
 class XPressure: public XField {
@@ -27,6 +27,6 @@ private:
     MConvectiveFast convective;
     MDiffusiveFast diffusive;
     MFlowmove flowmove;
-    epsfast eps;
+    MEpsilonFast eps;
     double pressure(TVec p) const;
 };

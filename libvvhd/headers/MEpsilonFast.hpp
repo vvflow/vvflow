@@ -2,10 +2,10 @@
 
 #include "TSortedTree.hpp"
 
-class epsfast
+class MEpsilonFast
 {
     public:
-        epsfast(Space *S, const TSortedTree *Tree):
+        MEpsilonFast(Space *S, const TSortedTree *Tree):
             S(S), Tree(Tree), merged_(0) {}
         void CalcEpsilonFast(bool merge);
         int Merged(){return merged_;}
@@ -21,7 +21,7 @@ class epsfast
         Space *S;
         const TSortedTree *Tree;
         //double merge_criteria_sq; // = (0.3*AverageSegmentLenght)^2
-        // double eps_restriction; // = 0.6*AverageSegmentLenght 
+        // double eps_restriction; // = 0.6*AverageSegmentLenght
         int merged_;
 
         void MergeVortexes(TObj *lv1, TObj *lv2);

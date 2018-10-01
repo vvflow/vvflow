@@ -1,4 +1,4 @@
-#include "MEpsFast.hpp"
+#include "MEpsilonFast.hpp"
 
 #include <cmath>
 // #include <limits>
@@ -8,7 +8,7 @@ using std::vector;
 using std::isfinite;
 using std::numeric_limits;
 
-void epsfast::CalcEpsilonFast(bool merge)
+void MEpsilonFast::CalcEpsilonFast(bool merge)
 {
     merged_ = 0;
 
@@ -63,7 +63,7 @@ void epsfast::CalcEpsilonFast(bool merge)
 }
 
 
-double epsfast::eps2h(const TSortedNode &node, TVec p)
+double MEpsilonFast::eps2h(const TSortedNode &node, TVec p)
 {
     double res1 = numeric_limits<double>::infinity();
     double res2 = numeric_limits<double>::infinity();
@@ -91,7 +91,7 @@ double epsfast::eps2h(const TSortedNode &node, TVec p)
     return numeric_limits<double>::lowest();
 }
 
-double epsfast::h2(const TSortedNode &node, TVec p)
+double MEpsilonFast::h2(const TSortedNode &node, TVec p)
 {
     double res = numeric_limits<double>::infinity();
 
@@ -108,7 +108,7 @@ double epsfast::h2(const TSortedNode &node, TVec p)
 
 /******************************** NAMESPACE ***********************************/
 
-void epsfast::MergeVortexes(TObj *lv1, TObj *lv2)
+void MEpsilonFast::MergeVortexes(TObj *lv1, TObj *lv2)
 {
     merged_++;
 
@@ -125,7 +125,7 @@ void epsfast::MergeVortexes(TObj *lv1, TObj *lv2)
     lv2->g = 0;
 }
 
-double epsfast::epsv(const TSortedNode &Node, TObj *lv, double merge_criteria_sq)
+double MEpsilonFast::epsv(const TSortedNode &Node, TObj *lv, double merge_criteria_sq)
 {
     double res1, res2;
     res2 = res1 = std::numeric_limits<double>::max();
@@ -172,7 +172,7 @@ double epsfast::epsv(const TSortedNode &Node, TObj *lv, double merge_criteria_sq
     return sqrt(res2);
 }
 
-double epsfast::epsh(const TSortedNode &Node, TObj *lv, double merge_criteria_sq)
+double MEpsilonFast::epsh(const TSortedNode &Node, TObj *lv, double merge_criteria_sq)
 {
     double res1, res2;
     res2 = res1 = std::numeric_limits<double>::max();
@@ -211,7 +211,7 @@ double epsfast::epsh(const TSortedNode &Node, TObj *lv, double merge_criteria_sq
     return sqrt(res2);
 }
 
-TAtt* epsfast::nearestBodySegment(TSortedNode &Node, TVec p)
+TAtt* MEpsilonFast::nearestBodySegment(TSortedNode &Node, TVec p)
 {
     TObj *att = NULL;
     double res = std::numeric_limits<double>::max();

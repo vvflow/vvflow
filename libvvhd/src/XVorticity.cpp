@@ -1,7 +1,7 @@
 #include "XVorticity.hpp"
 
 #include "MFlowmove.hpp"
-#include "MEpsFast.hpp"
+#include "MEpsilonFast.hpp"
 #include "elementary.h"
 
 #include <cmath>
@@ -49,7 +49,7 @@ void XVorticity::evaluate()
         {
             for (TObj *lobj = (**llbnode).vRange.first; lobj < (**llbnode).vRange.last; lobj++)
             {
-                lobj->v.x = 1./(sqr(eps_mult)*std::max(epsfast::eps2h(**llbnode, lobj->r), sqr(0.6*dl)));
+                lobj->v.x = 1./(sqr(eps_mult)*std::max(MEpsilonFast::eps2h(**llbnode, lobj->r), sqr(0.6*dl)));
                 lobj->v.y = lobj->v.x * lobj->g;
             }
         }
@@ -87,7 +87,7 @@ double XVorticity::vorticity(const TSortedNode &node, TVec p) const
 
     res *= C_1_PI;
 
-    double erfarg = epsfast::h2(node, p)/sqr(dl*eps_mult);
+    double erfarg = MEpsilonFast::h2(node, p)/sqr(dl*eps_mult);
     res += (erfarg<3) ? 0.5*(1-erf(erfarg)) : 0;
 
     return res;

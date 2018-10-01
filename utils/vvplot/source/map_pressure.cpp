@@ -8,7 +8,7 @@
 #include "elementary.h"
 #include "libvvplot_api.h"
 #include "MConvectiveFast.hpp"
-#include "MEpsFast.hpp"
+#include "MEpsilonFast.hpp"
 #include "MDiffusiveFast.hpp"
 #include "MFlowmove.hpp"
 
@@ -83,7 +83,7 @@ int map_pressure(hid_t fid, char RefFrame, double xmin, double xmax, double ymin
     double dl = S->average_segment_length();
     TSortedTree tr(S, 8, dl*20, 0.1);
     MConvectiveFast conv(S, &tr);
-    epsfast eps(S, &tr);
+    MEpsilonFast eps(S, &tr);
     MDiffusiveFast diff(S, &tr);
     MFlowmove fm(S);
 
@@ -111,7 +111,7 @@ int map_pressure(hid_t fid, char RefFrame, double xmin, double xmax, double ymin
     diff.process_vort_list();
 
     hsize_t dims[2] = {
-        static_cast<size_t>((xmax-xmin)/spacing) + 1, 
+        static_cast<size_t>((xmax-xmin)/spacing) + 1,
         static_cast<size_t>((ymax-ymin)/spacing) + 1
     };
     float *mem = (float*)malloc(sizeof(float)*dims[0]*dims[1]);
@@ -123,11 +123,11 @@ int map_pressure(hid_t fid, char RefFrame, double xmin, double xmax, double ymin
         for (size_t yj=0; yj<dims[1]; yj++)
         {
             double y = ymin + double(yj)*spacing;
-            mem[xi*dims[1]+yj] = S->point_is_in_body(TVec(x, y)) ? 
+            mem[xi*dims[1]+yj] = S->point_is_in_body(TVec(x, y)) ?
                        0 : Pressure(S, &conv, TVec(x, y), RefFrame, NaN);
         }
     }
-    
+
     /**************************************************************************
     *** SAVE RESULTS **********************************************************
     **************************************************************************/
@@ -152,7 +152,7 @@ int pressure_print(hid_t fid, TVec* points, int count)
     double dl = S->average_segment_length();
     TSortedTree tr(S, 8, dl*20, 0.1);
     MConvectiveFast conv(S, &tr);
-    epsfast eps(S, &tr);
+    MEpsilonFast eps(S, &tr);
     MDiffusiveFast diff(S, &tr);
     MFlowmove fm(S);
 
@@ -168,7 +168,7 @@ int pressure_print(hid_t fid, TVec* points, int count)
     for (int i=0; i<count; i++)
     {
         TVec p = points[i];
-        double P = S->point_is_in_body(p) ? 
+        double P = S->point_is_in_body(p) ?
             NaN : Pressure(S, &conv, p, 's', NaN);
         printf("%.6le\n", P);
     }
