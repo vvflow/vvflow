@@ -10,13 +10,12 @@ public:
         const Space &S,
         double xmin, double ymin,
         double dxdy,
-        int xres, int yres,
-        double eps_mult
+        int xres, int yres
     );
+    double eps_mult;
     void evaluate();
 private:
     Space S;
-    double eps_mult;
     double dl; // = S.AverageSenmentLength()
     double vorticity(const TSortedNode &node, TVec p) const;
 };

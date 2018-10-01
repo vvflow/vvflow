@@ -15,20 +15,19 @@ XVorticity::XVorticity(
     const Space &S,
     double xmin, double ymin,
     double dxdy,
-    int xres, int yres,
-    double eps_mult
+    int xres, int yres
 ):
     XField(xmin, ymin, dxdy, xres, yres),
+    eps_mult(),
     S(S),
-    eps_mult(eps_mult),
     dl(S.average_segment_length())
-{
-    if (eps_mult <= 0)
-        throw std::invalid_argument("XVorticity(): eps_mult must be positive");
-}
+{}
 
 void XVorticity::evaluate()
 {
+    if (eps_mult <= 0)
+        throw std::invalid_argument("XVorticity(): eps_mult must be positive");
+
     if (evaluated)
         return;
 

@@ -13,34 +13,16 @@ XStreamfunction::XStreamfunction(
     const Space &S,
     double xmin, double ymin,
     double dxdy,
-    int xres, int yres,
-    double eps_mult,
-    char ref_frame
+    int xres, int yres
 ):
     XField(xmin, ymin, dxdy, xres, yres),
+    eps_mult(),
+    ref_frame(),
     S(S),
-    eps_mult(eps_mult),
     ref_frame_speed(),
-    dl(),
-    rd2()
-{
-    if (eps_mult <= 0)
-        throw std::invalid_argument("XStreamfunction(): eps_mult must be positive");
-
-    switch (ref_frame) {
-    case 'o':
-        ref_frame_speed = TVec(0, 0);
-        break;
-    case 'f':
-        ref_frame_speed = S.inf_speed();
-        break;
-    case 'b':
-        ref_frame_speed = S.BodyList[0]->speed_slae.r;
-        break;
-    default:
-        throw std::invalid_argument("XStreamfunction(): bad ref_frame");
-    }
-}
+    dl(S.average_segment_length()),
+    rd2(sqr(0.2*dl))
+{}
 
 inline static
 double _4pi_psi_g(TVec dr, double rd2, double g)
@@ -64,6 +46,23 @@ double _2pi_psi_qatt(TVec p, TVec att, TVec cofm, double q)
 
 void XStreamfunction::evaluate()
 {
+    if (eps_mult <= 0)
+        throw std::invalid_argument("XStreamfunction(): eps_mult must be positive");
+
+    switch (ref_frame) {
+    case 'o':
+        ref_frame_speed = TVec(0, 0);
+        break;
+    case 'f':
+        ref_frame_speed = S.inf_speed();
+        break;
+    case 'b':
+        ref_frame_speed = S.BodyList[0]->speed_slae.r;
+        break;
+    default:
+        throw std::invalid_argument("XStreamfunction(): bad ref_frame");
+    }
+
     if (evaluated)
         return;
 
@@ -73,8 +72,6 @@ void XStreamfunction::evaluate()
     // flowmove fm(&S);
     // fm.VortexShed();
 
-    dl = S.average_segment_length();
-    rd2 = sqr(0.2*dl);
     double min_node_size = dl>0 ? dl*10 : 0;
     double max_node_size = dl>0 ? dl*20 : 1.0l/0.0l;
     TSortedTree tree(&S, 8, min_node_size, max_node_size);

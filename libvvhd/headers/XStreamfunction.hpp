@@ -12,16 +12,14 @@ public:
         const Space &S,
         double xmin, double ymin,
         double dxdy,
-        int xres, int yres,
-        double eps_mult,
-        char ref_frame
+        int xres, int yres
     );
-
+    double eps_mult;
+    char ref_frame;
     void evaluate();
     static double streamfunction(const Space &S, TVec p);
 private:
     Space S;
-    double eps_mult;
     TVec ref_frame_speed;
 
     double dl; // = S.AverageSenmentLength()

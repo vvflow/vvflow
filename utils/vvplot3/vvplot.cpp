@@ -135,7 +135,8 @@ int main_hdf(int argc, char **argv)
             opt::mesh_hi.dxdy,
             opt::mesh_hi.xres+1,
             opt::mesh_hi.yres+1,
-            2};
+        };
+        vrt.eps_mult = 2;
         vrt.evaluate();
         bin << vrt;
         gp.add("map_vorticity", bin.str());
@@ -147,6 +148,10 @@ int main_hdf(int argc, char **argv)
         }
         if (opt::Gmax > 0) {
             gp << strfmt( "set cbrange [%lg:%lg]\n", -opt::Gmax, opt::Gmax);
+            if (opt::colorbox) {
+                gp << strfmt("set label \"%.1lf\" at graph 0.096, 0.039 right front\n", -opt::Gmax);
+                gp << strfmt("set label \"%.1lf\" at graph 0.904, 0.039 left front\n", opt::Gmax);
+            }
         } else {
             gp << "set cbrange []\n" << std::endl;
         }
@@ -188,7 +193,9 @@ int main_hdf(int argc, char **argv)
             opt::mesh_lo.dxdy,
             opt::mesh_lo.xres+1,
             opt::mesh_lo.yres+1,
-            2, opt::ref_S};
+        };
+        psi.eps_mult = 2;
+        psi.ref_frame = opt::ref_S;
         psi.evaluate();
         bin_streamfunction << psi;
         gp.add("map_streamfunction", bin_streamfunction.str());
