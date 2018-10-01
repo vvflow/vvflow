@@ -31,6 +31,6 @@ def test(env_cyl):
     check('base.bv4.png', args='-x -3,3 -B --V=4')
     check('base.bv0.png', args='-x -3,3 -B --V=0')
     check('base.bsa.png', args='-x -3,3 -B -S')
-    check('base.bp.png',  args='-x -3,3 -B -P')
+    check('base.bp.png',  args='-x -3,3 -B --P=-15,15 --res-hi 256 --colorbox')
     check('base.bs1.png', args='-x -3,3 -B --S=-10,10,0.1')
     # env.vvplot3(ret.ofile, '.')
