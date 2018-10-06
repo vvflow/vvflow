@@ -6,4 +6,4 @@ gitinfo.cpp
 *.sublime-*
 doc/images/
 build/
-
+example/
