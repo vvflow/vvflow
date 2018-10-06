@@ -12,12 +12,12 @@ def test(env):
     hdf = 'ref_o.h5'
     env.vvcompose('compose_ref_o.lua', hdf)
     env.vvflow(hdf)
-    ret = env.vvplot3(
+    ret = env.vvplot(
         'results_ref_o/000001.h5',
         'ref_o.tar',
         args='-x -1.5,1.5 -B -S --ref-S o --tar'
     )
-    env.vvplot3(ret.ofile, '.')
+    env.vvplot(ret.ofile, '.')
     sf_o = env.run(['tar', '-xOf', ret.ofile, 'map_streamfunction']).stdout
     sf_o = struct.unpack('f'*int(len(sf_o)/4), sf_o)
 
@@ -25,12 +25,12 @@ def test(env):
     hdf = 'ref_b.h5'
     env.vvcompose('compose_ref_b.lua', hdf)
     env.vvflow(hdf)
-    ret = env.vvplot3(
+    ret = env.vvplot(
         'results_ref_b/000001.h5',
         'ref_b.tar',
         args='-x -1.5,1.5 -B -S --ref-S b --tar'
     )
-    env.vvplot3(ret.ofile, '.')
+    env.vvplot(ret.ofile, '.')
     sf_b = env.run(['tar', '-xOf', ret.ofile, 'map_streamfunction']).stdout
     sf_b = struct.unpack('f'*int(len(sf_b)/4), sf_b)
 

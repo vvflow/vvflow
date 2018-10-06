@@ -6,7 +6,7 @@ add_test(pytests python3 -mpytest ${CMAKE_CURRENT_SOURCE_DIR})
 set(PATH_LIST
     "${CMAKE_BINARY_DIR}/utils/vvcompose/"
     "${CMAKE_BINARY_DIR}/utils/vvflow/"
-    "${CMAKE_BINARY_DIR}/utils/vvplot3/"
+    "${CMAKE_BINARY_DIR}/utils/vvplot/"
     "${CMAKE_BINARY_DIR}/utils/vvxtract/"
     "$ENV{PATH}"
 )

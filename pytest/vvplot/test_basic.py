@@ -15,7 +15,7 @@ def test(env_cyl):
     # ref_o
     h5 = 'results_base/000001.h5'
     def check(ofile, args):
-        ret = env_cyl.vvplot3(h5, ofile, args)
+        ret = env_cyl.vvplot(h5, ofile, args)
         assert not ret.stdout
         assert not ret.stderr
 
@@ -33,4 +33,4 @@ def test(env_cyl):
     check('base.bsa.png', args='-x -3,3 -B -S')
     check('base.bp.png',  args='-x -3,3 -B --P=-15,15 --res-hi 256 --colorbox')
     check('base.bs1.png', args='-x -3,3 -B --S=-10,10,0.1')
-    # env.vvplot3(ret.ofile, '.')
+    # env.vvplot(ret.ofile, '.')

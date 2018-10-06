@@ -135,16 +135,16 @@ $ vvxtract stepdata_re600_n350.h5 time body00/force_hydro | less
 To plot the images use *vvplot* tool:
 
 ```
-vvplot re600_n350.h5 -b -x -2 20 ./
+vvplot re600_n350.h5 -B -x -2,20 ./
 ```
 
 ```
-vvplot results_re600_n350/010000.h5 -bvV -x -2 20 ./images --timelabel --spring
+vvplot results_re600_n350/010000.h5 -BV -x -2,20 ./images --spring
 ```
 
 Draw animation:
 ```
-for f in results_re600_n350/*.h5; do vvplot $f -bvV -x -2 20 ./images --timelabel --spring; done;
+ls results_re600_n350/*.h5 | xargs -I{} vvplot {} -BV -x -2,20 ./images --spring
 ```
 
 Encode video using ffmeg
@@ -240,7 +240,7 @@ python -m SimpleHTTPServer 1208
 ```
 * http://127.0.0.1:1208/utils/vvcompose/vvcompose.1.html
 * http://127.0.0.1:1208/utils/vvxtract/vvxtract.1.html
-* http://127.0.0.1:1208/utils/vvplot3/vvplot.1.html
+* http://127.0.0.1:1208/utils/vvplot/vvplot.1.html
 
 ## Links
 

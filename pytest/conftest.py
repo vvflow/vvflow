@@ -17,7 +17,7 @@ class Env:
         path = [
             'utils/vvcompose',
             'utils/vvxtract',
-            'utils/vvplot3',
+            'utils/vvplot',
             self.env['PATH']
         ]
         # self.env['PATH'] = ':'.join(path)
@@ -86,14 +86,14 @@ class Env:
             **kwargs
         )
 
-    def vvplot3(self, ifile, ofile, args=[]):
+    def vvplot(self, ifile, ofile, args=[]):
         ifile = self.tmp(ifile)
         ofile = self.tmp(ofile)
         if type(args) is str:
             args = args.split(' ')
 
         output = self.run(
-            ['vvplot3', ifile, ofile] + args,
+            ['vvplot', ifile, ofile] + args,
             cwd=self.tempdir
         )
         output.ifile = ifile
