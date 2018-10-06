@@ -24,5 +24,5 @@ for i = 1, N do
 	S.vort_list:append({-x, -y, 1/N})
 end
 
-S.caption = "base"
+S.caption = "cyl"
 S:save(arg[1])

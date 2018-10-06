@@ -36,6 +36,7 @@ public:
 
     float min() const;
     float max() const;
+    float percentile(float p) const;
 
     //  N   y1  y2  yN
     // x1  z11 z12 z1N
