@@ -20,10 +20,22 @@ sudo apt install vvflow
 
 * [/usr/share/doc/vvflow/](file:///usr/share/doc/vvflow/)
 * `man vvcompose`
+* `man vvflow`
 * `man vvxtract`
 * `man vvplot`
 
 ## Flow simulation
+
+For a start, one can copy the example simulation from doc:
+
+```
+cp -R /usr/share/doc/vvflow/example/ ./
+cd example
+make
+```
+
+This will compose the CFD problem as described in `cylinder.lua` file,
+run the simulation (for a minute or two), and plot the results.
 
 ### *vvcompose*
 
