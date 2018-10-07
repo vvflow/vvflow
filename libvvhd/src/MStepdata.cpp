@@ -1,37 +1,31 @@
+#define H5_USE_18_API
+#include <hdf5.h>
+
 #include "MStepdata.hpp"
 #include "elementary.h"
+#include "vvhdf.h"
 
-#include <hdf5.h>
 #include <limits>
 
-#define H5ASSERT(expr, msg) if (expr<0) { \
-    fprintf(stderr, "%s failed (%s:%d). Aborting.\n", msg, __FILE__, __LINE__); \
-    std::exit(5); \
-}
+static const float f_nan = std::numeric_limits<float>::quiet_NaN();
 
 Stepdata::Stepdata(Space* S, const char *fname, bool b_save_profile):
     S(S),
-    blsize(S->BodyList.size()),
     b_save_profile(b_save_profile),
+    blsize(S->BodyList.size()),
     last_flush_time(0),
     h5f(),
-    string_h5t(),
-    scalar_h5s(),
     time_h5d(-1),
-    force_hydro_h5d(blsize),
-    force_holder_h5d(blsize),
-    force_friction_h5d(blsize),
-    nusselt_h5d(blsize),
-    position_h5d(blsize),
-    spring_h5d(blsize),
-    speed_h5d(blsize),
-    pressure_h5d(blsize),
-    friction_h5d(blsize)
+    force_hydro_h5d(),
+    force_holder_h5d(),
+    force_friction_h5d(),
+    nusselt_h5d(),
+    position_h5d(),
+    spring_h5d(),
+    speed_h5d(),
+    pressure_h5d(),
+    friction_h5d()
 {
-    scalar_h5s = H5Screate(H5S_SCALAR);
-    string_h5t = H5Tcopy(H5T_C_S1);
-    H5Tset_size(string_h5t, H5T_VARIABLE);
-
     force_hydro_h5d.resize(blsize, -1);
     force_holder_h5d.resize(blsize, -1);
     force_friction_h5d.resize(blsize, -1);
@@ -43,25 +37,33 @@ Stepdata::Stepdata(Space* S, const char *fname, bool b_save_profile):
     friction_h5d.resize(blsize, -1);
 
     size_t rows = 0;
+    H5Eset_auto(H5E_DEFAULT, NULL, NULL);
     if (H5Fis_hdf5(fname)<=0)
     {
         h5f = H5Fcreate(fname, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-        H5ASSERT(h5f, "H5Hcreate");
-        H5Tcommit(h5f, "string_t", string_h5t, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        if (h5f < 0)
+            h5_throw("H5Fcreate", fname);
 
-        attribute_write("caption",  S->caption.c_str());
-        attribute_write("git_rev",  libvvhd_gitrev);
-        attribute_write("git_info", libvvhd_gitinfo);
-        attribute_write("git_diff", libvvhd_gitdiff);
+        h5a_write<std::string const&>(h5f, "caption",  S->caption);
+        h5a_write<const char*>(h5f, "git_rev",  libvvhd_gitrev);
+        h5a_write<const char*>(h5f, "git_info", libvvhd_gitinfo);
+        h5a_write<const char*>(h5f, "git_diff", libvvhd_gitdiff);
+        h5t_commit<const char*>(h5f);
+        h5t_close<const char*>();
     } else {
         h5f = H5Fopen(fname, H5F_ACC_RDWR, H5P_DEFAULT);
-        H5ASSERT(h5f, "H5Fopen");
+        if (h5f < 0)
+            h5_throw("H5Fcreate", fname);
 
         // TODO update git_info, git_diff
         if (H5Lexists(h5f, "time", H5P_DEFAULT))
         {
             hid_t h5d = H5Dopen(h5f, "time", H5P_DEFAULT);
+            if (h5d < 0)
+                h5_throw("H5Dopen", "time");
             hid_t h5s = H5Dget_space(h5d);
+            if (h5s < 0)
+                h5_throw("H5Dget_space", "time");
             hsize_t dims[2];
             H5Sget_simple_extent_dims(h5s, dims, NULL);
             float* tbuf = new float[dims[0]*dims[1]];
@@ -79,17 +81,19 @@ Stepdata::Stepdata(Space* S, const char *fname, bool b_save_profile):
     time_h5d = h5d_init(h5f, "time", rows, 1);
     for (auto& lbody: S->BodyList)
     {
-        int body_n = S->get_body_index(lbody.get());
+        size_t body_n = S->get_body_index(lbody.get());
         if (body_n > blsize) continue;
         const char *bname = S->get_body_name(lbody.get()).c_str();
         hid_t body_h5g;
         if (!H5Lexists(h5f, bname, H5P_DEFAULT))
         {
             body_h5g = H5Gcreate(h5f, bname, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-            H5ASSERT(body_h5g, "H5Gcreate");
+            if (body_h5g < 0)
+                h5_throw("H5Gcreate", bname);
         } else {
             body_h5g = H5Gopen(h5f, bname, H5P_DEFAULT);
-            H5ASSERT(body_h5g, "H5Gopen");
+            if (body_h5g < 0)
+                h5_throw("H5Gopen", bname);
         }
 
         force_hydro_h5d[body_n]    = h5d_init(body_h5g, "force_hydro", rows, 3);
@@ -125,7 +129,7 @@ Stepdata::Stepdata(Space* S, const char *fname, bool b_save_profile):
 Stepdata::~Stepdata()
 {
     H5Dclose(time_h5d);
-    for (int i=0; i<blsize; i++)
+    for (size_t i=0; i<blsize; i++)
     {
         if (force_hydro_h5d[i]    >= 0) H5Dclose(force_hydro_h5d[i]);
         if (force_holder_h5d[i]   >= 0) H5Dclose(force_holder_h5d[i]);
@@ -138,8 +142,6 @@ Stepdata::~Stepdata()
         if (friction_h5d[i]       >= 0) H5Dclose(friction_h5d[i]);
     }
 
-    H5Tclose(string_h5t);
-    H5Sclose(scalar_h5s);
     H5Fclose(h5f);
 }
 
@@ -154,7 +156,7 @@ void Stepdata::write()
 
     for (auto& lbody: S->BodyList)
     {
-        int body_n = S->get_body_index(lbody.get());
+        size_t body_n = S->get_body_index(lbody.get());
         if (body_n > blsize) continue;
         append(force_hydro_h5d[body_n], lbody->force_hydro);
         append(force_holder_h5d[body_n], lbody->force_holder);
@@ -193,52 +195,67 @@ void Stepdata::write()
 /** PRIVATE ******************************************************************/
 /*****************************************************************************/
 
-void Stepdata::attribute_write(const char *name, const char *str)
+void Stepdata::append(int64_t h5d, const void *buf)
 {
-    hid_t aid = H5Acreate2(h5f, name, string_h5t, scalar_h5s, H5P_DEFAULT, H5P_DEFAULT);
-    H5ASSERT(aid, "H5Acreate");
-    H5ASSERT(H5Awrite(aid, string_h5t, &str), "H5Awrite");
-    H5ASSERT(H5Aclose(aid), "H5Aclose");
-}
-
-void Stepdata::append(int dataspace_hid, const void *buf)
-{
-    if (dataspace_hid < 0) return;
+    if (h5d < 0) return;
+    herr_t err;
     hsize_t dims[2];
     hsize_t ext[2];
     hsize_t offset[2];
-    hid_t filespace = H5Dget_space(dataspace_hid);
-    H5Sget_simple_extent_dims(filespace, dims, NULL);
+
+    hid_t h5s_file = H5Dget_space(h5d);
+    if (h5s_file < 0)
+        h5_throw("H5Dget_space", "append, 1");
+
+    err = H5Sget_simple_extent_dims(h5s_file, dims, NULL);
+    if (err < 0)
+        h5_throw("H5Sget_simple_extent_dims", "append, 1");
+
     offset[0] = dims[0];
     offset[1] = 0;
     ext[0] = 1;
     ext[1] = dims[1];
     dims[0]++;
-    H5Dset_extent(dataspace_hid, dims);
-    filespace = H5Dget_space(dataspace_hid);
-    H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offset, NULL, ext, NULL);
+    err = H5Dset_extent(h5d, dims);
+    if (err < 0)
+        h5_throw("H5Dset_extent", "append, 1");
 
-    hid_t memspace = H5Screate_simple(2, ext, NULL);
-    H5Dwrite(dataspace_hid, H5T_NATIVE_DOUBLE, memspace, filespace, H5P_DEFAULT, buf);
+    H5Sclose(h5s_file);
+    h5s_file = H5Dget_space(h5d);
+    if (h5s_file < 0)
+        h5_throw("H5Dget_space", "append, 2");
 
-    H5Sclose(filespace);
-    H5Sclose(memspace);
+    err = H5Sselect_hyperslab(h5s_file, H5S_SELECT_SET, offset, NULL, ext, NULL);
+    if (err < 0)
+        h5_throw("H5Sselect_hyperslab", "append, 2");
+
+    hid_t h5s_mem = H5Screate_simple(2, ext, NULL);
+    if (h5s_mem < 0)
+        h5_throw("H5Screate_simple", "append, 2");
+
+    err = H5Dwrite(h5d, H5T_NATIVE_DOUBLE, h5s_mem, h5s_file, H5P_DEFAULT, buf);
+    if (err < 0)
+        h5_throw("H5Dwrite", "append, 2");
+
+    H5Sclose(h5s_file);
+    H5Sclose(h5s_mem);
 }
 
-void Stepdata::append(int dataspace_hid, double value)
+void Stepdata::append(int64_t h5d, double value)
 {
-    append(dataspace_hid, &value);
+    append(h5d, &value);
 }
 
-void Stepdata::append(int dataspace_hid, TVec3D value)
+void Stepdata::append(int64_t h5d, TVec3D value)
 {
     double arr[3] = {value.r.x, value.r.y, value.o};
-    append(dataspace_hid, arr);
+    append(h5d, &arr);
 }
 
-int Stepdata::h5d_init(int loc_id, const char *name, size_t rows, size_t cols)
+int64_t Stepdata::h5d_init(int64_t loc_id, const char *name, size_t rows, size_t cols)
 {
     hid_t h5d;
+    herr_t err;
     if (H5Lexists(loc_id, name, H5P_DEFAULT))
     {
         h5d = H5Dopen(loc_id, name, H5P_DEFAULT);
@@ -246,16 +263,19 @@ int Stepdata::h5d_init(int loc_id, const char *name, size_t rows, size_t cols)
 
         hsize_t cur_dims[2];
         hsize_t new_dims[2] = {rows, cols};
-        H5Sget_simple_extent_dims(h5s, cur_dims, NULL);
-        H5ASSERT(H5Dset_extent(h5d, new_dims), "H5Dset_extent");
+        err = H5Sget_simple_extent_dims(h5s, cur_dims, NULL);
+        if (err < 0)
+            h5_throw("H5Sget_simple_extent_dims", name);
+        err = H5Dset_extent(h5d, new_dims);
+        if (err < 0)
+            h5_throw("H5Dset_extent", name);
         H5Sclose(h5s);
     } else {
         hid_t h5p = H5Pcreate(H5P_DATASET_CREATE);
         hsize_t chunk_dims[2] = {0x80, cols};
         H5Pset_chunk(h5p, 2, chunk_dims);
         H5Pset_deflate(h5p, 9);
-        float NaN = std::numeric_limits<float>::quiet_NaN();
-        H5Pset_fill_value(h5p, H5T_NATIVE_FLOAT, &NaN);
+        H5Pset_fill_value(h5p, H5T_NATIVE_FLOAT, &f_nan);
         H5Pset_fill_time(h5p, H5D_FILL_TIME_ALLOC);
 
         hsize_t cur_dims[2] = {rows, cols};

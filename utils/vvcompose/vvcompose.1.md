@@ -9,7 +9,8 @@ vvcompose(1) -- compose the CFD problem to be solved with vvflow program
 
 vvcompose is a part of Vvflow CFD Suite. It serves as a preprocessor for defining the CFD problems.
 
-vvcompose is an extended Lua interpreter. It supports everything that Lua supports. Plus it provides bindings for the VVD classes (structures) and functions.
+vvcompose is an extended Lua interpreter. It supports everything that Lua supports.
+Plus it provides bindings for the VVD classes (structures) and functions.
 
 The script is loaded from <FILE>, which consists of regular Lua commands. Optionally <FILE> may start with a shebang:
 
@@ -603,7 +604,7 @@ The boundary condition in expanding channel is no-slip.
 The bounding box is a rectangle with constraints X:{`X3`-`L`, `X3`}, Y:{-`H`/2, `H`/2}.
 The bounding box implies slip boundary condition.
 
-Regions with no-slip boundary condition have segment length `dln`, regions with slip - `dls`. 
+Regions with no-slip boundary condition have segment length `dln`, regions with slip - `dls`.
 
     #    ,----------------,  - H
     #    |              .-'
@@ -616,9 +617,9 @@ Regions with no-slip boundary condition have segment length `dln`, regions with 
 
     #          slip | noslip ..--"
     #      .-"""""""|"""""""'
-    #     /    
+    #     /
     #    ;    +
-    #     \    
+    #     \
     #      '-.......|.......,
     #                        ""--,
     #         ^x0   ^x1     ^x2  ^x3
@@ -637,7 +638,7 @@ Thickness of the left, right and top walls is `h`.
 Thickness of the bottom wall is `d`.
 
 Regions with no-slip boundary condition (inner bottom surface) have segment length `dln`,
-regions with slip - `dls`. 
+regions with slip - `dls`.
 
     #    ,-------------------,  - H+h
     #    |   _____________   |  _ H
@@ -659,7 +660,7 @@ This is how it looks like:
     #        .-'""'-.
     #      .'        '.
     #     /   .-""-.   \          __
-    #    ;   /      \   ;        /  \ 
+    #    ;   /      \   ;        /  \
     #    \__/        ;   \      /   ;
     #                 \   '-..-'   /
     #                  '.        .'
@@ -675,4 +676,4 @@ This is how it looks like:
     specify either number of segments or average segment length
 
 ## SEE ALSO
-  vvxtract(1)
+  vvflow(1), vvxtract(1), vvplot(1)

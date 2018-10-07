@@ -1,6 +1,8 @@
 #include "XField.hpp"
 
+#include <cmath>
 #include <stdexcept>
+#include <algorithm>
 
 XField::XField(
     double xmin, double ymin, double dxdy,
@@ -30,12 +32,7 @@ float XField::min() const
     if (!evaluated) {
         throw std::invalid_argument("XField::min(): not evaluated");
     }
-
-    float result = *map;
-    for (int i=0; i<xres*yres; i++) {
-        result = std::min(result, map[i]);
-    }
-    return result;
+    return *std::min_element(&map[0], &map[xres*yres]);
 }
 
 float XField::max() const
@@ -43,12 +40,36 @@ float XField::max() const
     if (!evaluated) {
         throw std::invalid_argument("XField::max(): not evaluated");
     }
+    return *std::max_element(&map[0], &map[xres*yres]);
+}
 
-    float result = *map;
-    for (int i=0; i<xres*yres; i++) {
-        result = std::max(result, map[i]);
+static bool gt(float x, float y) { return x>y; }
+static bool lt(float x, float y) { return x<y; }
+float XField::percentile(float p) const
+{
+    if (!evaluated) {
+        throw std::invalid_argument("XField::percentile(): not evaluated");
     }
-    return result;
+
+    if (!(p>0 && p<1)) {
+        throw std::invalid_argument("XField::percentile(p): p must be in range (0, 1)");
+    }
+
+    bool (*cmp)(float, float);
+    if (p < 0.5) {
+        cmp = lt;
+    } else {
+        p = 1 - p;
+        cmp = gt;
+    }
+
+    std::vector<float> v(xres*yres);
+    auto it = std::copy_if(&map[0], &map[xres*yres], v.begin(), [](float x){return x!=0;});
+    v.resize(std::distance(v.begin(),it));
+
+    size_t N = std::floor(v.size()*p);
+    std::partial_sort(v.begin(), v.begin()+N, v.end(), cmp);
+    return v[N-1];
 }
 
 std::ostream& operator<< (std::ostream& os, const XField& field)

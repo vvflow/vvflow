@@ -2,14 +2,19 @@ cmake_minimum_required (VERSION 3.0)
 project (vvflow)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Weffc++")
+enable_testing()
 
 add_subdirectory(libvvhd)
 add_subdirectory(utils/vvflow)
 add_subdirectory(utils/vvplot)
-add_subdirectory(utils/vvplot3)
 add_subdirectory(utils/vvxtract)
 add_subdirectory(utils/vvcompose)
 add_subdirectory(utils/scripts)
+add_subdirectory(pytest)
+
+install(DIRECTORY example
+    DESTINATION share/doc/vvflow
+)
 
 if(NOT NO_MANPAGES)
 set(MAN_MD   ${CMAKE_CURRENT_SOURCE_DIR}/README.md)
@@ -50,24 +55,9 @@ execute_process(
 SET(CPACK_PACKAGE_VERSION_MAJOR "${MAJOR_VERSION}")
 SET(CPACK_PACKAGE_VERSION_MINOR "${MINOR_VERSION}")
 SET(CPACK_PACKAGE_VERSION_PATCH "${PATCH_VERSION}")
-SET(CPACK_DEBIAN_PACKAGE_DEPENDS "liblua5.2-0, liblapack3, libmatheval1, libgomp1")
 SET(CPACK_DEBIAN_PACKAGE_MAINTAINER "Yaroslav Dynnikov") #required
 SET(CPACK_DEBIAN_PACKAGE_SECTION "science")
 SET(CPACK_PACKAGE_CONTACT "yaroslav.dynnikov@gmail.com")
-
-# find_path(HDF5_PATH libhdf5.so)
-find_package(HDF5 REQUIRED)
-execute_process(
-    COMMAND readlink -f ${HDF5_LIBRARY_DIRS}/libhdf5.so
-    OUTPUT_VARIABLE HDF5_LIBRARY
-    OUTPUT_STRIP_TRAILING_WHITESPACE)
-execute_process(
-    COMMAND dpkg -S ${HDF5_LIBRARY}
-    COMMAND cut -d: -f1
-    OUTPUT_VARIABLE HDF5_PACKAGE
-    OUTPUT_STRIP_TRAILING_WHITESPACE)
-SET(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, ${HDF5_PACKAGE}")
-
 SET(CPACK_PACKAGE_DESCRIPTION "CFD simulation software")
 SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY
     "Viscous Vortex Domains (VVD) simulation software
@@ -75,5 +65,11 @@ SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY
     for directly numerically solving 2D Navier-Stokes equations in Lagrange coordinates.
     This package provides tools for performing numerical experiment:
     composing a problem, solving it, processing results and doing visualization.")
+if(NOT CPACK_OUTPUT_FILE_PREFIX)
+    SET(CPACK_OUTPUT_FILE_PREFIX deb)
+endif()
+string(REPLACE ";" ", " CPACK_DEBIAN_PACKAGE_DEPENDS "${DEPENDENCIES}")
+message("-- Generating dpkg deps: " "${CPACK_DEBIAN_PACKAGE_DEPENDS}")
+message("-- Will put deb package to: " "${CPACK_OUTPUT_FILE_PREFIX}")
 
 INCLUDE(CPack)

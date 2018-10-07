@@ -1,17 +1,18 @@
 cmake_minimum_required (VERSION 3.0)
 project (libvvhd)
 
-set(LIBVVHD_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/headers)
-set(LIBVVHD_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/headers PARENT_SCOPE)
-add_subdirectory(test)
+include(${CMAKE_SOURCE_DIR}/libvvhd/CPackDeps.cmake)
 
 # HDF5
 find_package(HDF5 REQUIRED)
+add_dependency(${HDF5_C_LIBRARIES})
 include_directories(${HDF5_INCLUDE_DIRS})
 
 # LAPACK
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     find_package(LAPACK REQUIRED)
+    add_dependency(${LAPACK_LIBRARIES})
+    list(APPEND DEPENDENCIES "libgomp1")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
     find_library(MKL_LIBRARIES mkl_core)
@@ -23,7 +24,8 @@ endif()
 
 # MATHEVAL
 find_path(LIBMATHEVAL_INCLUDE_DIR matheval.h)
-find_library(LIBMATHEVAL matheval)
+find_library(MATHEVAL_LIBRARIES matheval)
+add_dependency(${MATHEVAL_LIBRARIES})
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 
@@ -43,34 +45,42 @@ execute_process(
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
     OUTPUT_VARIABLE LIBVVHD_GITDIFF
     OUTPUT_STRIP_TRAILING_WHITESPACE)
-message("PROJECT_SOURCE_DIR: " ${PROJECT_SOURCE_DIR})
-message("LIBVVHD_GITREV: "  ${LIBVVHD_GITREV})
-message("LIBVVHD_GITINFO: " ${LIBVVHD_GITINFO})
-message("LIBVVHD_GITDIFF: " ${LIBVVHD_GITDIFF})
+message("-- Extracted git-rev: "  ${LIBVVHD_GITREV})
+message("-- Extracted git-info: " ${LIBVVHD_GITINFO})
+message("-- Extracted git-diff: " ${LIBVVHD_GITDIFF})
 configure_file (
     "gitinfo.cpp.in"
     "${PROJECT_BINARY_DIR}/gitinfo.cpp"
   )
+
 include_directories(headers/)
-
-set (LIBVVHD_SOURCES ${LIBVVHD_SOURCES} ${PROJECT_BINARY_DIR}/gitinfo.cpp)
-set (LIBVVHD_SOURCES ${LIBVVHD_SOURCES} src/TEval.cpp)
-set (LIBVVHD_SOURCES ${LIBVVHD_SOURCES} src/TBody.cpp)
-set (LIBVVHD_SOURCES ${LIBVVHD_SOURCES} src/TSpace.cpp)
-set (LIBVVHD_SOURCES ${LIBVVHD_SOURCES} src/TSortedTree.cpp)
-set (LIBVVHD_SOURCES ${LIBVVHD_SOURCES} src/TMatrix.cpp)
-set (LIBVVHD_SOURCES ${LIBVVHD_SOURCES} src/vvhdf.cpp)
-set (LIBVVHD_SOURCES ${LIBVVHD_SOURCES} src/MStepdata.cpp)
-set (LIBVVHD_SOURCES ${LIBVVHD_SOURCES} src/MConvectiveFast.cpp)
-set (LIBVVHD_SOURCES ${LIBVVHD_SOURCES} src/MDiffusiveFast.cpp)
-set (LIBVVHD_SOURCES ${LIBVVHD_SOURCES} src/MEpsFast.cpp)
-set (LIBVVHD_SOURCES ${LIBVVHD_SOURCES} src/MFlowmove.cpp)
-
-set (LIBVVHD_SOURCES ${LIBVVHD_SOURCES} src/XField.cpp)
-set (LIBVVHD_SOURCES ${LIBVVHD_SOURCES} src/XIsoline.cpp)
-set (LIBVVHD_SOURCES ${LIBVVHD_SOURCES} src/XVorticity.cpp)
-set (LIBVVHD_SOURCES ${LIBVVHD_SOURCES} src/XStreamfunction.cpp)
-add_library(vvhd SHARED ${LIBVVHD_SOURCES})
-target_link_libraries(vvhd ${HDF5_C_LIBRARIES} ${LAPACK_LIBRARIES} ${LIBMATHEVAL})
+add_library(vvhd SHARED
+    ${PROJECT_BINARY_DIR}/gitinfo.cpp
+    src/TEval.cpp
+    src/TBody.cpp
+    src/TSpace.cpp
+    src/TSpace_save_hdf.cpp
+    src/TSpace_load_hdf.cpp
+    src/TSpace_load_v13.cpp
+    src/TSortedTree.cpp
+    src/TMatrix.cpp
+    src/vvhdf.cpp
+    src/vvhdf_h5t.cpp
+    src/MStepdata.cpp
+    src/MConvectiveFast.cpp
+    src/MDiffusiveFast.cpp
+    src/MEpsilonFast.cpp
+    src/MFlowmove.cpp
+    src/XField.cpp
+    src/XIsoline.cpp
+    src/XPressure.cpp
+    src/XVorticity.cpp
+    src/XStreamfunction.cpp
+)
+target_link_libraries(vvhd ${HDF5_C_LIBRARIES} ${LAPACK_LIBRARIES} ${MATHEVAL_LIBRARIES})
 
 install (TARGETS vvhd DESTINATION lib)
+set(DEPENDENCIES ${DEPENDENCIES} PARENT_SCOPE)
+set(LIBVVHD_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/headers ${HDF5_INCLUDE_DIRS})
+set(LIBVVHD_INCLUDE_DIRS ${LIBVVHD_INCLUDE_DIRS} PARENT_SCOPE)
+add_subdirectory(test)

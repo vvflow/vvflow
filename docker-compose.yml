@@ -1,0 +1,58 @@
+version: '3.4'
+services:
+    grip:
+        image: vvflow/env:build-${OS}
+        command: grip /vvflow 0.0.0.0:1207
+        ports:
+          - "1207:1207"
+        volumes:
+          - type: bind
+            source: .
+            target: /vvflow
+            read_only: true
+
+    http:
+        image: vvflow/env:build-${OS}
+        command: python3 -m http.server 1208
+        ports:
+          - "1208:1208"
+        volumes:
+          - type: volume
+            source: build
+            target: /root
+            read_only: true
+
+    builder:
+        image: vvflow/env:build-${OS}
+        command: /bin/sleep 2147483647
+        environment:
+            CTEST_OUTPUT_ON_FAILURE: 1
+        volumes:
+          - type: bind
+            source: .
+            target: /vvflow
+            read_only: true
+          - type: bind
+            source: /tmp
+            target: /tmp
+          - type: volume
+            source: build
+            target: /root
+
+    tester:
+        image: vvflow/env:test-${OS}
+        command: /bin/sleep 2147483647
+        environment:
+            CTEST_OUTPUT_ON_FAILURE: 1
+        volumes:
+          - type: bind
+            source: .
+            target: /vvflow
+            read_only: true
+          - type: volume
+            source: build
+            target: /root
+
+volumes:
+    build:
+        name: build.${OS}

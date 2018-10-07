@@ -7,7 +7,7 @@
 class Stepdata
 {
     public:
-        Stepdata(Space* s_, const char* fname, bool b_save_profile);
+        Stepdata(Space* S, const char* fname, bool b_save_profile);
         Stepdata(const Stepdata&) = delete;
         Stepdata& operator=(const Stepdata&) = delete;
         ~Stepdata();
@@ -15,27 +15,25 @@ class Stepdata
         void flush();
 
     private:
-        void attribute_write(const char *name, const char *str);
-        int h5d_init(int loc_id, const char *name, size_t rows, size_t cols);
-        void append(int dataspace_hid, const void* buf);
-        void append(int dataspace_hid, double value);
-        void append(int dataspace_hid, TVec3D value);
-        Space *S;
-        int blsize;
-        bool b_save_profile;
-        time_t last_flush_time;
-        int h5f;
-        int string_h5t;
-        int scalar_h5s;
+        int64_t h5d_init(int64_t loc_id, const char *name, size_t rows, size_t cols);
+        void append(int64_t h5d, const void* buf);
+        void append(int64_t h5d, double value);
+        void append(int64_t h5d, TVec3D value);
 
-        int time_h5d;
-        std::vector<int> force_hydro_h5d;
-        std::vector<int> force_holder_h5d;
-        std::vector<int> force_friction_h5d;
-        std::vector<int> nusselt_h5d;
-        std::vector<int> position_h5d;
-        std::vector<int> spring_h5d;
-        std::vector<int> speed_h5d;
-        std::vector<int> pressure_h5d;
-        std::vector<int> friction_h5d;
+        Space *S;
+        bool b_save_profile;
+        size_t blsize;
+        time_t last_flush_time;
+
+        int64_t h5f;
+        int64_t time_h5d;
+        std::vector<int64_t> force_hydro_h5d;
+        std::vector<int64_t> force_holder_h5d;
+        std::vector<int64_t> force_friction_h5d;
+        std::vector<int64_t> nusselt_h5d;
+        std::vector<int64_t> position_h5d;
+        std::vector<int64_t> spring_h5d;
+        std::vector<int64_t> speed_h5d;
+        std::vector<int64_t> pressure_h5d;
+        std::vector<int64_t> friction_h5d;
 };

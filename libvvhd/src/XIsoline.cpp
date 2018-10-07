@@ -1,7 +1,7 @@
 #include "XIsoline.hpp"
 
 #include "MFlowmove.hpp"
-#include "MEpsFast.hpp"
+#include "MEpsilonFast.hpp"
 #include "elementary.h"
 
 #include <cmath>
@@ -15,7 +15,7 @@ using std::deque;
 using std::list;
 using std::numeric_limits;
 
-static const double inf = numeric_limits<double>::infinity();
+static const float f_nan = numeric_limits<float>::quiet_NaN();
 
 XIsoline::XIsoline(
     const XField& field,
@@ -142,8 +142,7 @@ std::ostream& operator<< (std::ostream& os, const XIsoline& xiso)
                 2*sizeof(float)
             );
         }
-        const static float NaN = numeric_limits<double>::quiet_NaN();
-        float nans[2] = {NaN, NaN};
+        float nans[2] = {f_nan, f_nan};
         os.write(reinterpret_cast<const char*>(&nans), 2*sizeof(float));
     }
 

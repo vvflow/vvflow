@@ -1,14 +1,13 @@
 cmake_minimum_required (VERSION 3.0)
 project (vvcompose)
 
-include_directories(${LIBVVHD_INCLUDE_DIR})
+include(${CMAKE_SOURCE_DIR}/libvvhd/CPackDeps.cmake)
+include_directories(${LIBVVHD_INCLUDE_DIRS})
 
+find_path(LUA_INCLUDE_DIR lua.hpp PATH_SUFFIXES lua5.2)
 find_library(LUA_LIBRARY lua5.2)
-find_path(LUA_INCLUDE_DIR lua.hpp
-    PATH_SUFFIXES lua5.2
-)
-message("LUA_LIBRARY: " ${LUA_LIBRARY})
-message("LUA_INCLUDE_DIR: " ${LUA_INCLUDE_DIR})
+message("-- Found liblua5.2: " ${LUA_LIBRARY})
+add_dependency(${LUA_LIBRARY})
 include_directories(${LUA_INCLUDE_DIR})
 
 add_executable(vvcompose
@@ -33,13 +32,6 @@ add_executable(vvcompose
 )
 target_link_libraries(vvcompose vvhd ${LUA_LIBRARY} dl)
 
-if(NOT NO_SELFTEST)
-add_custom_command(
-    TARGET vvcompose POST_BUILD
-    COMMAND vvcompose ${CMAKE_CURRENT_SOURCE_DIR}/test.lua
-)
-endif()
-
 if(NOT NO_MANPAGES)
 set(MAN_MD ${CMAKE_CURRENT_SOURCE_DIR}/vvcompose.1.md)
 set(MAN_ROFF ${CMAKE_CURRENT_BINARY_DIR}/vvcompose.1)
@@ -58,3 +50,14 @@ endif()
 install (TARGETS vvcompose DESTINATION bin)
 install (FILES ${MAN_ROFF} DESTINATION share/man/man1)
 install (FILES ${MAN_HTML} DESTINATION share/doc/vvflow)
+add_custom_command(
+    OUTPUT ${CMAKE_BINARY_DIR}/tests/vvcompose_test.lua
+    COMMAND ${CMAKE_COMMAND} -E copy
+            ${CMAKE_CURRENT_SOURCE_DIR}/vvcompose_test.lua
+            ${CMAKE_BINARY_DIR}/tests/vvcompose_test.lua
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/vvcompose_test.lua)
+add_custom_target(vvcompose_test.lua ALL
+    DEPENDS ${CMAKE_BINARY_DIR}/tests/vvcompose_test.lua)
+
+add_test(vvcompose_test vvcompose ${CMAKE_BINARY_DIR}/tests/vvcompose_test.lua)
+set(DEPENDENCIES ${DEPENDENCIES} PARENT_SCOPE)

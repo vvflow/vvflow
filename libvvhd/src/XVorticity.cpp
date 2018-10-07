@@ -1,7 +1,7 @@
 #include "XVorticity.hpp"
 
 #include "MFlowmove.hpp"
-#include "MEpsFast.hpp"
+#include "MEpsilonFast.hpp"
 #include "elementary.h"
 
 #include <cmath>
@@ -15,20 +15,19 @@ XVorticity::XVorticity(
     const Space &S,
     double xmin, double ymin,
     double dxdy,
-    int xres, int yres,
-    double eps_mult
+    int xres, int yres
 ):
     XField(xmin, ymin, dxdy, xres, yres),
+    eps_mult(),
     S(S),
-    eps_mult(eps_mult),
     dl(S.average_segment_length())
-{
-    if (eps_mult <= 0)
-        throw std::invalid_argument("XVorticity(): eps_mult must be positive");
-}
+{}
 
 void XVorticity::evaluate()
 {
+    if (eps_mult <= 0)
+        throw std::invalid_argument("XVorticity(): eps_mult must be positive");
+
     if (evaluated)
         return;
 
@@ -50,7 +49,7 @@ void XVorticity::evaluate()
         {
             for (TObj *lobj = (**llbnode).vRange.first; lobj < (**llbnode).vRange.last; lobj++)
             {
-                lobj->v.x = 1./(sqr(eps_mult)*std::max(epsfast::eps2h(**llbnode, lobj->r), sqr(0.6*dl)));
+                lobj->v.x = 1./(sqr(eps_mult)*std::max(MEpsilonFast::eps2h(**llbnode, lobj->r), sqr(0.6*dl)));
                 lobj->v.y = lobj->v.x * lobj->g;
             }
         }
@@ -88,7 +87,7 @@ double XVorticity::vorticity(const TSortedNode &node, TVec p) const
 
     res *= C_1_PI;
 
-    double erfarg = epsfast::h2(node, p)/sqr(dl*eps_mult);
+    double erfarg = MEpsilonFast::h2(node, p)/sqr(dl*eps_mult);
     res += (erfarg<3) ? 0.5*(1-erf(erfarg)) : 0;
 
     return res;

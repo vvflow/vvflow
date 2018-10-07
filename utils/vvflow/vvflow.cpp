@@ -1,4 +1,4 @@
-#include "MEpsFast.hpp"
+#include "MEpsilonFast.hpp"
 #include "MConvectiveFast.hpp"
 #include "MDiffusiveFast.hpp"
 #include "MStepdata.hpp"
@@ -72,11 +72,11 @@ int main(int argc, char** argv)
     double min_node_size = dl>0 ? dl*5 : 0;
     double max_node_size = dl>0 ? dl*100 : std::numeric_limits<double>::max();
     TSortedTree tr = {&S, 8, min_node_size, max_node_size};
-    MConvectiveFast conv(&S, &tr);
-    epsfast eps(&S, &tr);
-    MDiffusiveFast diff = {&S, &tr};
+    MConvectiveFast convective = {&S, &tr};
+    MEpsilonFast epsilon = {&S, &tr};
+    MDiffusiveFast diffusive = {&S, &tr};
     MFlowmove flowmove = {&S};
-    sensors sens(&S, &conv, (argc>2)?argv[2]:NULL, f_sensors_output);
+    sensors sens(&S, &convective, (argc>2)?argv[2]:NULL, f_sensors_output);
     #ifdef OVERRIDEMOI
         S.BodyList->at(0)->overrideMoi_c(OVERRIDEMOI);
     #endif
@@ -90,16 +90,16 @@ int main(int argc, char** argv)
 
             // решаем слау
             if (collision != nullptr) {
-                conv.calc_circulation(&collision);
+                convective.calc_circulation(&collision);
             }
-            conv.calc_circulation(&collision);
+            convective.calc_circulation(&collision);
 
             dbg(tr.destroy());
         }
 
         dbg(flowmove.heat_shed());
 
-        if (S.time.divisibleBy(S.dt_save)  && (double(S.time) > 0))
+        if (S.time.divisibleBy(S.dt_save)  && (double(S.time) >= 0))
         {
             char tmp_filename[256]; snprintf(tmp_filename, 256, "%s/%%06d.h5", f_results);
             S.save(tmp_filename);
@@ -114,13 +114,13 @@ int main(int argc, char** argv)
         S.zero_forces();
 
         dbg(tr.build());
-        dbg(eps.CalcEpsilonFast(/*merge=*/is_viscous));
-        dbg(conv.process_all_lists());
+        dbg(epsilon.CalcEpsilonFast(/*merge=*/is_viscous));
+        dbg(convective.process_all_lists());
         dbg(sens.output());
         if (is_viscous)
         {
-            dbg(diff.process_vort_list());
-            dbg(diff.process_heat_list());
+            dbg(diffusive.process_vort_list());
+            dbg(diffusive.process_heat_list());
         }
         dbg(tr.destroy());
 
@@ -132,7 +132,7 @@ int main(int argc, char** argv)
         S.time = TTime::add(S.time, S.dt);
 
         if (b_progress)
-            fprintf(stderr, "\r%-10g \t%-10zd \t%-10zd", double(S.time), S.VortexList.size(), S.HeatList.size());
+            fprintf(stderr, "\rt=%-10g \tN=%-10zd", double(S.time), S.VortexList.size());
     }
 
     if (b_progress)

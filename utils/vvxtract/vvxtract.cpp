@@ -1,4 +1,5 @@
 #include "TSpace.hpp"
+#include "elementary.h"
 #include "vvhdf.h"
 
 #include <cstdio>
@@ -117,7 +118,7 @@ int main(int argc, char **argv)
 
     if (b_info && H5Aexists(fid, "dt")) {
         Space S;
-        S.load(fid);
+        S.load_hdf(fid);
 
         printf("\n");
         printf("-- space\n");
