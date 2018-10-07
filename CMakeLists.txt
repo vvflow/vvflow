@@ -12,6 +12,10 @@ add_subdirectory(utils/vvcompose)
 add_subdirectory(utils/scripts)
 add_subdirectory(pytest)
 
+install(DIRECTORY example
+    DESTINATION share/doc/vvflow
+)
+
 if(NOT NO_MANPAGES)
 set(MAN_MD   ${CMAKE_CURRENT_SOURCE_DIR}/README.md)
 set(MAN_HTML ${CMAKE_CURRENT_BINARY_DIR}/README.html)
