@@ -132,7 +132,7 @@ int main(int argc, char** argv)
         S.time = TTime::add(S.time, S.dt);
 
         if (b_progress)
-            fprintf(stderr, "\r%-10g \t%-10zd \t%-10zd", double(S.time), S.VortexList.size(), S.HeatList.size());
+            fprintf(stderr, "\rt=%-10g \tN=%-10zd", double(S.time), S.VortexList.size());
     }
 
     if (b_progress)
