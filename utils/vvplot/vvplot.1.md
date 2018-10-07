@@ -34,7 +34,7 @@ vvplot(1) -- plot Vvflow simulation results
 
   * -P, --P `PMIN`,`PMAX` :
     plot pressure field with color range \[PMIN, PMAX\]
-    (default: -1.5,1,0.125)
+    (default: -1.5,1)
 
   * -G, --G `GMAX` :
     plot vorticity field with color range \[-GMAX, GMAX\]
@@ -91,4 +91,4 @@ vvplot(1) -- plot Vvflow simulation results
 
 
 ## SEE ALSO
-  vvcompose(1), vvxtract(1)
+  vvcompose(1), vvflow(1), vvxtract(1)
