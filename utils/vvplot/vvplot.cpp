@@ -107,9 +107,18 @@ int main_hdf(int argc, char **argv)
     << strfmt( "set xrange [%lg:%lg]", opt::rect.xmin, opt::rect.xmax) << std::endl
     << strfmt( "set yrange [%lg:%lg]", opt::rect.ymin, opt::rect.ymax) << std::endl;
     if (opt::colorbox) {
-        gp << "set colorbox horizontal user origin .1,.02 size .8,.04" << std::endl;
+        gp << "set format cb \"\"" << std::endl;
+        gp << "set colorbox horizontal user";
+        gp << " origin screen 0.15, character 0.4";
+        gp << " size   screen 0.70, character 1.0" << std::endl;
+        gp << "set label 61 \"\"";
+        gp << " at screen 0.14, character 0.9 right front" << std::endl;
+        gp << "set label 62 \"\"";
+        gp << " at screen 0.86, character 0.9 left front" << std::endl;
     } else {
         gp << "unset colorbox" << std::endl;
+        gp << "set label 61 \"\" at screen 0, -1" << std::endl;
+        gp << "set label 62 \"\" at screen 1, -1" << std::endl;
     }
 
     if (opt::gray) {
@@ -153,10 +162,8 @@ int main_hdf(int argc, char **argv)
             opt::Gmax = std::max(-pmin, pmax);
         }
         gp << strfmt( "set cbrange [%lg:%lg]\n", -opt::Gmax, opt::Gmax);
-        if (opt::colorbox) {
-            gp << strfmt("set label \"%.1lf\" at graph 0.096, 0.039 right front\n", -opt::Gmax);
-            gp << strfmt("set label \"%.1lf\" at graph 0.904, 0.039 left front\n", opt::Gmax);
-        }
+        gp << strfmt( "set label 61 \"%.1lf\"\n", -opt::Gmax);
+        gp << strfmt( "set label 62 \"%.1lf\"\n", opt::Gmax);
 
         plot_cmd << DELIMITER;
         plot_cmd << "'map_vorticity'";
@@ -197,10 +204,8 @@ int main_hdf(int argc, char **argv)
         }
 
         gp << strfmt( "set cbrange [%lg:%lg]\n", opt::Pmin, opt::Pmax);
-        if (opt::colorbox) {
-            gp << strfmt("set label \"%.1lf\" at graph 0.096, 0.039 right front\n", opt::Pmin);
-            gp << strfmt("set label \"%.1lf\" at graph 0.904, 0.039 left front\n", opt::Pmax);
-        }
+        gp << strfmt( "set label 61 \"%.1lf\"\n", opt::Pmin);
+        gp << strfmt( "set label 62 \"%.1lf\"\n", opt::Pmax);
 
         plot_cmd << DELIMITER;
         plot_cmd << "'map_pressure'";
