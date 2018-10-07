@@ -234,9 +234,9 @@ void opt::parse(int argc, char **argv) {
             opt::ifmt = ffmt::hdf;
         }
 
-        struct stat statbuf;
-        stat(opt::target, &statbuf);
-        if (S_ISDIR(statbuf.st_mode)) {
+        struct stat statbuf = {};
+        int err = stat(opt::target, &statbuf);
+        if (!err && S_ISDIR(statbuf.st_mode)) {
             std::stringstream fout_name;
 
             std::string target = opt::target;
