@@ -118,6 +118,7 @@ void opt::parse(int argc, char **argv) {
         case 'G': // -G, --G GAMMA
             opt::P = false;
             opt::G = true;
+            opt::colorbox = true;
             if (!optarg) break;
             fail = sscanf(optarg, "%lf %n", &opt::Gmax, &optn) < 1;
             fail = fail || !std::isfinite(opt::Gmax);
@@ -129,6 +130,7 @@ void opt::parse(int argc, char **argv) {
         case 'P': // -P, --P PMIN,PMAX
             opt::G = false;
             opt::P = true;
+            opt::colorbox = true;
             if (!optarg) break;
             fail = sscanf(optarg, "%lf , %lf %n", &opt::Pmin, &opt::Pmax, &optn) < 2;
             fail = fail || !std::isfinite(opt::Pmin);
