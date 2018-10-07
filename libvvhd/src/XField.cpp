@@ -1,5 +1,6 @@
 #include "XField.hpp"
 
+#include <cmath>
 #include <stdexcept>
 #include <algorithm>
 
@@ -66,7 +67,7 @@ float XField::percentile(float p) const
     auto it = std::copy_if(&map[0], &map[xres*yres], v.begin(), [](float x){return x!=0;});
     v.resize(std::distance(v.begin(),it));
 
-    size_t N = floor(v.size()*p);
+    size_t N = std::floor(v.size()*p);
     std::partial_sort(v.begin(), v.begin()+N, v.end(), cmp);
     return v[N-1];
 }
