@@ -1,24 +1,28 @@
-#include "iostream"
-#include "fstream"
-#include "stdio.h"
+#include "MEpsilonFast.hpp"
+#include "MConvectiveFast.hpp"
+#include "MDiffusiveFast.hpp"
+#include "MStepdata.hpp"
+#include "MFlowmove.hpp"
+#include "elementary.h"
+
+#include <iostream>
+#include <fstream>
+#include <cstdio>
 
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <string.h>
-#include <time.h>
-
-#include "core.h"
-#include "epsfast.h"
-#include "convectivefast.h"
-#include "diffusivefast.h"
-#include "flowmove.h"
+#include <cstring>
+#include <ctime>
 
 #include "sensors.cpp"
 #include "omp.h"
 #define dbg(a) a
 //#define dbg(a) cerr << "Doing " << #a << "... " << flush; a; cerr << "done\n";
 #define seek(f) while (fgetc(f)!='\n'){}
-using namespace std;
+
+using std::cerr;
+using std::endl;
+using std::shared_ptr;
 
 //#define OVERRIDEMOI 0.35
 
@@ -32,9 +36,9 @@ int main(int argc, char** argv)
         else if (!strcmp(argv[1], "--profile")) b_save_profile = true;
         else if (!strcmp(argv[1], "--version"))
         {
-            cerr << "Git rev: " << Space::getGitRev() << std::endl;
-            cerr << "Git info: " << Space::getGitInfo() << std::endl;
-            cerr << "Git diff: " << Space::getGitDiff() << std::endl;
+            cerr << "Git rev: "  << libvvhd_gitrev << std::endl;
+            cerr << "Git info: " << libvvhd_gitinfo << std::endl;
+            cerr << "Git diff: " << libvvhd_gitdiff << std::endl;
             return 0;
         }
         else break;
@@ -48,91 +52,87 @@ int main(int argc, char** argv)
         return -1;
     }
 
-    Space *S = new Space();
-    S->Load(argv[1]);
+    Space S;
+    S.load(argv[1]);
 
     // error checking
     #define RAISE(STR) { cerr << "vvflow ERROR: " << STR << endl; return -1; }
-    if (S->Re <= 0) RAISE("invalid value re<=0");
+    if (S.re <= 0) RAISE("invalid value re<=0");
     #undef RAISE
-    bool is_viscous = (S->Re != std::numeric_limits<double>::infinity());
+    bool is_viscous = (S.re != std::numeric_limits<double>::infinity());
 
-    char f_stepdata[256]; snprintf(f_stepdata, 256, "stepdata_%s.h5", S->caption.c_str());
-    char f_results[256]; snprintf(f_results, 256, "results_%s", S->caption.c_str());
-    char f_sensors_output[256]; snprintf(f_sensors_output, 256, "velocity_%s", S->caption.c_str());
+    char f_stepdata[256]; snprintf(f_stepdata, 256, "stepdata_%s.h5", S.caption.c_str());
+    char f_results[256]; snprintf(f_results, 256, "results_%s", S.caption.c_str());
+    char f_sensors_output[256]; snprintf(f_sensors_output, 256, "velocity_%s", S.caption.c_str());
     mkdir(f_results, 0777);
 
-    Stepdata *stepdata = new Stepdata(S, f_stepdata, b_save_profile);
+    Stepdata stepdata = {&S, f_stepdata, b_save_profile};
 
-    double dl = S->AverageSegmentLength();
+    double dl = S.average_segment_length();
     double min_node_size = dl>0 ? dl*5 : 0;
     double max_node_size = dl>0 ? dl*100 : std::numeric_limits<double>::max();
-    TSortedTree tr(S, 8, min_node_size, max_node_size);
-    S->Tree = &tr;
-    convectivefast conv(S);
-    epsfast eps(S);
-    diffusivefast diff(S);
-    flowmove fm(S);
-    sensors sens(S, &conv, (argc>2)?argv[2]:NULL, f_sensors_output);
+    TSortedTree tr = {&S, 8, min_node_size, max_node_size};
+    MConvectiveFast convective = {&S, &tr};
+    MEpsilonFast epsilon = {&S, &tr};
+    MDiffusiveFast diffusive = {&S, &tr};
+    MFlowmove flowmove = {&S};
+    sensors sens(&S, &convective, (argc>2)?argv[2]:NULL, f_sensors_output);
     #ifdef OVERRIDEMOI
-        S->BodyList->at(0)->overrideMoi_c(OVERRIDEMOI);
+        S.BodyList->at(0)->overrideMoi_c(OVERRIDEMOI);
     #endif
 
-    while (S->Time < S->Finish + S->dt/2)
+    const void* collision = nullptr;
+    while (S.time < S.finish + S.dt/2)
     {
-        if (S->BodyList.size())
+        if (S.BodyList.size())
         {
             dbg(tr.build());
 
             // решаем слау
-            conv.CalcCirculationFast();
-            shared_ptr<TBody> cbody = S->collision_detected();
-            if (cbody.get() != nullptr)
-            {
-                cbody->collision_detected = false;
-                conv.CalcCirculationFast();
+            if (collision != nullptr) {
+                convective.calc_circulation(&collision);
             }
+            convective.calc_circulation(&collision);
 
             dbg(tr.destroy());
         }
 
-        dbg(fm.HeatShed());
+        dbg(flowmove.heat_shed());
 
-        if (S->Time.divisibleBy(S->dt_save)  && (double(S->Time) > 0))
+        if (S.time.divisibleBy(S.dt_save)  && (double(S.time) >= 0))
         {
             char tmp_filename[256]; snprintf(tmp_filename, 256, "%s/%%06d.h5", f_results);
-            S->Save(tmp_filename);
-            stepdata->flush();
+            S.save(tmp_filename);
+            stepdata.flush();
         }
 
-        dbg(fm.VortexShed());
-        dbg(fm.StreakShed());
+        dbg(flowmove.vortex_shed());
+        dbg(flowmove.streak_shed());
 
-        dbg(S->CalcForces());
-        stepdata->write();
-        S->ZeroForces();
+        dbg(S.calc_forces());
+        stepdata.write();
+        S.zero_forces();
 
         dbg(tr.build());
-        dbg(eps.CalcEpsilonFast(/*merge=*/is_viscous));
-        dbg(conv.CalcBoundaryConvective());
-        dbg(conv.CalcConvectiveFast());
+        dbg(epsilon.CalcEpsilonFast(/*merge=*/is_viscous));
+        dbg(convective.process_all_lists());
         dbg(sens.output());
         if (is_viscous)
         {
-            dbg(diff.CalcVortexDiffusiveFast());
-            dbg(diff.CalcHeatDiffusiveFast());
+            dbg(diffusive.process_vort_list());
+            dbg(diffusive.process_heat_list());
         }
         dbg(tr.destroy());
 
-        dbg(fm.MoveAndClean(true));
+        dbg(flowmove.move_and_clean(true, &collision));
             #ifdef OVERRIDEMOI
-                    S->BodyList->at(0)->overrideMoi_c(OVERRIDEMOI);
+                    S.BodyList->at(0)->overrideMoi_c(OVERRIDEMOI);
             #endif
-        dbg(fm.CropHeat());
-        S->Time = TTime::add(S->Time, S->dt);
+        dbg(flowmove.heat_crop());
+        S.time = TTime::add(S.time, S.dt);
 
         if (b_progress)
-            fprintf(stderr, "\r%-10g \t%-10zd \t%-10zd", double(S->Time), S->VortexList.size(), S->HeatList.size());
+            fprintf(stderr, "\rt=%-10g \tN=%-10zd", double(S.time), S.VortexList.size());
     }
 
     if (b_progress)

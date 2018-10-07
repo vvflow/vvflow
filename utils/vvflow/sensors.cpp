@@ -1,29 +1,34 @@
-#include "stdio.h"
+#include "MConvectiveFast.hpp"
 
-#include "core.h"
-#include "convectivefast.h"
+// #include <cstdio>
+#include <vector>
+
+using std::vector;
 
 class sensors
 {
 	public:
-		sensors(Space* sS, convectivefast *sconv, const char* sensors_file, const char* output);
+		sensors() = delete;
+		sensors(Space* S, MConvectiveFast *conv, const char* sensors_file, const char* output);
+		sensors(const sensors&) = delete;
+		sensors& operator=(const sensors&) = delete;
 		~sensors();
 		void loadFile(const char* file);
 		void output();
 
 	private:
 		Space *S;
-		convectivefast *conv;
+		MConvectiveFast *conv;
 		FILE *fout;
 		vector <TVec> slist;
 };
 
-sensors::sensors(Space* sS, convectivefast *sconv, const char* sensors_file, const char* output)
+sensors::sensors(Space* S, MConvectiveFast *conv, const char* sensors_file, const char* output):
+	S(S),
+	conv(conv),
+	fout(nullptr),
+	slist()
 {
-	S = sS;
-	conv = sconv;
-	fout = NULL;
-
 	loadFile(sensors_file);
 	if (slist.size()) fout = fopen(output, "a");
 }
@@ -54,10 +59,10 @@ void sensors::output()
 {
 	if (!fout) return;
 
-	fprintf(fout, "%lg", double(S->Time));
+	fprintf(fout, "%lg", double(S->time));
 	for (TVec vec: slist)
 	{
-		TVec tmp = conv->SpeedSumFast(vec);
+		TVec tmp = conv->velocity(vec);
 		fprintf(fout, " \t%lg \t%lg", tmp.x, tmp.y);
 	}
 	fprintf(fout, "\n");

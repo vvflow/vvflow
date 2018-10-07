@@ -1,0 +1,3 @@
+const char* libvvhd_gitrev  = "@LIBVVHD_GITREV@";
+const char* libvvhd_gitinfo = "@LIBVVHD_GITINFO@";
+const char* libvvhd_gitdiff = "@LIBVVHD_GITDIFF@";
