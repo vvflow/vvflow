@@ -78,11 +78,11 @@ TEST_F(TBodyTest, TAttTest)
     TAtt a3 = TAtt(0., 0.); a3 = a1;
     TAtt a4 = std::move(a1);
     TAtt a5 = TAtt(0., 0.); a5 = std::move(a1);
-    EXPECT_EQ(7, a1.eq_no);
-    EXPECT_EQ(7, a2.eq_no);
-    EXPECT_EQ(7, a3.eq_no);
-    EXPECT_EQ(7, a4.eq_no);
-    EXPECT_EQ(7, a5.eq_no);
+    EXPECT_EQ(7U, a2.eq_no);
+    EXPECT_EQ(7U, a3.eq_no);
+    EXPECT_EQ(7U, a1.eq_no);
+    EXPECT_EQ(7U, a4.eq_no);
+    EXPECT_EQ(7U, a5.eq_no);
 }
 
 ::testing::AssertionResult checkDummy(std::shared_ptr<TBody> dummy)
@@ -90,7 +90,7 @@ TEST_F(TBodyTest, TAttTest)
     if (!dummy) {
         return ::testing::AssertionFailure() << " invalid dummy";
     }
-    EXPECT_EQ(4, dummy->size());
+    EXPECT_EQ(4U, dummy->size());
     EXPECT_EQ(false, dummy->isInsideValid());
     EXPECT_EQ(8.0, dummy->get_slen());
     EXPECT_EQ(4.0, dummy->get_area());
@@ -115,7 +115,7 @@ TEST_F(TBodyTest, TAttTest)
     if (!jimmy) {
         return ::testing::AssertionFailure() << " invalid jimmy";
     }
-    EXPECT_EQ(4, jimmy->size());
+    EXPECT_EQ(4U, jimmy->size());
     EXPECT_EQ(true, jimmy->isInsideValid());
     EXPECT_EQ(16.0, jimmy->get_slen());
     EXPECT_EQ(-16.0, jimmy->get_area());
