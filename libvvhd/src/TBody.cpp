@@ -22,12 +22,12 @@ TBody::TBody():
     collision_min(NaN, NaN, NaN),
     collision_max(NaN, NaN, NaN),
     bounce(),
-    
+
     density(1.0),
     special_segment_no(0),
     boundary_condition(bc_t::steady),
     heat_condition(hc_t::neglect),
-    
+
     friction(), friction_prev(),
     force_hydro(),
     force_holder(),
@@ -38,7 +38,7 @@ TBody::TBody():
     speed_x(),
     speed_y(),
     speed_o(),
-    
+
     eq_forces_no(),
     _slip(),
     _slen(),
@@ -192,7 +192,7 @@ void TBody::move(TVec3D deltaHolder, TVec3D deltaBody)
     {
         TVec dr = att.corner - axis;
         att.corner = axis + deltaBody.r + dr*_cos + rotl(dr)*_sin;
-    } 
+    }
     holder.r += deltaHolder.r;
     holder.o += deltaHolder.o;
     dpos.r += deltaBody.r - deltaHolder.r;
@@ -292,8 +292,6 @@ void TBody::doFillProperties()
     _slip = false;
     _slen = 0;
     _area = 0;
-    TVec _3S_cofm = TVec(0., 0.);
-    double _12moi_0 = 0.; // 12 * moment of inertia around point (0, 0)
 
     if (!alist.size()) {
         return;
@@ -305,14 +303,33 @@ void TBody::doFillProperties()
         _slip = _slip || latt->slip;
         _slen+= latt->dl.abs();
         _area+= latt->r.y*latt->dl.x;
-        _3S_cofm-= latt->r * (rotl(latt->corner) * (latt+1)->corner);
-        _12moi_0 -= (latt->corner.abs2() + latt->corner*(latt+1)->corner + (latt+1)->corner.abs2())
-            *  (rotl(latt->corner) * (latt+1)->corner);
 
     }
+
+    if (_area == 0) {
+        TVec _L_cofm = TVec(0., 0.);
+
+        for (auto latt=alist.begin(); latt<alist.end()-1; latt++) {
+            _L_cofm += latt->r * latt->dl.abs();
+        }
+
+        _cofm = _L_cofm/_slen;
+        _moi_cofm = 0.;
+    } else {
+        TVec _3S_cofm = TVec(0., 0.);
+        double _12moi_0 = 0.; // 12 * moment of inertia around point (0, 0)
+
+        for (auto latt=alist.begin(); latt<alist.end()-1; latt++) {
+            _3S_cofm-= latt->r * (rotl(latt->corner) * (latt+1)->corner);
+            _12moi_0 -= (latt->corner.abs2() + latt->corner*(latt+1)->corner + (latt+1)->corner.abs2())
+                *  (rotl(latt->corner) * (latt+1)->corner);
+        }
+
+        _cofm = _3S_cofm/(3*_area);
+        _moi_cofm = _12moi_0/12. - _area*_cofm.abs2();
+    }
+
     alist.pop_back();
-    _cofm = _3S_cofm/(3*_area);
-    _moi_cofm = _12moi_0/12. - _area*_cofm.abs2();
 
     _min_disc_r2 = 0;
     _min_rect_bl = TVec(

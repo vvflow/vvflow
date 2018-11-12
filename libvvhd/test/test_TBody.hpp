@@ -21,10 +21,12 @@ class TBodyTest : public ::testing::Test {
 public:
     TBodyTest():
         dummy(),
-        jimmy() {}
+        jimmy(),
+        thin() {}
 protected:
     std::shared_ptr<TBody> dummy;
     std::shared_ptr<TBody> jimmy;
+    std::shared_ptr<TBody> thin;
 
     void SetUp()
     {
@@ -52,13 +54,33 @@ protected:
         jimmy->dpos.r =   TVec( 3., 0.);
         jimmy->root_body = dummy;
         jimmy->eq_forces_no = 69;
+
+        thin = std::make_shared<TBody>();
+        thin->label = "thin";
+        thin->alist.emplace_back(0.0, 1.0);
+        thin->alist.emplace_back(0.5, 1.0);
+        thin->alist.emplace_back(1.0, 1.0);
+        thin->doUpdateSegments();
+        thin->doFillProperties();
     }
     void TearDown()
     {
         dummy.reset();
         jimmy.reset();
+        thin.reset();
     }
 };
+
+TEST_F(TBodyTest, ThinBody)
+{
+    EXPECT_EQ(0.0, thin->get_area());
+    EXPECT_EQ(0.0, thin->get_moi_cofm());
+    EXPECT_EQ(0.0, thin->get_moi_axis());
+    EXPECT_EQ(2.0, thin->get_slen());
+    TVec cofm = thin->get_cofm();
+    EXPECT_EQ(0.5, cofm.x);
+    EXPECT_EQ(1.0, cofm.y);
+}
 
 TEST_F(TBodyTest, TAttTest)
 {
@@ -78,9 +100,9 @@ TEST_F(TBodyTest, TAttTest)
     TAtt a3 = TAtt(0., 0.); a3 = a1;
     TAtt a4 = std::move(a1);
     TAtt a5 = TAtt(0., 0.); a5 = std::move(a1);
+    EXPECT_EQ(7U, a1.eq_no);
     EXPECT_EQ(7U, a2.eq_no);
     EXPECT_EQ(7U, a3.eq_no);
-    EXPECT_EQ(7U, a1.eq_no);
     EXPECT_EQ(7U, a4.eq_no);
     EXPECT_EQ(7U, a5.eq_no);
 }
