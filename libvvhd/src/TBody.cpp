@@ -38,6 +38,7 @@ TBody::TBody():
     speed_x(),
     speed_y(),
     speed_o(),
+    force_o(),
 
     eq_forces_no(),
     _slip(),
@@ -86,6 +87,7 @@ TBody& TBody::operator= (const TBody& copy)
     speed_x = copy.speed_x;
     speed_y = copy.speed_y;
     speed_o = copy.speed_o;
+    force_o = copy.force_o;
     eq_forces_no = copy.eq_forces_no;
     doUpdateSegments();
     doFillProperties();

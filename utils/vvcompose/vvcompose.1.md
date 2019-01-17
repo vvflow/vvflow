@@ -261,6 +261,9 @@ _Example_:
   * body.*holder_vx*, body.*holder_vy*, body.*holder_vo* (TEval):
     expressions of the holder movement speed
 
+  * body.*holder_mo* (TEval):
+    expression of the external holder torque
+
   * body.*speed* (TVec3D) :
     the speed obtained by solving the System of Linear Equations.
     The rotation *axis* `=` *holder_pos* `+` *delta_pos*, see body`:get_axis`().
