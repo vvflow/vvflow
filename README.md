@@ -9,9 +9,21 @@ Platforms supported:
 Run in shell:
 
 ```
-# sudo apt install curl apt-transport-https
-curl -L https://packagecloud.io/vvflow/nightly/gpgkey | sudo apt-key add -
-echo "deb https://packagecloud.io/vvflow/nightly/debian/ jessie main" | sudo tee /etc/apt/sources.list.d/vvflow.list
+sudo apt install curl apt-transport-https
+curl -L https://packagecloud.io/vvflow/stable/gpgkey | sudo apt-key add -
+```
+
+Add an apt repository according to your OS:
+
+```
+echo "deb https://packagecloud.io/vvflow/stable/debian/ jessie main" | sudo tee /etc/apt/sources.list.d/vvflow.list
+echo "deb https://packagecloud.io/vvflow/stable/ubuntu/ xenial main" | sudo tee /etc/apt/sources.list.d/vvflow.list
+echo "deb https://packagecloud.io/vvflow/stable/ubuntu/ bionic main" | sudo tee /etc/apt/sources.list.d/vvflow.list
+```
+
+Finally, install the Vvflow CFD Suite:
+
+```
 sudo apt update
 sudo apt install vvflow
 ```
@@ -20,14 +32,26 @@ sudo apt install vvflow
 
 * [/usr/share/doc/vvflow/](file:///usr/share/doc/vvflow/)
 * `man vvcompose`
+* `man vvflow`
 * `man vvxtract`
 * `man vvplot`
 
 ## Flow simulation
 
+For a start, one can copy the example simulation from doc:
+
+```
+cp -R /usr/share/doc/vvflow/example/ ./
+cd example
+make
+```
+
+This will compose the CFD problem as described in `cylinder.lua` file,
+run the simulation (for a minute or two), and plot the results.
+
 ### *vvcompose*
 
-Defining the CDF problem is handled by *vvcompose* tool.
+Defining the CFD problem is handled by *vvcompose* tool.
 It is a [lua](https://learnxinyminutes.com/docs/lua/) interpreter,
 so it supports everything that lua supports, and even more.
 

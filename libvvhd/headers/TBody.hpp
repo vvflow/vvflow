@@ -104,6 +104,7 @@ class TBody
         TEval speed_x;
         TEval speed_y;
         TEval speed_o;
+        TEval force_o;
         TVec3D speed(double t) const;
 
         //see \vec c_s \vert_Rotation

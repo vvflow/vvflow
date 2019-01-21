@@ -22,7 +22,7 @@ static void dataset_read_list(hid_t fid, std::string name, std::vector<TObj>& li
         h5_throw("H5Dget_space", name);
 
     hsize_t dims1[2];
-    H5Sget_simple_extent_dims(h5s_file, dims1, dims1);    
+    H5Sget_simple_extent_dims(h5s_file, dims1, dims1);
 
     hsize_t dims2[2] = {dims1[0]*2, dims1[1]};
     hid_t h5s_mem = H5Screate_simple(2, dims2, dims2);
@@ -65,6 +65,7 @@ static void dataset_read_body(hid_t hid, std::string name, body_map_t& body_map)
     body.speed_x = h5a_read<std::string> (h5d, "speed_x");
     body.speed_y = h5a_read<std::string> (h5d, "speed_y");
     body.speed_o = h5a_read<std::string> (h5d, "speed_o");
+    body.force_o = h5a_read<std::string> (h5d, "force_o");
     body.speed_slae = h5a_read<TVec3D> (h5d, "speed_slae");
     body.speed_slae_prev = h5a_read<TVec3D> (h5d, "speed_slae_prev");
     body.kspring = h5a_read<TVec3D> (h5d, "spring_const");
@@ -117,7 +118,7 @@ static void dataset_read_body(hid_t hid, std::string name, body_map_t& body_map)
         body.special_segment_no = h5a_read<int32_t> (h5d, "special_bc_segment");
         switch (h5a_read<int32_t> (h5d, "special_bc"))
         {
-            case 's': 
+            case 's':
             case 'i': body.boundary_condition = bc_t::steady; break;
             case 'z': body.boundary_condition = bc_t::kutta; break;
         }
@@ -157,7 +158,7 @@ static void dataset_read_body(hid_t hid, std::string name, body_map_t& body_map)
         latt.g = att_array[i][2];
         latt.gsum = att_array[i][3];
         latt.slip = slip_array[i];
-        latt.heat_const = heat_const;        
+        latt.heat_const = heat_const;
     }
 
     body.doUpdateSegments();

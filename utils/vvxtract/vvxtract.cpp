@@ -160,6 +160,7 @@ int main(int argc, char **argv)
             printf("%s.holder_vx = '%s'\n", blabel, std::string(b.speed_x).c_str());
             printf("%s.holder_vy = '%s'\n", blabel, std::string(b.speed_y).c_str());
             printf("%s.holder_vo = '%s'\n", blabel, std::string(b.speed_o).c_str());
+            printf("%s.holder_mo = '%s'\n", blabel, std::string(b.force_o).c_str());
             printf("%s.speed = {%lg, %lg, %lg}\n", blabel, S3D(b.speed_slae));
             printf("%s.delta_pos = {%lg, %lg, %lg} -- .d = %lg\n", blabel, S4D(b.dpos));
             printf("%s.spring_const = {%lg, %lg, %lg}\n", blabel, S3D(b.kspring));

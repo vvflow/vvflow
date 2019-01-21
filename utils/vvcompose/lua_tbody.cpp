@@ -174,12 +174,13 @@ static const struct luavvd_member tbody_members[] = {
     {"holder_vx",       luavvd_getTEval,       luavvd_setTEval,       0 },
     {"holder_vy",       luavvd_getTEval,       luavvd_setTEval,       0 },
     {"holder_vo",       luavvd_getTEval,       luavvd_setTEval,       0 },
+    {"holder_mo",       luavvd_getTEval,       luavvd_setTEval,       0 },
     {"density",         luavvd_getdouble,      luavvd_setdouble,      0 },
     {"bounce",          luavvd_getdouble,      luavvd_setdouble,      0 },
     {"special_segment", luavvd_getint32,       luavvd_setint32,       0 },
     {"slip",            luavvd_getslip,        luavvd_setslip,        0 },
     {"root",            luavvd_getrootbody,    luavvd_setrootbody,    0 },
-    {NULL, NULL, NULL, 0} /* sentinel */    
+    {NULL, NULL, NULL, 0} /* sentinel */
 };
 
 #define BIND_MEMBER(NAME, MEMBER) \
@@ -200,6 +201,7 @@ static const struct luavvd_member tbody_members[] = {
     BIND_MEMBER("holder_vx",       speed_x) \
     BIND_MEMBER("holder_vy",       speed_y) \
     BIND_MEMBER("holder_vo",       speed_o) \
+    BIND_MEMBER("holder_mo",       force_o) \
     BIND_MEMBER("density",         density) \
     BIND_MEMBER("bounce",          bounce) \
     BIND_MEMBER("special_segment", special_segment_no) \

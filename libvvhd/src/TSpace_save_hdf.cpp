@@ -12,7 +12,7 @@ static void dataset_write_list(hid_t fid, std::string name, const std::vector<TO
 {
     if (list.empty())
         return;
-    
+
     // 1D dataspace
     hsize_t N = list.size();
     hsize_t dims1[2] = {N, 3};
@@ -29,7 +29,7 @@ static void dataset_write_list(hid_t fid, std::string name, const std::vector<TO
     hid_t h5s_mem = H5Screate_simple(2, dims2, dims2);
     if (h5s_file < 0)
         h5_throw("H5Screate_simple", name);
-    
+
     hsize_t start[2] = {0, 0};
     hsize_t stride[2] = {2, 1};
     herr_t err = H5Sselect_hyperslab(h5s_mem, H5S_SELECT_SET, start, stride, dims1, NULL);
@@ -57,13 +57,13 @@ static void dataset_write_body(hid_t fid, std::string name, std::string root_nam
     hsize_t dims[2] = {N, 4};
 
     double att_array[N][4] = {0};
-    
+
     uint32_t general_slip = body.alist.front().slip;
     uint32_t slip_array[N] = {0};
-    
+
     float heat_const = body.alist.front().heat_const;
     float heat_array[N] = {0};
-    
+
     for (hsize_t i=0; i<N; i++) {
         const TAtt& att = body.alist[i];
         att_array[i][0] = att.corner.x;
@@ -92,7 +92,7 @@ static void dataset_write_body(hid_t fid, std::string name, std::string root_nam
 
     if (!can_simplify_slip) {
         h5t<uint32_t>::init();
-        
+
         hid_t h5s_slip = H5Screate_simple(1, dims, dims);
         if (h5s_slip < 0)
             h5_throw("H5Screate_simple", name);
@@ -119,7 +119,7 @@ static void dataset_write_body(hid_t fid, std::string name, std::string root_nam
     }
 
     h5a_write<uint32_t> (h5d, "simplified_dataset", 2);
-        
+
 
     h5a_write<std::string const&> (h5d, "label", body.label);
     h5a_write<std::string const&> (h5d, "root_body", root_name);
@@ -128,6 +128,7 @@ static void dataset_write_body(hid_t fid, std::string name, std::string root_nam
     h5a_write<std::string const&> (h5d, "speed_x", body.speed_x);
     h5a_write<std::string const&> (h5d, "speed_y", body.speed_y);
     h5a_write<std::string const&> (h5d, "speed_o", body.speed_o);
+    h5a_write<std::string const&> (h5d, "force_o", body.force_o);
     h5a_write<TVec3D> (h5d, "speed_slae", body.speed_slae);
     h5a_write<TVec3D> (h5d, "speed_slae_prev", body.speed_slae_prev);
     h5a_write<TVec3D> (h5d, "spring_const", body.kspring);
