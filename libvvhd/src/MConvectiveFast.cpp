@@ -707,7 +707,6 @@ void MConvectiveFast::fillNewtonOEquation(unsigned eq_no, TBody* ibody, bool rig
         - ibody->get_area()*_1_dt*ibody->density * (rotl(r_c_com)*ibody->speed_slae_prev.r)
         - ibody->get_moi_axis()*_1_dt*ibody->density * ibody->speed_slae_prev.o
         - (ibody->density-1.0) * (rotl(r_c_com)*S->gravity) * ibody->get_area()
-        - ibody->force_o.eval(S->time)
         - ibody->friction_prev.o;
     if (rightColOnly) return;
 
@@ -775,7 +774,9 @@ void MConvectiveFast::fillHookeYEquation(unsigned eq_no, TBody* ibody, bool righ
 
 void MConvectiveFast::fillHookeOEquation(unsigned eq_no, TBody* ibody, bool rightColOnly)
 {
-    *matrix.getRightCol(eq_no) = ibody->kspring.o * ibody->dpos.o;
+    *matrix.getRightCol(eq_no) =
+        ibody->kspring.o * ibody->dpos.o
+        + ibody->force_o.eval(S->time);
     if (rightColOnly) return;
 
     // self
