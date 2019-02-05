@@ -181,8 +181,14 @@ void opt::parse(int argc, char **argv) {
             // }
             break;
         case 0xfe10: // --ref-xy
-            fail = sscanf(optarg, "%c %n", &opt::ref_xy, &optn) < 1;
-            fail = fail || !(opt::ref_xy=='o' || opt::ref_xy=='b' || opt::ref_xy=='f');
+            if (strcmp(optarg, "o") == 0) opt::ref_xy = 'o';
+            else if (strcmp(optarg, "f") == 0) opt::ref_xy = 'f';
+            else if (strcmp(optarg, "b") == 0) opt::ref_xy = 'b';
+            else if (strcmp(optarg, "bxy") == 0) opt::ref_xy = 'b';
+            else if (strcmp(optarg, "bx") == 0) opt::ref_xy = 'x';
+            else if (strcmp(optarg, "by") == 0) opt::ref_xy = 'y';
+            else fail = true;
+            optn = strlen(optarg);
             break;
         case 0xfe11: // --ref-S
             fail = sscanf(optarg, "%c %n", &opt::ref_S, &optn) < 1;

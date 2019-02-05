@@ -90,6 +90,28 @@ int main_hdf(int argc, char **argv)
     }
     gp << "\n" << std::endl;
 
+    if (opt::ref_xy == 'o') {
+        // do nothing
+    } else if (opt::ref_xy == 'f') {
+        opt::rect.xmin += S.inf_marker.x;
+        opt::rect.xmax += S.inf_marker.x;
+        opt::rect.ymin += S.inf_marker.y;
+        opt::rect.ymax += S.inf_marker.y;
+    } else if (opt::ref_xy == 'b') {
+        TVec pos = S.BodyList.front()->get_axis();
+        opt::rect.xmin += pos.x;
+        opt::rect.xmax += pos.x;
+        opt::rect.ymin += pos.y;
+        opt::rect.ymax += pos.y;
+    } else if (opt::ref_xy == 'x') {
+        TVec pos = S.BodyList.front()->get_axis();
+        opt::rect.xmin += pos.x;
+        opt::rect.xmax += pos.x;
+    } else if (opt::ref_xy == 'y') {
+        TVec pos = S.BodyList.front()->get_axis();
+        opt::rect.ymin += pos.y;
+        opt::rect.ymax += pos.y;
+    }
 
     gp << "set terminal pngcairo enhanced"
     << strfmt( "  size %d, %d", opt::width, opt::height);

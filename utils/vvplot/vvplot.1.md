@@ -53,8 +53,8 @@ vvplot(1) -- plot Vvflow simulation results
     with gnuplot script and binary data to be plotted
     (default: png)
 
-  * --ref-xy {o,b,f} :
-    reference frame: original, body, fluid (default: 'o'); affects options -x, -y
+  * --ref-xy {o,b,bx,by,f} :
+    reference frame: original, body axis (x, y or both), fluid (default: 'o'); affects options -x, -y
 
   * --ref-S {o,b,f} :
     streamlines reference frame: original, body, fluid;
