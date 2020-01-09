@@ -11,6 +11,6 @@ FIRSTFILE=$(ls $1 | head -n1)
 COMMENT="$(exiv2 -P t -bg Exif.Photo.UserComment $FIRSTFILE)"
 echo $FIRSTFILE "$COMMENT"
 ffmpeg -pattern_type glob -i "$GLOB" \
-	-r 25 -c:v libx264 -crf 28 -pix_fmt yuv420p \
+	-r 25 -c:v libx264 -crf 28 -pix_fmt yuv420p -bf 0 \
 	-metadata comment="$COMMENT" $3 \
 	$OUTPUT
