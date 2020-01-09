@@ -110,15 +110,6 @@ void TBody::validate(bool critical)
                 fprintf(stderr, "%s\n", estr.c_str());
             }
         }
-        if ( *val < 0 ) {
-            estr += "non-negative";
-            if (critical)
-                throw std::invalid_argument(estr);
-            else {
-                *val = std::fabs(*val);
-                fprintf(stderr, "warning: %s, changing to %lf\n", estr.c_str(), *val);
-            }
-        }
     };
 
     validate_damping(critical, &damping.r.x, "r.x");

@@ -640,8 +640,6 @@ end
 collectgarbage()
 S:save("/tmp/vvlua.test.h5")
 
-S.body_list[1].spring_damping.o = -1
-check_err(function() S:save("/tmp/vvlua.test.h5") end, "TBody::validate(): spring_damping.o must be non-negative")
 S.body_list[1].spring_damping.o = nan
 check_err(function() S:save("/tmp/vvlua.test.h5") end, "TBody::validate(): spring_damping.o must be finite")
 S.body_list[1].spring_damping.o = inf
