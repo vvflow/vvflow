@@ -62,7 +62,7 @@ int main(int argc, char** argv)
     bool is_viscous = (S.re != std::numeric_limits<double>::infinity());
 
     char f_stepdata[256]; snprintf(f_stepdata, 256, "stepdata_%s.h5", S.caption.c_str());
-    char f_results[256]; snprintf(f_results, 256, "results_%s", S.caption.c_str());
+    char f_results[240]; snprintf(f_results, 240, "results_%s", S.caption.c_str());
     char f_sensors_output[256]; snprintf(f_sensors_output, 256, "velocity_%s", S.caption.c_str());
     mkdir(f_results, 0777);
 
@@ -101,7 +101,8 @@ int main(int argc, char** argv)
 
         if (S.time.divisibleBy(S.dt_save)  && (double(S.time) >= 0))
         {
-            char tmp_filename[256]; snprintf(tmp_filename, 256, "%s/%%06d.h5", f_results);
+            char tmp_filename[256];
+            snprintf(tmp_filename, 256, "%s/%%06d.h5", f_results);
             S.save(tmp_filename);
             stepdata.flush();
         }

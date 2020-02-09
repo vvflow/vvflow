@@ -2,6 +2,8 @@
 #include "elementary.h"
 
 #include <complex>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 using std::complex;
 using std::shared_ptr;
@@ -48,8 +50,8 @@ void MConvectiveFast::process_all_lists()
             TVec DistP = TVec(lbnode->x, lbnode->y) - lfnode->CMp.r;
             TVec DistM = TVec(lbnode->x, lbnode->y) - lfnode->CMm.r;
 
-            //			double _1_DistPabs = 1./DistP.abs2();
-            //			double _1_DistMabs = 1./DistM.abs2();
+            // double _1_DistPabs = 1./DistP.abs2();
+            // double _1_DistMabs = 1./DistM.abs2();
             double FuncP1 = lfnode->CMp.g / DistP.abs2(); //Extremely complicated useless variables
             double FuncM1 = lfnode->CMm.g / DistM.abs2();
             double FuncP2 = lfnode->CMp.g / sqr(DistP.abs2());
@@ -83,7 +85,7 @@ void MConvectiveFast::process_all_lists()
                 lobj->v += TVec(TVec(Teilor3,  Teilor4)*dr_local, TVec(Teilor4, -Teilor3)*dr_local);
             }
 
-        	#pragma omp for schedule(dynamic, 256)
+            #pragma omp for schedule(dynamic, 256)
             for (TObj *lobj = lbnode->hRange.first; lobj < lbnode->hRange.last; lobj++)
             {
                 if (!lobj->g) {continue;}
@@ -96,7 +98,7 @@ void MConvectiveFast::process_all_lists()
                 lobj->v += TVec(TVec(Teilor3,  Teilor4)*dr_local, TVec(Teilor4, -Teilor3)*dr_local);
             }
 
-        	#pragma omp for schedule(dynamic, 256)
+            #pragma omp for schedule(dynamic, 256)
             for (TObj *lobj = lbnode->sRange.first; lobj < lbnode->sRange.last; lobj++)
             {
                 TVec dr_local = lobj->r - nodeCenter;
@@ -387,8 +389,8 @@ void MConvectiveFast::_2PI_A123(const TAtt &seg, const TBody* ibody, const TBody
         TVec r0 = latt.r - b.get_axis();
         // A1 и A2 в сумме тождественно (аналитически) равны нулю
         // не знаю почему, но если вкопаться в документацию - можно проверить
-        //		*A1 -= Xi*latt.dl;
-        //		*A2 -= rotl(Xi)*latt.dl;
+        // *A1 -= Xi*latt.dl;
+        // *A2 -= rotl(Xi)*latt.dl;
         *_2PI_A3 -= Xi * TVec(rotl(r0) * latt.dl, -latt.dl*r0);
     }
 }
@@ -437,7 +439,7 @@ double MConvectiveFast::AttachInfluence(const TAtt &seg, double rd) const
 
 TVec MConvectiveFast::SegmentInfluence_linear_source(TVec p, const TAtt &seg, double q1, double q2) const
 {
-    //	cerr << "orly?" << endl;
+    // cerr << "orly?" << endl;
     complex<double> z(p.x, p.y);
     complex<double> zc(seg.r.x, seg.r.y);
     complex<double> dz(seg.dl.x, seg.dl.y);
@@ -1000,7 +1002,15 @@ void MConvectiveFast::fill_matrix(bool rightColOnly, const void** collision)
     if (!rightColOnly)
         matrix.markBodyMatrixAsFilled();
 
-    // matrix.save("matrix");
-    // exit(0);
-}
+    if (std::getenv("VVFLOW_SAVE_MATRIX") &&
+        S->time.divisibleBy(S->dt_save) && (double(S->time) >= 0)
+    ) {
+        char tmp_dirname[240];
+        snprintf(tmp_dirname, 240, "matrix_%s", S->caption.c_str());
+        mkdir(tmp_dirname, 0777);
 
+        char tmp_filename[256];
+        snprintf(tmp_filename, 256, "%s/%06d.txt", tmp_dirname, int(S->time/S->dt+0.5));
+        matrix.save(tmp_filename);
+    }
+}

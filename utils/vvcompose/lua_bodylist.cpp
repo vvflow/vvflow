@@ -136,6 +136,7 @@ vector<shared_ptr<TBody>>* checkBodyList(lua_State *L, int idx) {
 }
 
 int luavvd_getBodyList(lua_State *L) {
-    vector<shared_ptr<TBody>>* li = (vector<shared_ptr<TBody>>*)lua_touserdata(L, 1);    
+    vector<shared_ptr<TBody>>* li = (vector<shared_ptr<TBody>>*)lua_touserdata(L, 1);
     pushBodyList(L, li);
+    return 1;
 }

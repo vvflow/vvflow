@@ -53,6 +53,7 @@ int stackDump(lua_State *L)
         }
     }
     printf("\n"); /* end the listing */
+    return 0;
 }
 
 int luaopen_vvd (lua_State *L) {
@@ -154,7 +155,7 @@ int main (int argc, char** argv) {
                 printf("%s\n", lua_tostring(L, -1));
                 lua_pop(L, 1);
             }
-            
+
             linenoiseFree(line);
         }
     }
