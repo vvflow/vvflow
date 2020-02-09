@@ -217,7 +217,7 @@ TVec MConvectiveFast::body_list_influence(const TVec &p) const
 
 bool MConvectiveFast::can_use_inverse()
 {
-    if (S->BodyList.size() <= 1) {
+    if (S->BodyList.size() == 0) {
         return true;
     }
 
