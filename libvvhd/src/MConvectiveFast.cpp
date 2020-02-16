@@ -541,6 +541,7 @@ void MConvectiveFast::fillHydroXEquation(unsigned eq_no, TBody* ibody, bool righ
         + ibody->get_area()*_1_dt*rotl(2*ibody->get_cofm()+r_c_com).x * ibody->speed_slae_prev.o
         // - (-ibody->speed_slae_prev.r.y) * ibody->speed_slae_prev.o * ibody->get_area()
         + sqr(ibody->speed_slae_prev.o) * ibody->get_area() * r_c_com.x
+        - ibody->friction_prev.r.x
         + ibody->fdt_dead.r.x*_1_dt;
 
     if (rightColOnly) return;
@@ -571,7 +572,9 @@ void MConvectiveFast::fillHydroYEquation(unsigned eq_no, TBody* ibody, bool righ
         + ibody->get_area()*_1_dt*rotl(2*ibody->get_cofm()+r_c_com).y * ibody->speed_slae_prev.o
         // - (ibody->speed_slae_prev.r.x) * ibody->speed_slae_prev.o * ibody->get_area()
         + sqr(ibody->speed_slae_prev.o) * ibody->get_area() * r_c_com.y
+        - ibody->friction_prev.r.y
         + ibody->fdt_dead.r.y*_1_dt;
+
     if (rightColOnly) return;
 
     // self
@@ -600,6 +603,7 @@ void MConvectiveFast::fillHydroOEquation(unsigned eq_no, TBody* ibody, bool righ
         + ibody->get_area()*_1_dt * rotl(r_c_com) * ibody->speed_slae_prev.r
         + 2*ibody->get_moi_axis()*_1_dt * ibody->speed_slae_prev.o
         // - (r_c_com * ibody->speed_slae_prev.r) * ibody->speed_slae_prev.o * ibody->get_area()
+        - ibody->friction_prev.o
         + ibody->fdt_dead.o*_1_2dt;
     if (rightColOnly) return;
 
@@ -637,8 +641,7 @@ void MConvectiveFast::fillNewtonXEquation(unsigned eq_no, TBody* ibody, bool rig
         - ibody->get_area()*_1_dt*ibody->density * ibody->speed_slae_prev.r.x
         + ibody->get_area()*_1_dt*ibody->density * r_c_com.y * ibody->speed_slae_prev.o
         - ibody->get_area()*ibody->density * r_c_com.x * sqr(ibody->speed_slae_prev.o)
-        - (ibody->density-1.0) * S->gravity.x * ibody->get_area()
-        - ibody->friction_prev.r.x;
+        - (ibody->density-1.0) * S->gravity.x * ibody->get_area();
     if (rightColOnly) return;
 
     // self
@@ -673,8 +676,7 @@ void MConvectiveFast::fillNewtonYEquation(unsigned eq_no, TBody* ibody, bool rig
         - ibody->get_area()*_1_dt*ibody->density * ibody->speed_slae_prev.r.y
         - ibody->get_area()*_1_dt*ibody->density * r_c_com.x * ibody->speed_slae_prev.o
         - ibody->get_area()*ibody->density * r_c_com.y * sqr(ibody->speed_slae_prev.o)
-        - (ibody->density-1.0) * S->gravity.y * ibody->get_area()
-        - ibody->friction_prev.r.y;
+        - (ibody->density-1.0) * S->gravity.y * ibody->get_area();
     if (rightColOnly) return;
 
     // self
@@ -708,8 +710,7 @@ void MConvectiveFast::fillNewtonOEquation(unsigned eq_no, TBody* ibody, bool rig
     *matrix.getRightCol(eq_no) =
         - ibody->get_area()*_1_dt*ibody->density * (rotl(r_c_com)*ibody->speed_slae_prev.r)
         - ibody->get_moi_axis()*_1_dt*ibody->density * ibody->speed_slae_prev.o
-        - (ibody->density-1.0) * (rotl(r_c_com)*S->gravity) * ibody->get_area()
-        - ibody->friction_prev.o;
+        - (ibody->density-1.0) * (rotl(r_c_com)*S->gravity) * ibody->get_area();
     if (rightColOnly) return;
 
     // self

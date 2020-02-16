@@ -99,7 +99,6 @@ void Space::calc_forces()
     {
         double tmp_gsum = 0;
         //TObj tmp_fric(0,0,0);
-        lbody->friction_prev = lbody->friction;
         lbody->friction = TVec3D();
 
         for (TAtt& latt: lbody->alist)
@@ -134,6 +133,7 @@ void Space::zero_forces()
 
         lbody->force_hydro = TVec3D();
         lbody->force_holder = TVec3D();
+        lbody->friction_prev = lbody->friction;
         lbody->friction = TVec3D();
         lbody->fdt_dead = TVec3D();
         lbody->g_dead = 0;
