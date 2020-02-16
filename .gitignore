@@ -7,3 +7,4 @@ gitinfo.cpp
 doc/images/
 build/
 example/
+*.AppImage

@@ -1,0 +1,5 @@
+#!/bin/bash
+
+echo Hello there "$0"
+export PATH="$(dirname $0)/usr/bin:$PATH"
+echo "vvflow -> $(which vvflow)"

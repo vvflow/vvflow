@@ -1,0 +1,6 @@
+[Desktop Entry]
+Categories=Utility;
+Type=Application
+Icon=vvflow
+Name=vvflow
+Exec=vvflow
