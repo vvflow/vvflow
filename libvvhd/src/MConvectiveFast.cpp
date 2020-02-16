@@ -636,7 +636,7 @@ void MConvectiveFast::fillNewtonXEquation(unsigned eq_no, TBody* ibody, bool rig
     *matrix.getRightCol(eq_no) =
         - ibody->get_area()*_1_dt*ibody->density * ibody->speed_slae_prev.r.x
         + ibody->get_area()*_1_dt*ibody->density * r_c_com.y * ibody->speed_slae_prev.o
-        + ibody->get_area()*ibody->density * r_c_com.x * sqr(ibody->speed_slae_prev.o)
+        - ibody->get_area()*ibody->density * r_c_com.x * sqr(ibody->speed_slae_prev.o)
         - (ibody->density-1.0) * S->gravity.x * ibody->get_area()
         - ibody->friction_prev.r.x;
     if (rightColOnly) return;
@@ -672,7 +672,7 @@ void MConvectiveFast::fillNewtonYEquation(unsigned eq_no, TBody* ibody, bool rig
     *matrix.getRightCol(eq_no) =
         - ibody->get_area()*_1_dt*ibody->density * ibody->speed_slae_prev.r.y
         - ibody->get_area()*_1_dt*ibody->density * r_c_com.x * ibody->speed_slae_prev.o
-        + ibody->get_area()*ibody->density * r_c_com.y * sqr(ibody->speed_slae_prev.o)
+        - ibody->get_area()*ibody->density * r_c_com.y * sqr(ibody->speed_slae_prev.o)
         - (ibody->density-1.0) * S->gravity.y * ibody->get_area()
         - ibody->friction_prev.r.y;
     if (rightColOnly) return;
