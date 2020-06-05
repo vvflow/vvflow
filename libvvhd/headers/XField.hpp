@@ -21,14 +21,17 @@ public:
     XField(XField&&) = delete;
     XField& operator=(const XField&) = delete;
     XField& operator=(XField&&) = delete;
+    ~XField();
 
     XField(
-        double xmin, double ymin, double dxdy,
+        float xmin, float ymin, float dxdy,
         int xres, int yres
     );
-    virtual ~XField();
+    XField(
+        const std::string& str
+    );
 
-    virtual void evaluate() = 0;
+    void evaluate() {};
 
     const float& at(int xi, int yj) const {
         return map[yj*xres + xi];
@@ -45,7 +48,7 @@ public:
     friend std::ostream& operator<< (std::ostream& os, const XField& field);
 
 protected:
-    double xmin, ymin, dxdy;
+    float xmin, ymin, dxdy;
     int xres, yres;
 
     float* map;
