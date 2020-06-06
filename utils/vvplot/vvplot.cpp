@@ -469,6 +469,24 @@ int main_tar(int argc, char **argv)
 {
     Gnuplotter gp;
     gp.load(opt::input);
+
+    const std::string* map_streamfunction = gp.get("map_streamfunction");
+    const std::string* streamlines = gp.get("streamlines");
+
+    if (map_streamfunction && streamlines == nullptr) {
+        std::cout << "Replotting streamlines" << std::endl;
+        XField psi(*map_streamfunction);
+        if (!(opt::Sstep>0)) {
+            opt::Smin = psi.min();
+            opt::Smax = psi.max();
+            opt::Sstep = (opt::Smax - opt::Smin)/33.;
+        }
+
+        std::stringstream bin_streamline;
+        bin_streamline << XIsoline(psi, opt::Smin, opt::Smax, opt::Sstep);
+        gp.add("streamlines", bin_streamline.str());
+    }
+
     gp.exec(opt::target);
     return 0;
 }

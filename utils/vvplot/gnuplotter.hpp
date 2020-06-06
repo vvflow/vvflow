@@ -28,6 +28,13 @@ public:
     void add(const std::string& filename, const std::string& str) {
         files[filename] = str;
     }
+    const std::string* get(const std::string& filename) {
+        const auto it = files.find(filename);
+        if (it == files.end())
+            return nullptr;
+        else
+            return &it->second;
+    }
 
     friend std::ostream& operator<< (Gnuplotter& gp, const std::string& str) {
         return gp.script << str;
