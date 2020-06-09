@@ -61,6 +61,8 @@ void opt::parse(int argc, char **argv) {
             {"S", required_argument, NULL, 'S'},
             {"G", required_argument, NULL, 'G'},
             {"P", required_argument, NULL, 'P'},
+            {"Ux", required_argument, NULL, 'U'},
+            {"Uy", required_argument, NULL, 'U'},
 
             {0, 0, 0, 0}
         };
@@ -68,7 +70,7 @@ void opt::parse(int argc, char **argv) {
         /* getopt_long stores the option index here. */
         int option_index = 0;
 
-        int c = getopt_long(argc, argv, "nvhBVSGPx:y:s:", long_options, &option_index);
+        int c = getopt_long(argc, argv, "nvhBVSGPU:x:y:s:", long_options, &option_index);
 
         if (c == -1) {
             break;
@@ -116,8 +118,9 @@ void opt::parse(int argc, char **argv) {
             // }
             break;
         case 'G': // -G, --G GAMMA
-            opt::P = false;
             opt::G = true;
+            opt::P = false;
+            opt::U = '\0';
             opt::colorbox = true;
             if (!optarg) break;
             fail = sscanf(optarg, "%lf %n", &opt::Gmax, &optn) < 1;
@@ -130,6 +133,7 @@ void opt::parse(int argc, char **argv) {
         case 'P': // -P, --P PMIN,PMAX
             opt::G = false;
             opt::P = true;
+            opt::U = '\0';
             opt::colorbox = true;
             if (!optarg) break;
             fail = sscanf(optarg, "%lf , %lf %n", &opt::Pmin, &opt::Pmax, &optn) < 2;
@@ -140,6 +144,23 @@ void opt::parse(int argc, char **argv) {
             //     printf("PMIN -> %lf\n", opt::Pmin);
             //     printf("PMAX -> %lf\n", opt::Pmax);
             // }
+            break;
+        case 'U': // -U[xy], --U[xy] UMIN,UMAX
+            opt::G = false;
+            opt::P = false;
+            opt::colorbox = true;
+            if (!option_index) {
+                // Short option -U
+                fail = sscanf(optarg, "%c %n", &opt::U, &optn) < 1;
+                fail = fail || !(opt::U=='x' || opt::U=='y');
+            } else {
+                // Long option Ux or Uy
+                opt::U = long_options[option_index].name[1];
+                fail = sscanf(optarg, "%lf , %lf %n", &opt::Umin, &opt::Umax, &optn) < 2;
+                fail = fail || !std::isfinite(opt::Umin);
+                fail = fail || !std::isfinite(opt::Umax);
+                fail = fail || !(opt::Umax >= opt::Umin);
+            }
             break;
         case 'x': // -x
             fail = sscanf(optarg, "%lf , %lf %n", &xmin, &xmax, &optn) < 2;

@@ -40,6 +40,10 @@ vvplot(1) -- plot Vvflow simulation results
     plot vorticity field with color range \[-GMAX, GMAX\]
     (default: auto)
 
+  * -U[xy], --U[xy] `UMIN`,`UMAX` :
+    plot velocity field with color range \[UMIN, UMAX\]
+    (default: auto)
+
 ## OTHER OPTIONS
 
   * -v, --version :

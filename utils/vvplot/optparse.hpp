@@ -42,6 +42,10 @@ namespace opt {
     extern double Pmin;
     extern double Pmax;
 
+    extern char   U; // '\0' | 'x' | 'y'
+    extern double Umin;
+    extern double Umax;
+
     // other options
     extern char   ref_xy;
     extern char   ref_S;

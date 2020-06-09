@@ -76,6 +76,7 @@ add_library(vvhd SHARED
     src/XPressure.cpp
     src/XVorticity.cpp
     src/XStreamfunction.cpp
+    src/XVelocity.cpp
 )
 target_link_libraries(vvhd ${HDF5_C_LIBRARIES} ${LAPACK_LIBRARIES} ${MATHEVAL_LIBRARIES})
 

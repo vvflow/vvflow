@@ -7,6 +7,7 @@
 #include "XPressure.hpp"
 #include "XVorticity.hpp"
 #include "XStreamfunction.hpp"
+#include "XVelocity.hpp"
 #include "XIsoline.hpp"
 
 // #include <string.h> /* strerror */
@@ -47,6 +48,10 @@ namespace opt {
     bool   P = false;
     double Pmin = -1.5;
     double Pmax = +1.0;
+
+    char   U = '\0';
+    double Umin = d_nan;
+    double Umax = d_nan;
 
     // other options
     char   ref_xy = 'o';
@@ -243,6 +248,45 @@ int main_hdf(int argc, char **argv)
         plot_cmd << "'isopressure'";
         plot_cmd << " binary format='%2float'";
         plot_cmd << " with lines lw 1 lc rgb '#9999cc'";
+    }
+
+    if (opt::U) {
+        std::stringstream bin;
+        XVelocity ufield = {S,
+            opt::rect.xmin, opt::rect.ymin,
+            opt::mesh_hi.dxdy,
+            opt::mesh_hi.xres+1,
+            opt::mesh_hi.yres+1,
+        };
+
+        ufield.mode = opt::U;
+        ufield.ref_frame = opt::ref_S;
+        ufield.evaluate();
+        bin << ufield;
+
+        std::string field_name = "map_velocity_" + std::string(1, opt::U);
+        gp.add(field_name, bin.str());
+
+        if (!std::isfinite(opt::Umin)) opt::Umin = ufield.min();
+        if (!std::isfinite(opt::Umax)) opt::Umax = ufield.max();
+
+        gp << "set palette defined (" <<
+            opt::Umin/1 << " \"#0829d5\", " <<
+            opt::Umin/3 << " \"#1ffcff\", " <<
+                    0.0 << " \"#2ef62e\", " <<
+            opt::Umax/3 << " \"yellow\", " <<
+            opt::Umax/1 << " \"red\"" <<
+        ")" << std::endl;
+
+        gp << strfmt( "set cbrange [%lg:%lg]\n", opt::Umin, opt::Umax);
+        gp << strfmt( "set label 61 \"%.1lf\"\n", opt::Umin);
+        gp << strfmt( "set label 62 \"%.1lf\"\n", opt::Umax);
+
+        plot_cmd << DELIMITER;
+        plot_cmd << "'" << field_name << "'";
+        plot_cmd << " binary matrix";
+        plot_cmd << " u 1:2:3";
+        plot_cmd << " with image";
     }
 
     if (opt::V) {
