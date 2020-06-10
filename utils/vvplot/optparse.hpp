@@ -68,6 +68,7 @@ namespace opt {
 
     extern const char* input;
     extern const char* target;
+    extern const char* load_field;
     extern int ifmt;
     extern int ofmt;
 }

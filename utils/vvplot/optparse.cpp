@@ -51,10 +51,12 @@ void opt::parse(int argc, char **argv) {
             {"size",   required_argument, 0, 's'},
             {"res-hi", required_argument, 0, 0xff00},
             {"res-lo", required_argument, 0, 0xff01},
+            {"load-field", required_argument, 0, 0xff10},
 
             {"ref-xy", required_argument, 0, 0xfe10},
             {"ref-S",  required_argument, 0, 0xfe11},
             {"ref-P",  required_argument, 0, 0xfe12},
+
 
             {"B",       no_argument, NULL, 'B'},
             {"V", required_argument, NULL, 'V'},
@@ -218,6 +220,10 @@ void opt::parse(int argc, char **argv) {
         case 0xfe12: // --ref-P
             fail = sscanf(optarg, "%c %n", &opt::ref_P, &optn) < 1;
             fail = fail || !(opt::ref_P=='o' || opt::ref_P=='b' || opt::ref_P=='f' || opt::ref_P=='s');
+            break;
+        case 0xff10: // --load-field
+            opt::load_field = optarg;
+            optn = strlen(optarg); // supress error
             break;
         case 0:
             if (long_options[option_index].flag != 0) {

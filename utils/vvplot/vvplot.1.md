@@ -93,6 +93,10 @@ vvplot(1) -- plot Vvflow simulation results
   * --res-lo `RES_LO` :
     horizontal resolution of streamfunction field (default: 256)
 
+  * --load-field `FILE` :
+    load field (either `-S` or `-U`) from file. Necessary for side
+    processing of that field.
+
 
 ## SEE ALSO
   vvcompose(1), vvflow(1), vvxtract(1)

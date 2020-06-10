@@ -24,6 +24,7 @@
 #include <vector>
 #include <limits>
 #include <iostream>
+#include <fstream>
 #include <sstream>
 
 static const double d_nan = nan("");
@@ -76,6 +77,7 @@ namespace opt {
 
     const char* input;
     const char* target;
+    const char* load_field;
     int ifmt = ffmt::unknown;
     int ofmt = ffmt::png;
 }
@@ -251,24 +253,36 @@ int main_hdf(int argc, char **argv)
     }
 
     if (opt::U) {
-        std::stringstream bin;
-        XVelocity ufield = {S,
-            opt::rect.xmin, opt::rect.ymin,
-            opt::mesh_hi.dxdy,
-            opt::mesh_hi.xres+1,
-            opt::mesh_hi.yres+1,
-        };
+        XField *field = nullptr;
 
-        ufield.mode = opt::U;
-        ufield.ref_frame = opt::ref_S;
-        ufield.evaluate();
-        bin << ufield;
+        if (opt::load_field) {
+            std::stringstream fbuf;
+            std::ifstream file(opt::load_field, std::ios::binary);
+            fbuf << file.rdbuf();
+            field = new XField {.str = fbuf.str()};
+        } else {
+            XVelocity *ufield = new XVelocity {
+                .space = S,
+                .xmin = opt::rect.xmin,
+                .ymin = opt::rect.ymin,
+                .dxdy = opt::mesh_hi.dxdy,
+                .xres = opt::mesh_hi.xres+1,
+                .yres = opt::mesh_hi.yres+1,
+            };
+
+            ufield->mode = opt::U;
+            ufield->ref_frame = opt::ref_S;
+            ufield->evaluate();
+            field = ufield;
+        }
 
         std::string field_name = "map_velocity_" + std::string(1, opt::U);
+        std::stringstream bin;
+        bin << *field;
         gp.add(field_name, bin.str());
 
-        if (!std::isfinite(opt::Umin)) opt::Umin = ufield.min();
-        if (!std::isfinite(opt::Umax)) opt::Umax = ufield.max();
+        if (!std::isfinite(opt::Umin)) opt::Umin = field->min();
+        if (!std::isfinite(opt::Umax)) opt::Umax = field->max();
 
         gp << "set palette defined (" <<
             opt::Umin/1 << " \"#0829d5\", " <<
@@ -313,17 +327,31 @@ int main_hdf(int argc, char **argv)
     }
 
     if (opt::S) {
+        XField *field = nullptr;
+
+        if (opt::load_field) {
+            std::stringstream fbuf;
+            std::ifstream file(opt::load_field, std::ios::binary);
+            fbuf << file.rdbuf();
+            field = new XField {.str = fbuf.str()};
+        } else {
+            XStreamfunction *sfield = new XStreamfunction {
+                .space = S,
+                .xmin = opt::rect.xmin,
+                .ymin = opt::rect.ymin,
+                .dxdy = opt::mesh_lo.dxdy,
+                .xres = opt::mesh_lo.xres+1,
+                .yres = opt::mesh_lo.yres+1,
+            };
+            sfield->eps_mult = 2;
+            sfield->ref_frame = opt::ref_S;
+            sfield->evaluate();
+            field = sfield;
+        }
+
         std::stringstream bin_streamfunction;
-        XStreamfunction psi = {S,
-            opt::rect.xmin, opt::rect.ymin,
-            opt::mesh_lo.dxdy,
-            opt::mesh_lo.xres+1,
-            opt::mesh_lo.yres+1,
-        };
-        psi.eps_mult = 2;
-        psi.ref_frame = opt::ref_S;
-        psi.evaluate();
-        bin_streamfunction << psi;
+        bin_streamfunction << *field;
+
         gp.add("map_streamfunction", bin_streamfunction.str());
 
         // gp << "set palette defined (-1 \"#000000\", 1 \"#ffffff\")" << std::endl;
@@ -335,13 +363,13 @@ int main_hdf(int argc, char **argv)
         // plot_cmd << " with image";
 
         if (!(opt::Sstep>0)) {
-            opt::Smin = psi.min();
-            opt::Smax = psi.max();
+            opt::Smin = field->min();
+            opt::Smax = field->max();
             opt::Sstep = (opt::Smax - opt::Smin)/33.;
         }
 
         std::stringstream bin_streamline;
-        bin_streamline << XIsoline(psi, opt::Smin, opt::Smax, opt::Sstep);
+        bin_streamline << XIsoline(*field, opt::Smin, opt::Smax, opt::Sstep);
         gp.add("streamlines", bin_streamline.str());
 
         plot_cmd << DELIMITER;
