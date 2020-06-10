@@ -38,15 +38,24 @@ XField::XField(const std::string& str):
 
     const float* data = reinterpret_cast<const float*>(str.c_str());
     float N = data[0];
-    if (!std::isfinite(N) || N <= 1 || fmod(N, 1) != 0)
+    if (!std::isfinite(N) || N <= 1 || fmod(N, 1) != 0) {
+        fprintf(stderr, "N = %lg\n", N);
         throw std::invalid_argument("XField(str): invalid data");
+    }
 
     xres = N;
     yres = str.size()/sizeof(float)/(xres+1) - 1;
     if (str.size() != sizeof(float)*(xres+1)*(yres+1))
         throw std::invalid_argument("XField(str): can't factorize matrix");
-    if (data[2]-data[1] != data[2*(xres+1)]-data[1*(xres+1)])
+
+    float dx = data[2] - data[1];
+    float dy = data[2*(xres+1)] - data[1*(xres+1)];
+    if (fabs(dx-dy) > std::min(fabs(dx), fabs(dy))/1000 ) {
+        fprintf(stderr, "Bad spacing: %lg != %lg (diff %lg)\n",
+            dx, dy, fabs(dx-dy)
+        );
         throw std::invalid_argument("XField(str): non-uniform grid");
+    }
 
     xmin = data[1];
     ymin = data[1*(xres+1)];
