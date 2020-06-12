@@ -1,14 +1,7 @@
 cmake_minimum_required (VERSION 3.0)
 project (vvcompose)
 
-include(${CMAKE_SOURCE_DIR}/libvvhd/CPackDeps.cmake)
 include_directories(${LIBVVHD_INCLUDE_DIRS})
-
-find_path(LUA_INCLUDE_DIR lua.hpp PATH_SUFFIXES lua5.2)
-find_library(LUA_LIBRARY lua5.2)
-message("-- Found liblua5.2: " ${LUA_LIBRARY})
-add_dependency(${LUA_LIBRARY})
-include_directories(${LUA_INCLUDE_DIR})
 
 add_executable(vvcompose
     vvcompose.cpp
@@ -30,7 +23,7 @@ add_executable(vvcompose
     gen_box.cpp
     linenoise.c
 )
-target_link_libraries(vvcompose vvhd ${LUA_LIBRARY} dl)
+target_link_libraries(vvcompose vvhd dl)
 
 if(NOT NO_MANPAGES)
 set(MAN_MD ${CMAKE_CURRENT_SOURCE_DIR}/vvcompose.1.md)

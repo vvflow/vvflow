@@ -1,6 +1,9 @@
 cmake_minimum_required (VERSION 3.0)
 project (libvvhd)
 
+set(LUA_VERSION 5.2.4)
+
+include(ExternalProject)
 include(${CMAKE_SOURCE_DIR}/libvvhd/CPackDeps.cmake)
 
 # HDF5
@@ -21,6 +24,17 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -debug all")
     set(CMAKE_SHARED_LINKER_FLAGS "-mkl=parallel")
 endif()
+
+ExternalProject_Add(lua
+    URL https://www.lua.org/ftp/lua-${LUA_VERSION}.tar.gz
+    CONFIGURE_COMMAND ""
+    BUILD_COMMAND make -C <SOURCE_DIR>/src liblua.a MYCFPLAGS=-fPIC
+    INSTALL_COMMAND ""
+)
+
+ExternalProject_Get_Property(lua source_dir)
+set(LUA_LIBRARY ${source_dir}/src/liblua.a)
+set(LUA_INCLUDE_DIR ${source_dir}/src)
 
 # MATHEVAL
 find_path(LIBMATHEVAL_INCLUDE_DIR matheval.h)
@@ -78,10 +92,20 @@ add_library(vvhd SHARED
     src/XStreamfunction.cpp
     src/XVelocity.cpp
 )
-target_link_libraries(vvhd ${HDF5_C_LIBRARIES} ${LAPACK_LIBRARIES} ${MATHEVAL_LIBRARIES})
+add_dependencies(vvhd lua)
+target_link_libraries(vvhd
+    ${HDF5_C_LIBRARIES}
+    ${LAPACK_LIBRARIES}
+    ${MATHEVAL_LIBRARIES}
+    ${LUA_LIBRARY}
+)
 
 install (TARGETS vvhd DESTINATION lib)
 set(DEPENDENCIES ${DEPENDENCIES} PARENT_SCOPE)
-set(LIBVVHD_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/headers ${HDF5_INCLUDE_DIRS})
+set(LIBVVHD_INCLUDE_DIRS
+    ${CMAKE_CURRENT_SOURCE_DIR}/headers
+    ${HDF5_INCLUDE_DIRS}
+    ${LUA_INCLUDE_DIR}
+)
 set(LIBVVHD_INCLUDE_DIRS ${LIBVVHD_INCLUDE_DIRS} PARENT_SCOPE)
 add_subdirectory(test)
