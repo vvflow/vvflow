@@ -32,11 +32,11 @@ TEST_F(TEvalTest, ConstructWithString)
     eval = "t+1";
     // invalid expression should not spoil evaluator
     EXPECT_THROW(eval = "b+1";, std::invalid_argument);
-    EXPECT_EQ("(t+1)", std::string(eval));
+    EXPECT_EQ("t+1", std::string(eval));
     EXPECT_EQ(2, eval.eval(1));
     // valid expression should drop cache
     EXPECT_NO_THROW(eval = "2+t";);
-    EXPECT_EQ("(2+t)", std::string(eval));
+    EXPECT_EQ("2+t", std::string(eval));
     EXPECT_EQ(3, eval.eval(1));
 
     // copy and move compile
@@ -70,9 +70,6 @@ TEST_F(TEvalTest, EvaluateConstants)
     CHECK("pi", pi);
     CHECK("pi_2", pi/2.L);
     CHECK("pi_4", pi/4.L);
-    CHECK("1_pi", 1.L/pi);
-    CHECK("2_pi", 2.L/pi);
-    CHECK("2_sqrtpi", 2.L/sqrt(pi));
     CHECK("sqrt2", sqrt(2.L));
     CHECK("sqrt1_2", sqrt(0.5L));
     #undef CHECK
@@ -82,7 +79,6 @@ TEST_F(TEvalTest, EvaluateFunctions)
 {
     std::map<const char*, double(*)(double)> functions = {
         {"exp(t)", exp},
-        {"log(t)", log},
         {"log(t)", log},
         {"sqrt(t)", sqrt},
         {"sin(t)", sin},

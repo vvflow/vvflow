@@ -15,11 +15,13 @@ class TEval
 
         double eval(double t) const;
 
-        operator std::string() const;
+        operator std::string() const {
+            return expr;
+        }
 
     private:
-        bool validate(void* evaluator);
-        void* evaluator;
+        void* lua_state;
+        std::string expr;
         mutable double cacheTime1;
         mutable double cacheTime2;
         mutable double cacheValue1;

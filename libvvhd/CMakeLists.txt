@@ -28,18 +28,13 @@ endif()
 ExternalProject_Add(lua
     URL https://www.lua.org/ftp/lua-${LUA_VERSION}.tar.gz
     CONFIGURE_COMMAND ""
-    BUILD_COMMAND make -C <SOURCE_DIR>/src liblua.a MYCFPLAGS=-fPIC
+    BUILD_COMMAND make -C <SOURCE_DIR>/src liblua.a MYCFLAGS=-fPIC
     INSTALL_COMMAND ""
 )
 
 ExternalProject_Get_Property(lua source_dir)
 set(LUA_LIBRARY ${source_dir}/src/liblua.a)
 set(LUA_INCLUDE_DIR ${source_dir}/src)
-
-# MATHEVAL
-find_path(LIBMATHEVAL_INCLUDE_DIR matheval.h)
-find_library(MATHEVAL_LIBRARIES matheval)
-add_dependency(${MATHEVAL_LIBRARIES})
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 
@@ -67,7 +62,7 @@ configure_file (
     "${PROJECT_BINARY_DIR}/gitinfo.cpp"
   )
 
-include_directories(headers/)
+include_directories(headers/ ${LUA_INCLUDE_DIR})
 add_library(vvhd SHARED
     ${PROJECT_BINARY_DIR}/gitinfo.cpp
     src/TEval.cpp
@@ -96,7 +91,6 @@ add_dependencies(vvhd lua)
 target_link_libraries(vvhd
     ${HDF5_C_LIBRARIES}
     ${LAPACK_LIBRARIES}
-    ${MATHEVAL_LIBRARIES}
     ${LUA_LIBRARY}
 )
 

@@ -146,10 +146,10 @@ check_err(function() S.inf_vx = nil end, "bad value for S.inf_vx (string or TEva
 check_err(function() S.inf_vx.s = 0 end,    "TEval has no parameters")
 S.inf_vx = "sin(2*pi*t/16)"
 S.inf_vy = "sin(2*pi*t/32)"
-check_val(function() return tostring(S.inf_vx) end, "sin((((2*pi)*t)/16))")
-check_val(function() return tostring(S.inf_vy) end, "sin((((2*pi)*t)/32))")
-check_val(function() return S.inf_vx:tostring() end, "sin((((2*pi)*t)/16))")
-check_val(function() return S.inf_vy:tostring() end, "sin((((2*pi)*t)/32))")
+check_val(function() return tostring(S.inf_vx) end, "sin(2*pi*t/16)")
+check_val(function() return tostring(S.inf_vy) end, "sin(2*pi*t/32)")
+check_val(function() return S.inf_vx:tostring() end, "sin(2*pi*t/16)")
+check_val(function() return S.inf_vy:tostring() end, "sin(2*pi*t/32)")
 check_val(function() return S.inf_vx:eval(4) end, 1)
 check_val(function() return S.inf_vy:eval(8) end, 1)
 check_val(function() return S.inf_vx.member end, nil)
