@@ -1,33 +1,10 @@
 cmake_minimum_required (VERSION 3.0)
 project (vvplot)
 
-include(ExternalProject)
-include_directories(${LIBVVHD_INCLUDE_DIRS})
-
-ExternalProject_Add(libarchive
-    URL https://www.libarchive.org/downloads/libarchive-3.4.3.tar.gz
-    CONFIGURE_COMMAND <SOURCE_DIR>/configure
-        --prefix=<INSTALL_DIR>
-        --disable-shared
-        --enable-static
-        --with-pic
-
-        --without-zlib
-        --without-bz2lib
-        --without-libb2
-        --without-iconv
-        --without-libiconv-prefix
-        --without-lz4
-        --without-zstd
-        --without-lzma
-        --without-cng
-        --without-openssl
-        --without-xml2
-        --without-expat
+include_directories(
+    ${LIBVVHD_INCLUDE_DIRS}
+    ${LIBARCHIVE_INCLUDE_DIRS}
 )
-
-ExternalProject_Get_Property(libarchive install_dir)
-include_directories(${install_dir}/include)
 
 add_executable(vvplot
     vvplot.cpp
@@ -35,10 +12,7 @@ add_executable(vvplot
     gnuplotter.cpp
 )
 add_dependencies(vvplot libarchive)
-target_link_libraries(vvplot
-    vvhd
-    ${install_dir}/lib/libarchive.a
-)
+target_link_libraries(vvplot vvhd ${LIBARCHIVE_LIBRARIES})
 
 if(NOT NO_MANPAGES)
 set(MAN_MD ${CMAKE_CURRENT_SOURCE_DIR}/vvplot.1.md)

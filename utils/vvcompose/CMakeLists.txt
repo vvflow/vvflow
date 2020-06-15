@@ -53,4 +53,3 @@ add_custom_target(vvcompose_test.lua ALL
     DEPENDS ${CMAKE_BINARY_DIR}/tests/vvcompose_test.lua)
 
 add_test(vvcompose_test vvcompose ${CMAKE_BINARY_DIR}/tests/vvcompose_test.lua)
-set(DEPENDENCIES ${DEPENDENCIES} PARENT_SCOPE)
