@@ -1,7 +1,30 @@
 cmake_minimum_required (VERSION 3.0)
 project (vvflow)
 
-include(CPackDeps.cmake)
+set(CPACK_DEPENDENCIES "" CACHE INTERNAL "")
+function(add_cpack_dependency lib_list)
+    list(GET lib_list 0 lib)
+    message(STATUS "Adding CPack dependency for ${lib}")
+
+    if(EXISTS ${lib})
+        execute_process(
+            COMMAND readlink -f "${lib}"
+            OUTPUT_VARIABLE lib_path
+            OUTPUT_STRIP_TRAILING_WHITESPACE)
+        execute_process(
+            COMMAND dpkg -S "${lib_path}"
+            COMMAND cut -d: -f1
+            OUTPUT_VARIABLE lib
+            OUTPUT_STRIP_TRAILING_WHITESPACE)
+    endif()
+
+    set(_CPACK_DEPENDENCIES ${CPACK_DEPENDENCIES})
+    list(APPEND _CPACK_DEPENDENCIES "${lib}")
+    set(CPACK_DEPENDENCIES ${_CPACK_DEPENDENCIES}
+        CACHE INTERNAL "Resulting DEB package dependencies"
+    )
+endfunction(add_cpack_dependency)
+
 include(ExternalProjects.cmake)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Weffc++")
 enable_testing()
@@ -70,7 +93,7 @@ SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY
 if(NOT CPACK_OUTPUT_FILE_PREFIX)
     SET(CPACK_OUTPUT_FILE_PREFIX deb)
 endif()
-string(REPLACE ";" ", " CPACK_DEBIAN_PACKAGE_DEPENDS "${DEPENDENCIES}")
+string(REPLACE ";" ", " CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEPENDENCIES}")
 message("-- Generating dpkg deps: " "${CPACK_DEBIAN_PACKAGE_DEPENDS}")
 message("-- Will put deb package to: " "${CPACK_OUTPUT_FILE_PREFIX}")
 

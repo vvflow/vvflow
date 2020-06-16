@@ -1,21 +1,9 @@
 cmake_minimum_required (VERSION 3.0)
 project (libvvhd)
 
-# LAPACK
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-    find_package(LAPACK REQUIRED)
-    add_dependency(${LAPACK_LIBRARIES})
-    list(APPEND DEPENDENCIES "libgomp1")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
-elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
-    find_library(MKL_LIBRARIES mkl_core)
-    set(LAPACK_LIBRARIES "")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -qopenmp -mkl")
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -debug all")
-    set(CMAKE_SHARED_LINKER_FLAGS "-mkl=parallel")
-endif()
-
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+find_package(LAPACK REQUIRED)
+add_cpack_dependency(${LAPACK_LIBRARIES})
+add_cpack_dependency("libgomp1")
 
 execute_process(
     COMMAND git rev-parse HEAD
@@ -40,6 +28,8 @@ configure_file (
     "gitinfo.cpp.in"
     "${PROJECT_BINARY_DIR}/gitinfo.cpp"
 )
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fopenmp")
 
 include_directories(
     headers/
@@ -78,7 +68,6 @@ target_link_libraries(vvhd
 )
 
 install (TARGETS vvhd DESTINATION lib)
-set(DEPENDENCIES ${DEPENDENCIES} PARENT_SCOPE)
 set(LIBVVHD_INCLUDE_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR}/headers
     ${HDF5_INCLUDE_DIRS}
