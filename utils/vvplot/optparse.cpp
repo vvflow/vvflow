@@ -19,6 +19,96 @@
 
 #include <getopt.h>
 
+static const char USAGE[] =
+R"(
+Usage:
+  vvplot (-h | --help)
+  vvplot (-v | --version)
+  vvplot [options] <input> <target>
+    <input>          Either h5 or tar file.
+    <target>         Either file or directory.
+)";
+
+static const char OPTIONS[] =
+R"(
+Options:
+  -h, --help         Show this screen.
+  -v, --version      Show version.
+
+  -x <XMIN>,<XMAX>   X axis range.
+  -y <YMIN>,<YMIN>   Y axis range.
+    When <XMIN> == <XMAX> or <YMIN> == <YMAX> their values will be
+    claculated from --size flag. One of <XMIN>, <XMAX>, <YMIN> or <YMAX>
+    may be "NaN": then it will be calculated from --size flag.
+    [default: "0,0"]
+
+  --size <W>x<H>     Image size.
+    Either <W> or <H> may be zero, but only if both -x and -y options
+    are specified. (default: 1280x720)
+
+  -B                 Plot bodies.
+
+  -V                 Plot vortex domains as circles.
+  --V <SIZE>         Specify circles diameter for -V (in pixels).
+    If <SIZE> is 0 dots are drawn instead.
+    (default: 4)
+
+  -S                 Plot streamlines.
+  --S <SMIN>,<SMAX>,<SSTEP>
+    Specify streamfunction range for -S.
+    (default: auto)
+
+  -P                 Plot pressure field.
+  --P <PMIN>,<PMAX>  Specify pressure range for -P.
+    (default: "-1.5,1")
+
+  -G                 Plot vorticity field.
+  --G <GMAX>         Specify vorticity range for -G.
+    Range is always symmetrical from -1*<GMAX> to <GMAX>.
+    (default: auto)
+
+  -Ux, -Uy           Plot velocity field.
+  --Ux, --Uy <UMIN>,<UMAX>
+    Specify velocity range for -Ux or -Uy.
+    (default: auto)
+
+  --png, --tar       Select output format.
+    In case of tar it can be passed to vvplot as an <input>
+    (default: png)
+
+  --ref-xy <REF_XY>  Specify reference frame for -x and -y:
+    "o"              - original;
+    "b", "bx", "by"  - bound to body (either both XY or X or Y);
+    "f"              - bound to fluid.
+    (default: "o")
+
+  --ref-S <REF_S>    Specify streamlines reference frame for -S:
+    "o"              - original;
+    "b"              - body;
+    "f"              - fluid.
+    (default: "o")
+
+  --ref-P <REF_P>    Specify pressure calculation mode for -P:
+    "s"              - static pressure;
+    "o"              - dynamic pressure in original reference frame;
+    "b"              - dynamic pressure in body reference frame;
+    "f"              - dynamic pressure in fluid reference frame.
+    (default: "s")
+
+  --[no-]gray        Plot image in grayscale. (default: false)
+  --[no-]colorbox    Draw colorbox. (default: when necessary)
+  --[no-]timelabel   Draw time label. (default: true)
+  --[no-]holder      Draw body holder. (default: false)
+  --[no-]spring      Draw body spring. (default: false)
+
+  --res-hi <RES_HI>  Horizontal resolution for -G, -P. (default: 640)
+  --res-lo <RES_LO>  Horizontal resolution for -S. (default: 256)
+
+  --load-field <FILE> Load field (either -S or -U) from file.
+    Necessary for side processing of that field.
+
+)";
+
 static double &xmin = opt::rect.xmin;
 static double &xmax = opt::rect.xmax;
 static double &ymin = opt::rect.ymin;
@@ -89,9 +179,10 @@ void opt::parse(int argc, char **argv) {
             fprintf(stderr, "git_diff: %s\n", libvvhd_gitdiff);
             exit(0);
         case 'h': // -h, --help
-            (void)execlp("man", "man", "vvplot", NULL);
-            fprintf(stderr, "%s: can not exec 'man': %s\n", argv[0], strerror(errno));
-            exit(1);
+            fprintf(stdout, "Plot vvflow simulation results.\n");
+            fprintf(stdout, "%s", USAGE);
+            fprintf(stdout, "%s", OPTIONS);
+            exit(0);
         case 'B': // -B, --B
             opt::B = true;
             break;
@@ -227,7 +318,6 @@ void opt::parse(int argc, char **argv) {
             break;
         case 0:
             if (long_options[option_index].flag != 0) {
-                // printf("%s -> %d\n", long_options[option_index].name, *long_options[option_index].flag);
                 break;
             }
         case '?':
@@ -247,6 +337,7 @@ void opt::parse(int argc, char **argv) {
                 fprintf(stderr, "option '-%c': ", c);
             }
             fprintf(stderr, "bad argument '%s'\n", optarg);
+            fprintf(stderr, "%s", USAGE);
             exit(1);
         }
     }
@@ -256,7 +347,7 @@ void opt::parse(int argc, char **argv) {
         if (argc-optind < 1) fprintf(stderr, "%s: missing INPUT file\n", argv[0]);
         if (argc-optind < 2) fprintf(stderr, "%s: missing TARGET path\n", argv[0]);
         if (argc-optind > 2) fprintf(stderr, "%s: too many command line arguments\n", argv[0]);
-        fprintf(stderr, "Usage: vvplot [OPTIONS] INPUT TARGET. See `vvplot --help'.\n");
+        fprintf(stderr, "%s", USAGE);
         exit(1);
     } else {
         opt::input = argv[optind+0];
@@ -317,6 +408,7 @@ void opt::parse(int argc, char **argv) {
             opt::height = 0;
         } else if (var_cnt > 1) {
             fprintf(stderr, "%s: too many options ommited: %s.\n", argv[0], var_names.c_str());
+            fprintf(stderr, "%s", USAGE);
             exit(1);
         }
 
@@ -337,6 +429,5 @@ void opt::parse(int argc, char **argv) {
         opt::mesh_hi.yres = ceil((ymax-ymin)/opt::mesh_hi.dxdy);
 
         opt::Vcirc = (xmax-xmin)/opt::width*opt::Vsize/2; // radius
-        // fprintf(stderr, "VCIRC -> %lf\n", opt_Vcirc);
     }
 }
