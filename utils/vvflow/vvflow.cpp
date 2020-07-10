@@ -1,3 +1,5 @@
+#include "./optparse.hpp"
+
 #include "MEpsilonFast.hpp"
 #include "MConvectiveFast.hpp"
 #include "MDiffusiveFast.hpp"
@@ -26,34 +28,21 @@ using std::shared_ptr;
 
 //#define OVERRIDEMOI 0.35
 
+// main options
+namespace opt {
+    int save_profile = 0;
+    int show_progress = 0;
+
+    const char* input;
+    const char* sensors_file = NULL;
+}
+
 int main(int argc, char** argv)
 {
-    bool b_progress = false;
-    bool b_save_profile = false;
-    while (argc>1)
-    {
-        /**/ if (!strcmp(argv[1], "--progress")) b_progress = true;
-        else if (!strcmp(argv[1], "--profile")) b_save_profile = true;
-        else if (!strcmp(argv[1], "--version"))
-        {
-            cerr << "Git rev: "  << libvvhd_gitrev << std::endl;
-            cerr << "Git info: " << libvvhd_gitinfo << std::endl;
-            cerr << "Git diff: " << libvvhd_gitdiff << std::endl;
-            return 0;
-        }
-        else break;
-        argv++;
-        argc--;
-    }
-
-    if (argc < 2)
-    {
-        cerr << "Missing filename to load. You can create it with vvcompose utility.\n";
-        return -1;
-    }
+    opt::parse(argc, argv);
 
     Space S;
-    S.load(argv[1]);
+    S.load(opt::input);
 
     // error checking
     #define RAISE(STR) { cerr << "vvflow ERROR: " << STR << endl; return -1; }
@@ -66,7 +55,7 @@ int main(int argc, char** argv)
     char f_sensors_output[256]; snprintf(f_sensors_output, 256, "velocity_%s", S.caption.c_str());
     mkdir(f_results, 0777);
 
-    Stepdata stepdata = {&S, f_stepdata, b_save_profile};
+    Stepdata stepdata = {&S, f_stepdata, !!opt::save_profile};
 
     double dl = S.average_segment_length();
     double min_node_size = dl>0 ? dl*5 : 0;
@@ -76,7 +65,7 @@ int main(int argc, char** argv)
     MEpsilonFast epsilon = {&S, &tr};
     MDiffusiveFast diffusive = {&S, &tr};
     MFlowmove flowmove = {&S};
-    sensors sens(&S, &convective, (argc>2)?argv[2]:NULL, f_sensors_output);
+    sensors sens(&S, &convective, opt::sensors_file, f_sensors_output);
     #ifdef OVERRIDEMOI
         S.BodyList->at(0)->overrideMoi_c(OVERRIDEMOI);
     #endif
@@ -132,10 +121,10 @@ int main(int argc, char** argv)
         dbg(flowmove.heat_crop());
         S.time = TTime::add(S.time, S.dt);
 
-        if (b_progress)
+        if (opt::show_progress)
             fprintf(stderr, "\rt=%-10g \tN=%-10zd", double(S.time), S.VortexList.size());
     }
 
-    if (b_progress)
+    if (opt::show_progress)
         fprintf(stderr, "\n");
 }

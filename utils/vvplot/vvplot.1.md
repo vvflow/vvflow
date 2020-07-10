@@ -50,7 +50,7 @@ vvplot(1) -- plot Vvflow simulation results
     print program version and exit
 
   * -h, --help :
-    show this manpage and exit
+    print help and exit
 
   * --png, --tar :
     select the output format: PNG image itself or TAR archive

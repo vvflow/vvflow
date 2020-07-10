@@ -15,8 +15,11 @@ or copied from another vvflow simulation results.
 
 ## OPTIONS
 
-  * --version :
+  * -v, --version :
     print program version and exit
+
+  * -h, --help :
+    print help and exit
 
   * --progress :
     print interactive progress printing during the simulation
