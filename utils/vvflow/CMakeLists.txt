@@ -3,7 +3,10 @@ project (vvflow)
 
 include_directories(${LIBVVHD_INCLUDE_DIRS})
 
-add_executable(vvflow vvflow.cpp)
+add_executable(vvflow
+    vvflow.cpp
+    optparse.cpp
+)
 target_link_libraries(vvflow vvhd)
 
 if(NOT NO_MANPAGES)

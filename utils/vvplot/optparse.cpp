@@ -19,6 +19,7 @@
 
 #include <getopt.h>
 
+// Mimic http://docopt.org, but without actual parsing
 static const char USAGE[] =
 R"(
 Usage:
