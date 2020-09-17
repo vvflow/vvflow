@@ -29,6 +29,14 @@ include(ExternalProjects.cmake)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Weffc++")
 enable_testing()
 
+find_program(GRIP grip DOC "Render markdown files into html")
+find_program(RONN ronn DOC "Build manuals from markdown")
+if(GRIP AND RONN)
+    set(WITH_MANPAGES TRUE CACHE BOOL "Build manpages")
+else()
+    set(WITH_MANPAGES FALSE CACHE BOOL "Build manpages")
+endif()
+
 add_subdirectory(libvvhd)
 add_subdirectory(utils/vvflow)
 add_subdirectory(utils/vvplot)
@@ -41,12 +49,12 @@ install(DIRECTORY example
     DESTINATION share/doc/vvflow
 )
 
-if(NOT NO_MANPAGES)
+if(WITH_MANPAGES)
 set(MAN_MD   ${CMAKE_CURRENT_SOURCE_DIR}/README.md)
 set(MAN_HTML ${CMAKE_CURRENT_BINARY_DIR}/README.html)
 add_custom_command(
     OUTPUT ${MAN_HTML}
-    COMMAND grip --export ${MAN_MD} ${MAN_HTML}
+    COMMAND ${GRIP} --export ${MAN_MD} ${MAN_HTML}
     DEPENDS ${MAN_MD}
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     COMMENT "Building ${MAN_HTML}"

@@ -42,7 +42,7 @@ jobs:
       run: |
         mkdir -p build
         pushd build
-        cmake -DNO_MANPAGES=TRUE ..
+        cmake ..
         make -j
         cpack
         popd

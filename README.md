@@ -203,6 +203,12 @@ vvxtract stepdata_re600_n350.h5 time body00/force_hydro | vvawk.mavg -v span=100
 
 ## Development and compilation
 
+```bash
+# Build dependencies
+sudo apt-get update
+sudo apt-get install build-essential cmake make git liblapack-dev
+```
+
 Сборку проекта удобнее всего выполнять внутри докер контейнера.
 Об установке самого докера можно почитать
 на [официальном сайте](https://docs.docker.com/engine/installation/linux/ubuntu/#install-docker).
