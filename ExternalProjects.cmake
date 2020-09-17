@@ -18,7 +18,9 @@ string(CONCAT LIBARCHIVE_URL
 # ZLIB
 #
 ExternalProject_Add(zlib
-    URL https://zlib.net/zlib-${ZLIB_VERSION}.tar.gz
+    URL https://vvflow.github.io/vvflow-deps/zlib-${ZLIB_VERSION}.tar.gz
+        https://zlib.net/zlib-${ZLIB_VERSION}.tar.gz
+    URL_MD5 1c9f62f0778697a09d36121ead88e08e
     CONFIGURE_COMMAND CFLAGS=-fPIC <SOURCE_DIR>/configure
         --prefix=<INSTALL_DIR>
         --static
@@ -33,8 +35,9 @@ set(ZLIB_INCLUDE_DIRS ${install_dir}/include)
 # HDF5
 #
 ExternalProject_Add(hdf5
-    # URL https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.10/hdf5-1.10.6/src/CMake-hdf5-1.10.6.tar.gz
-    URL ${HDF5_URL}
+    URL https://vvflow.github.io/vvflow-deps/hdf5-${HDF5_VERSION}.tar.gz
+        ${HDF5_URL}
+    URL_MD5 37f3089e7487daf0890baf3d3328e54a
     DEPENDS zlib
     CONFIGURE_COMMAND <SOURCE_DIR>/configure
         --prefix=<INSTALL_DIR>
@@ -46,17 +49,6 @@ ExternalProject_Add(hdf5
         --with-zlib=${ZLIB_DIR}
         --enable-static
         --with-pic
-    # CMAKE_ARGS
-    #     -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
-    #     -DCMAKE_PREFIX_PATH=${ZLIB_PREFIX_PATH}
-    #     -DBUILD_SHARED_LIBS=FALSE
-    #     -DBUILD_TESTING=FALSE
-    #     -DHDF5_BUILD_EXAMPLES=FALSE
-    #     -DHDF5_BUILD_CPP_LIB=FALSE
-    #     -DHDF5_BUILD_TOOLS=FALSE
-    #     -DHDF5_BUILD_HL_LIB=FALSE
-    #     -DHDF5_DISABLE_COMPILER_WARNINGS=TRUE
-    #     -DHDF5_ENABLE_Z_LIB_SUPPORT=TRUE
     STEP_TARGETS download
 )
 ExternalProject_Get_Property(hdf5 install_dir)
@@ -67,7 +59,9 @@ set(HDF5_LIBRARIES ${install_dir}/lib/libhdf5.a ${ZLIB_LIBRARIES})
 # Lua
 #
 ExternalProject_Add(lua
-    URL https://www.lua.org/ftp/lua-${LUA_VERSION}.tar.gz
+    URL https://vvflow.github.io/vvflow-deps/lua-${LUA_VERSION}.tar.gz
+        https://www.lua.org/ftp/lua-${LUA_VERSION}.tar.gz
+    URL_MD5 913fdb32207046b273fdb17aad70be13
     CONFIGURE_COMMAND ""
     BUILD_COMMAND make -C <SOURCE_DIR>/src liblua.a MYCFLAGS=-fPIC
     INSTALL_COMMAND ""
@@ -81,7 +75,9 @@ set(LUA_LIBRARIES ${source_dir}/src/liblua.a)
 # GoogleTest
 #
 ExternalProject_Add(googletest
-    URL https://github.com/google/googletest/archive/v1.10.x.tar.gz
+    URL https://vvflow.github.io/vvflow-deps/googletest/v1.10.x.tar.gz
+        https://github.com/google/googletest/archive/v1.10.x.tar.gz
+    URL_MD5 58e27196e6423e330e5caadacfe3557b
     CMAKE_ARGS
         -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
 )
@@ -98,7 +94,9 @@ set(GTEST_LIBRARIES
 # LibArchive
 #
 ExternalProject_Add(libarchive
-    URL ${LIBARCHIVE_URL}
+    URL https://vvflow.github.io/vvflow-deps/libarchive-${LIBARCHIVE_VERSION}.tar.gz
+        ${LIBARCHIVE_URL}
+    URL_MD5 2c5f01b65e74c5a5a6ce45cc01647a53
     CONFIGURE_COMMAND <SOURCE_DIR>/configure
         --prefix=<INSTALL_DIR>
         --disable-shared
