@@ -380,11 +380,9 @@ int main_hdf(int argc, char **argv)
 
     for (const std::shared_ptr<TBody>& lbody: S.BodyList) {
         const TBody& b = *lbody;
-        const char* blabel;
-        if (!b.label.empty()){
-            blabel = b.label.c_str();
-        } else {
-            blabel = S.get_body_name(&b).c_str();
+        std::string blabel = b.label;
+        if (blabel.empty()){
+            blabel = S.get_body_name(&b);
         }
 
         if (opt::B) {
