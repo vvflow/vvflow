@@ -4,6 +4,7 @@ set(LUA_VERSION 5.2.4)
 set(ZLIB_VERSION 1.2.11)
 set(HDF5_VERSION 1.10.6)
 set(LIBARCHIVE_VERSION 3.4.3)
+set(CPPUNIT_VERSION 1.15.1)
 
 string(CONCAT HDF5_URL
     "https://support.hdfgroup.org/ftp/HDF5/releases/"
@@ -72,25 +73,6 @@ set(LUA_INCLUDE_DIRS ${source_dir}/src)
 set(LUA_LIBRARIES ${source_dir}/src/liblua.a)
 
 #
-# GoogleTest
-#
-ExternalProject_Add(googletest
-    URL https://vvflow.github.io/vvflow-deps/googletest/v1.10.x.tar.gz
-        https://github.com/google/googletest/archive/v1.10.x.tar.gz
-    URL_MD5 58e27196e6423e330e5caadacfe3557b
-    CMAKE_ARGS
-        -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
-)
-
-ExternalProject_Get_Property(googletest install_dir)
-set(GTEST_INCLUDE_DIRS ${install_dir}/include)
-set(GTEST_LIBRARIES
-    ${install_dir}/lib/libgtest.a
-    ${install_dir}/lib/libgtest_main.a
-    -lpthread
-)
-
-#
 # LibArchive
 #
 ExternalProject_Add(libarchive
@@ -120,3 +102,22 @@ ExternalProject_Add(libarchive
 ExternalProject_Get_Property(libarchive install_dir)
 set(LIBARCHIVE_INCLUDE_DIRS ${install_dir}/include)
 set(LIBARCHIVE_LIBRARIES ${install_dir}/lib/libarchive.a)
+
+#
+# CppUnit
+#
+ExternalProject_Add(cppunit
+    URL https://vvflow.github.io/vvflow-deps/cppunit-${CPPUNIT_VERSION}.tar.gz
+        http://dev-www.libreoffice.org/src/cppunit-${CPPUNIT_VERSION}.tar.gz
+    URL_MD5 "9dc669e6145cadd9674873e24943e6dd"
+    CONFIGURE_COMMAND <SOURCE_DIR>/configure
+        --prefix=<INSTALL_DIR>
+        --disable-doxygen
+        --disable-docs
+        # shared is enough for testing
+        --enable-shared
+        --disable-static
+)
+ExternalProject_Get_Property(cppunit install_dir)
+set(CPPUNIT_INCLUDE_DIRS ${install_dir}/include)
+set(CPPUNIT_LIBRARIES ${install_dir}/lib/libcppunit.so)
