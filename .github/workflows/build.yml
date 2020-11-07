@@ -44,6 +44,7 @@ jobs:
         pushd build
         cmake ..
         make -j
+        ctest -VV
         cpack
         popd
 
