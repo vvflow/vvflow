@@ -1,15 +1,16 @@
 #pragma once
 
+#include <cppunit/extensions/HelperMacros.h>
+#include "expect.hpp"
 #include "XField.hpp"
 #include "TVec.hpp"
-#include "expect.hpp"
 
-#include <gtest/gtest.h>
 #include <stdexcept>
 #include <sstream>
+#include <cstring>
 
-float inf = std::numeric_limits<float>::infinity();
-float NaN = std::numeric_limits<float>::quiet_NaN();
+float f_inf = std::numeric_limits<float>::infinity();
+float f_nan = std::numeric_limits<float>::quiet_NaN();
 
 class YField: public XField {
 public:
@@ -43,27 +44,38 @@ public:
 };
 
 
-class XFieldTest : public ::testing::Test {};
+class XFieldSuite : public CPPUNIT_NS::TestFixture
+{
+    CPPUNIT_TEST_SUITE( XFieldSuite );
+    CPPUNIT_TEST( TestDefaultConstructor );
+    CPPUNIT_TEST( TestStringConstructor );
+    CPPUNIT_TEST( TestEvaluate );
+    CPPUNIT_TEST_SUITE_END();
+protected:
+    void TestDefaultConstructor();
+    void TestStringConstructor();
+    void TestEvaluate();
+};
 
-TEST_F(XFieldTest, ConstructDefault)
+void XFieldSuite::TestDefaultConstructor()
 {
     EXPECT_THROW_MSG(XField f(0, 0, 0, 1, 2);, std::invalid_argument, "XField(): xres must be > 1");
     EXPECT_THROW_MSG(XField f(0, 0, 0, 2, 1);, std::invalid_argument, "XField(): yres must be > 1");
     EXPECT_THROW_MSG(XField f(0, 0, 0, 2, 2);, std::invalid_argument, "XField(): dxdy must be positive");
     EXPECT_THROW_MSG(XField f(0, 0, -1, 2, 2);, std::invalid_argument, "XField(): dxdy must be positive");
-    EXPECT_THROW_MSG(XField f(0, 0, inf, 2, 2);, std::invalid_argument, "XField(): dxdy must be finite");
-    EXPECT_THROW_MSG(XField f(0, 0, NaN, 2, 2);, std::invalid_argument, "XField(): dxdy must be finite");
+    EXPECT_THROW_MSG(XField f(0, 0, f_inf, 2, 2);, std::invalid_argument, "XField(): dxdy must be finite");
+    EXPECT_THROW_MSG(XField f(0, 0, f_nan, 2, 2);, std::invalid_argument, "XField(): dxdy must be finite");
 
     YField field(1, 2, 3, 4, 5);
-    EXPECT_EQ(1, field.xmin);
-    EXPECT_EQ(2, field.ymin);
-    EXPECT_EQ(3, field.dxdy);
-    EXPECT_EQ(4, field.xres);
-    EXPECT_EQ(5, field.yres);
-    EXPECT_EQ(false, field.evaluated);
+    CPPUNIT_ASSERT_EQUAL(1.f, field.xmin);
+    CPPUNIT_ASSERT_EQUAL(2.f, field.ymin);
+    CPPUNIT_ASSERT_EQUAL(3.f, field.dxdy);
+    CPPUNIT_ASSERT_EQUAL(4, field.xres);
+    CPPUNIT_ASSERT_EQUAL(5, field.yres);
+    CPPUNIT_ASSERT_EQUAL(false, field.evaluated);
 }
 
-TEST_F(XFieldTest, Evaluate)
+void XFieldSuite::TestEvaluate()
 {
     YField field = {-1, -1, 1, 3, 3};
     field.evaluate();
@@ -73,16 +85,16 @@ TEST_F(XFieldTest, Evaluate)
     //  0 | 1 0 1
     // -1 | 2 1 2
 
-    EXPECT_EQ(2, field.at(0, 0));
-    EXPECT_EQ(1, field.at(0, 1));
-    EXPECT_EQ(0, field.at(1, 1));
+    CPPUNIT_ASSERT_EQUAL(2.f, field.at(0, 0));
+    CPPUNIT_ASSERT_EQUAL(1.f, field.at(0, 1));
+    CPPUNIT_ASSERT_EQUAL(0.f, field.at(1, 1));
 
-    EXPECT_EQ(0, field.min());
-    EXPECT_EQ(2, field.max());
+    CPPUNIT_ASSERT_EQUAL(0.f, field.min());
+    CPPUNIT_ASSERT_EQUAL(2.f, field.max());
 
     // zero values are ignored
-    EXPECT_EQ(1, field.percentile(0.49));
-    EXPECT_EQ(2, field.percentile(0.51));
+    CPPUNIT_ASSERT_EQUAL(1.f, field.percentile(0.49));
+    CPPUNIT_ASSERT_EQUAL(2.f, field.percentile(0.51));
 }
 
 std::string pack(std::vector<float> v) {
@@ -91,25 +103,26 @@ std::string pack(std::vector<float> v) {
     return bin.str();
 }
 
-TEST_F(XFieldTest, ConstructWithString)
+void XFieldSuite::TestStringConstructor()
 {
+    std::cout << std::endl;
     YField f1 = {1, 2, 1, 3, 4};
     f1.evaluate();
 
     std::stringstream ss;
     ss << f1;
     const std::string str = ss.str();
-    EXPECT_EQ(sizeof(float)*(3+1)*(4+1), str.size());
+    CPPUNIT_ASSERT_EQUAL(sizeof(float)*(3+1)*(4+1), str.size());
     YField f2(str);
-    EXPECT_NO_THROW(ss << f2);
-    EXPECT_EQ(f1.xmin, f2.xmin);
-    EXPECT_EQ(f1.ymin, f2.ymin);
-    EXPECT_EQ(f1.dxdy, f2.dxdy);
-    EXPECT_EQ(f1.xres, f2.xres);
-    EXPECT_EQ(f1.yres, f2.yres);
+    CPPUNIT_ASSERT_NO_THROW(ss << f2);
+    CPPUNIT_ASSERT_EQUAL(f1.xmin, f2.xmin);
+    CPPUNIT_ASSERT_EQUAL(f1.ymin, f2.ymin);
+    CPPUNIT_ASSERT_EQUAL(f1.dxdy, f2.dxdy);
+    CPPUNIT_ASSERT_EQUAL(f1.xres, f2.xres);
+    CPPUNIT_ASSERT_EQUAL(f1.yres, f2.yres);
 
     if (memcmp(f1.map, f2.map, f1.xres*f2.yres*sizeof(float)) != 0) {
-        FAIL() << "XField maps not equal";
+        CPPUNIT_FAIL("XField maps not equal");
     }
 
     EXPECT_THROW_MSG(
@@ -129,10 +142,10 @@ TEST_F(XFieldTest, ConstructWithString)
         XField f(pack({7.5, 1, 2,   1, 0, 0,   2, 0, 0}));,
         std::invalid_argument, "XField(str): invalid data");
     EXPECT_THROW_MSG(
-        XField f(pack({inf, 1, 2,   1, 0, 0,   2, 0, 0}));,
+        XField f(pack({f_inf, 1, 2,   1, 0, 0,   2, 0, 0}));,
         std::invalid_argument, "XField(str): invalid data");
     EXPECT_THROW_MSG(
-        XField f(pack({NaN, 1, 2,   1, 0, 0,   2, 0, 0}));,
+        XField f(pack({f_nan, 1, 2,   1, 0, 0,   2, 0, 0}));,
         std::invalid_argument, "XField(str): invalid data");
 
     EXPECT_THROW_MSG(
