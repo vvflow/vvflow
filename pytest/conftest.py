@@ -94,7 +94,8 @@ class Env:
 
         output = self.run(
             ['vvplot', ifile, ofile] + args,
-            cwd=self.tempdir
+            cwd=self.tempdir,
+            timeout = 30
         )
         output.ifile = ifile
         output.ofile = ofile

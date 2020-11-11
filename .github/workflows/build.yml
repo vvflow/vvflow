@@ -1,33 +1,21 @@
 name: Vvflow CI
 
-on: push
+on: pull_request
 
 jobs:
   build-ubuntu-bionic:
     runs-on: ubuntu-18.04
     env:
-      APT_PACKAGES: liblapack-dev
+      APT_PACKAGES: liblapack-dev gnuplot
     steps:
     - name: Git checkout
       uses: actions/checkout@v2
       with:
         fetch-depth: 0
 
-    - name: Install apt packages
+    - name: Install dependencies
       run: |
         sudo apt-get install ${APT_PACKAGES}
-
-    - name: Cache pip packages
-      id: cache-pip
-      uses: actions/cache@v2
-      with:
-        path: ~/.cache/pip
-        key: bionic-pip-${{ hashFiles('**/requirements.txt') }}
-        restore-keys: bionic-pip-
-
-    - name: Install pip packages
-      if: steps.cache-pip.outputs.cache-hit != 'true'
-      run: |
         pip3 install -r pytest/requirements.txt
 
     - name: Cache CMakeFiles
@@ -44,6 +32,7 @@ jobs:
         pushd build
         cmake ..
         make -j
+        ctest -VV
         cpack
         popd
 
