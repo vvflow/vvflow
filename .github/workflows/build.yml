@@ -1,6 +1,12 @@
 name: Vvflow CI
 
-on: pull_request
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+    tags:
+      - v*
 
 jobs:
   build-ubuntu-bionic:
