@@ -1,27 +1,19 @@
 name: Vvflow CI
 
 on:
-  pull_request:
   push:
-    branches:
-      - master
-    tags:
-      - v*
 
 jobs:
-  build-ubuntu-bionic:
+  test:
     runs-on: ubuntu-18.04
-    env:
-      APT_PACKAGES: liblapack-dev gnuplot
     steps:
-    - name: Git checkout
-      uses: actions/checkout@v2
+    - uses: actions/checkout@v2
       with:
         fetch-depth: 0
 
     - name: Install dependencies
       run: |
-        sudo apt-get install ${APT_PACKAGES}
+        sudo apt-get install liblapack-dev gnuplot
         pip3 install -r pytest/requirements.txt
 
     - name: Cache CMakeFiles
@@ -32,21 +24,32 @@ jobs:
           ~build/deb
         key: bionic-cmake-cache-01
 
-    - name: Build & Test
-      run: |
-        mkdir -p build
-        pushd build
-        cmake ..
-        make -j
-        ctest -VV
-        cpack
-        popd
+    - run: mkdir -p build
+    - run: cmake ..
+      working-directory: ./build
+    - run: make -j
+      working-directory: ./build
+    - run: ctest -VV
+      working-directory: ./build
+    - run: cpack
+      working-directory: ./build
 
     - name: Upload to packagecloud/nightly
-      if: github.ref == 'refs/heads/master'
+      if: >
+        github.ref == 'refs/heads/master' ||
+        startsWith(github.ref, 'refs/tags/')
       run: >
         curl
         -u "${{ secrets.PACKAGECLOUD_TOKEN }}:"
         -F "package[distro_version_id]=190"
         -F "package[package_file]=@$(ls build/deb/vvflow-*.deb | head -n1)"
         -v https://packagecloud.io/api/v1/repos/vvflow/nightly/packages.json
+
+    - name: Upload to packagecloud/stable
+      if: startsWith(github.ref, 'refs/tags/')
+      run: >
+        curl
+        -u "${{ secrets.PACKAGECLOUD_TOKEN }}:"
+        -F "package[distro_version_id]=190"
+        -F "package[package_file]=@$(ls build/deb/vvflow-*.deb | head -n1)"
+        -v https://packagecloud.io/api/v1/repos/vvflow/stable/packages.json
