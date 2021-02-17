@@ -2,55 +2,102 @@ name: Vvflow CI
 
 on:
   push:
+    branches: ['*']
+    tags: ['*']
 
 jobs:
   test:
-    runs-on: ubuntu-18.04
+    strategy:
+      fail-fast: false
+      matrix:
+        runs-on:
+          - ubuntu-18.04
+          - ubuntu-20.04
+    runs-on: ${{ matrix.runs-on }}
     steps:
-    - uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
-    - name: Install dependencies
-      run: |
-        sudo apt-get install liblapack-dev gnuplot
-        pip3 install -r pytest/requirements.txt
+      - name: Install dependencies
+        run: |
+          sudo apt-get install liblapack-dev gnuplot
+          pip3 install -r pytest/requirements.txt
 
-    - name: Cache CMakeFiles
-      uses: actions/cache@v2
-      with:
-        path: |
-          build/*
-          ~build/deb
-        key: bionic-cmake-cache-02
+      - uses: actions/cache@v2
+        with:
+          path: |
+            build/*
+            !build/deb
+          key: cmake-cache-${{ matrix.runs-on }}-03
 
-    - run: mkdir -p build
-    - run: cmake ..
-      working-directory: ./build
-    - run: make -j
-      working-directory: ./build
-    - run: ctest -VV
-      working-directory: ./build
-    - run: cpack
-      working-directory: ./build
-    - run: ls -al build/deb/vvflow-*.deb
+      - run: rm -rf build/deb
+      - run: cmake -S. -Bbuild
+      - run: make -C build -j
+      - run: make -C build test ARGS=-VV
+      - run: pushd build; cpack
 
-    - name: Upload to packagecloud/nightly
-      if: >
-        github.ref == 'refs/heads/master' ||
-        startsWith(github.ref, 'refs/tags/')
-      run: >
-        curl
-        -u "${{ secrets.PACKAGECLOUD_TOKEN }}:"
-        -F "package[distro_version_id]=190"
-        -F "package[package_file]=@$(ls build/deb/vvflow-*.deb | tail -n1)"
-        -v https://packagecloud.io/api/v1/repos/vvflow/nightly/packages.json
+      - uses: actions/upload-artifact@v2
+        with:
+          name: vvflow-${{ matrix.runs-on }}
+          path: build/deb/vvflow-*.deb
+          if-no-files-found: error
 
-    - name: Upload to packagecloud/stable
-      if: startsWith(github.ref, 'refs/tags/')
-      run: >
-        curl
-        -u "${{ secrets.PACKAGECLOUD_TOKEN }}:"
-        -F "package[distro_version_id]=190"
-        -F "package[package_file]=@$(ls build/deb/vvflow-*.deb | tail -n1)"
-        -v https://packagecloud.io/api/v1/repos/vvflow/stable/packages.json
+  publish:
+    needs: test
+    if: >
+      github.ref == 'refs/heads/master' ||
+      startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-20.04
+    strategy:
+      fail-fast: false
+      matrix:
+        cfg:
+          - artifact-name: vvflow-ubuntu-18.04
+            distro-name: ubuntu
+            distro-version: '18.04'
+
+          - artifact-name: vvflow-ubuntu-20.04
+            distro-name: ubuntu
+            distro-version: '20.04'
+
+          - artifact-name: vvflow-ubuntu-20.04
+            distro-name: ubuntu
+            distro-version: '20.10'
+    steps:
+      - uses: actions/download-artifact@v2
+        with:
+          name: ${{ matrix.cfg.artifact-name }}
+
+      - run: ls -alR
+
+      - name: Obtain distro_version_id
+        run: >
+          curl
+          -u "${{ secrets.PACKAGECLOUD_TOKEN }}:"
+          -sS https://packagecloud.io/api/v1/distributions.json
+          | jq '.deb[] | select(.index_name == "${{ matrix.cfg.distro-name }}")'
+          | jq '.versions[] | select(.version_number == "${{ matrix.cfg.distro-version }}")'
+          | tee /dev/stderr
+          | jq '.id'
+          | awk '{print "DISTRO_VERSION_ID=" $0}'
+          | tee -a $GITHUB_ENV
+
+      - run: echo "PACKAGE=$(ls vvflow-*.deb)" | tee -a $GITHUB_ENV
+
+      - name: Upload to packagecloud/nightly
+        run: >
+          curl
+          -u "${{ secrets.PACKAGECLOUD_TOKEN }}:"
+          -F "package[distro_version_id]=${{ env.DISTRO_VERSION_ID }}"
+          -F "package[package_file]=@${{ env.PACKAGE }}"
+          -v https://packagecloud.io/api/v1/repos/vvflow/nightly/packages.json
+
+      - name: Upload to packagecloud/stable
+        if: startsWith(github.ref, 'refs/tags/')
+        run: >
+          curl
+          -u "${{ secrets.PACKAGECLOUD_TOKEN }}:"
+          -F "package[distro_version_id]=${{ env.DISTRO_VERSION_ID }}"
+          -F "package[package_file]=@${{ env.PACKAGE }}"
+          -v https://packagecloud.io/api/v1/repos/vvflow/stable/packages.json
