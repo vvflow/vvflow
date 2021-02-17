@@ -1,46 +1,54 @@
+# Vvflow CFD suite
+
+[vvd-wiki]: https://en.wikipedia.org/wiki/Viscous_vortex_domains_method
+[pbs-wiki]: https://en.wikipedia.org/wiki/Portable_Batch_System
+[issue]: https://github.com/vvflow/vvflow/issues/new
+[lua]: https://learnxinyminutes.com/docs/lua/
+[awk]: https://man7.org/linux/man-pages/man1/awk.1p.html
+[ffmpeg]: https://ffmpeg.org/about.html
+
+An implementation of the [Viscous Vortex Domains][vvd-wiki] (VVD) method.
+
+> The VVD method is a mesh-free method of computational fluid dynamics
+> for directly numerically solving 2D Navier-Stokes equations in Lagrange
+> coordinates. It doesn't implement any turbulence model and free of
+> arbitrary parameters.
+
+<p align="center">
+    <img src="readme-pics/example.png" height="350px">
+</p>
+
+## Table of contents
+
+* [Installation](#installation)
+* [Flow simulation](#flow-simulation)
+    * [vvcompose](#vvcompose)
+    * [vvflow](#vvflow)
+* [Postprocessing results](#postprocessing-results)
+    * [vvxtract](#vvxtract)
+    * [vvplot, vvencode](#vvplot-vvencode)
+    * [vvawk](#vvawk)
+    * [gpquick](#gpquick)
+* [Building from source](#building-from-source)
+
 ## Installation
 
-Platforms supported:
-
-* debian jessie
-* ubuntu xenial
-* ubuntu bionic
-
-Run in shell:
-
 ```
-sudo apt install curl apt-transport-https
-curl -L https://packagecloud.io/vvflow/stable/gpgkey | sudo apt-key add -
-```
-
-Add an apt repository according to your OS:
-
-```
-echo "deb https://packagecloud.io/vvflow/stable/debian/ jessie main" | sudo tee /etc/apt/sources.list.d/vvflow.list
-echo "deb https://packagecloud.io/vvflow/stable/ubuntu/ xenial main" | sudo tee /etc/apt/sources.list.d/vvflow.list
-echo "deb https://packagecloud.io/vvflow/stable/ubuntu/ bionic main" | sudo tee /etc/apt/sources.list.d/vvflow.list
-```
-
-Finally, install the Vvflow CFD Suite:
-
-```
-sudo apt update
+curl -s https://packagecloud.io/install/repositories/vvflow/stable/script.deb.sh | sudo bash
 sudo apt install vvflow
 ```
 
-## Documentation
+For today, binary packages are available for ubuntu 18.04 (bionic),
+20.04 (focal), 20.10 (groovy). On other Linux platforms, it can be
+[built from source](#building-from-source).
 
-* [/usr/share/doc/vvflow/](file:///usr/share/doc/vvflow/)
-* `man vvcompose`
-* `man vvflow`
-* `man vvxtract`
-* `man vvplot`
+Don't hesitate to [open an issue][issue] if you encounter any problems.
 
 ## Flow simulation
 
 For a start, one can copy the example simulation from doc:
 
-```
+```bash
 cp -R /usr/share/doc/vvflow/example/ ./
 cd example
 make
@@ -49,17 +57,17 @@ make
 This will compose the CFD problem as described in `cylinder.lua` file,
 run the simulation (for a minute or two), and plot the results.
 
-### *vvcompose*
+### vvcompose
 
-Defining the CFD problem is handled by *vvcompose* tool.
-It is a [lua](https://learnxinyminutes.com/docs/lua/) interpreter,
-so it supports everything that lua supports, and even more.
+Defining the CFD problem is handled by the `vvcompose` tool. It's a
+[Lua][lua] interpreter, so it supports everything that Lua supports
+(and even more).
 
 Flow around circular cylinder:
 
-```
+```bash
 #!/bin/bash
-vvcompose <<EOF
+vvcompose <<SCRIPT
     S.inf_vx = "1"
     S.re = 600
     S.dt = 0.005
@@ -72,35 +80,28 @@ vvcompose <<EOF
 
     S.caption = "re600_n350"
     S:save(S.caption..".h5")
-EOF
+SCRIPT
 ```
 
-More information is given in `man vvcompose`.
+### vvflow
 
-### *vvflow*
-
-The flow simulation itself is performed by *vvflow* tool:
+The flow simulation itself is performed by `vvflow` tool:
 
 ```
 vvflow --progress --profile re600_n350.h5
 ```
 
-There is no manual entry for *vvflow*, but there is only two options:
+The `vvflow` can be run on a [PBS][pbs-wiki] cluster:
 
- - `--progress`: print current internal time to stdout.
- - `--profile`: save pressure and friction profiles to file `stepdata`.
-
-The *vvflow* can be run on a [PBS](https://en.wikipedia.org/wiki/Portable_Batch_System) cluster:
-
-```
+```bash
 #!/bin/bash
-qsub -d. -l nodes=1:ppn=6 -N testrun <<EOF
-    export OMP_NUM_THREADS=6;
+qsub -d. -l nodes=1:ppn=6 -N testrun <<'EOF'
+    export OMP_NUM_THREADS=$PBS_NUM_PPN;
     exec vvflow re600_n350.h5;
 EOF
 ```
 
-### Postprocessing results
+## Postprocessing results
 
 The results are saved to the current working directory during the simulation:
 * `stepdata_re600_n350.h5` - integral parameters (forces, dispositions) time series.
@@ -112,12 +113,12 @@ Those are raw data, which can be processed using one of the following:
 * [vvawk](#vvawk)
 * [gpquick](#gpquick)
 
-### *vvxtract*
+### vvxtract
 
-The *vvxtract* tool is the opposite to the *vvcompose*.
-It prints `.h5` file content in human readable form.
+The `vvxtract` tool is the opposite of the `vvcompose`.
+It prints `.h5` file content in a human-readable form.
 
-```
+```console
 $ vvxtract re600_n350.h5
 -- space
 S.re = 600
@@ -144,7 +145,7 @@ cyl.slip = false -- no-slip
 
 Stepdata files can be handled the same way:
 
-```
+```console
 $ vvxtract stepdata_re600_n350.h5 time body00/force_hydro | less
 #time   body00/force_hydro[1]   body00/force_hydro[2]   body00/force_hydro[3]
 +0.000000e+00   +3.140723e+02   -2.296381e-13   +5.088693e-15
@@ -154,124 +155,82 @@ $ vvxtract stepdata_re600_n350.h5 time body00/force_hydro | less
 ...
 ```
 
-### *vvplot, vvencode*
+### vvplot, vvencode
 
-To plot the images use *vvplot* tool:
+<img align="right" height="150px" src="readme-pics/000150.png">
 
-```
-vvplot re600_n350.h5 -B -x -2,20 ./
-```
+To plot the images use `vvplot` tool:
 
-```
-vvplot results_re600_n350/010000.h5 -BV -x -2,20 ./images --spring
-```
-
-Draw animation:
-```
-ls results_re600_n350/*.h5 | xargs -I{} vvplot {} -BV -x -2,20 ./images --spring
+```bash
+vvplot re600_n350.h5 ./ -B -x -1,4
+vvplot results_re600_n350/000150.h5 ./ -B --V 10 -x -1,4
 ```
 
-Encode video using ffmeg
+Draw an animation:
+
+```bash
+mkdir -p images
+ls results_re600_n350/*.h5 | xargs -I{} vvplot {} ./images -BV -x -2,20
 ```
+
+A single movie can be encoded with the `vvencode` tool - a small
+wrapper script for the [FFmpeg][ffmpeg]:
+
+```bash
 vvencode 'images/*.png' re600_n350.mp4
 ```
 
-### *vvawk*
+### vvawk
 
-The *vvawk* tool is a bunch of helpful awk scripts, like command-line MS-Excel.
-It can be very useful in combination with *vvxtract*.
+This is a bunch of helpful `awk` scripts, like command-line MS-Excel.
+It can be very useful in combination with `vvxtract`.
 
  - `vvawk.avg`: the arithmetic mean in a column.
  - `vvawk.sd`: the standard deviation in a column.
  - `vvawk.zeros`: find zeroes.
  - `vvawk.mavg`: the moving average in a column.
  - `vvawk.drv`: the derivative.
- - `vvawk.ampl`: the amplitude in a column - avg(max) - avg(min).
+ - `vvawk.ampl`: the amplitude in a column - `avg(max) - avg(min)`.
 
-### *gpquick*
+### gpquick
+
+<img align="right" height="140px" src="readme-pics/fx_raw.png">
 
 The `gpquick` tool is used to preview plots.
 
-```
-vvxtract stepdata_re600_n350.h5 time body00/force_hydro | gpquick --points > fx_raw.png
+```bash
+vvxtract stepdata_re600_n350.h5 time body00/force_hydro \
+| gpquick --points -y 0 1 \
+| display
+
 ```
 
-In combination with *vvawk*:
-```
-vvxtract stepdata_re600_n350.h5 time body00/force_hydro | vvawk.mavg -v span=100 - | gpquick --lines > fx_mavg.png
-```
+<img align="right" height="140px" src="readme-pics/fx_mavg.png">
 
-## Development and compilation
+In combination with `vvawk.mavg` (moving average):
 
 ```bash
-# Build dependencies
+vvxtract stepdata_re600_n350.h5 time body00/force_hydro \
+| vvawk.mavg -v span=10 - \
+| gpquick --points -y 0 1 \
+| display
+```
+
+## Building from source
+
+Install build dependencies:
+
+```bash
 sudo apt-get update
 sudo apt-get install build-essential cmake make git liblapack-dev
 ```
 
-Сборку проекта удобнее всего выполнять внутри докер контейнера.
-Об установке самого докера можно почитать
-на [официальном сайте](https://docs.docker.com/engine/installation/linux/ubuntu/#install-docker).
-Запуск девелоперского окружения делается при помощи [docker-compose](https://docs.docker.com/compose/install/):
+Build the project:
 
 ```bash
-export OS=ubuntu-artful
-sudo docker-compose build --pull
-sudo docker-compose up --no-start
-sudo docker-compose start
-sudo docker-compose exec builder /bin/bash
-```
-
-Внутри контейнера присутствуют все необходимые девелоперские либы (см. `Dockerfile`).
-Исходники vvflow примаунчены к директории `/vvflow`.
-Для сборки проекта используется `cmake`:
-
-```
-cmake -D CMAKE_BUILD_TYPE=Release /vvflow
+git clone https://github.com/vvflow/vvflow.git
+cd vvflow
+cmake .
 make -j
-make test
-cpack
+sudo make install
 ```
-
-Протестировать его можно в другом чистом контейнере:
-```
-sudo docker-compose exec tester /bin/bash
-```
-
-В нём можно установить свеже собранный `deb`-пакет и потренироваться запускать отдельные утилиты:
-```
-apt update && apt install -y ./deb/vvflow-*.deb
-find ./tests -type f -exec {} \;
-vvcompose
-```
-
-Распространять скомпилированный проект можно с помощью deb-пакетов через [packagecloud.io](https://packagecloud.io/):
-
-```
-export PACKAGECLOUD_TOKEN=api_token # https://packagecloud.io/api_token
-pkgcloud-push rosik/vvflow/ubuntu/xenial ./vvflow.deb
-```
-
-В процессе разработки также может пригодиться предпросмотр Markdown файлов:
-
-```
-grip /vvflow 0.0.0.0:1207
-```
-
-* README.md: http://127.0.0.1:1207
-
-Документацию можно проверять командой `man` внутри контейнера:
-```
-man -l utils/vvcompose/vvcompose.1
-```
-Либо через http сервер:
-```
-python -m SimpleHTTPServer 1208
-```
-* http://127.0.0.1:1208/utils/vvcompose/vvcompose.1.html
-* http://127.0.0.1:1208/utils/vvxtract/vvxtract.1.html
-* http://127.0.0.1:1208/utils/vvplot/vvplot.1.html
-
-## Links
-
-* [ronn](http://ricostacruz.com/cheatsheets/ronn.html) - markdown to manpages cheatsheet
