@@ -600,6 +600,39 @@ check_dev(function() return box:get_cofm()[1] end, 0, 1e-4)
 box = nil
 collectgarbage()
 
+-- gen_savonius
+check_err(function() gen_savonius() end, "bad argument #1 to 'gen_savonius' (table expected, got no value)")
+check_err(function() gen_savonius{ N={0} } end, "bad argument #1 to 'gen_savonius' ('N' must be a number)")
+check_err(function() gen_savonius{ N=nan } end, "bad argument #1 to 'gen_savonius' ('N' must be finite)")
+check_err(function() gen_savonius{ N=inf } end, "bad argument #1 to 'gen_savonius' ('N' must be finite)")
+check_err(function() gen_savonius{ N=-11 } end, "bad argument #1 to 'gen_savonius' ('N' must be positive)")
+check_err(function() gen_savonius{ dl={0} } end, "bad argument #1 to 'gen_savonius' ('dl' must be a number)")
+check_err(function() gen_savonius{ dl=nan } end, "bad argument #1 to 'gen_savonius' ('dl' must be finite)")
+check_err(function() gen_savonius{ dl=inf } end, "bad argument #1 to 'gen_savonius' ('dl' must be finite)")
+check_err(function() gen_savonius{ dl=-11 } end, "bad argument #1 to 'gen_savonius' ('dl' must be positive)")
+check_err(function() gen_savonius{ N=1, dl=1 } end, "bad argument #1 to 'gen_savonius' ('N' and 'dl' are mutually exclusive)")
+check_err(function() gen_savonius{             } end, "bad argument #1 to 'gen_savonius' (either 'N' or dl' must be specified)")
+check_err(function() gen_savonius{         N=1 } end, "bad argument #1 to 'gen_savonius' ('R' must be a number)")
+check_err(function() gen_savonius{ R={0}, N=1 } end, "bad argument #1 to 'gen_savonius' ('R' must be a number)")
+check_err(function() gen_savonius{ R=inf, N=1 } end, "bad argument #1 to 'gen_savonius' ('R' must be finite)")
+check_err(function() gen_savonius{ R=nan, N=1 } end, "bad argument #1 to 'gen_savonius' ('R' must be finite)")
+check_err(function() gen_savonius{ R= 1,  N=1 } end, "bad argument #1 to 'gen_savonius' ('h' must be a number)")
+check_err(function() gen_savonius{ R=-1, h= 1, N=1 } end, "bad argument #1 to 'gen_savonius' ('R' must be positive)")
+check_err(function() gen_savonius{ R= 1, h=-1, N=1 } end, "bad argument #1 to 'gen_savonius' ('h' must be positive)")
+check_err(function() gen_savonius{ R= 1, h= 1, N=1 } end, "bad argument #1 to 'gen_savonius' ('R' must be larger than 'h')")
+check_err(function() gen_savonius{ R= 2, h= 1, N=1, foo=5 } end, "bad argument #1 to 'gen_savonius' (excess parameter 'foo')")
+local savonius = gen_savonius{
+    R = 4, h = 1, dl = 0.01
+}
+-- Savonius area = 2*pi*R*h + pi*h^2/4
+check_dev(function() return savonius:get_area() end, (2*pi*4*1) + pi/4, 0.01)
+-- Savonius surface length = 4*pi*R + pi*h
+check_dev(function() return savonius:get_slen() end, (4*pi*4) + pi, 0.01)
+check_dev(function() return savonius:get_cofm()[1] end, 0, 1e-4)
+check_dev(function() return savonius:get_cofm()[2] end, 0, 1e-4)
+savonius = nil
+collectgarbage()
+
 -- TBodyList
 local cyl = gen_cylinder{R=0.5, N=200}
 cyl.label = "cyl"
