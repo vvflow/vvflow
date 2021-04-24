@@ -79,6 +79,8 @@ int luaopen_vvd (lua_State *L) {
     lua_setglobal(L, "gen_chamber_gpj"); // pop 1
     lua_pushcfunction(L, luavvd_gen_chamber_box); // push 1
     lua_setglobal(L, "gen_chamber_box"); // pop 1
+    lua_pushcfunction(L, luavvd_gen_savonius); // push 1
+    lua_setglobal(L, "gen_savonius"); // pop 1
 
     luaopen_space(L);
     luaopen_tvec(L);

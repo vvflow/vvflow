@@ -21,6 +21,7 @@ add_executable(vvcompose
     gen_plate.cpp
     gen_gis.cpp
     gen_box.cpp
+    gen_savonius.cpp
     linenoise.c
 )
 target_link_libraries(vvcompose vvhd dl)
