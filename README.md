@@ -6,6 +6,7 @@
 [lua]: https://learnxinyminutes.com/docs/lua/
 [awk]: https://man7.org/linux/man-pages/man1/awk.1p.html
 [ffmpeg]: https://ffmpeg.org/about.html
+[packagecloud]: https://packagecloud.io/vvflow/stable
 
 An implementation of the [Viscous Vortex Domains][vvd-wiki] (VVD) method.
 
@@ -38,9 +39,9 @@ curl -s https://packagecloud.io/install/repositories/vvflow/stable/script.deb.sh
 sudo apt install vvflow
 ```
 
-For today, binary packages are available for ubuntu 18.04 (bionic),
-20.04 (focal), 20.10 (groovy). On other Linux platforms, it can be
-[built from source](#building-from-source).
+Binary packages are hosted at [packagecloud.io][packagecloud]. For
+today, those are available for ubuntu 20.04 (focal) and 22.04 (jammy).
+On other Linux platforms, it can be [built from source](#building-from-source).
 
 Don't hesitate to [open an issue][issue] if you encounter any problems.
 

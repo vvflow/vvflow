@@ -259,16 +259,16 @@ int main_hdf(int argc, char **argv)
             std::stringstream fbuf;
             std::ifstream file(opt::load_field, std::ios::binary);
             fbuf << file.rdbuf();
-            field = new XField {.str = fbuf.str()};
+            field = new XField(fbuf.str());
         } else {
-            XVelocity *ufield = new XVelocity {
-                .space = S,
-                .xmin = opt::rect.xmin,
-                .ymin = opt::rect.ymin,
-                .dxdy = opt::mesh_hi.dxdy,
-                .xres = opt::mesh_hi.xres+1,
-                .yres = opt::mesh_hi.yres+1,
-            };
+            XVelocity *ufield = new XVelocity(
+                S,
+                opt::rect.xmin,
+                opt::rect.ymin,
+                opt::mesh_hi.dxdy,
+                opt::mesh_hi.xres+1,
+                opt::mesh_hi.yres+1
+            );
 
             ufield->mode = opt::U;
             ufield->ref_frame = opt::ref_S;
@@ -333,16 +333,16 @@ int main_hdf(int argc, char **argv)
             std::stringstream fbuf;
             std::ifstream file(opt::load_field, std::ios::binary);
             fbuf << file.rdbuf();
-            field = new XField {.str = fbuf.str()};
+            field = new XField(fbuf.str());
         } else {
-            XStreamfunction *sfield = new XStreamfunction {
-                .space = S,
-                .xmin = opt::rect.xmin,
-                .ymin = opt::rect.ymin,
-                .dxdy = opt::mesh_lo.dxdy,
-                .xres = opt::mesh_lo.xres+1,
-                .yres = opt::mesh_lo.yres+1,
-            };
+            XStreamfunction *sfield = new XStreamfunction(
+                S,
+                opt::rect.xmin,
+                opt::rect.ymin,
+                opt::mesh_lo.dxdy,
+                opt::mesh_lo.xres+1,
+                opt::mesh_lo.yres+1
+            );
             sfield->eps_mult = 2;
             sfield->ref_frame = opt::ref_S;
             sfield->evaluate();

@@ -11,8 +11,8 @@ jobs:
       fail-fast: false
       matrix:
         runs-on:
-          - ubuntu-18.04
           - ubuntu-20.04
+          - ubuntu-22.04
     runs-on: ${{ matrix.runs-on }}
     steps:
       - uses: actions/checkout@v2
@@ -53,17 +53,13 @@ jobs:
       fail-fast: false
       matrix:
         cfg:
-          - artifact-name: vvflow-ubuntu-18.04
-            distro-name: ubuntu
-            distro-version: '18.04'
-
           - artifact-name: vvflow-ubuntu-20.04
             distro-name: ubuntu
             distro-version: '20.04'
 
-          - artifact-name: vvflow-ubuntu-20.04
+          - artifact-name: vvflow-ubuntu-22.04
             distro-name: ubuntu
-            distro-version: '20.10'
+            distro-version: '22.04'
     steps:
       - uses: actions/download-artifact@v2
         with:

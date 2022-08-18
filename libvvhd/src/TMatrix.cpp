@@ -1,7 +1,9 @@
 #include "TMatrix.hpp"
 #include "elementary.h"
 
-#include <cstring> // memcpy
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 
 #ifdef __INTEL_COMPILER
     #include <mkl.h>
