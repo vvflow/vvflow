@@ -219,11 +219,11 @@ vvxtract stepdata_re600_n350.h5 time body00/force_hydro \
 
 ## Building from source
 
-Install build dependencies:
+Install build and runtime dependencies:
 
 ```bash
 sudo apt-get update
-sudo apt-get install build-essential cmake make git liblapack-dev
+sudo apt-get install build-essential cmake make git liblapack-dev gnuplot
 ```
 
 Build the project:
