@@ -77,6 +77,9 @@ Options:
     In case of tar it can be passed to vvplot as an <input>
     (default: png)
 
+  --eps <EPS>        Specify a field smoothing factor for -G, -P, -S.
+    (default: 2)
+
   --ref-xy <REF_XY>  Specify reference frame for -x and -y:
     "o"              - original;
     "b", "bx", "by"  - bound to body (either both XY or X or Y);
@@ -142,6 +145,7 @@ void opt::parse(int argc, char **argv) {
             {"size",   required_argument, 0, 's'},
             {"res-hi", required_argument, 0, 0xff00},
             {"res-lo", required_argument, 0, 0xff01},
+            {"eps",    required_argument, 0, 0xff02},
             {"load-field", required_argument, 0, 0xff10},
 
             {"ref-xy", required_argument, 0, 0xfe10},
@@ -294,6 +298,10 @@ void opt::parse(int argc, char **argv) {
             // if (!fail) {
             //     printf("RES_LO -> %d\n", opt::mesh_lo.xres);
             // }
+            break;
+        case 0xff02: // --eps
+            fail = sscanf(optarg, "%lf %n", &opt::eps_mult, &optn) < 1;
+            fail = fail || !(opt::eps_mult>0);
             break;
         case 0xfe10: // --ref-xy
             if (strcmp(optarg, "o") == 0) opt::ref_xy = 'o';

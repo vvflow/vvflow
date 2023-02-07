@@ -74,6 +74,7 @@ namespace opt {
     rect_t rect = {0.};
     mesh_t mesh_hi = {0., 640, 0};
     mesh_t mesh_lo = {0., 256, 0};
+    double eps_mult = 2.;
 
     const char* input;
     const char* target;
@@ -175,7 +176,7 @@ int main_hdf(int argc, char **argv)
             opt::mesh_hi.xres+1,
             opt::mesh_hi.yres+1,
         };
-        vrt.eps_mult = 2;
+        vrt.eps_mult = opt::eps_mult;
         vrt.evaluate();
         bin << vrt;
         gp.add("map_vorticity", bin.str());
@@ -209,7 +210,7 @@ int main_hdf(int argc, char **argv)
             opt::mesh_hi.xres+1,
             opt::mesh_hi.yres+1,
         };
-        prs.eps_mult = 2;
+        prs.eps_mult = opt::eps_mult;
         prs.ref_frame = opt::ref_P;
         prs.evaluate();
         bin << prs;
@@ -343,7 +344,7 @@ int main_hdf(int argc, char **argv)
                 opt::mesh_lo.xres+1,
                 opt::mesh_lo.yres+1
             );
-            sfield->eps_mult = 2;
+            sfield->eps_mult = opt::eps_mult;
             sfield->ref_frame = opt::ref_S;
             sfield->evaluate();
             field = sfield;

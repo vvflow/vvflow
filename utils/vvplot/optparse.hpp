@@ -61,6 +61,7 @@ namespace opt {
     extern int ttree_bottom_nodes;
     extern int ttree_near_nodes;
     extern int ttree_find_node;
+    extern double eps_mult;
 
     extern rect_t rect;
     extern mesh_t mesh_hi;
