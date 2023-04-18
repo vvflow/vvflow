@@ -56,13 +56,13 @@ static void dataset_write_body(hid_t fid, std::string name, std::string root_nam
     hsize_t N = body.size();
     hsize_t dims[2] = {N, 4};
 
-    double att_array[N][4] = {0};
+    double att_array[N][4];
 
     uint32_t general_slip = body.alist.front().slip;
-    uint32_t slip_array[N] = {0};
+    uint32_t slip_array[N];
 
     float heat_const = body.alist.front().heat_const;
-    float heat_array[N] = {0};
+    float heat_array[N];
 
     for (hsize_t i=0; i<N; i++) {
         const TAtt& att = body.alist[i];

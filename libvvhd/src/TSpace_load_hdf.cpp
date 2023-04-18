@@ -92,8 +92,8 @@ static void dataset_read_body(hid_t hid, std::string name, body_map_t& body_map)
         body.root_body = body_map[root_name];
     }
 
-    double att_array[N][4] = {0};
-    uint32_t slip_array[N] = {0};
+    double att_array[N][4];
+    uint32_t slip_array[N];
     herr_t err = H5Dread(h5d, H5T_NATIVE_DOUBLE, H5S_ALL, h5s_file, H5P_DEFAULT, att_array);
     if (err < 0)
         h5_throw("H5Dread", name);
