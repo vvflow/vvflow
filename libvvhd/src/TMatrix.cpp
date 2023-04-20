@@ -8,8 +8,8 @@
 #ifdef __INTEL_COMPILER
     #include <mkl.h>
 #else
-    #include <cblas.h>
     extern "C" {
+        #include <cblas.h>
         void dgesv_(int* n, const int* nrhs, double* a, int* lda, int* ipiv, double *x, int *incx, int *info);
         void dgetrf_(int* M, int *N, double* A, int* lda, int* IPIV, int* INFO);
         void dgetri_(int* N, double* A, int* lda, int* IPIV, double* WORK, int* lwork, int* INFO);

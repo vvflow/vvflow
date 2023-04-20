@@ -61,10 +61,18 @@ add_library(vvhd SHARED
     src/XVelocity.cpp
 )
 add_dependencies(vvhd lua hdf5)
+
+find_library(CBLAS cblas
+    HINTS ${PROJECT_BINARY_DIR}/../CBLAS/lib
+    REQUIRED
+)
+
 target_link_libraries(vvhd
+    ${CBLAS}
     ${LAPACK_LIBRARIES}
     ${HDF5_LIBRARIES}
     ${LUA_LIBRARIES}
+    dl
 )
 
 install (TARGETS vvhd DESTINATION lib)
