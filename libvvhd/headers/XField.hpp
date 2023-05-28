@@ -2,6 +2,7 @@
 
 #include <sstream>
 #include <vector>
+#include <cstdint>
 
 class XIsoline;
 struct TGap {
