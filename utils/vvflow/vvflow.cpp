@@ -1,4 +1,14 @@
 #include "./optparse.hpp"
+#include "./lua_space.h"
+#include "./lua_tvec.h"
+#include "./lua_tobj.h"
+#include "./lua_tvec3d.h"
+#include "./lua_tbody.h"
+#include "./lua_teval.h"
+#include "./lua_objlist.h"
+#include "./lua_bodylist.h"
+#include "./gen_body.h"
+#include "./getset.h"
 
 #include "MEpsilonFast.hpp"
 #include "MConvectiveFast.hpp"
@@ -16,6 +26,9 @@
 #include <cstring>
 #include <ctime>
 
+#define H5_USE_18_API
+#include <hdf5.h>
+
 #include "sensors.cpp"
 #include "omp.h"
 #define dbg(a) a
@@ -26,7 +39,83 @@ using std::cerr;
 using std::endl;
 using std::shared_ptr;
 
-//#define OVERRIDEMOI 0.35
+int stackDump(lua_State *L)
+{
+    int i;
+    int top = lua_gettop(L); /* depth of the stack */
+    for (i = 1; i <= top; i++) { /* repeat for each level */
+        int t = lua_type(L, i);
+        switch (t) {
+        case LUA_TSTRING: { /* strings */
+            printf("#%d str  '%s'\n", i, lua_tostring(L, i));
+            break;
+        }
+        case LUA_TBOOLEAN: { /* Booleans */
+            printf("#%d bool %s\n", i, lua_toboolean(L, i) ? "true" : "false");
+            break;
+        }
+        case LUA_TNUMBER: { /* numbers */
+            printf("#%d num  %g\n", i, lua_tonumber(L, i));
+            break;
+        }
+        case LUA_TUSERDATA: {
+            const char *typ;
+            if (luaL_getmetafield(L, i, "__name")) {
+                typ = lua_tostring(L, -1);
+                lua_pop(L, 1);
+            }
+            else
+                typ = "userdata";
+            printf("#%d udata %s\n", i, typ);
+            break;
+        }
+        default: { /* other values */
+            printf("#%d %s\n", i, lua_typename(L, t));
+            break;
+        }
+        }
+    }
+    printf("\n"); /* end the listing */
+    return 0;
+}
+
+int luaopen_vvd (lua_State *L) {
+
+    lua_pushnumber(L, std::numeric_limits<double>::infinity()); // push 1
+    lua_setglobal(L, "inf"); // pop 1
+    lua_pushnumber(L, std::numeric_limits<double>::quiet_NaN()); // push 1
+    lua_setglobal(L, "nan"); // pop 1
+
+    lua_pushcfunction(L, luavvd_load_body); // push 1
+    lua_setglobal(L, "load_body"); // pop 1
+    lua_pushcfunction(L, luavvd_gen_cylinder); // push 1
+    lua_setglobal(L, "gen_cylinder"); // pop 1
+    lua_pushcfunction(L, luavvd_gen_semicyl); // push 1
+    lua_setglobal(L, "gen_semicyl"); // pop 1
+    lua_pushcfunction(L, luavvd_gen_ellipse); // push 1
+    lua_setglobal(L, "gen_ellipse"); // pop 1
+    lua_pushcfunction(L, luavvd_gen_plate); // push 1
+    lua_setglobal(L, "gen_plate"); // pop 1
+    lua_pushcfunction(L, luavvd_gen_parallelogram); // push 1
+    lua_setglobal(L, "gen_parallelogram"); // pop 1
+    lua_pushcfunction(L, luavvd_gen_chamber_gpj); // push 1
+    lua_setglobal(L, "gen_chamber_gpj"); // pop 1
+    lua_pushcfunction(L, luavvd_gen_chamber_box); // push 1
+    lua_setglobal(L, "gen_chamber_box"); // pop 1
+    lua_pushcfunction(L, luavvd_gen_savonius); // push 1
+    lua_setglobal(L, "gen_savonius"); // pop 1
+
+    luaopen_space(L);
+    luaopen_tvec(L);
+    luaopen_tobj(L);
+    luaopen_tvec3d(L);
+    luaopen_teval(L);
+    luaopen_tbody(L);
+    luaopen_objlist(L);
+    luaopen_bodylist(L);
+
+    return 0;
+}
 
 // main options
 namespace opt {
@@ -41,8 +130,33 @@ int main(int argc, char** argv)
 {
     opt::parse(argc, argv);
 
+    lua_State *L = luaL_newstate();
+    luaL_openlibs(L);
+    luaopen_vvd(L);
+    int ret = 0;
+
+    lua_newtable(L);
+    lua_pushstring(L, argv[0]);
+    lua_rawseti(L, -2, 0);
+    lua_pushstring(L, opt::input);
+    lua_rawseti(L, -2, 1);
+    lua_setglobal(L, "arg");
+
     Space S;
-    S.load(opt::input);
+
+    if (H5Fis_hdf5(opt::input)) {
+        S.load(opt::input);
+        ret = luaL_dostring(L, "simulate()");
+    } else {
+        ret = luaL_dofile(L, opt::input);
+    }
+
+    if (ret) {
+        fprintf(stderr, "%s\n", lua_tostring(L, -1));
+        lua_pop(L, 1);
+    }
+
+    return 0;
 
     // error checking
     #define RAISE(STR) { cerr << "vvflow ERROR: " << STR << endl; return -1; }
