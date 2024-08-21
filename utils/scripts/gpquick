@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 from __future__ import print_function
 import sys, os
@@ -24,8 +24,8 @@ parser.add_argument(
 
 parser.add_argument(
     '-u', '--using',
-    dest='plot_usung',
-    type = str,
+    dest='plot_using',
+    type=str,
     help='plot using clause'
 )
 
@@ -97,9 +97,9 @@ if (args.plot_w_points):
     style = "lt 0 pt 7"
     if (args.plot_w_lines):
         style = "lt 1 pt 7"
-if args.plot_usung:
-    args.plot_usung = 'u ' + args.plot_usung
-gpw("plot '/dev/stdin' {} w linespoints {} lc rgb 'black'\n", args.plot_usung or "", style)
+if args.plot_using:
+    args.plot_using = 'u ' + args.plot_using
+gpw("plot '/dev/stdin' {} w linespoints {} lc rgb 'black'\n", args.plot_using or "", style)
 
 gpw("exit\n")
 os.close(wpipe)
