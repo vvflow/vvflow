@@ -124,9 +124,12 @@ namespace opt {
 
     const char* input;
     const char* sensors_file = NULL;
+
+    int argc;
+    char* const* argv;
 }
 
-int main(int argc, char** argv)
+int main(int argc, char* const* argv)
 {
     opt::parse(argc, argv);
 
@@ -136,10 +139,10 @@ int main(int argc, char** argv)
     int ret = 0;
 
     lua_newtable(L);
-    lua_pushstring(L, argv[0]);
-    lua_rawseti(L, -2, 0);
-    lua_pushstring(L, opt::input);
-    lua_rawseti(L, -2, 1);
+    for (int i=0; i<opt::argc; i++) {
+        lua_pushstring(L, opt::argv[i]);
+        lua_rawseti(L, -2, i);
+    }
     lua_setglobal(L, "arg");
 
     Space S;
