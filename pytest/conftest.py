@@ -22,7 +22,7 @@ class Env:
         #     self.env['PATH']
         # ]
         # self.env['PATH'] = ':'.join(path)
-        logging.warn('export PATH="%s"' % self.env['PATH'])
+        logging.warning('export PATH="%s"' % self.env['PATH'])
 
     def run(self, cmd, **kwargs):
         timeout = 10
@@ -116,11 +116,11 @@ def tempdir(request):
     tempdir = getattr(request.module, "tempdir")
     if not tempdir:
         dir = py.path.local(tempfile.mkdtemp())
-        logging.warn("Create tempdir: {}".format(str(dir)))
+        logging.warning("Create tempdir: {}".format(str(dir)))
         request.addfinalizer(lambda: dir.remove(rec=1))
         return str(dir)
     else:
-        logging.warn("Use tempdir: {}".format(tempdir))
+        logging.warning("Use tempdir: {}".format(tempdir))
         if not os.path.exists(tempdir):
             os.makedirs(tempdir)
         return tempdir
