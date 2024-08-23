@@ -164,6 +164,7 @@ int main(int argc, char* const* argv)
     if (ret) {
         fprintf(stderr, "%s\n", lua_tostring(L, -1));
         lua_pop(L, 1);
+        return 8;
     }
 
     return 0;

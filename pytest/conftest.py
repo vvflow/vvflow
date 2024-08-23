@@ -63,6 +63,8 @@ class Env:
         if proc.returncode != 0:
             raise subprocess.CalledProcessError(
                 returncode=proc.returncode,
+                output=stdout,
+                stderr=stderr,
                 cmd=cmd
             )
 

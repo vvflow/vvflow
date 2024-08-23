@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 
 import os
+import pytest
 from conftest import Env
+from subprocess import CalledProcessError
 
 tempdir = '/tmp/test_vvflow'
 
@@ -33,5 +35,8 @@ def test_run2(env: Env):
     with open(env.tmp("run2.lua"), "w") as f:
         f.write("error('Boo', 0)")
 
-    ret = env.run(["vvflow", env.tmp("run2.lua")])
-    assert ret.stderr.decode("utf-8") == "Boo\n"
+    with pytest.raises(CalledProcessError) as e:
+        env.run(["vvflow", env.tmp("run2.lua")])
+
+    assert e.value.stderr.decode("utf-8") == "Boo\n"
+    assert e.value.returncode == 8  # hardcoded in vvflow.cpp
