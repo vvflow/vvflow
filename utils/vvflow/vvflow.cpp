@@ -145,7 +145,14 @@ int main(int argc, char* const* argv)
     }
     lua_setglobal(L, "arg");
 
-    Space S;
+    lua_getglobal(L, "S");
+    Space **ptr = (Space**)lua_touserdata(L, -1);
+    lua_pop(L, 1);
+
+    if (!ptr) {
+        throw std::runtime_error("Internal error 0x180");
+    }
+    Space &S = **ptr;
 
     if (H5Fis_hdf5(opt::input)) {
         S.load(opt::input);
