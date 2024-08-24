@@ -40,3 +40,7 @@ def test_run2(env: Env):
 
     assert e.value.stderr.decode("utf-8") == "Boo\n"
     assert e.value.returncode == 8  # hardcoded in vvflow.cpp
+
+
+def test_run3(env: Env):
+    env.run(["vvflow", os.path.join(env.cwd, "nothing.lua")])

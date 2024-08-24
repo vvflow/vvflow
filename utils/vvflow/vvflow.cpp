@@ -79,6 +79,8 @@ int stackDump(lua_State *L)
     return 0;
 }
 
+int simulate (lua_State *L);
+
 int luaopen_vvd (lua_State *L) {
 
     lua_pushnumber(L, std::numeric_limits<double>::infinity()); // push 1
@@ -104,6 +106,9 @@ int luaopen_vvd (lua_State *L) {
     lua_setglobal(L, "gen_chamber_box"); // pop 1
     lua_pushcfunction(L, luavvd_gen_savonius); // push 1
     lua_setglobal(L, "gen_savonius"); // pop 1
+
+    lua_pushcfunction(L, simulate);
+    lua_setglobal(L, "simulate");
 
     luaopen_space(L);
     luaopen_tvec(L);
@@ -145,18 +150,17 @@ int main(int argc, char* const* argv)
     }
     lua_setglobal(L, "arg");
 
-    lua_getglobal(L, "S");
-    Space **ptr = (Space**)lua_touserdata(L, -1);
-    lua_pop(L, 1);
-
-    if (!ptr) {
-        throw std::runtime_error("Internal error 0x180");
-    }
-    Space &S = **ptr;
-
     if (H5Fis_hdf5(opt::input)) {
+        lua_getglobal(L, "S");
+        Space **ptr = (Space**)lua_touserdata(L, -1);
+        lua_pop(L, 1);
+
+        if (!ptr) {
+            throw std::runtime_error("Internal error 0x180");
+        }
+        Space &S = **ptr;
         S.load(opt::input);
-        ret = luaL_dostring(L, "simulate()");
+        ret = luaL_dostring(L, "simulate_until()");
     } else {
         ret = luaL_dofile(L, opt::input);
     }
@@ -168,6 +172,17 @@ int main(int argc, char* const* argv)
     }
 
     return 0;
+}
+
+int simulate (lua_State *L) {
+    lua_getglobal(L, "S");
+    Space **ptr = (Space**)lua_touserdata(L, -1);
+    lua_pop(L, 1);
+
+    if (!ptr) {
+        throw std::runtime_error("Internal error 0x180");
+    }
+    Space &S = **ptr;
 
     // error checking
     #define RAISE(STR) { cerr << "vvflow ERROR: " << STR << endl; return -1; }
@@ -252,4 +267,6 @@ int main(int argc, char* const* argv)
 
     if (opt::show_progress)
         fprintf(stderr, "\n");
+
+    return 0;
 }
