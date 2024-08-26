@@ -6,17 +6,20 @@ import shutil
 from conftest import Env
 from subprocess import CalledProcessError
 
-tempdir = '/tmp/test_vvflow'
+tempdir = "/tmp/test_vvflow"
 
 
 def test_args(env: Env):
-    ret = env.run([
-        "vvflow",
-        os.path.join(env.cwd, "echo_args.lua"),
-        "bar",
-        "baz",
-        "--progress",
-        "boo"])
+    ret = env.run(
+        [
+            "vvflow",
+            os.path.join(env.cwd, "echo_args.lua"),
+            "bar",
+            "baz",
+            "--progress",
+            "boo",
+        ]
+    )
     assert ret.stdout == b"bar\nbaz\nboo\n"
 
 
@@ -51,10 +54,10 @@ def test_run3(env: Env):
     results = os.listdir(tempdir + "/results_nothing")
     results.sort()
     assert results == [
-        '000000.h5',
-        '000005.h5',
-        '000010.h5',
-        '000012.h5',
-        '000016.h5',
-        '000020.h5',
+        "000000.h5",
+        "000005.h5",
+        "000010.h5",
+        "000012.h5",
+        "000016.h5",
+        "000020.h5",
     ]

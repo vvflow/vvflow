@@ -5,7 +5,8 @@ import struct
 import logging
 import subprocess
 
-tempdir = '/tmp'
+tempdir = "/tmp"
+
 
 def test(env):
     try:

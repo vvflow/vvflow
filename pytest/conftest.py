@@ -7,7 +7,8 @@ import logging
 import tempfile
 import shutil
 import subprocess
-logging.basicConfig(level=logging.INFO, format=' %(levelname)7s %(name)s > %(message)s')
+
+logging.basicConfig(level=logging.INFO, format=" %(levelname)7s %(name)s > %(message)s")
 
 
 class Env:
@@ -23,9 +24,9 @@ class Env:
         #     self.env['PATH']
         # ]
         # self.env['PATH'] = ':'.join(path)
-        logging.warning('export PATH="%s"' % self.env['PATH'])
+        logging.warning('export PATH="%s"' % self.env["PATH"])
         self.which = {}
-        for prog in ['vvcompose', 'vvflow', 'vvplot']:
+        for prog in ["vvcompose", "vvflow", "vvplot"]:
             self.which[prog] = os.path.abspath(shutil.which(prog))
 
     def run(self, cmd, **kwargs):
@@ -36,6 +37,7 @@ class Env:
 
         logging.info("Running: '{}'".format(cmd))
         proc = subprocess.Popen(
+            # fmt: skip
             cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -50,64 +52,53 @@ class Env:
             raise
 
         if stdout:
-            logger = logging.getLogger('stdout:')
+            logger = logging.getLogger("stdout:")
             try:
                 for line in iter(stdout.splitlines()):
-                    logger.info(line.decode('utf-8'))
+                    logger.info(line.decode("utf-8"))
             except UnicodeError:
                 logger.info("not UTF-8 ({} B)".format(len(stdout)))
             del logger
 
         if stderr:
-            logger = logging.getLogger('stderr:')
+            logger = logging.getLogger("stderr:")
             for line in iter(stderr.splitlines()):
-                logger.error(line.decode('utf-8'))
+                logger.error(line.decode("utf-8"))
             del logger
 
         if proc.returncode != 0:
             raise subprocess.CalledProcessError(
+                # fmt: skip
                 returncode=proc.returncode,
                 output=stdout,
                 stderr=stderr,
-                cmd=cmd
+                cmd=cmd,
             )
 
-        class ProcOutput():
+        class ProcOutput:
             pass
+
         output = ProcOutput()
         output.stdout = stdout
         output.stderr = stderr
         return output
 
     def vvcompose(self, lua_script, hdf):
-        return self.run([
-                'vvcompose',
-                os.path.join(self.cwd, lua_script),
-                self.tmp(hdf)
-            ],
-            cwd=self.tempdir
+        return self.run(
+            ["vvcompose", os.path.join(self.cwd, lua_script), self.tmp(hdf)],
+            cwd=self.tempdir,
         )
 
     def vvflow(self, hdf, **kwargs):
-        return self.run([
-                'vvflow',
-                self.tmp(hdf)
-            ],
-            cwd=self.tempdir,
-            **kwargs
-        )
+        return self.run(["vvflow", self.tmp(hdf)], cwd=self.tempdir, **kwargs)
 
     def vvplot(self, ifile, ofile, args=[]):
         ifile = self.tmp(ifile)
         ofile = self.tmp(ofile)
         if type(args) is str:
-            args = args.split(' ')
+            args = args.split(" ")
 
-        output = self.run(
-            ['vvplot', ifile, ofile] + args,
-            cwd=self.tempdir,
-            timeout=30
-        )
+        output = self.run(["vvplot", ifile, ofile] + args, cwd=self.tempdir, timeout=30)
         output.ifile = ifile
         output.ofile = ofile
         return output
@@ -116,9 +107,9 @@ class Env:
         return os.path.join(self.tempdir, fname)
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def tempdir(request):
-    print('')
+    print("")
     tempdir = getattr(request.module, "tempdir")
     if not tempdir:
         dir = py.path.local(tempfile.mkdtemp())
@@ -132,7 +123,7 @@ def tempdir(request):
         return tempdir
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def env(request, tempdir):
     env = Env(
         cwd=str(request.fspath.dirname),
