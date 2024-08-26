@@ -2,6 +2,7 @@
 
 import os
 import pytest
+import shutil
 from conftest import Env
 from subprocess import CalledProcessError
 
@@ -43,4 +44,17 @@ def test_run2(env: Env):
 
 
 def test_run3(env: Env):
-    env.run(["vvflow", os.path.join(env.cwd, "nothing.lua")])
+    script = os.path.join(env.cwd, "nothing.lua")
+    env.run([env.which["vvflow"], script], cwd=tempdir)
+    assert os.path.exists(tempdir + "/nothing.h5")
+    assert os.path.exists(tempdir + "/stepdata_nothing.h5")
+    results = os.listdir(tempdir + "/results_nothing")
+    results.sort()
+    assert results == [
+        '000000.h5',
+        '000005.h5',
+        '000010.h5',
+        '000012.h5',
+        '000016.h5',
+        '000020.h5',
+    ]

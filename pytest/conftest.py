@@ -5,6 +5,7 @@ import py
 import pytest
 import logging
 import tempfile
+import shutil
 import subprocess
 logging.basicConfig(level=logging.INFO, format=' %(levelname)7s %(name)s > %(message)s')
 
@@ -23,6 +24,9 @@ class Env:
         # ]
         # self.env['PATH'] = ':'.join(path)
         logging.warning('export PATH="%s"' % self.env['PATH'])
+        self.which = {}
+        for prog in ['vvcompose', 'vvflow', 'vvplot']:
+            self.which[prog] = os.path.abspath(shutil.which(prog))
 
     def run(self, cmd, **kwargs):
         timeout = 10
