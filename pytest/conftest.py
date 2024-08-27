@@ -84,21 +84,40 @@ class Env:
         return output
 
     def vvcompose(self, lua_script, hdf):
+        if not os.path.isabs(lua_script):
+            lua_script = os.path.join(self.cwd, lua_script)
+        if not os.path.isabs(hdf):
+            hdf = self.tmp(hdf)
         return self.run(
-            ["vvcompose", os.path.join(self.cwd, lua_script), self.tmp(hdf)],
+            # fmt: skip
+            [self.which["vvcompose"], lua_script, hdf],
             cwd=self.tempdir,
         )
 
     def vvflow(self, hdf, **kwargs):
-        return self.run(["vvflow", self.tmp(hdf)], cwd=self.tempdir, **kwargs)
+        if not os.path.isabs(hdf):
+            hdf = self.tmp(hdf)
+        return self.run(
+            # fmt: skip
+            [self.which["vvflow"], hdf],
+            cwd=self.tempdir,
+            **kwargs
+        )
 
     def vvplot(self, ifile, ofile, args=[]):
-        ifile = self.tmp(ifile)
-        ofile = self.tmp(ofile)
+        if not os.path.isabs(ifile):
+            ifile = self.tmp(ifile)
+        if not os.path.isabs(ofile):
+            ofile = self.tmp(ofile)
         if type(args) is str:
             args = args.split(" ")
 
-        output = self.run(["vvplot", ifile, ofile] + args, cwd=self.tempdir, timeout=30)
+        output = self.run(
+            # fmt: skip
+            [self.which["vvplot"], ifile, ofile] + args,
+            cwd=self.tempdir,
+            timeout=30,
+        )
         output.ifile = ifile
         output.ofile = ofile
         return output
@@ -117,9 +136,10 @@ def tempdir(request):
         request.addfinalizer(lambda: dir.remove(rec=1))
         return str(dir)
     else:
-        logging.warning("Use tempdir: {}".format(tempdir))
-        if not os.path.exists(tempdir):
-            os.makedirs(tempdir)
+        logging.warning("Use clean tempdir: {}".format(tempdir))
+        if os.path.exists(tempdir):
+            shutil.rmtree(tempdir)
+        os.makedirs(tempdir)
         return tempdir
 
 
