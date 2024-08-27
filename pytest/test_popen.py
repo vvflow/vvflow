@@ -1,11 +1,8 @@
 #!/usr/bin/env python3
-import os
-import numpy
-import struct
-import logging
+
 import subprocess
 
-tempdir = "/tmp"
+tempdir = "/tmp/test_popen"
 
 
 def test(env):
