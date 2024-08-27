@@ -32,6 +32,7 @@ jobs:
           key: cmake-cache-${{ matrix.runs-on }}-03
 
       - run: rm -rf build/deb
+      - run: black ./pytest --check --diff
       - run: cmake -S. -Bbuild
       - run: make -C build -j
       - run: make -C build test ARGS=-VV
