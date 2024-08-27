@@ -160,7 +160,7 @@ int main(int argc, char* const* argv)
         }
         Space &S = **ptr;
         S.load(opt::input);
-        ret = luaL_dostring(L, "simulate_until()");
+        ret = luaL_dostring(L, "simulate()");
     } else {
         ret = luaL_dofile(L, opt::input);
     }
