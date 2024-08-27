@@ -13,6 +13,7 @@ jobs:
         runs-on:
           - ubuntu-20.04
           - ubuntu-22.04
+          - ubuntu-24.04
     runs-on: ${{ matrix.runs-on }}
     steps:
       - uses: actions/checkout@v2
@@ -62,6 +63,10 @@ jobs:
           - artifact-name: vvflow-ubuntu-22.04
             distro-name: ubuntu
             distro-version: '22.04'
+
+          - artifact-name: vvflow-ubuntu-24.04
+            distro-name: ubuntu
+            distro-version: '24.04'
     steps:
       - uses: actions/download-artifact@v2
         with:
