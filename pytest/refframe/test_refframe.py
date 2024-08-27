@@ -14,7 +14,8 @@ def test(env):
     env.vvflow(hdf)
     ret = env.vvplot(
         # fmt: skip
-        "results_ref_o/000001.h5", "ref_o.tar",
+        "results_ref_o/000001.h5",
+        "ref_o.tar",
         args="-x -1.5,1.5 -B -S --ref-S o --tar",
     )
     env.vvplot(ret.ofile, ".")
@@ -27,7 +28,8 @@ def test(env):
     env.vvflow(hdf)
     ret = env.vvplot(
         # fmt: skip
-        "results_ref_b/000001.h5", "ref_b.tar",
+        "results_ref_b/000001.h5",
+        "ref_b.tar",
         args="-x -1.5,1.5 -B -S --ref-S b --tar",
     )
     env.vvplot(ret.ofile, ".")
