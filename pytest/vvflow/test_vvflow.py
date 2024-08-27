@@ -2,7 +2,6 @@
 
 import os
 import pytest
-import shutil
 from conftest import Env
 from subprocess import CalledProcessError
 

@@ -33,6 +33,7 @@ jobs:
 
       - run: rm -rf build/deb
       - run: black ./pytest --check --diff
+      - run: flake8 ./pytest
       - run: cmake -S. -Bbuild
       - run: make -C build -j
       - run: make -C build test ARGS=-VV

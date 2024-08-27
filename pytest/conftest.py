@@ -8,7 +8,11 @@ import tempfile
 import shutil
 import subprocess
 
-logging.basicConfig(level=logging.INFO, format=" %(levelname)7s %(name)s > %(message)s")
+logging.basicConfig(
+    # fmt: skip
+    level=logging.INFO,
+    format=" %(levelname)7s %(name)s > %(message)s",
+)
 
 
 class Env:

@@ -13,7 +13,9 @@ def test(env):
     env.vvcompose("compose_ref_o.lua", hdf)
     env.vvflow(hdf)
     ret = env.vvplot(
-        "results_ref_o/000001.h5", "ref_o.tar", args="-x -1.5,1.5 -B -S --ref-S o --tar"
+        # fmt: skip
+        "results_ref_o/000001.h5", "ref_o.tar",
+        args="-x -1.5,1.5 -B -S --ref-S o --tar",
     )
     env.vvplot(ret.ofile, ".")
     sf_o = env.run(["tar", "-xOf", ret.ofile, "map_streamfunction"]).stdout
@@ -24,7 +26,9 @@ def test(env):
     env.vvcompose("compose_ref_b.lua", hdf)
     env.vvflow(hdf)
     ret = env.vvplot(
-        "results_ref_b/000001.h5", "ref_b.tar", args="-x -1.5,1.5 -B -S --ref-S b --tar"
+        # fmt: skip
+        "results_ref_b/000001.h5", "ref_b.tar",
+        args="-x -1.5,1.5 -B -S --ref-S b --tar",
     )
     env.vvplot(ret.ofile, ".")
     sf_b = env.run(["tar", "-xOf", ret.ofile, "map_streamfunction"]).stdout
