@@ -26,7 +26,7 @@ class Env:
         # self.env['PATH'] = ':'.join(path)
         logging.warning('export PATH="%s"' % self.env["PATH"])
         self.which = {}
-        for prog in ["vvcompose", "vvflow", "vvplot"]:
+        for prog in ["vvflow", "vvplot"]:
             bin = shutil.which(prog)
             assert bin, f"Command '{prog}' not fount in PATH"
             self.which[prog] = os.path.abspath(bin)
@@ -92,16 +92,16 @@ class Env:
             hdf = self.tmp(hdf)
         return self.run(
             # fmt: skip
-            [self.which["vvcompose"], lua_script, hdf],
+            [self.which["vvflow"], lua_script, hdf],
             cwd=self.tempdir,
         )
 
-    def vvflow(self, hdf, **kwargs):
+    def vvflow(self, hdf, *args, **kwargs):
         if not os.path.isabs(hdf):
             hdf = self.tmp(hdf)
         return self.run(
             # fmt: skip
-            [self.which["vvflow"], hdf],
+            [self.which["vvflow"], hdf, *args],
             cwd=self.tempdir,
             **kwargs,
         )

@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-import os
+
 import pytest
+from conftest import Env
 
 tempdir = "/tmp/test_vvplot"
 
 
 @pytest.fixture(scope="module")
-def env_cyl(env):
+def env_cyl(env: Env):
     hdf = "cyl.h5"
     env.vvcompose("compose_cyl.lua", hdf)
     env.vvflow(hdf, timeout=30)
