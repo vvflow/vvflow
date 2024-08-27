@@ -44,7 +44,7 @@ class Env:
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             env=self.env,
-            **kwargs
+            **kwargs,
         )
 
         try:
@@ -103,7 +103,7 @@ class Env:
             # fmt: skip
             [self.which["vvflow"], hdf],
             cwd=self.tempdir,
-            **kwargs
+            **kwargs,
         )
 
     def vvplot(self, ifile, ofile, args=[]):
