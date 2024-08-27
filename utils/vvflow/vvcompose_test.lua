@@ -1,4 +1,4 @@
-#!/usr/bin/env vvcompose
+#!/usr/bin/env vvflow
 
 function printf(fmt, ...)
     print(string.format(fmt, ...))
