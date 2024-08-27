@@ -27,7 +27,9 @@ class Env:
         logging.warning('export PATH="%s"' % self.env["PATH"])
         self.which = {}
         for prog in ["vvcompose", "vvflow", "vvplot"]:
-            self.which[prog] = os.path.abspath(shutil.which(prog))
+            bin = shutil.which(prog)
+            assert bin, f"Command '{prog}' not fount in PATH"
+            self.which[prog] = os.path.abspath(bin)
 
     def run(self, cmd, **kwargs):
         timeout = 10
