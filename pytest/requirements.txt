@@ -1,4 +1,0 @@
-pytest
-numpy
-black
-flake8
