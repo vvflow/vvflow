@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-
+import os
 import numpy
 import struct
 import logging
+import subprocess
 
 tempdir = "/tmp/test_refframe"
 

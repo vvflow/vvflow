@@ -1,4 +1,4 @@
-#!/usr/bin/env vvflow
+#!/usr/bin/env vvcompose
 
 S.inf_vx = "0"
 S.re = 600
