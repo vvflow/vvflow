@@ -40,8 +40,9 @@ sudo apt install vvflow
 ```
 
 Binary packages are hosted at [packagecloud.io][packagecloud]. For
-today, those are available for ubuntu 20.04 (focal) and 22.04 (jammy).
-On other Linux platforms, it can be [built from source](#building-from-source).
+today, those are available for ubuntu 20.04 (focal), 22.04 (jammy),
+24.04 (noble). For performance reasons it's recommended to [build from
+source](#building-from-source).
 
 Don't hesitate to [open an issue][issue] if you encounter any problems.
 
