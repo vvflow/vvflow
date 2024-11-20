@@ -45,7 +45,7 @@ jobs:
       - run: make -C build test ARGS=-VV
       - run: pushd build; cpack
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         with:
           name: vvflow-${{ matrix.runs-on }}
           path: build/deb/vvflow-*.deb
