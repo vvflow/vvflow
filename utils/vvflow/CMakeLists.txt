@@ -27,6 +27,12 @@ add_executable(vvflow
 )
 target_link_libraries(vvflow vvhd dl)
 
+add_custom_command(
+    TARGET vvflow POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E create_symlink vvflow vvcompose
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    VERBATIM)
+
 if(WITH_MANPAGES)
 set(MAN_MD ${CMAKE_CURRENT_SOURCE_DIR}/vvflow.1.md)
 set(MAN_ROFF ${CMAKE_CURRENT_BINARY_DIR}/vvflow.1)
@@ -43,6 +49,7 @@ add_custom_target(vvflow.man ALL DEPENDS ${MAN_ROFF} ${MAN_HTML})
 endif()
 
 install (TARGETS vvflow DESTINATION bin)
+install (FILES ${CMAKE_CURRENT_BINARY_DIR}/vvcompose DESTINATION bin)
 install (FILES ${MAN_ROFF} DESTINATION share/man/man1)
 install (FILES ${MAN_HTML} DESTINATION share/doc/vvflow)
 

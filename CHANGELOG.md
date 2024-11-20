@@ -6,7 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
-- Deprecate `vvcompose`. Its functionality now is a part of `vvflow`.
+- Merge `vvcompose` functionality with `vvflow`. The symlink is
+  preserved for the compatibility.
 
 ## [2.3.0] - 2023-05-29
 

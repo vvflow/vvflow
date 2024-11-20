@@ -6,7 +6,6 @@ add_test(flake8 pipenv run flake8 ${CMAKE_CURRENT_SOURCE_DIR})
 add_test(black pipenv run black ${CMAKE_CURRENT_SOURCE_DIR} --check --diff)
 
 set(PATH_LIST
-    "${CMAKE_BINARY_DIR}/utils/vvcompose/"
     "${CMAKE_BINARY_DIR}/utils/vvflow/"
     "${CMAKE_BINARY_DIR}/utils/vvplot/"
     "${CMAKE_BINARY_DIR}/utils/vvxtract/"
