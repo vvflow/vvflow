@@ -1,22 +1,25 @@
-vvxtract(1) -- extract data from h5 files obtained with vvflow program
+vvxtract(1) -- extract data from hdf5 files obtained with vvflow program
 ====
 
 ## SYNOPSIS
 
-`vvxtract` [<OPTIONS>] <FILE> [<DATASET> ...]
+`vvxtract` [_options_] _file_ [_dataset_ ...]
 
 ## DESCRIPTION
 
-vvxtract is a part of Vvflow CFD Suite. It serves as a postprocessor for extracting obtained CFD simulation results.
+`vvxtract` is a part of Vvflow CFD Suite. It serves as a postprocessor
+for extracting obtained CFD simulation results.
 
-<FILE> is a hdf5 file, containing either a _Space_ from `vvcompose` or _stepdata_ from `vvflow`.
+_file_ is an hdf5 file, either from `results_*/` directory or a
+`stepdata_*` file.
 
-Without <DATASET> specified vvxtract runs with `--info` option enabled.
-It shows general information about the file: caption, creation time, creator version.
-When <FILE> is a _Space_ it also shows attributes of the space and all bodies in vvcompose-like style. 
+Without _dataset_ specified `vvxtract` runs with `--info` option
+implied. It shows general information about the file: caption, creation
+time, creator version. When _file_ is a results file it also shows
+attributes of the space and all bodies in vvflow-like style.
 
-With one or more <DATASET> option specified
-vvxtract merges lines of all datasets.
+With one or more _dataset_ option specified `vvxtract` merges lines of all
+those datasets.
 
 ## OPTIONS
 
@@ -24,7 +27,7 @@ vvxtract merges lines of all datasets.
     print program version and exit
 
   * -h, --help :
-    show manpage and exit
+    print help and exit
 
   * -l, --list:
     list all datasets in file and exit
@@ -33,4 +36,4 @@ vvxtract merges lines of all datasets.
     show general information about the file and exit
 
 ## SEE ALSO
-  vvcompose(1)
+  vvflow(1), vvplot(1)
