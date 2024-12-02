@@ -369,5 +369,302 @@ _Examples_:
     -- calculate fluid flow rate between two points
     print( S:XStreamfunction{2, -1} - S:XStreamfunction{2, 1} )
 
+### TVec
+
+  * vec.*x* (number) :
+
+  * vec.*y* (number) :
+
+  * vec = {*x*, *y*} :
+
+  * vec`:abs2`() :
+    return *x*\^2 + *y*\^2
+
+  * vec`:abs`() :
+    return sqrt( *x*\^2 + *y*\^2 )
+
+  * vec`:tostring`(), `tostring`(vec) :
+    return string "TVec(*x*,*y*)"
+
+  * vec`:totable`() :
+    return Lua table {*x*, *y*}
+
+_Example_:
+
+    S.gravity = {0, -9.8}
+    local vec = S.gravity
+    print(vec.x)      -- '0'
+    print(vec.y)      -- '-9.8'
+    print(vec:abs2()) -- '96.04', which is 9.8^2
+    print(vec:abs())  -- '9.8'
+    vec.x = 0 -- vectors are referenced by pointers
+    vec.y = 0 -- now gravity.y is 0
+
+### TVec3D
+
+Extended version of TVec with the third rotational component (angle)
+
+  * vec3d.*r* (TVec) :
+
+  * vec3d.*o* (number, radians) :
+
+  * vec3d.*d* (number, degrees) :
+
+  * vec3d = {*x*, *y*, *o*} :
+    initialization with *r* = {*x*, *y*} and angle *o* in radians
+
+  * vec3d`:tostring`(), `tostring`(vec3d) :
+    return string "TVec3D(*x*,*y*,*o*)"
+
+  * vec3d`:totable`() :
+    return Lua table {*x*, *y*, *o*}
+
+_Example_:
+
+    body.holder_pos = {0, 0, 0}
+    body.delta_pos.r = {1, 0} -- x, y components
+    body.delta_pos.o = math.pi -- in radians
+    body.delta_pos.d = 180 -- in degrees
+
+### TTime
+
+TTime class represets time as a common fraction.
+There are three forms of assignment:
+
+  * time =  {*num*, *den*} :
+
+  * time = "*num*/*den*" :
+    initialize with fraction *num*/*den*
+
+  * time = *t* :
+    initialize with decimal *t*
+
+_Example_:
+
+    S.time = 0.33 -- parsed as decimal 33/100
+    S.dt_save = {1, 500} -- 0.002
+    S.dt = "1/77" -- do not forget about quotes here
+    -- fraction without quotes is calculated by Lua,
+    -- thus obtained number will be considered decimal,
+    -- which may lead to the accuracy loss
+
+### TEval
+
+TEval class represents a math function of time *t*, expressed as string.
+TEval is implemented using [GNU libmatheval](https://www.gnu.org/software/libmatheval/manual/)
+
+  * e = "*expr*" :
+    initialize with math expression *expr*
+
+  * e`:eval`(*t*) :
+    evaluate the math expression
+
+  * e`:tostring`(), `tostring`(e) :
+    return string "*expr*"
+
+_Example_:
+
+    S.inf_vx = "sin(2*pi*t/8)"
+    S.inf_vy = "1"
+    S.inf_vx:eval(2.0) -- 1.0
+
+### TBody
+  * body.*label* (string) :
+    human-readable body name
+
+  * body.*density* (number) :
+    ratio of body and fluid densities
+
+  * body.*holder_pos* (TVec3D) :
+    the body holder coordinates
+
+  * body.*holder_vx*, body.*holder_vy*, body.*holder_vo* (TEval):
+    expressions of the holder movement speed
+
+  * body.*holder_mo* (TEval):
+    expression of the external holder torque
+
+  * body.*speed* (TVec3D) :
+    the speed obtained by solving the System of Linear Equations.
+    The rotation *axis* `=` *holder_pos* `+` *delta_pos*, see body`:get_axis`().
+
+  * body.*delta_pos* (TVec3D) :
+    current deformations of elastic connections between the holder and the body
+
+  * body.*spring_const* (TVec3D) :
+    rate of elastic connections.
+    Value `inf` corresponds to the rigid connection.
+
+  * body.*spring_damping* (TVec3D) :
+    viscous damping coefficient
+
+    Force acting on a body can be expressed as
+    `F = -`*spring_const*`*`*delta_pos* `-` *spring_damping*`*`*speed*.
+
+  * body.*collision_min*, body.*collision_max* (TVec3D) :
+    boundaries of body movement (concerning the *axis*).
+    Value `nan` correspond to the absence of boubdaries.
+
+  * body.*bounce* (number) :
+    coefficient of restitution (considering collisions)
+
+  * body.*slip* (boolean) :
+    whether to use slip or no-slip condition
+    for all segments of the body.
+    Valid values are `false` (no-slip, default) and `true` (slip).
+    Getting the value may return `nil`, which indicates
+    that the boundary condition is not uniform along the surface.
+
+  * body.*special_segment* (integer) :
+    the number of segment where slip/no-slip boundary condition
+    is replaced with equation of the flow steadines at infinity
+
+  * body.*root* (TBody) :
+    the root of the body. When `nil`, the holder is ultimate.
+
+  * `#`body :
+    return number of body segments
+
+  * body`:move_r`(TVec) :
+    displace the body together with *holder_pos.r*, keeping *delta_pos* unchanged
+
+  * body`:move_o`(*o*), body`:move_d`(*d*):
+    rotate the body around the *axis* by *o* radiand or *d* degrees.
+
+    Here *axis* `=` *holder_pos.r* `+` *delta_pos.r*.
+    After rotaion *holder_pos.r* and *delta_pos* remains unchanged,
+    and *holder_pos.o* increases by *o*.
+
+  * body`:get_axis`() :
+    return Lua table {*axis.x*, *axis.y*}, where *axis* `=` *holder_pos.r* `+` *delta_pos.r*
+
+  * body`:get_cofm`() :
+    return Lua table {*cofm.x*, *cofm.y*}, where *cofm* is the body center of mass
+
+  * body`:get_slen`() :
+    return the body surface length
+
+  * body`:get_area`() :
+    return the body area
+
+  * body`:get_moi_cofm`() :
+    return the moment of inertia about the center of mass.
+    Moment of inertia is calculated for density = 1,
+    do not forget to multiply it.
+
+  * body`:get_moi_axis`() :
+    return the moment of inertia about the *axis*.
+    *moi_axis* = *moi_cofm* + (*axis*-*cofm*).abs2() * *area*.
+
+  * body`:totable`() :
+    return Lua table with body corners (TVec)
+
+_Example_:
+
+    local cyl = load_body("cyl.txt")
+    cyl.label = "cylinder"
+    cyl:move_r({1, 0})
+    cyl.holder_pos.r = {0, 0}
+    cyl.delta_pos.r = {1, 0}
+    cyl.spring_const.r.x = 1
+    cyl.spring_const.r.y = inf
+
+### TBodyList
+
+  * S.body_list`:insert`(*body*) :
+    add *body* to the list
+
+  * S.body_list`:erase`(*body*) :
+    remove *body* from the list
+
+  * S.body_list`:clear`() :
+    remove all bodies
+
+  * `#`S.body_list :
+    return number of bodies in list
+
+  * S.body_list[*i*] :
+    return body at position *i*.
+    Counting is valid from `1` to `#list`, other indices return `nil`.
+
+  * `ipairs`(S.body_list) :
+    iterate over bodies
+
+_Example_:
+
+    -- change body density
+    S:load("example_re140.h5")
+    S.body_list[1].density = 4
+    S:save("example_re140.h5")
+
+### TObj
+
+TObj is a general class for vortex domains, sources and sinks, streak domains and streak sources.
+
+  * obj.*r* (TVec) :
+    object position
+
+  * obj.*v* (TVec) :
+    object speed, for internal use only
+
+  * obj.*g* (number) :
+    In *S.vort_list* it denotes circulation of vortex domain;
+
+    In *S.sink_list* it denotes intensity of sources (positive) and sinks (negative);
+
+    In *S.streak_source_list* and *S.streak_domain_list* the value *g* is ignored (and copied as is);
+
+  * obj = {*x*, *y*, *g*} :
+    initialization with *r* = {*x*, *y*}, *v* = {0, 0}
+
+  * obj:`tostring`(), `tostring`(obj) :
+    return string "TObj(*x*,*y*,*g*)"
+
+### TObjList
+
+  * list`:append`(*obj*, ...) :
+    append one or more objects to the list.
+    *obj* can be either TObj instance or Lua table {*x*, *y*, *g*}
+
+  * list`:clear`() :
+    remove all objects from list
+
+  * list`:load`(*FILE*) :
+    load body from text file with columns "*x* *y* *g*".
+    Loading does not remove any objects appended earlier.
+
+  * list`:load_bin`(*FILE*) :
+    load body from binary file, reading TObj values *x*, *y*, *g* from
+    three 8-byte blocks in double-precision floating-point format
+
+  * list`:totable`() :
+    return Lua table with objects (TObj)
+
+  * `#`list :
+    return number of objects in list
+
+  * list[*i*] :
+    return object at position *i*.
+    Counting is valid from `1` to `#list`, other indices return `nil`.
+
+  * `ipairs`(list) :
+    iterate over objects in list
+
+_Example_:
+
+    S.vort_list:clear()
+    S.vort_list:load("vlist.txt")
+    local gsum = 0
+    for i, obj in ipairs(S.vort_list) do
+        gsum = gsum + obj.g
+    end
+    print("Total circulation =", gsum)
+
+    S.sink_list:clear()
+    S.sink_list:append({0, 0, 10}) -- add source
+    print(#S.sink_list)   -- '1'
+    print(S.sink_list[1]) -- 'TObj(0,0,10)'
+    print(S.sink_list[2]) -- 'nil'
+
 ## SEE ALSO
   vvxtract(1), vvplot(1)
