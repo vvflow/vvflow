@@ -314,19 +314,7 @@ _Example_:
 
 ### gen_semicyl
 
-    gen_semicyl{R, [N|dl]}
-    -- b = gen_semicyl{R=0.5, N=500}
-
-The bottom half of a cylinder with center at {0, 0}
-
-    #      ____________________
-    #     |          /         |
-    #     ;         /          ;
-    #      ;       / R        ;
-    #       \     /          /
-    #        '.  /         .`
-    #          `-.______.-'
-    #
+    Moved to vvflow.1.md
 
 ### gen_ellipse
 

@@ -109,6 +109,29 @@ Vvflow defines the following global variables:
 ```
 
   * **gen_semicyl**({*R*, [*N*|*dl*]}) :
+
+    generate bottom half of a cylinder with the center at point (0, 0)
+    with *R* - radius of the cylinder,
+    *N* - number of segments,
+    *dl* - average segment length.
+    Either *N* or *dl* must be specified but not both.
+
+```
+    #      ____________________
+    #     |          /         |
+    #     ;         /          ;
+    #      ;       / R        ;
+    #       \     /          /
+    #        '.  /         .`
+    #          `-.______.-'
+    #
+
+    Example:
+
+    local b1 = gen_semicyl({R=0.5, N=500})
+    local b2 = gen_semicyl({R=0.5, dl=0.01})
+```
+
   * **gen_ellipse**({*Rx*, *Ry*, [*N*|*dl*]}) :
   * **gen_plate**({*R1*, *R2*, *L*, [*N*|*dl*]}) :
   * **gen_parallelogram**({*L*, *H*, *d*, [*N*|*dl*]}) :
