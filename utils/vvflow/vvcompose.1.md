@@ -322,29 +322,7 @@ _Example_:
 
 ### gen_plate
 
-    gen_plate{R1, R2, L, [N|dl]}
-
-Shape of a plate is formed by two circles and two tangents.
-Circles radius are `R1` and `R2`, their centers are {0, 0} and {0, `L`}.
-
-    #        .-'""""""""""""""""""""""""'-.
-    #      .'                             /'.
-    #     /                           R2 /   \
-    #    ;       __________ L _________ /     ;
-    #    ;      /                             ;
-    #     \    / R1                          /
-    #      '. /                            .'
-    #        '-..........................-'
-
-
-  * `R1`, `R2` :
-    radius of the left and right edge respectively
-
-  * `L` :
-    distance between circles centers
-
-  * `N`, `dl` :
-    specify either number of segments or average segment length
+    Moved to vvflow.1.md
 
 ### gen_parallelogram
 

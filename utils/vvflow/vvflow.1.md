@@ -153,7 +153,23 @@ Vvflow defines the following global variables:
     local b = gen_ellipse{Rx=4, Ry=0.5, N=600}
 ```
 
-  * **gen_plate**({*R1*, *R2*, *L*, [*N*|*dl*]}) :
+  * **gen_plate**({*R1*, *R2*, *L*, [*N*|*dl*], [*start*], [*stop*], [*gap*]}) :
+    A plate is formed by two circles and two tangents.
+    Circles radius are *R1* and *R2*, their centers are (0, 0) and (0, *L*).
+
+    Parameters *start* and *stop* allow generating multi-segment fish-like body.
+
+```
+    #        .-'""""""""""""""""""""""""'-.
+    #      .'                             /'.
+    #     /                           R2 /   \
+    #    ;       __________ L _________ /     ;
+    #    ;      /                             ;
+    #     \    / R1                          /
+    #      '. /                            .'
+    #        '-..........................-'
+```
+
   * **gen_parallelogram**({*L*, *H*, *d*, [*N*|*dl*]}) :
   * **gen_roundrect**({*L*, *H*, *R*, [*N*|*dl*]}) :
   * **gen_savonius**({*R*, *h*, [*N*|*dl*]}) :
