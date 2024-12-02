@@ -342,29 +342,7 @@ _Example_:
 
 ### gen_savonius
 
-    gen_savonius{R, h, [N|dl]}
-
-Savonius is formed by 2 thick semi-circles,
-which boundary is 6 semi-circle arcs.
-This is how it looks like:
-
-    #        .-'""'-.
-    #      .'        '.
-    #     /   .-""-.   \          __
-    #    ;   /      \   ;        /  \
-    #    \__/        ;   \      /   ;
-    #                 \   '-..-'   /
-    #                  '.        .'
-    #                    '-....-'
-
-  * `R` :
-    radius of the midline
-
-  * `h` :
-    thickness of savonius
-
-  * `N`, `dl` :
-    specify either number of segments or average segment length
+    Moved to vvflow.1.md
 
 ## SEE ALSO
   vvflow(1), vvxtract(1), vvplot(1)

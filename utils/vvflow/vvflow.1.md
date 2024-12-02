@@ -209,6 +209,24 @@ Vvflow defines the following global variables:
 ```
 
   * **gen_savonius**({*R*, *h*, [*N*|*dl*]}) :
+    generate a savonius formed by 2 thick semi-circles
+    with *R* - the radius of the midline,
+    *h* - thickness of savonius,
+    *N* - number of segments,
+    *dl* - average segment length.
+    Either *N* or *dl* must be specified but not both.
+
+```
+    #        .-'""'-.
+    #      .'        '.
+    #     /   .-""-.   \          __
+    #    ;   /      \   ;        /  \
+    #    \__/        ;   \      /   ;
+    #                 \   '-..-'   /
+    #                  '.        .'
+    #                    '-....-'
+```
+
   * **gen_chamber_gpj**({*R0*, *X0*, *X1*, *X2*, *X3*, *d*, *L*, *H*, *dln*, *dls*}) :
     This is a chamber for the generator of pulsating jets (GPJ).
     It consists of prechamber, straight channel, expanding channel, and a bounding box.
