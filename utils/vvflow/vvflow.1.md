@@ -210,6 +210,43 @@ Vvflow defines the following global variables:
 
   * **gen_savonius**({*R*, *h*, [*N*|*dl*]}) :
   * **gen_chamber_gpj**({*R0*, *X0*, *X1*, *X2*, *X3*, *d*, *L*, *H*, *dln*, *dls*}) :
+    This is a chamber for the generator of pulsating jets (GPJ).
+    It consists of prechamber, straight channel, expanding channel, and a bounding box.
+
+    Prechamber is a half of a circle with radius *R0* and the center at point (*X0*, 0).
+    Boundary condition in prechamber is always slip.
+
+    Straight channel is formed by two symmetric horizontal lines:
+    with slip condition from *X0* to *X1* and no-slip from *X1* to *X2*.
+
+    Expanding channel is defined by angle *d* in degrees. It spans from *X2* to *X3*.
+    The boundary condition in expanding channel is no-slip.
+
+    The bounding box is a rectangle with constraints X:{*X3*-*L*, *X3*}, Y:{-*H*/2, *H*/2}.
+    The bounding box implies slip boundary condition.
+
+    Regions with no-slip boundary condition have segment length *dln*, regions with slip - *dls*.
+
+```
+    #    ,----------------,  - H
+    #    |              .-'
+    #    |     .------""     - r0
+    #    |    /
+    #    |    \
+    #    |     '------..
+    #    |              '-.
+    #    '----------------'
+
+    #          slip | noslip ..--"
+    #      .-"""""""|"""""""'
+    #     /
+    #    ;    +
+    #     \
+    #      '-.......|.......,
+    #                        ""--,
+    #         ^x0   ^x1     ^x2  ^x3
+```
+
   * **gen_chamber_box**({*L*, *H*, *D*, *h*, *d*, *dln*, *dls*}) :
 
 ### Space
