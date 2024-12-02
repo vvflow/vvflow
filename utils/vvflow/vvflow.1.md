@@ -109,7 +109,6 @@ Vvflow defines the following global variables:
 ```
 
   * **gen_semicyl**({*R*, [*N*|*dl*]}) :
-
     generate bottom half of a cylinder with the center at point (0, 0)
     with *R* - radius of the cylinder,
     *N* - number of segments,
