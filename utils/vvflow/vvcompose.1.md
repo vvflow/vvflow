@@ -318,24 +318,7 @@ _Example_:
 
 ### gen_ellipse
 
-    gen_ellipse{Rx, Ry, [N|dl]}
-    -- b = gen_ellipse{Rx=4, Ry=0.5, N=600}
-
-Generate an ellipse with center at {0, 0}
-
-    #        .--"""""--.
-    #      .'     | Ry  '.
-    #     /       |       \
-    #    ;        +---Rx---;
-    #     \               /
-    #      '.           .'
-    #        '--.....--'
-
-  * `Rx`, `Ry` :
-    Ellipse semi-axis
-
-  * `N`, `dl` :
-    specify either number of segments or average segment length
+    Moved to vvflow.1.md
 
 ### gen_plate
 

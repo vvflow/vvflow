@@ -133,6 +133,26 @@ Vvflow defines the following global variables:
 ```
 
   * **gen_ellipse**({*Rx*, *Ry*, [*N*|*dl*]}) :
+    generate an ellipse with the center at point (0, 0)
+    with *Rx*, *Ry* - semi-axis,
+    *N* - number of segments,
+    *dl* - average segment length.
+    Either *N* or *dl* must be specified but not both.
+
+```
+    #        .--"""""--.
+    #      .'     | Ry  '.
+    #     /       |       \
+    #    ;        +---Rx---;
+    #     \               /
+    #      '.           .'
+    #        '--.....--'
+
+    Example:
+
+    local b = gen_ellipse{Rx=4, Ry=0.5, N=600}
+```
+
   * **gen_plate**({*R1*, *R2*, *L*, [*N*|*dl*]}) :
   * **gen_parallelogram**({*L*, *H*, *d*, [*N*|*dl*]}) :
   * **gen_roundrect**({*L*, *H*, *R*, [*N*|*dl*]}) :
