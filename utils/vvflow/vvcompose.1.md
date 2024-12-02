@@ -310,26 +310,7 @@ _Example_:
 
 ### gen_cylinder
 
-    gen_cylinder{R, [N|dl]}
-    -- b = gen_cylinder{R=0.5, N=500}
-
-Generate a cylinder with center at {0, 0}
-
-    #        .-'""'-.
-    #      .'        '.
-    #     /            \
-    #    ;              ;
-    #    ;       \      ;
-    #     \     R \    /
-    #      '.      \ .'
-    #        '-....-'
-
-  * `R` :
-    radius of the cylinder
-
-  * `N`, `dl` :
-    specify either number of segments or average segment length
-
+    Moved to vvflow.1.md
 
 ### gen_semicyl
 
