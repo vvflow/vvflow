@@ -338,28 +338,7 @@ _Example_:
 
 ### gen_chamber_box
 
-    gen_chamber_box{L, H, D, h, d, dln, dls}
-
-This is a box chamber.
-It consists of 4 thick walls with a hole on the bottom.
-
-Inner rect has dimensions `L`x`H`.
-with the centet of its bottom having coordinates {0, 0}.
-Size of the hole is `D`.
-Thickness of the left, right and top walls is `h`.
-Thickness of the bottom wall is `d`.
-
-Regions with no-slip boundary condition (inner bottom surface) have segment length `dln`,
-regions with slip - `dls`.
-
-    #    ,-------------------,  - H+h
-    #    |   _____________   |  _ H
-    #    |  |             |  |
-    #    |  |             |  |
-    #    |  |___   .   ___|  |  _ 0
-    #    '------'     '------'  - 0-d
-    #              ^  ^   ^  ^
-    #              0 D/2 L/2 L/2+h
+    Moved to vvflow.1.md
 
 ### gen_savonius
 
