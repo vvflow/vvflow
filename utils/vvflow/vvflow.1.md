@@ -171,6 +171,25 @@ Vvflow defines the following global variables:
 ```
 
   * **gen_parallelogram**({*L*, *H*, *d*, [*N*|*dl*]}) :
+    generate a parallelogram with its bottom left corner at point (0, 0)
+    with *L* - basement length,
+    *H* - height,
+    *d* - angle in degrees (from 0 to 180),
+    *N* - number of segments,
+    *dl* - average segment length.
+    Either *N* or *dl* must be specified but not both.
+
+```
+    #          _______________
+    #         /|            d /
+    #        / |             /
+    #       /  |H           /
+    #      /   |           /
+    #     /    |          /
+    #    /_____'_________/
+    #            L
+```
+
   * **gen_roundrect**({*L*, *H*, *R*, [*N*|*dl*]}) :
   * **gen_savonius**({*R*, *h*, [*N*|*dl*]}) :
   * **gen_chamber_gpj**({*R0*, *X0*, *X1*, *X2*, *X3*, *d*, *L*, *H*, *dln*, *dls*}) :

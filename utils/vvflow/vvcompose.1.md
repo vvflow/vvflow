@@ -326,30 +326,7 @@ _Example_:
 
 ### gen_parallelogram
 
-    gen_parallelogram{L, H, d, [N|dl]}
-
-Generate parallelogram with origin in bottom left corner.
-
-    #          _______________
-    #         /|            d /
-    #        / |             /
-    #       /  |H           /
-    #      /   |           /
-    #     /    |          /
-    #    /_____'_________/
-    #            L
-
-  * `L` :
-    basement length
-
-  * `H` :
-    height
-
-  * `d` :
-    angle in degrees (from 0 to 180)
-
-  * `N`, `dl` :
-    specify either number of segments or average segment length
+    Moved to vvflow.1.md
 
 ### gen_roundrect
 
