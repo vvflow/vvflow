@@ -330,30 +330,7 @@ _Example_:
 
 ### gen_roundrect
 
-    gen_roundrect{L, H, R, [N|dl]}
-
-Generate roundrect with origin in center.
-
-    #       .-;""""""""""""""""""""""""""--.
-    #     /`  | R                           `\
-    #    ;    |                               ;
-    #    |----+                               |
-    #    |                                    |
-    #    ;                                    ;
-    #     \                                  /
-    #      `'--..........................--'`
-
-  * `L` :
-    bounding rect length
-
-  * `H` :
-    bounding rect height
-
-  * `R` :
-    corner radius (shoud be less than `0.5*min(L,H)` )
-
-  * `N`, `dl` :
-    specify either number of segments or average segment length
+    Moved to vvflow.1.md
 
 ### gen_chamber_gpj
 

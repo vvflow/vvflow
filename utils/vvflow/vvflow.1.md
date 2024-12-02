@@ -191,6 +191,24 @@ Vvflow defines the following global variables:
 ```
 
   * **gen_roundrect**({*L*, *H*, *R*, [*N*|*dl*]}) :
+    generate a roundrect with its center at point (0, 0)
+    with *L*, *H* - bounding rect size,
+    *R* - corner radius (shoud be less than `0.5*min(L,H)`),
+    *N* - number of segments,
+    *dl* - average segment length.
+    Either *N* or *dl* must be specified but not both.
+
+```
+    #       .-;""""""""""""""""""""""""""--.
+    #     /`  | R                           `\
+    #    ;    |                               ;
+    #    |----+                               |
+    #    |                                    |
+    #    ;                                    ;
+    #     \                                  /
+    #      `'--..........................--'`
+```
+
   * **gen_savonius**({*R*, *h*, [*N*|*dl*]}) :
   * **gen_chamber_gpj**({*R0*, *X0*, *X1*, *X2*, *X3*, *d*, *L*, *H*, *dln*, *dls*}) :
   * **gen_chamber_box**({*L*, *H*, *D*, *h*, *d*, *dln*, *dls*}) :
