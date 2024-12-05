@@ -429,13 +429,13 @@ Example:
 TTime class represets time as a common fraction.
 There are three forms of assignment:
 
-  * time =  {*num*, *den*} :
+  * **time** =  {_num_, _den_} :
 
-  * time = "*num*/*den*" :
-    initialize with fraction *num*/*den*
+  * **time** = "_num_/_den_" :
+    initialize with fraction _num_/_den_
 
-  * time = *t* :
-    initialize with decimal *t*
+  * **time** = _t_ :
+    initialize with decimal _t_
 
 Example:
 
@@ -448,17 +448,17 @@ Example:
 
 ### TEval
 
-TEval class represents a math function of time *t*, expressed as string.
-TEval is implemented using [GNU libmatheval](https://www.gnu.org/software/libmatheval/manual/)
+TEval class represents a math function of time _t_, expressed as string.
+TEval is parsed as a lua script using **lua_load** function.
 
-  * e = "*expr*" :
-    initialize with math expression *expr*
+  * **e** = "_expr_" :
+    initialize with math expression _expr_
 
-  * e`:eval`(*t*) :
+  * **e:eval**(_t_) :
     evaluate the math expression
 
-  * e`:tostring`(), `tostring`(e) :
-    return string "*expr*"
+  * **e:tostring**(), **tostring**(_e_) :
+    return string "expr"
 
 Example:
 
