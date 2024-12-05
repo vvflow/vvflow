@@ -351,7 +351,7 @@ below.
   * **S:XStreamfunction**({_x_, _y_}) :
     calculate streamfunction in point
 
-_Examples_:
+Example:
 
     S.re = 140
     S.inf_vx = "1+0.5*sin(2*pi*0.1*t)" -- gusty wind
@@ -389,7 +389,7 @@ _Examples_:
   * vec`:totable`() :
     return Lua table {*x*, *y*}
 
-_Example_:
+Example:
 
     S.gravity = {0, -9.8}
     local vec = S.gravity
@@ -419,7 +419,7 @@ Extended version of TVec with the third rotational component (angle)
   * vec3d`:totable`() :
     return Lua table {*x*, *y*, *o*}
 
-_Example_:
+Example:
 
     body.holder_pos = {0, 0, 0}
     body.delta_pos.r = {1, 0} -- x, y components
@@ -439,7 +439,7 @@ There are three forms of assignment:
   * time = *t* :
     initialize with decimal *t*
 
-_Example_:
+Example:
 
     S.time = 0.33 -- parsed as decimal 33/100
     S.dt_save = {1, 500} -- 0.002
@@ -462,7 +462,7 @@ TEval is implemented using [GNU libmatheval](https://www.gnu.org/software/libmat
   * e`:tostring`(), `tostring`(e) :
     return string "*expr*"
 
-_Example_:
+Example:
 
     S.inf_vx = "sin(2*pi*t/8)"
     S.inf_vy = "1"
@@ -559,7 +559,7 @@ _Example_:
   * body`:totable`() :
     return Lua table with body corners (TVec)
 
-_Example_:
+Example:
 
     local cyl = load_body("cyl.txt")
     cyl.label = "cylinder"
@@ -590,7 +590,7 @@ _Example_:
   * `ipairs`(S.body_list) :
     iterate over bodies
 
-_Example_:
+Example:
 
     -- change body density
     S:load("example_re140.h5")
@@ -650,7 +650,7 @@ TObj is a general class for vortex domains, sources and sinks, streak domains an
   * `ipairs`(list) :
     iterate over objects in list
 
-_Example_:
+Example:
 
     S.vort_list:clear()
     S.vort_list:load("vlist.txt")
