@@ -3,15 +3,15 @@ vvxtract(1) -- extract data from hdf5 files obtained with vvflow program
 
 ## SYNOPSIS
 
-`vvxtract` [_options_] _file_ [_dataset_ ...]
+**vvxtract** [ _options_ ] _file_ [ _dataset_ ... ]
 
 ## DESCRIPTION
 
-`vvxtract` is a part of Vvflow CFD Suite. It serves as a postprocessor
+**vvxtract** is a part of Vvflow CFD Suite. It serves as a postprocessor
 for extracting obtained CFD simulation results.
 
-_file_ is an hdf5 file, either from `results_*/` directory or a
-`stepdata_*` file.
+_file_ is an hdf5 file, either from **results\_\*/** directory or a
+**stepdata\_\*** file.
 
 Without _dataset_ specified `vvxtract` runs with `--info` option
 implied. It shows general information about the file: caption, creation
