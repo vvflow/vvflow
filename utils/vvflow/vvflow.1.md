@@ -402,20 +402,20 @@ Example:
 
 Extended version of TVec with the third rotational component (angle)
 
-  * vec3d.*r* (TVec) :
+  * **vec3d.r** = ... (TVec) :
 
-  * vec3d.*o* (number, radians) :
+  * **vec3d.o** = ... (number, in radians) :
 
-  * vec3d.*d* (number, degrees) :
+  * **vec3d.d** = ... (number, in degrees) :
 
-  * vec3d = {*x*, *y*, *o*} :
-    initialization with *r* = {*x*, *y*} and angle *o* in radians
+  * **vec3d** = {_x_, _y_, _o_} :
+    initialization with **r** = {_x_, _y_} and angle _o_ in radians
 
-  * vec3d`:tostring`(), `tostring`(vec3d) :
-    return string "TVec3D(*x*,*y*,*o*)"
+  * **vec3d:tostring**(), **tostring**(_vec3d_) :
+    return string "TVec3D(_x_,_y_,_o_)"
 
-  * vec3d`:totable`() :
-    return Lua table {*x*, *y*, *o*}
+  * **vec3d:totable**() :
+    return Lua table {_x_, _y_, _o_}
 
 Example:
 
