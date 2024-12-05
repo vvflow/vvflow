@@ -371,23 +371,21 @@ Example:
 
 ### TVec
 
-  * vec.*x* (number) :
+  * **vec.x, vec.y** = ... (number) :
 
-  * vec.*y* (number) :
+  * **vec** = {_x_, _y_} :
 
-  * vec = {*x*, *y*} :
+  * **vec:abs2**() :
+    return _x_\^2 + _y_\^2
 
-  * vec`:abs2`() :
-    return *x*\^2 + *y*\^2
+  * **vec:abs**() :
+    return sqrt( _x_\^2 + _y_\^2 )
 
-  * vec`:abs`() :
-    return sqrt( *x*\^2 + *y*\^2 )
+  * **vec:tostring**(), **tostring**(_vec_) :
+    return string "TVec(_x_,_y_)"
 
-  * vec`:tostring`(), `tostring`(vec) :
-    return string "TVec(*x*,*y*)"
-
-  * vec`:totable`() :
-    return Lua table {*x*, *y*}
+  * **vec:totable**() :
+    return Lua table {_x_, _y_}
 
 Example:
 
