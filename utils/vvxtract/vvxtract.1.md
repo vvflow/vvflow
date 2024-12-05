@@ -23,16 +23,16 @@ those datasets.
 
 ## OPTIONS
 
-  * -v, --version :
+  * **-v, --version** :
     print program version and exit
 
-  * -h, --help :
+  * **-h, --help** :
     print help and exit
 
-  * -l, --list:
+  * **-l, --list**:
     list all datasets in file and exit
 
-  * -i, --info:
+  * **-i, --info**:
     show general information about the file and exit
 
 ## SEE ALSO

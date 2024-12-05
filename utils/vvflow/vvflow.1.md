@@ -3,7 +3,7 @@ vvflow(1) -- solve the CFD problem
 
 ## SYNOPSIS
 
-`vvflow` [_options_] _file_
+**vvflow** [ _options_ ] _file_
 
 ## DESCRIPTION
 
@@ -16,16 +16,16 @@ hdf5 file copied from another simulation results.
 
 ## OPTIONS
 
-  * -v, --version :
+  * **-v, --version** :
     print program version and exit
 
-  * -h, --help :
+  * **-h, --help** :
     print help and exit
 
-  * --progress :
+  * **--progress** :
     print progress during the simulation
 
-  * --profile :
+  * **--profile** :
     save pressure and friction profiles along bodies surfaces to the stepdata file
 
 ## LUA SCRIPT
@@ -296,59 +296,59 @@ the data about the simulation. Here are listed all defined properties
 with their types and physical meaning. Description of all types is given
 below.
 
-  * S.*caption* (string) :
+  * **S.caption** = *caption* (string) :
     simulation caption is used in results filenames:
-    stepdata_*caption*.h5, results_*caption*
+    stepdata\_*caption*.h5, results\_*caption*/
 
-  * S.*re* (number) :
+  * **S.re** = *re* (number) :
     *re* = 1/*nyu*, where *nyu* is the kinematic viscosity of fluid
 
-  * S.*inf_g* (number) :
+  * **S.inf_g** = ... (number) :
     circulation over an infinite contour
 
-  * S.*inf_vx*, S.*inf_vy* (TEval) :
+  * **S.inf_vx, S.inf_vy** = ... (TEval) :
     math expressions of undisturbed flow speed
 
-  * S.*gravity* (TVec) :
+  * **S.gravity** = ... (TVec) :
     acceleration of gravity
 
-  * S.*time* (TTime) :
+  * **S.time** = ... (TTime) :
     current simulation time
 
-  * S.*dt* (TTime) :
+  * **S.dt** = ... (TTime) :
     simulation timestep
 
-  * S.*dt_save* (TTime) :
+  * **S.dt_save** = ... (TTime) :
     period to save results
 
-  * S.*dt_streak* (TTime) :
+  * **S.dt_streak** = ... (TTime) :
     period of streak domains shedding
 
-  * S.*dt_profile* (TTime) :
+  * **S.dt_profile** = ... (TTime) :
     period to save profiles of pressure and friction
 
-  * S.*finish* (number) :
+  * **S.finish** = ... (number) :
     time to finish the simulation
 
-  * S.*body_list* (TBodyList) :
+  * **S.body_list** (TBodyList) :
     list of bodies
 
-  * S.*vort_list* (TObjList) :
+  * **S.vort_list** (TObjList) :
     list of vortex domains
 
-  * S.*sink_list* (TObjList) :
+  * **S.sink_list** (TObjList) :
     list of sources and sinks
 
-  * S.*streak_source_list* (TObjList) :
+  * **S.streak_source_list** (TObjList) :
     list of streak sources
 
-  * S.*streak_domain_list* (TObjList) :
+  * **S.streak_domain_list** (TObjList) :
     list of streak particles
 
-  * S`:save`(*FILE*), S`:load`(*FILE*) :
+  * **S:save**(_filename_), **S:load**(_filename_) :
     save or load the Space in HDF5 format
 
-  * S`:XStreamfunction`(*TVec*) :
+  * **S:XStreamfunction**({_x_, _y_}) :
     calculate streamfunction in point
 
 _Examples_:
