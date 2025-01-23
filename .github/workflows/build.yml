@@ -30,18 +30,18 @@ jobs:
       - run: pipenv install --python=$(which python)
       - run: sudo apt-get install liblapack-dev gnuplot
 
-      - uses: actions/cache@v2
+      - uses: actions/cache@v4
         with:
           path: |
             build/*
             !build/deb
-          key: cmake-cache-${{ matrix.runs-on }}-03
+          key: cmake-cache-${{ matrix.runs-on }}-04
 
       - run: rm -rf build/deb
       - run: pipenv run black ./pytest --check --diff
       - run: pipenv run flake8 ./pytest
-      - run: cmake -S. -Bbuild
-      - run: make -C build -j
+      - run: cmake -DWITH_MANPAGES=TRUE -S. -Bbuild
+      - run: make -C build
       - run: make -C build test ARGS=-VV
       - run: pushd build; cpack
 
