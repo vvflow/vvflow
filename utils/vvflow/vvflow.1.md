@@ -83,7 +83,10 @@ Vvflow defines the following global variables:
     body.
 
   * **simulate**() :
-    run the simulation until what?
+    run the simulation until `t == S.time_finish`. It will produce a
+    file named stepdata\_*caption*.h5 with integral parameters on every
+    timestep, and a directory results\_*caption*/ with full datasets
+    saved every *dt_save*.
 
   * **gen_cylinder**({*R*, [*N*|*dl*]}) :
     generate a cylinder with the center at point (0, 0)
@@ -93,6 +96,7 @@ Vvflow defines the following global variables:
     Either *N* or *dl* must be specified but not both.
 
 ```
+
     #        .-'""'-.
     #      .'        '.
     #     /            \
@@ -106,6 +110,7 @@ Vvflow defines the following global variables:
 
     local b1 = gen_cylinder({R=0.5, N=500})
     local b2 = gen_cylinder({R=0.5, dl=0.01})
+
 ```
 
   * **gen_semicyl**({*R*, [*N*|*dl*]}) :
@@ -116,6 +121,7 @@ Vvflow defines the following global variables:
     Either *N* or *dl* must be specified but not both.
 
 ```
+
     #      ____________________
     #     |          /         |
     #     ;         /          ;
@@ -129,6 +135,7 @@ Vvflow defines the following global variables:
 
     local b1 = gen_semicyl({R=0.5, N=500})
     local b2 = gen_semicyl({R=0.5, dl=0.01})
+
 ```
 
   * **gen_ellipse**({*Rx*, *Ry*, [*N*|*dl*]}) :
@@ -139,6 +146,7 @@ Vvflow defines the following global variables:
     Either *N* or *dl* must be specified but not both.
 
 ```
+
     #        .--"""""--.
     #      .'     | Ry  '.
     #     /       |       \
@@ -150,6 +158,7 @@ Vvflow defines the following global variables:
     Example:
 
     local b = gen_ellipse{Rx=4, Ry=0.5, N=600}
+
 ```
 
   * **gen_plate**({*R1*, *R2*, *L*, [*N*|*dl*], [*start*], [*stop*], [*gap*]}) :
@@ -159,6 +168,7 @@ Vvflow defines the following global variables:
     Parameters *start* and *stop* allow generating multi-segment fish-like body.
 
 ```
+
     #        .-'""""""""""""""""""""""""'-.
     #      .'                             /'.
     #     /                           R2 /   \
@@ -167,6 +177,7 @@ Vvflow defines the following global variables:
     #     \    / R1                          /
     #      '. /                            .'
     #        '-..........................-'
+
 ```
 
   * **gen_parallelogram**({*L*, *H*, *d*, [*N*|*dl*]}) :
@@ -179,6 +190,7 @@ Vvflow defines the following global variables:
     Either *N* or *dl* must be specified but not both.
 
 ```
+
     #          _______________
     #         /|            d /
     #        / |             /
@@ -187,6 +199,7 @@ Vvflow defines the following global variables:
     #     /    |          /
     #    /_____'_________/
     #            L
+
 ```
 
   * **gen_roundrect**({*L*, *H*, *R*, [*N*|*dl*]}) :
@@ -198,6 +211,7 @@ Vvflow defines the following global variables:
     Either *N* or *dl* must be specified but not both.
 
 ```
+
     #       .-;""""""""""""""""""""""""""--.
     #     /`  | R                           `\
     #    ;    |                               ;
@@ -206,6 +220,7 @@ Vvflow defines the following global variables:
     #    ;                                    ;
     #     \                                  /
     #      `'--..........................--'`
+
 ```
 
   * **gen_savonius**({*R*, *h*, [*N*|*dl*]}) :
@@ -217,6 +232,7 @@ Vvflow defines the following global variables:
     Either *N* or *dl* must be specified but not both.
 
 ```
+
     #        .-'""'-.
     #      .'        '.
     #     /   .-""-.   \          __
@@ -225,6 +241,7 @@ Vvflow defines the following global variables:
     #                 \   '-..-'   /
     #                  '.        .'
     #                    '-....-'
+
 ```
 
   * **gen_chamber_gpj**({*R0*, *X0*, *X1*, *X2*, *X3*, *d*, *L*, *H*, *dln*, *dls*}) :
@@ -246,6 +263,7 @@ Vvflow defines the following global variables:
     Regions with no-slip boundary condition have segment length *dln*, regions with slip - *dls*.
 
 ```
+
     #    ,----------------,  - H
     #    |              .-'
     #    |     .------""     - r0
@@ -263,6 +281,7 @@ Vvflow defines the following global variables:
     #      '-.......|.......,
     #                        ""--,
     #         ^x0   ^x1     ^x2  ^x3
+
 ```
 
   * **gen_chamber_box**({*L*, *H*, *D*, *h*, *d*, *dln*, *dls*}) :
@@ -279,6 +298,7 @@ Vvflow defines the following global variables:
     regions with slip - *dls*.
 
 ```
+
     #    ,-------------------,  - H+h
     #    |   _____________   |  _ H
     #    |  |             |  |
@@ -287,6 +307,7 @@ Vvflow defines the following global variables:
     #    '------'     '------'  - 0-d
     #              ^  ^   ^  ^
     #              0 D/2 L/2 L/2+h
+
 ```
 
 ### Space
