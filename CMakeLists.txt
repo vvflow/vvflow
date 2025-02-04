@@ -68,7 +68,8 @@ add_custom_command(
     VERBATIM)
 add_custom_target(readme.man ALL DEPENDS ${MAN_HTML})
 endif()
-install (FILES ${MAN_HTML} DESTINATION share/doc/vvflow)
+install(FILES ${MAN_HTML} DESTINATION share/doc/vvflow)
+install(DIRECTORY readme-pics DESTINATION share/doc/vvflow)
 
 SET(CPACK_GENERATOR "DEB")
 execute_process(
