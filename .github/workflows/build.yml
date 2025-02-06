@@ -60,10 +60,6 @@ jobs:
       fail-fast: false
       matrix:
         cfg:
-          - artifact-name: vvflow-ubuntu-20.04
-            distro-name: ubuntu
-            distro-version: '20.04'
-
           - artifact-name: vvflow-ubuntu-22.04
             distro-name: ubuntu
             distro-version: '22.04'
