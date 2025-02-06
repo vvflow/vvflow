@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Merge `vvcompose` functionality with `vvflow`. The symlink is
   preserved for the compatibility.
+- Fix diffusion velocity formula. It eliminates outlying vortices and
+  spikes (noise) in resulting forces.
 
 ## [2.3.0] - 2023-05-29
 

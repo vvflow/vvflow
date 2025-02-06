@@ -41,6 +41,7 @@ void MDiffusiveFast::process_vort_list()
             if ( (sign(S1)!=lobj->sign()) || (fabs(S1)<fabs(0.1*lobj->g)) ) { S1 = 0.1*lobj->g; }
 
             lobj->v += lobj->_1_eps/(re*S1) * S2;
+            if (S0 > C_PI) { S0 = C_PI; }
             lobj->v += (sqr(lobj->_1_eps)/(re*(C_2PI-S0))) * S3;
         }
     }
@@ -120,5 +121,3 @@ void MDiffusiveFast::segment_influence(const TObj &v, TAtt *rk,
     if (calc_friction)
         rk->fric += sqr(v._1_eps) * v.g * expres * dS.abs();
 }
-
-
