@@ -4,12 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [2.4.0] - Unreleased
 
 - Merge `vvcompose` functionality with `vvflow`. The symlink is
   preserved for the compatibility.
+
 - Fix diffusion velocity formula. It eliminates outlying vortices and
   spikes (noise) in resulting forces.
+
+- Add `gpquick --size` option for adjusting image size.
 
 ## [2.3.0] - 2023-05-29
 
@@ -20,7 +23,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 
-- Buuilding instructions.
+- Building instructions.
 - Compilation errors with GCC 13.
 
 ## [2.2.2] - 2022-08-19

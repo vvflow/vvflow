@@ -4,6 +4,8 @@ from __future__ import print_function
 import sys, os
 from subprocess import Popen, PIPE
 import argparse
+import time
+
 
 parser = argparse.ArgumentParser(description='Quickly plot some data from pipe',
     formatter_class=argparse.RawDescriptionHelpFormatter);
@@ -65,32 +67,47 @@ parser.add_argument(
     help='plot major grid'
 )
 
+parser.add_argument(
+    '--size',
+    dest='size',
+    nargs=2,
+    type=int,
+    metavar=('WIDTH', 'HEIGHT'),
+    default=(640, 480),
+    help='plot size'
+)
+
+parser.add_argument(
+    '--verbose',
+    dest='verbose',
+    action='store_true',
+    help='dump script to stderr'
+)
+
 args = parser.parse_args()
 if sys.stdout.isatty():
     print("You are trying to write a png to stdout. It may be harmful.", file=sys.stderr)
     print("Aborting.", file=sys.stderr)
     sys.exit(-1)
 
-# os.dup2(0, 9)
-# os.close(0)
-(rpipe, wpipe) = os.pipe()
-gp = Popen(["gnuplot", "/dev/fd/"+str(rpipe)])
-import time
-def gpw(str, *args, **kwargs):
-    os.write(wpipe, str.format(*args, **kwargs).encode())
 
-gpw("""set terminal pngcairo enhanced\n""")
-gpw("""unset key\n""")
+script_lines = []
+def gpw(str, *args, **kwargs):
+    script_lines.append(str.format(*args, **kwargs))
+
+gpw("""set terminal pngcairo enhanced""")
+gpw("""  size {}, {};\n""".format(args.size[0], args.size[1]))
+gpw("""unset key;\n""")
 if args.plot_square:
-    gpw("""set size ratio -1\n""")
+    gpw("""set size ratio -1;\n""")
 if args.xrange[0] != None and args.xrange[1] != None:
-    gpw("""set xrange [{}:{}]\n""".format(args.xrange[0], args.xrange[1]))
+    gpw("""set xrange [{}:{}];\n""".format(args.xrange[0], args.xrange[1]))
 if args.yrange[0] != None and args.yrange[1] != None:
-    gpw("""set yrange [{}:{}]\n""".format(args.yrange[0], args.yrange[1]))
+    gpw("""set yrange [{}:{}];\n""".format(args.yrange[0], args.yrange[1]))
 if 'x' in args.grid:
-    gpw("""set grid ytics\n""")
+    gpw("""set grid ytics;\n""")
 if 'y' in args.grid:
-    gpw("""set grid xtics\n""")
+    gpw("""set grid xtics;\n""")
 
 style = "lt 1 pt 0"
 if (args.plot_w_points):
@@ -99,9 +116,12 @@ if (args.plot_w_points):
         style = "lt 1 pt 7"
 if args.plot_using:
     args.plot_using = 'u ' + args.plot_using
-gpw("plot '/dev/stdin' {} w linespoints {} lc rgb 'black'\n", args.plot_using or "", style)
 
-gpw("exit\n")
-os.close(wpipe)
-os.close(rpipe)
+gpw("plot '/dev/stdin' {} w linespoints {} lc rgb 'black';\n", args.plot_using or "", style)
+gpw("exit;\n")
+
+script = "".join(script_lines)
+if args.verbose:
+    print(script, file=sys.stderr)
+gp = Popen(["gnuplot", "-e", script])
 gp.wait()
