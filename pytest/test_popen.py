@@ -2,7 +2,7 @@
 
 import subprocess
 
-tempdir = "/tmp/test_popen"
+tempdir = "/tmp/vvflow_test_results/test_popen"
 
 
 def test(env):

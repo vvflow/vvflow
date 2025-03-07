@@ -3,7 +3,7 @@ import numpy
 import struct
 import logging
 
-tempdir = "/tmp/test_refframe"
+tempdir = "/tmp/vvflow_test_results/test_refframe"
 
 
 def test(env):

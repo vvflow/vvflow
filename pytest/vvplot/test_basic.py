@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import pytest
 
-tempdir = "/tmp/test_vvplot"
+tempdir = "/tmp/vvflow_test_results/test_vvplot"
 
 
 @pytest.fixture(scope="module")

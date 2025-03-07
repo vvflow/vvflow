@@ -5,7 +5,7 @@ import pytest
 from conftest import Env
 from subprocess import CalledProcessError
 
-tempdir = "/tmp/test_vvflow"
+tempdir = "/tmp/vvflow_test_results/test_vvflow"
 
 
 def test_args(env: Env):
