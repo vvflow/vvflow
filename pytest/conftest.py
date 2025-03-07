@@ -21,13 +21,7 @@ class Env:
         self.tempdir = tempdir
 
         self.env = os.environ.copy()
-        # path = [
-        #     'utils/vvcompose',
-        #     'utils/vvxtract',
-        #     'utils/vvplot',
-        #     self.env['PATH']
-        # ]
-        # self.env['PATH'] = ':'.join(path)
+        self.env["OMP_NUM_THREADS"] = "1"
         logging.warning('export PATH="%s"' % self.env["PATH"])
         self.which = {}
         for prog in ["vvcompose", "vvflow", "vvplot"]:
