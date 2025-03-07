@@ -4,7 +4,7 @@ project (vvxtract)
 
 include_directories(${LIBVVHD_INCLUDE_DIRS})
 
-add_executable(vvxtract vvxtract.cpp)
+add_executable(vvxtract vvxtract.cpp optparse.cpp)
 target_link_libraries(vvxtract vvhd)
 
 if(WITH_MANPAGES)

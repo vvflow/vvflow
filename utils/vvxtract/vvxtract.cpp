@@ -1,3 +1,5 @@
+#include "./optparse.hpp"
+
 #include "TSpace.hpp"
 #include "elementary.h"
 #include "vvhdf.h"
@@ -28,72 +30,37 @@ struct dataset_t {
     dataset_t& operator=(const dataset_t&) = default;
 };
 
-int main(int argc, char **argv)
-{
-    int b_xyvalue = 0;
-    int b_margins = 0;
+// main options
+namespace opt {
     int b_info = 0;
     int b_list = 0;
 
-    while (1) {
-        static struct option long_options[] =
-        {
-            {"version", no_argument, 0, 'v'},
-            {"help",    no_argument, 0, 'h'},
-            {"info",    no_argument, 0, 'i'},
-            {"list",    no_argument, 0, 'l'},
-            {0, 0, 0, 0}
-        };
+    const char* input;
 
-        /* getopt_long stores the option index here. */
-        int option_index = 0;
+    int argc;
+    char* const* argv;
+}
 
-        int c = getopt_long(argc, argv, "vhli", long_options, &option_index);
-
-        if (c == -1) {
-            break;
-        }
-
-        switch (c) {
-        case 'v':
-            fprintf(stderr, "vvxtract %s\n", libvvhd_gitinfo);
-            fprintf(stderr, "revision: %s\n", libvvhd_gitrev);
-            if (libvvhd_gitdiff[0] == '\0') return 0;
-            fprintf(stderr, "git_diff: %s\n", libvvhd_gitdiff);
-            return 0;
-        case 'h':
-            return execlp("man", "man", "vvxtract", NULL);
-        case 'i':
-            b_info = 1;
-            break;
-        case 'l':
-            b_list = 1;
-            break;
-        case '?':
-        default:
-            exit(1);
-        }
-    }
-
-    if (argc-optind < 1) {
-        fprintf(stderr, "%s: not enough arguments: missing FILE\n", argv[0]);
-    }
+int main(int argc, char **argv)
+{
+    opt::parse(argc, argv);
 
     H5Eset_auto2(H5E_DEFAULT, NULL, NULL);
-    hid_t fid = H5Fopen(argv[optind], H5F_ACC_RDONLY, H5P_DEFAULT);
+    hid_t fid = H5Fopen(opt::input, H5F_ACC_RDONLY, H5P_DEFAULT);
     if (fid < 0)
     {
         H5Epop(H5E_DEFAULT, H5Eget_num(H5E_DEFAULT)-1);
         H5Eprint2(H5E_DEFAULT, stderr);
-        fprintf(stderr, "%s: can't open file '%s'\n", argv[0], argv[optind]);
+        fprintf(stderr, "%s: can't open file '%s'\n", argv[0], opt::input);
         return 2;
     }
 
-    if (argc-optind < 2) {
-        b_info = 1;
+    // imply --info in no dataset specified
+    if (opt::argc < 2) {
+        opt::b_info = 1;
     }
 
-    if (b_list) {
+    if (opt::b_list) {
         H5O_iterate_t h5o_iter = [](hid_t, const char* name, const H5O_info_t* info, void *) -> herr_t
         {
             if (info->type == H5O_TYPE_DATASET) {
@@ -105,7 +72,7 @@ int main(int argc, char **argv)
         return 0;
     }
 
-    if (b_info) {
+    if (opt::b_info) {
         printf("caption: %s\n", h5a_read<std::string>(fid, "caption").c_str());
         printf("created: %s\n", h5a_read<std::string>(fid, "time_local").c_str());
         printf("version: %s\n", h5a_read<std::string>(fid, "git_info").c_str());
@@ -116,7 +83,7 @@ int main(int argc, char **argv)
         }
     }
 
-    if (b_info && H5Aexists(fid, "dt")) {
+    if (opt::b_info && H5Aexists(fid, "dt")) {
         Space S;
         S.load_hdf(fid);
 
@@ -205,8 +172,8 @@ int main(int argc, char **argv)
 
     std::vector<dataset_t> datasets;
     size_t max_rows = 0;
-    for (int i=optind+1; i<argc; i++) {
-        datasets.emplace_back(argv[i]);
+    for (int i=1; i<opt::argc; i++) {
+        datasets.emplace_back(opt::argv[i]);
         dataset_t& dat = datasets.back();
 
         hid_t dataset = H5Dopen2(fid, dat.label, H5P_DEFAULT);
