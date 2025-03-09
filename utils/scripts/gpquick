@@ -28,7 +28,8 @@ parser.add_argument(
     '-u', '--using',
     dest='plot_using',
     type=str,
-    help='plot using clause'
+    default='1:2',
+    help='plot using specified columns'
 )
 
 parser.add_argument(
@@ -74,7 +75,7 @@ parser.add_argument(
     type=int,
     metavar=('WIDTH', 'HEIGHT'),
     default=(640, 480),
-    help='plot size'
+    help='set plot size'
 )
 
 parser.add_argument(
@@ -96,28 +97,33 @@ def gpw(str, *args, **kwargs):
     script_lines.append(str.format(*args, **kwargs))
 
 gpw("""set terminal pngcairo enhanced""")
-gpw("""  size {}, {};\n""".format(args.size[0], args.size[1]))
+gpw(""" size {}, {};\n""", args.size[0], args.size[1])
 gpw("""unset key;\n""")
 if args.plot_square:
     gpw("""set size ratio -1;\n""")
-if args.xrange[0] != None and args.xrange[1] != None:
-    gpw("""set xrange [{}:{}];\n""".format(args.xrange[0], args.xrange[1]))
-if args.yrange[0] != None and args.yrange[1] != None:
-    gpw("""set yrange [{}:{}];\n""".format(args.yrange[0], args.yrange[1]))
+if args.xrange[0] is not None and args.xrange[1] is not None:
+    gpw("""set xrange [{}:{}];\n""", args.xrange[0], args.xrange[1])
+if args.yrange[0] is not None and args.yrange[1] is not None:
+    gpw("""set yrange [{}:{}];\n""", args.yrange[0], args.yrange[1])
 if 'x' in args.grid:
     gpw("""set grid ytics;\n""")
 if 'y' in args.grid:
     gpw("""set grid xtics;\n""")
 
-style = "lt 1 pt 0"
-if (args.plot_w_points):
-    style = "lt 0 pt 7"
-    if (args.plot_w_lines):
-        style = "lt 1 pt 7"
-if args.plot_using:
-    args.plot_using = 'u ' + args.plot_using
+style_lt = "0"
+if args.plot_w_lines:
+    style_lt = "1"
+elif not args.plot_w_points:
+    style_lt = "1"
 
-gpw("plot '/dev/stdin' {} w linespoints {} lc rgb 'black';\n", args.plot_using or "", style)
+style_pt = "0"
+if args.plot_w_points:
+    style_pt = "7"
+
+gpw("plot '-'")
+gpw(" using {}", args.plot_using)
+gpw(" with linespoints lt {} pt {}", style_lt, style_pt)
+gpw(" lc rgb 'black';\n")
 gpw("exit;\n")
 
 script = "".join(script_lines)
