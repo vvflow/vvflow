@@ -151,9 +151,8 @@ vvencode 'images_cyl_re600/*.png' cyl_re600.mp4
 The `gpquick` tool is useful for previewing `stepdata` files:
 
 ```bash
-vvxtract stepdata_cyl_re600.h5 time body00/force_hydro \
-| gpquick --points -u 1:3 -y -0.5 0.5 --size 480 360 \
-> fy_raw.png;
+vvxtract stepdata_cyl_re600.h5 time body00/force_holder \
+| gpquick --points -u 1:3 -y -0.5 0.5 --size 480 360 -o fy_raw.png;
 open fy_raw.png
 ```
 
@@ -174,10 +173,9 @@ It is supposed to be used in combination with `vvxtract`.
 Example of moving average:
 
 ```bash
-vvxtract stepdata_cyl_re600.h5 time body00/force_hydro \
+vvxtract stepdata_cyl_re600.h5 time body00/force_holder \
 | vvawk.mavg -v col=3 - \
-| gpquick --lines -u 1:3 -y -0.5 0.5 --size 480 360 \
-> fy_mavg.png;
+| gpquick --lines -u 1:3 -y -0.5 0.5 --size 480 360 -o fy_mavg.png;
 open fy_mavg.png
 ```
 

@@ -11,6 +11,12 @@ parser = argparse.ArgumentParser(description='Quickly plot some data from pipe',
     formatter_class=argparse.RawDescriptionHelpFormatter);
 
 parser.add_argument(
+    '-o', '--output',
+    dest='output',
+    help='set filename of plotted image'
+)
+
+parser.add_argument(
     '-l', '--lines',
     dest='plot_w_lines',
     action='store_true',
@@ -79,25 +85,22 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    '--verbose',
-    dest='verbose',
+    '--dump-script',
+    dest='dump_script',
     action='store_true',
-    help='dump script to stderr'
+    help='print gnuplot script to stdout'
 )
 
 args = parser.parse_args()
-if sys.stdout.isatty():
-    print("You are trying to write a png to stdout. It may be harmful.", file=sys.stderr)
-    print("Aborting.", file=sys.stderr)
-    sys.exit(-1)
-
-
 script_lines = []
 def gpw(str, *args, **kwargs):
     script_lines.append(str.format(*args, **kwargs))
 
 gpw("""set terminal pngcairo enhanced""")
 gpw(""" size {}, {};\n""", args.size[0], args.size[1])
+if args.output is not None:
+    gpw("""set output '{}';\n""", args.output)
+
 gpw("""unset key;\n""")
 if args.plot_square:
     gpw("""set size ratio -1;\n""")
@@ -127,7 +130,9 @@ gpw(" lc rgb 'black';\n")
 gpw("exit;\n")
 
 script = "".join(script_lines)
-if args.verbose:
-    print(script, file=sys.stderr)
-gp = Popen(["gnuplot", "-e", script])
-gp.wait()
+if args.dump_script or args.output is None:
+    print(script)
+
+if args.output is not None:
+    gp = Popen(["gnuplot", "-e", script])
+    exit(gp.wait())

@@ -24,7 +24,7 @@ class Env:
         self.env["OMP_NUM_THREADS"] = "1"
         logging.warning('export PATH="%s"' % self.env["PATH"])
         self.which = {}
-        for prog in ["vvcompose", "vvflow", "vvplot"]:
+        for prog in ["vvcompose", "vvflow", "vvplot", "vvxtract", "gpquick"]:
             bin = shutil.which(prog)
             assert bin, f"Command '{prog}' not fount in PATH"
             self.which[prog] = os.path.abspath(bin)
@@ -120,6 +120,21 @@ class Env:
         )
         output.ifile = ifile
         output.ofile = ofile
+        return output
+
+    def vvxtract(self, ifile, args=[]):
+        if not os.path.isabs(ifile):
+            ifile = self.tmp(ifile)
+        if type(args) is str:
+            args = args.split(" ")
+
+        output = self.run(
+            # fmt: skip
+            [self.which["vvxtract"], ifile] + args,
+            cwd=self.tempdir,
+            timeout=30,
+        )
+        output.ifile = ifile
         return output
 
     def tmp(self, fname):
