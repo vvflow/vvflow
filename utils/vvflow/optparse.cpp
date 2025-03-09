@@ -12,7 +12,8 @@ Usage:
   vvflow (-h | --help)
   vvflow (-v | --version)
   vvflow [options] <input> [args]
-    <input>          Filename of a Lua script specifying the CFD problem.
+    <input>          Filename of a Lua script specifying the CFD problem. See
+                     `man vvflow` for reference.
     [args]           Arguments passed to the script in the global variable `arg`.
 )";
 

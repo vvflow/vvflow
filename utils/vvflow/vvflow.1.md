@@ -45,9 +45,10 @@ Example:
     S.finish = 20
 
     local cyl = gen_cylinder{R=0.5, N=350}
+    cyl.label = "cyl"
     S.body_list:insert(cyl)
 
-    S.caption = "re600_n350"
+    S.caption = "cyl_re600"
     S:save(S.caption..".h5")
 
 This manual will not discuss the Lua syntax in all details, although it
