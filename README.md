@@ -33,12 +33,20 @@ An implementation of the [Viscous Vortex Domains][vvd-wiki] (VVD) method.
 ## Installation
 
 ```
-curl -s https://packagecloud.io/install/repositories/vvflow/stable/script.deb.sh | sudo bash
+curl -s https://packagecloud.io/install/repositories/vvflow/stable/script.deb.sh -o vvflow.deb.sh sudo bash ./vvflow.deb.sh
 sudo apt install vvflow
 ```
 
 Binary packages are hosted at [packagecloud.io][packagecloud]. For
 today, those are available for ubuntu 22.04 (jammy) and 24.04 (noble).
+
+You can also try installing it on other dists, more modern dists are
+usually compatible. To do so specify the version manually:
+
+```
+sudo os=ubuntu dist=noble bash ./vvflow.deb.sh
+sudo apt install vvflow
+```
 
 > ⚠️ For performance reasons it's recommended to build vvflow
 > [from source](#building-from-source).

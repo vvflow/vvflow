@@ -9,10 +9,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Merge `vvcompose` functionality with `vvflow`. The symlink is
   preserved for the compatibility.
 
+- Remove obsolete `vvgen` script. Its functions are performed by `vvflow`.
+
 - Fix diffusion velocity formula. It eliminates outlying vortices and
   spikes (noise) in resulting forces.
 
 - Add `gpquick --size` option for adjusting image size.
+
+- Write `gpquick` resulting image to the `--output` file instead of stdout.
+
+- Add `gpquick --dump-script` option which prints the gnuplot sctipt to stdout.
+
+- Revise manpages `man vvflow`, `man vvxtract`, `man vvplot`.
+
+- Provide `--help` option for all commands in addition to manpages.
 
 ## [2.3.0] - 2023-05-29
 
