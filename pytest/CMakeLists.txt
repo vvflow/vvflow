@@ -9,6 +9,7 @@ set(PATH_LIST
     "${CMAKE_BINARY_DIR}/utils/vvflow/"
     "${CMAKE_BINARY_DIR}/utils/vvplot/"
     "${CMAKE_BINARY_DIR}/utils/vvxtract/"
+    "${CMAKE_SOURCE_DIR}/utils/scripts"
     "$ENV{PATH}"
 )
 
