@@ -23,7 +23,7 @@ An implementation of the [Viscous Vortex Domains][vvd-wiki] (VVD) method.
 
 * [Installation](#installation)
 * [Flow simulation](#flow-simulation)
-* [Postprocessing results](#postprocessing-results)
+* [Results postprocessing](#results-postprocessing)
     * [vvxtract](#vvxtract)
     * [vvplot, vvencode](#vvplot-vvencode)
     * [gpquick](#gpquick)
@@ -82,7 +82,7 @@ qsub -d. -l nodes=1:ppn=6 -N testrun <<'EOF'
 EOF
 ```
 
-## Postprocessing results
+## Results postprocessing
 
 The results are saved to the current working directory during the simulation:
 
@@ -201,7 +201,17 @@ Build the project:
 ```bash
 git clone https://github.com/vvflow/vvflow.git
 cd vvflow
-cmake .
-make -j
-sudo make install
+cmake -Bbuild -S. \
+    -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+    -DCMAKE_INSTALL_PREFIX=$HOME/.local/vvflow \
+    -DCMAKE_INSTALL_RPATH=$HOME/.local/vvflow/lib
+make -C build
+make -C build install
+```
+
+Update the PATH shell environment accordingly:
+
+```bash
+echo 'export PATH="$HOME/.local/vvflow:$PATH"' >> ~/.bashrc
+source ~/.bashrc
 ```

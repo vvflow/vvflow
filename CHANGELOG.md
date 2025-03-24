@@ -6,13 +6,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [2.4.0] - Unreleased
 
+- Fix diffusion velocity formula. It eliminates outlying vortices and
+  spikes (noise) in resulting forces.
+
+- Significantly refactor command-line UX and update README.
+
 - Merge `vvcompose` functionality with `vvflow`. The symlink is
   preserved for the compatibility.
 
 - Remove obsolete `vvgen` script. Its functions are performed by `vvflow`.
-
-- Fix diffusion velocity formula. It eliminates outlying vortices and
-  spikes (noise) in resulting forces.
 
 - Add `gpquick --size` option for adjusting image size.
 
