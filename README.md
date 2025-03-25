@@ -33,7 +33,8 @@ An implementation of the [Viscous Vortex Domains][vvd-wiki] (VVD) method.
 ## Installation
 
 ```
-curl -s https://packagecloud.io/install/repositories/vvflow/stable/script.deb.sh -o vvflow.deb.sh sudo bash ./vvflow.deb.sh
+curl -s https://packagecloud.io/install/repositories/vvflow/stable/script.deb.sh -o vvflow.deb.sh
+sudo bash ./vvflow.deb.sh
 sudo apt install vvflow
 ```
 
@@ -64,6 +65,7 @@ For a start, one can copy the example simulation from doc:
 ```bash
 cp -R /usr/share/doc/vvflow/example/ ./vvflow-demo
 cd ./vvflow-demo
+chmod +x ./cyl_re600.lua
 ./cyl_re600.lua
 export OMP_NUM_THREADS=1 # disable multi-threading for now
 vvflow --progress ./cyl_re600.h5
