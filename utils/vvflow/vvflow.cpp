@@ -8,17 +8,13 @@
 #include "./lua_objlist.h"
 #include "./lua_bodylist.h"
 #include "./gen_body.h"
-#include "./getset.h"
 
 #include "MEpsilonFast.hpp"
 #include "MConvectiveFast.hpp"
 #include "MDiffusiveFast.hpp"
 #include "MStepdata.hpp"
 #include "MFlowmove.hpp"
-#include "elementary.h"
 
-#include <iostream>
-#include <fstream>
 #include <cstdio>
 
 #include <sys/stat.h>
@@ -33,11 +29,6 @@
 #include "omp.h"
 #define dbg(a) a
 //#define dbg(a) cerr << "Doing " << #a << "... " << flush; a; cerr << "done\n";
-#define seek(f) while (fgetc(f)!='\n'){}
-
-using std::cerr;
-using std::endl;
-using std::shared_ptr;
 
 int stackDump(lua_State *L)
 {
