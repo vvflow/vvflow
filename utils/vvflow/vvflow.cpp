@@ -8,6 +8,7 @@
 #include "./lua_objlist.h"
 #include "./lua_bodylist.h"
 #include "./gen_body.h"
+#include "./communicate.h"
 
 #include "MEpsilonFast.hpp"
 #include "MConvectiveFast.hpp"
@@ -175,11 +176,13 @@ int simulate (lua_State *L) {
     }
     Space &S = **ptr;
 
-    // error checking
-    #define RAISE(STR) { cerr << "vvflow ERROR: " << STR << endl; return -1; }
-    if (S.re <= 0) RAISE("invalid value re<=0");
-    #undef RAISE
+    if (S.re <= 0) {
+        throw std::runtime_error("Invalid value: S.re must be positive");
+    }
     bool is_viscous = (S.re != std::numeric_limits<double>::infinity());
+
+    PidFile pidfile(S.caption);
+    pidfile.write();
 
     char f_stepdata[256]; snprintf(f_stepdata, 256, "stepdata_%s.h5", S.caption.c_str());
     char f_results[240]; snprintf(f_results, 240, "results_%s", S.caption.c_str());
