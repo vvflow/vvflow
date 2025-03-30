@@ -27,6 +27,7 @@ jobs:
       - run: python -m pip install --upgrade --break-system-packages pipenv grip
       - run: python --version
       - run: pipenv install --python=$(which python)
+      - run: sudo apt-get update
       - run: sudo apt-get install liblapack-dev gnuplot ronn
 
       - uses: actions/cache@v4
