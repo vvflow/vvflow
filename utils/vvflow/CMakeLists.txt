@@ -24,6 +24,7 @@ add_executable(vvflow
     gen_box.cpp
     gen_savonius.cpp
     linenoise.c
+    communicate.cpp
 )
 target_link_libraries(vvflow vvhd dl)
 
