@@ -5,6 +5,7 @@
 class PidFile {
 public:
     PidFile(const std::string& sim_caption);
+    ~PidFile();
     void write();
 private:
     int fd;

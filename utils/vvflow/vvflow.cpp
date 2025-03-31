@@ -8,7 +8,7 @@
 #include "./lua_objlist.h"
 #include "./lua_bodylist.h"
 #include "./gen_body.h"
-#include "./communicate.h"
+#include "./utils.h"
 
 #include "MEpsilonFast.hpp"
 #include "MConvectiveFast.hpp"
