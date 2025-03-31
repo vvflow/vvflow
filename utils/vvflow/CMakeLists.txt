@@ -24,7 +24,7 @@ add_executable(vvflow
     gen_box.cpp
     gen_savonius.cpp
     linenoise.c
-    communicate.cpp
+    utils.cpp
 )
 target_link_libraries(vvflow vvhd dl)
 
@@ -64,3 +64,15 @@ add_custom_target(vvcompose_test.lua ALL
     DEPENDS ${CMAKE_BINARY_DIR}/tests/vvcompose_test.lua)
 
 add_test(vvcompose_test vvflow ${CMAKE_BINARY_DIR}/tests/vvcompose_test.lua)
+
+include_directories(
+	${CPPUNIT_INCLUDE_DIRS}
+)
+add_executable(vvflow_pidfile_test test_pidfile.cpp utils.cpp)
+add_dependencies(vvflow_pidfile_test cppunit)
+target_link_libraries(vvflow_pidfile_test ${CPPUNIT_LIBRARIES})
+set_target_properties(vvflow_pidfile_test PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/tests/
+)
+
+add_test(vvflow_pidfile_test ${CMAKE_BINARY_DIR}/tests/vvflow_pidfile_test)
