@@ -5,10 +5,11 @@
 #include <cstring>
 #include <fcntl.h>
 #include <stdexcept>
-#include <sys/un.h>
 #include <sys/file.h>
 #include <sys/socket.h>
+#include <sys/un.h>
 #include <unistd.h>
+#include <unordered_set>
 
 std::string errno_str() {
     return std::string(std::strerror(errno));
@@ -62,22 +63,24 @@ ListenSock::ListenSock(const std::string& sim_caption):
         throw std::runtime_error("Socket error: " + errno_str());
     }
 
+    int ret;
+    ret = fcntl(fd, F_SETFL, O_NONBLOCK);
+    if (ret < 0) {
+        throw std::runtime_error("Socket fcntl(O_NONBLOCK) error: " + errno_str());
+    }
+
     struct sockaddr_un addr;
     memset(&addr, 0, sizeof(struct sockaddr_un));
     if (sock_path.length() > sizeof(addr.sun_path) - 1) {
-        throw std::runtime_error("Socket error: " + sock_path + ": filename too long");
+        throw std::runtime_error("Socket bind error: " + sock_path + ": filename too long");
     }
     strncpy(addr.sun_path, sock_path.c_str(), sizeof(addr.sun_path) - 1);
     unlink(addr.sun_path);
     addr.sun_family = AF_UNIX;
 
-    int ret = bind(fd, (const struct sockaddr *) &addr, sizeof(struct sockaddr_un));
+    ret = bind(fd, (const struct sockaddr *) &addr, sizeof(struct sockaddr_un));
     if (ret < 0) {
-        if (errno == EADDRINUSE) {
-            throw std::runtime_error("Simulation already running: " + sim_caption);
-        } else {
-            throw std::runtime_error("Socket bind error: " + sock_path + ": " + errno_str());
-        }
+        throw std::runtime_error("Socket bind error: " + sock_path + ": " + errno_str());
     }
 
     ret = listen(fd, 20);
@@ -86,6 +89,34 @@ ListenSock::ListenSock(const std::string& sim_caption):
     }
 }
 
+void ListenSock::accept_all() {
+    for (;;) {
+        errno = 0;
+        int client_fd = accept4(fd, NULL, NULL, O_NONBLOCK);
+        if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            break;
+        } else if (client_fd < 0) {
+            throw std::runtime_error("Socket accept error: " + sock_path + ": " + errno_str());
+        }
+        accepted_fds.insert(client_fd);
+    }
+}
+
+void ListenSock::broadcast(std::string msg) {
+    auto fds(accepted_fds);
+    for (int client_fd: fds) {
+        errno = 0;
+        int ret = write(client_fd, msg.c_str(), msg.length());
+        if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            continue;
+        } else if (ret < msg.length()) {
+            close(client_fd);
+            accepted_fds.erase(client_fd);
+        }
+    }
+}
+
 ListenSock::~ListenSock() {
+    close(fd);
     unlink(sock_path.c_str());
 }

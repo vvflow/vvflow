@@ -16,6 +16,7 @@
 #include "MStepdata.hpp"
 #include "MFlowmove.hpp"
 
+#include <csignal>
 #include <cstdio>
 
 #include <sys/stat.h>
@@ -184,6 +185,12 @@ int simulate (lua_State *L) {
     PidFile pidfile(S.caption);
     pidfile.write();
 
+    ListenSock listen_sock(S.caption);
+    {
+        struct sigaction sig_ign{SIG_IGN};
+        sigaction(SIGPIPE, &sig_ign, NULL);
+    }
+
     char f_stepdata[256]; snprintf(f_stepdata, 256, "stepdata_%s.h5", S.caption.c_str());
     char f_results[240]; snprintf(f_results, 240, "results_%s", S.caption.c_str());
     char f_sensors_output[256]; snprintf(f_sensors_output, 256, "velocity_%s", S.caption.c_str());
@@ -255,8 +262,21 @@ int simulate (lua_State *L) {
         dbg(flowmove.heat_crop());
         S.time = TTime::add(S.time, S.dt);
 
-        if (opt::show_progress)
-            fprintf(stderr, "\rt=%-10g \tN=%-10zd", double(S.time), S.VortexList.size());
+        char progress_buf[128];
+        snprintf(
+            progress_buf,
+            sizeof(progress_buf),
+            "\rt=%-10g \tN=%-10zd",
+            double(S.time),
+            S.VortexList.size()
+        );
+
+        if (opt::show_progress) {
+            fputs(progress_buf, stderr);
+        }
+
+        listen_sock.accept_all();
+        listen_sock.broadcast(progress_buf);
     }
 
     if (opt::show_progress)
