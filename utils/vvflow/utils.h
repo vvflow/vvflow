@@ -1,6 +1,8 @@
 #pragma once
 
 #include <string>
+#include <unordered_set>
+#include <vector>
 
 class PidFile {
 public:
@@ -17,10 +19,13 @@ class ListenSock {
 public:
     ListenSock(const std::string& sim_caption);
     ~ListenSock();
+    void accept_all();
+    void broadcast(std::string msg);
 private:
+    int fd;
     std::string sim_caption;
     std::string sock_path;
-    int fd;
+    std::unordered_set<int> accepted_fds;
 };
 
 // class ClientSock {
