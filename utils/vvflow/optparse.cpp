@@ -22,8 +22,8 @@ R"(
 Options:
   -h, --help         Show this screen.
   -v, --version      Show version.
-
-  --progress         Print progress during the simulation. (default: false)
+  --progress         Deprecated, use vvmon instead. Print progress of
+                     the simulation to the stderr. (default: false)
   --profile          Save pressure and friction profiles. (default: false)
     Profiles are collected along bodies surfaces and saved
     to the stepdata file.

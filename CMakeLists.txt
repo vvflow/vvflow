@@ -50,6 +50,7 @@ add_subdirectory(utils/vvflow)
 add_subdirectory(utils/vvplot)
 add_subdirectory(utils/vvxtract)
 add_subdirectory(utils/scripts)
+add_subdirectory(utils/vvmon)
 add_subdirectory(pytest)
 
 install(DIRECTORY example
