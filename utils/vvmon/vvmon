@@ -1,0 +1,97 @@
+#!/usr/bin/env python3
+
+from __future__ import print_function
+import sys, os
+from subprocess import Popen, PIPE
+import asyncio
+import argparse
+import glob
+import time
+
+from rich.console import Console
+from rich.table import Table
+from rich.live import Live
+from rich.spinner import Spinner
+from rich import box
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        prog='vvmon',
+        description='Monitor simulation progress',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
+
+    parser.add_argument(
+        'workdir',
+        nargs='?',
+        default='.',
+        help='Simulation working directory to monitor'
+    )
+
+    return parser.parse_args()
+
+
+class SimWatcher():
+    def __init__(self, sock_path, ev_updated):
+        self.percent = 0
+        self.sock_path = sock_path
+        self.ev_updated = ev_updated
+        self.state = "disconnected"
+
+    async def handle(self):
+        self.sock, _ = await asyncio.open_unix_connection(self.sock_path)
+        while self.percent < 100:
+            await asyncio.sleep(0.3)
+            self.percent += 1
+            self.ev_updated.set()
+
+
+class LiveTable():
+    def __init__(self):
+        self.ev_updated = asyncio.Event()
+        self.map_watchers = {}
+
+    async def watch_dir(self, workdir):
+        while True:
+            sock_list = [f for f in os.listdir(workdir) if f.endswith('.sock')]
+            for sock_path in sock_list:
+                if sock_path not in self.map_watchers:
+                    w = SimWatcher(sock_path, self.ev_updated)
+                    self.map_watchers[sock_path] = w
+                    asyncio.create_task(w.handle())
+                    self.ev_updated.set()
+
+            await asyncio.sleep(1)
+
+    async def wait_updated(self):
+        await self.ev_updated.wait()
+        self.ev_updated.clear()
+
+    def render(self):
+        table = Table(box=None)
+        table.add_column("%")
+        table.add_column("Time")
+        table.add_column("Caption")
+
+        for sock_path in sorted(self.map_watchers):
+            w = self.map_watchers[sock_path]
+            table.add_row(f"{w.percent}", "", w.sock_path)
+
+        return table
+
+
+async def main():
+    args = parse_args()
+    live_table = LiveTable()
+    asyncio.create_task(live_table.watch_dir(args.workdir))
+    with Live(live_table.render(), auto_refresh=False) as live:
+        while True:
+            await live_table.wait_updated()
+            live.update(live_table.render(), refresh=True)
+
+
+if __name__ == '__main__':
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        pass
