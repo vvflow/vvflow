@@ -2,7 +2,6 @@
 
 #include <string>
 #include <unordered_set>
-#include <vector>
 
 class PidFile {
 public:
@@ -27,8 +26,3 @@ private:
     std::string sock_path;
     std::unordered_set<int> accepted_fds;
 };
-
-// class ClientSock {
-//     public:
-//         ClientSock(const char* filename);
-// };
