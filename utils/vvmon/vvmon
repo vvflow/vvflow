@@ -1,18 +1,25 @@
 #!/usr/bin/env python3
 
 from __future__ import print_function
-import sys, os
+from dataclasses import dataclass
+from datetime import datetime
+from enum import auto, Enum
 from subprocess import Popen, PIPE
-import asyncio
 import argparse
+import asyncio
 import glob
+import os
+import sys
+import signal
 import time
 
+from rich import box
+from rich import print
 from rich.console import Console
-from rich.table import Table
 from rich.live import Live
 from rich.spinner import Spinner
-from rich import box
+from rich.table import Table
+
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -31,37 +38,124 @@ def parse_args():
     return parser.parse_args()
 
 
-class SimWatcher():
+@dataclass
+class SimulationProgress():
+    caption: str
+    wallclock_time: datetime
+    simulation_time: float | None
+    simulation_percent: int | None
+    # steps_per_second: float
+    vortex_count: int | None
+
+
+class UnixConnection():
+    class State(Enum):
+        disconnected = auto()
+        connected = auto()
+        finished = auto()
+
     def __init__(self, sock_path, ev_updated):
-        self.percent = 0
         self.sock_path = sock_path
+        self.finished = False
+        self.last_error = None
+        self.last_progress = None
+        self.state = UnixConnection.State.disconnected
         self.ev_updated = ev_updated
-        self.state = "disconnected"
+
+    @staticmethod
+    def decode_message(msg):
+        ret = {}
+        for field in msg.decode().split():
+            key, val = field.split('=', 1)
+            ret[key] = val
+        return ret
 
     async def handle(self):
-        self.sock, _ = await asyncio.open_unix_connection(self.sock_path)
-        while self.percent < 100:
-            await asyncio.sleep(0.3)
-            self.percent += 1
-            self.ev_updated.set()
+        print(f'{self.sock_path} connecting...')
+        while True:
+            try:
+                sock_reader, sock_writer = await asyncio.open_unix_connection(self.sock_path)
+                print(f'{self.sock_path} connected')
+                self.state = UnixConnection.State.connected
+                self.last_error = None
+                self.last_progress = None
+                self.ev_updated.set()
+                while True:
+                    msg = await sock_reader.read(1024)
+                    if not len(msg):
+                        sock_writer.close()
+                        raise ConnectionResetError("Connection reset by peer")
+                    keyval = UnixConnection.decode_message(msg)
+                    self.last_progress = SimulationProgress(
+                        caption=self.sock_path,
+                        wallclock_time=datetime.now(),
+                        simulation_time=keyval['t'],
+                        simulation_percent=0,
+                        vortex_count=keyval['N'],
+                    )
+                    self.ev_updated.set()
+            except FileNotFoundError as e:
+                print(f'{self.sock_path} disappeared')
+                self.last_error = e
+                self.state = UnixConnection.State.finished
+                self.ev_updated.set()
+                break
+            except asyncio.CancelledError as e:
+                print(f'{self.sock_path} handler cancelled')
+                break
+            except Exception as e:
+                self.last_error = e
+                if self.state == UnixConnection.State.connected:
+                    print(f'{self.sock_path} disconnected, reconnecting...')
+                    self.state = UnixConnection.State.disconnected
+                self.ev_updated.set()
+                await asyncio.sleep(1)
+
+    def render(self):
+        lp = self.last_progress
+        if self.state == UnixConnection.State.finished:
+            led = '[green]●[/]'
+        elif self.state == UnixConnection.State.connected:
+            led = '[yellow]●[/]'
+        elif lp:
+            led = '[red]●[/]'
+        else:
+            led = '[gray]●[/]'
+
+        return (
+            str(lp and lp.simulation_percent or ''),
+            str(lp and lp.simulation_time or ''),
+            led,
+            str(lp and lp.caption or self.sock_path),
+            str(lp and lp.vortex_count or ''),
+            str(self.last_error or ''),
+        )
 
 
 class LiveTable():
     def __init__(self):
         self.ev_updated = asyncio.Event()
-        self.map_watchers = {}
+        self.conn_pool = {}
 
     async def watch_dir(self, workdir):
         while True:
-            sock_list = [f for f in os.listdir(workdir) if f.endswith('.sock')]
-            for sock_path in sock_list:
-                if sock_path not in self.map_watchers:
-                    w = SimWatcher(sock_path, self.ev_updated)
-                    self.map_watchers[sock_path] = w
-                    asyncio.create_task(w.handle())
-                    self.ev_updated.set()
+            try:
+                sock_list = [f for f in os.listdir(workdir) if f.endswith('.sock')]
+                for sock_path in sock_list:
+                    if conn:= self.conn_pool.get(sock_path):
+                        if conn.state == UnixConnection.State.finished:
+                            await conn.task
+                            del self.conn_pool[sock_path]
+                        else:
+                            continue
 
-            await asyncio.sleep(1)
+                    conn = UnixConnection(sock_path, self.ev_updated)
+                    self.conn_pool[sock_path] = conn
+                    conn.task = asyncio.create_task(conn.handle())
+                    self.ev_updated.set()
+                await asyncio.sleep(1)
+            except asyncio.CancelledError as e:
+                break
 
     async def wait_updated(self):
         await self.ev_updated.wait()
@@ -70,17 +164,27 @@ class LiveTable():
     def render(self):
         table = Table(box=None)
         table.add_column("%")
-        table.add_column("Time")
+        table.add_column("Time  ")
+        table.add_column("○")
         table.add_column("Caption")
+        table.add_column("Vortex count")
+        table.add_column("Error")
 
-        for sock_path in sorted(self.map_watchers):
-            w = self.map_watchers[sock_path]
-            table.add_row(f"{w.percent}", "", w.sock_path)
+        for sock_path in sorted(self.conn_pool):
+            conn = self.conn_pool[sock_path]
+            table.add_row(*conn.render())
 
         return table
 
 
 async def main():
+    loop = asyncio.get_running_loop()
+    def loop_stop():
+        loop.stop()
+        raise KeyboardInterrupt
+    loop.add_signal_handler(signal.SIGINT, loop_stop)
+    loop.add_signal_handler(signal.SIGTERM, loop_stop)
+
     args = parse_args()
     live_table = LiveTable()
     asyncio.create_task(live_table.watch_dir(args.workdir))

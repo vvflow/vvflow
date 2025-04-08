@@ -8,6 +8,7 @@ pytest = "*"
 numpy = "*"
 black = "*"
 flake8 = "*"
+rich = "*"
 
 [dev-packages]
 
