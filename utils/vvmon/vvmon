@@ -7,18 +7,24 @@ from enum import auto, Enum
 from subprocess import Popen, PIPE
 import argparse
 import asyncio
-import glob
+import logging
 import os
-import sys
 import signal
-import time
 
-from rich import box
 from rich import print
-from rich.console import Console
 from rich.live import Live
-from rich.spinner import Spinner
+from rich.logging import RichHandler
+from rich.highlighter import NullHighlighter
 from rich.table import Table
+
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(message)s",
+    datefmt="[%X]",
+    handlers=[RichHandler(highlighter=NullHighlighter())],
+)
+log = logging.getLogger()
 
 
 def parse_args():
@@ -33,6 +39,12 @@ def parse_args():
         nargs='?',
         default='.',
         help='Simulation working directory to monitor'
+    )
+
+    parser.add_argument(
+        '--debug',
+        action='store_true',
+        help='Print debug logs'
     )
 
     return parser.parse_args()
@@ -71,11 +83,11 @@ class UnixConnection():
         return ret
 
     async def handle(self):
-        print(f'{self.sock_path} connecting...')
+        log.debug(f'{self.sock_path} connecting...')
         while True:
             try:
                 sock_reader, sock_writer = await asyncio.open_unix_connection(self.sock_path)
-                print(f'{self.sock_path} connected')
+                log.debug(f'{self.sock_path} connected')
                 self.state = UnixConnection.State.connected
                 self.last_error = None
                 self.last_progress = None
@@ -95,18 +107,18 @@ class UnixConnection():
                     )
                     self.ev_updated.set()
             except FileNotFoundError as e:
-                print(f'{self.sock_path} disappeared')
-                self.last_error = e
+                log.debug(f'{self.sock_path} file not found')
+                self.last_error = None
                 self.state = UnixConnection.State.finished
                 self.ev_updated.set()
                 break
             except asyncio.CancelledError as e:
-                print(f'{self.sock_path} handler cancelled')
+                log.debug(f'{self.sock_path} handler cancelled')
                 break
             except Exception as e:
                 self.last_error = e
                 if self.state == UnixConnection.State.connected:
-                    print(f'{self.sock_path} disconnected, reconnecting...')
+                    log.debug(f'{self.sock_path} disconnected, reconnecting...')
                     self.state = UnixConnection.State.disconnected
                 self.ev_updated.set()
                 await asyncio.sleep(1)
@@ -186,6 +198,7 @@ async def main():
     loop.add_signal_handler(signal.SIGTERM, loop_stop)
 
     args = parse_args()
+    log.setLevel(logging.DEBUG if args.debug else logging.INFO)
     live_table = LiveTable()
     asyncio.create_task(live_table.watch_dir(args.workdir))
     with Live(live_table.render(), auto_refresh=False) as live:
