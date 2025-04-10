@@ -7,11 +7,12 @@ from enum import auto, Enum
 from subprocess import Popen, PIPE
 import argparse
 import asyncio
+import errno
 import logging
 import os
 import signal
 
-from rich import print
+from rich import box
 from rich.live import Live
 from rich.logging import RichHandler
 from rich.highlighter import NullHighlighter
@@ -83,11 +84,11 @@ class UnixConnection():
         return ret
 
     async def handle(self):
-        log.debug(f'{self.sock_path} connecting...')
+        log.debug(f'{self.sock_path}: Connecting...')
         while True:
             try:
                 sock_reader, sock_writer = await asyncio.open_unix_connection(self.sock_path)
-                log.debug(f'{self.sock_path} connected')
+                log.debug(f'{self.sock_path}: Connected')
                 self.state = UnixConnection.State.connected
                 self.last_error = None
                 self.last_progress = None
@@ -96,7 +97,7 @@ class UnixConnection():
                     msg = await sock_reader.read(1024)
                     if not len(msg):
                         sock_writer.close()
-                        raise ConnectionResetError("Connection reset by peer")
+                        raise OSError(errno.ECONNRESET, "Connection reset by peer")
                     keyval = UnixConnection.decode_message(msg)
                     self.last_progress = SimulationProgress(
                         caption=self.sock_path,
@@ -107,18 +108,20 @@ class UnixConnection():
                     )
                     self.ev_updated.set()
             except FileNotFoundError as e:
-                log.debug(f'{self.sock_path} file not found')
+                log.debug(f'{self.sock_path}: {e.strerror} (Error {e.errno})')
                 self.last_error = None
                 self.state = UnixConnection.State.finished
                 self.ev_updated.set()
                 break
             except asyncio.CancelledError as e:
-                log.debug(f'{self.sock_path} handler cancelled')
+                log.debug(f'{self.sock_path}: Handler cancelled')
                 break
-            except Exception as e:
+            except OSError as e:
+                if str(e) != str(self.last_error):
+                    log.debug(f'{self.sock_path}: {e.strerror} (Error {e.errno})')
                 self.last_error = e
-                if self.state == UnixConnection.State.connected:
-                    log.debug(f'{self.sock_path} disconnected, reconnecting...')
+                if self.state != UnixConnection.State.disconnected:
+                    log.debug(f'{self.sock_path}: Reconnecting...')
                     self.state = UnixConnection.State.disconnected
                 self.ev_updated.set()
                 await asyncio.sleep(1)
@@ -140,7 +143,7 @@ class UnixConnection():
             led,
             str(lp and lp.caption or self.sock_path),
             str(lp and lp.vortex_count or ''),
-            str(self.last_error or ''),
+            str(self.last_error and self.last_error.strerror or ''),
         )
 
 
@@ -174,7 +177,7 @@ class LiveTable():
         self.ev_updated.clear()
 
     def render(self):
-        table = Table(box=None)
+        table = Table(box=box.SIMPLE)
         table.add_column("%")
         table.add_column("Time  ")
         table.add_column("○")
