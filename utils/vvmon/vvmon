@@ -13,9 +13,10 @@ import os
 import signal
 
 from rich import box
+from rich.console import Console, Group
+from rich.highlighter import NullHighlighter
 from rich.live import Live
 from rich.logging import RichHandler
-from rich.highlighter import NullHighlighter
 from rich.table import Table
 
 
@@ -185,11 +186,21 @@ class LiveTable():
         table.add_column("Vortex count")
         table.add_column("Error")
 
+        sim_running = 0
+        sim_total = len(self.conn_pool)
         for sock_path in sorted(self.conn_pool):
             conn = self.conn_pool[sock_path]
             table.add_row(*conn.render())
+            if conn.state == UnixConnection.State.connected:
+                sim_running += 1
 
-        return table
+        now = datetime.now()
+        datestr = now.strftime('%Y-%m-%d')
+        timestr = now.strftime('%H:%M:%S')
+        footer = f"\[{datestr} [bold]{timestr}[/]]"
+        footer += f"\n{sim_running:3d} running"
+        footer += f"\n{sim_total:3d} total"
+        return Group(table, footer)
 
 
 async def main():
@@ -204,7 +215,8 @@ async def main():
     log.setLevel(logging.DEBUG if args.debug else logging.INFO)
     live_table = LiveTable()
     asyncio.create_task(live_table.watch_dir(args.workdir))
-    with Live(live_table.render(), auto_refresh=False) as live:
+    console = Console(highlight=False)
+    with Live(live_table.render(), auto_refresh=False, console=console) as live:
         while True:
             await live_table.wait_updated()
             live.update(live_table.render(), refresh=True)
