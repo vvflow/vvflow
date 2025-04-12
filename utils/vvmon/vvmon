@@ -20,15 +20,6 @@ from rich.logging import RichHandler
 from rich.table import Table
 
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(message)s",
-    datefmt="[%X]",
-    handlers=[RichHandler(highlighter=NullHighlighter())],
-)
-log = logging.getLogger()
-
-
 def parse_args():
     parser = argparse.ArgumentParser(
         prog='vvmon',
@@ -79,12 +70,16 @@ class UnixConnection():
     @staticmethod
     def decode_message(msg):
         ret = {}
-        for field in msg.decode().split():
+        global log
+        for field in msg.decode().split('\n'):
+            if not '=' in field:
+                continue
             key, val = field.split('=', 1)
-            ret[key] = val
+            ret[key.strip()] = val.strip()
         return ret
 
     async def handle(self):
+        global log
         log.debug(f'{self.sock_path}: Connecting...')
         while True:
             try:
@@ -99,13 +94,17 @@ class UnixConnection():
                     if not len(msg):
                         sock_writer.close()
                         raise OSError(errno.ECONNRESET, "Connection reset by peer")
-                    keyval = UnixConnection.decode_message(msg)
+                    try:
+                        keyval = UnixConnection.decode_message(msg)
+                    except Exception as e:
+                        log.warning(e)
+                        continue
                     self.last_progress = SimulationProgress(
                         caption=self.sock_path,
                         wallclock_time=datetime.now(),
-                        simulation_time=keyval['t'],
-                        simulation_percent=0,
-                        vortex_count=keyval['N'],
+                        simulation_time=keyval.get('simulation_time'),
+                        simulation_percent=keyval.get('percent'),
+                        vortex_count=keyval.get('vortex_count'),
                     )
                     self.ev_updated.set()
             except FileNotFoundError as e:
@@ -149,9 +148,10 @@ class UnixConnection():
 
 
 class LiveTable():
-    def __init__(self):
+    def __init__(self, console):
         self.ev_updated = asyncio.Event()
         self.conn_pool = {}
+        self.console = console
 
     async def watch_dir(self, workdir):
         while True:
@@ -215,10 +215,21 @@ async def main():
     loop.add_signal_handler(signal.SIGTERM, loop_stop)
 
     args = parse_args()
-    log.setLevel(logging.DEBUG if args.debug else logging.INFO)
-    live_table = LiveTable()
-    asyncio.create_task(live_table.watch_dir(args.workdir))
     console = Console(highlight=False)
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(message)s",
+        datefmt="[%X]",
+        handlers=[RichHandler(highlighter=NullHighlighter(), console=console)],
+    )
+
+    global log
+    log = logging.getLogger()
+    log.setLevel(logging.DEBUG if args.debug else logging.INFO)
+
+    live_table = LiveTable(console=console)
+    asyncio.create_task(live_table.watch_dir(args.workdir))
+
     with Live(live_table.render(), auto_refresh=False, console=console) as live:
         while True:
             await live_table.wait_updated(timeout=1)
