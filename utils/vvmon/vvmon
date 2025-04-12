@@ -173,8 +173,11 @@ class LiveTable():
             except asyncio.CancelledError as e:
                 break
 
-    async def wait_updated(self):
-        await self.ev_updated.wait()
+    async def wait_updated(self, timeout):
+        try:
+            await asyncio.wait_for(self.ev_updated.wait(), timeout)
+        except asyncio.TimeoutError:
+            pass
         self.ev_updated.clear()
 
     def render(self):
@@ -218,8 +221,9 @@ async def main():
     console = Console(highlight=False)
     with Live(live_table.render(), auto_refresh=False, console=console) as live:
         while True:
-            await live_table.wait_updated()
+            await live_table.wait_updated(timeout=1)
             live.update(live_table.render(), refresh=True)
+            await asyncio.sleep(0.25)
 
 
 if __name__ == '__main__':
