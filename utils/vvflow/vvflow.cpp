@@ -9,6 +9,7 @@
 #include "./lua_bodylist.h"
 #include "./gen_body.h"
 #include "./utils.h"
+#include "./monitoring.h"
 
 #include "MEpsilonFast.hpp"
 #include "MConvectiveFast.hpp"
@@ -197,6 +198,8 @@ int simulate (lua_State *L) {
     mkdir(f_results, 0777);
 
     Stepdata stepdata = {&S, f_stepdata, !!opt::save_profile};
+    Monitoring monitoring = {};
+    monitoring.setFinish(S.finish);
 
     double dl = S.average_segment_length();
     double min_node_size = dl>0 ? dl*5 : 0;
@@ -262,6 +265,11 @@ int simulate (lua_State *L) {
         dbg(flowmove.heat_crop());
         S.time = TTime::add(S.time, S.dt);
 
+        monitoring.process(Monitoring::Event {
+            .simulation_time = S.time,
+            .vortex_count = S.VortexList.size(),
+        });
+
         char progress_buf[128];
         snprintf(
             progress_buf,
@@ -275,8 +283,9 @@ int simulate (lua_State *L) {
             fputs(progress_buf, stderr);
         }
 
+        auto report = monitoring.report();
         listen_sock.accept_all();
-        listen_sock.broadcast(progress_buf);
+        listen_sock.broadcast(report);
     }
 
     if (opt::show_progress)
