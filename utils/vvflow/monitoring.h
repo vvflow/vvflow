@@ -21,19 +21,15 @@ std::string datetimefmt(TWallclock t) {
 }
 
 template<size_t N>
-class RingBuffer {
+class TRingBuffer {
 private:
     std::array<double, N> buffer;
     size_t buffer_pos;
     size_t buffer_size;
 public:
-    RingBuffer<N>(): buffer(), buffer_pos(), buffer_size() {}
-    ~RingBuffer<N>() {}
+    TRingBuffer<N>(): buffer(), buffer_pos(), buffer_size() {}
+    ~TRingBuffer<N>() {}
 
-
-    // size_t size() {
-    //     return _size;
-    // }
     void record(double val) {
         buffer[buffer_pos] = val;
         buffer_size = std::min(buffer_size + 1, N);
@@ -52,8 +48,9 @@ public:
 class Monitoring {
 public:
     Monitoring():
-        init_timepoint(),
-        init_wallclock(),
+        init_timepoint(TTimepoint::clock::now()),
+        init_wallclock(TWallclock::clock::now()),
+        step_durations(),
         finish(),
         events()
         {}
@@ -70,18 +67,16 @@ public:
         size_t vortex_count;
     };
 
-    struct Report {
-        TWallclock wallclock_time;
-        // TDuration last_step_duration;
-        // double steps_per_second_mavg;
-        TTime simulation_time;
-        size_t vortex_count;
-        // TWallclock eta;
-    };
-
     void process(struct Event event) {
-        event.emitted_timepoint = TTimepoint::clock::now(); //std::chrono::steady_clock::now();
-        event.emitted_wallclock = TWallclock::clock::now(); // std::chrono::system_clock::now();
+        event.emitted_timepoint = TTimepoint::clock::now();
+        event.emitted_wallclock = TWallclock::clock::now();
+
+        const auto& it = events.crbegin();
+        if (it != events.crend()) {
+            const auto& last_event = it->second;
+            auto last_step_duration = event.emitted_timepoint - last_event.emitted_timepoint;
+            step_durations.record(std::chrono::duration<double>(last_step_duration).count());
+        }
 
         events.insert({event.emitted_timepoint, event});
     }
@@ -93,25 +88,50 @@ public:
         char buf[256];
         memset(buf, 0, sizeof(buf));
 
-        snprintf(buf, sizeof(buf), "%.1f", double(last_event.simulation_time)/finish*100);
-        ss << "percent = " << buf << std::endl;
+        /* percent */ if (finish > 0) {
+            snprintf(buf, sizeof(buf), "%.1f", double(last_event.simulation_time)/finish*100);
+            ss << "percent = " << buf << std::endl;
+        }
 
-        std::time_t tt = TWallclock::clock::to_time_t(last_event.emitted_wallclock);
-        std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", std::localtime(&tt));
-        ss << "wallclock_time = " << buf << std::endl;
+        /* wallclock_time */ {
+            std::time_t tt = TWallclock::clock::to_time_t(last_event.emitted_wallclock);
+            std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", std::localtime(&tt));
+            ss << "wallclock_time = " << buf << std::endl;
+        }
 
-        int digits = std::log10(last_event.simulation_time.timescale) + 1;
-        snprintf(buf, sizeof(buf), "%.*f", digits, double(last_event.simulation_time));
-        ss << "simulation_time = " << buf << std::endl;
+        /* simulation_time */ {
+            int digits = std::log10(last_event.simulation_time.timescale) + 1;
+            snprintf(buf, sizeof(buf), "%.*f", digits, double(last_event.simulation_time));
+            ss << "simulation_time = " << buf << std::endl;
+        }
 
-        ss << "vortex_count = " << last_event.vortex_count << std::endl;
+        /* vortex_count */ {
+            ss << "vortex_count = " << last_event.vortex_count << std::endl;
+        }
+
+        /* elapsed */ {
+            double elapsed = std::chrono::duration<double>(last_event.emitted_timepoint - init_timepoint).count();
+            snprintf(buf, sizeof(buf), "%02d:%02d:%02d", int(elapsed/3600), int(elapsed/60)%60, int(elapsed)%60);
+            ss << "elapsed = " << buf << std::endl;
+        }
+
+        /* step_duration */ {
+            double step_duration = step_durations.average();
+            if (step_duration > 0.2) {
+                snprintf(buf, sizeof(buf), "%.1f", step_duration);
+            } else {
+                snprintf(buf, sizeof(buf), "%e", step_duration);
+            }
+            ss << "step_duration = " << step_duration << std::endl;
+        }
+
         return ss.str();
     }
 
 private:
     TTimepoint init_timepoint;
     TWallclock init_wallclock;
-    // TRingBuffer
+    TRingBuffer<10> step_durations;
     double finish;
     std::map<TTimepoint, struct Event> events;
 };

@@ -47,10 +47,11 @@ def parse_args():
 class SimulationProgress():
     caption: str
     wallclock_time: datetime
-    simulation_time: float | None
-    simulation_percent: int | None
-    # steps_per_second: float
-    vortex_count: int | None
+    simulation_time: str | None
+    simulation_percent: str | None
+    vortex_count: str | None
+    elapsed: str | None
+    step_duration: str | None
 
 
 class UnixConnection():
@@ -105,7 +106,10 @@ class UnixConnection():
                         simulation_time=keyval.get('simulation_time'),
                         simulation_percent=keyval.get('percent'),
                         vortex_count=keyval.get('vortex_count'),
+                        elapsed=keyval.get('elapsed'),
+                        step_duration=keyval.get('step_duration'),
                     )
+                    log.debug(f"{self.last_progress.elapsed}")
                     self.ev_updated.set()
             except FileNotFoundError as e:
                 log.debug(f'{self.sock_path}: {e.strerror} (Error {e.errno})')
@@ -137,13 +141,21 @@ class UnixConnection():
         else:
             led = '[gray]●[/]'
 
+        state_info = ''
+        if self.state == UnixConnection.State.finished and lp and lp.wallclock_time:
+            state_info = 'Finished ' + lp.wallclock_time.strftime('%Y-%m-%d %H:%M:%S')
+        if self.last_error:
+            state_info = self.last_error.strerror
+
         return (
             str(lp and lp.simulation_percent or ''),
             str(lp and lp.simulation_time or ''),
             led,
             str(lp and lp.caption or self.sock_path),
             str(lp and lp.vortex_count or ''),
-            str(self.last_error and self.last_error.strerror or ''),
+            str(lp and lp.step_duration or ''),
+            str(lp and lp.elapsed or ''),
+            state_info,
         )
 
 
@@ -187,7 +199,9 @@ class LiveTable():
         table.add_column("○")
         table.add_column("Caption")
         table.add_column("Vortex count")
-        table.add_column("Error")
+        table.add_column("Step duration")
+        table.add_column("Elapsed")
+        table.add_column("State")
 
         sim_running = 0
         sim_total = len(self.conn_pool)
