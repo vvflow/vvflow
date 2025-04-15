@@ -50,7 +50,7 @@ class Space
         void load_hdf(int64_t fid, metainfo_t *info = NULL);
         void load_v13(const char* filename); // deprecated format (for compatibility)
         FILE* open_file(const char* format);
-    
+
         static int load_list_txt(std::vector<TObj>& li, const char* filename);
         static int load_list_bin(std::vector<TObj>& li, const char* filename);
         int load_body_txt(const char* filename);
@@ -75,6 +75,10 @@ class Space
         void ZeroBodies(); //zero Cp, Fr, Nu variables.
 
     public: // const methods
+        int step_number() const {
+            return int(time/dt+0.5);
+        }
+
         TVec inf_speed() const {
             return TVec(
                 inf_vx.eval(time),

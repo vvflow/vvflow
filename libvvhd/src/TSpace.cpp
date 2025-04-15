@@ -69,7 +69,7 @@ void Space::save(const char* format)
     }
 
     char fname[64];
-    snprintf(fname, 64, format, int(time/dt+0.5));
+    snprintf(fname, 64, format, step_number());
     H5Eset_auto(H5E_DEFAULT, NULL, NULL);
     hid_t fid = H5Fcreate(fname, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
     if (fid < 0)
