@@ -231,7 +231,7 @@ int simulate (lua_State *L) {
 
         dbg(flowmove.heat_shed());
 
-        if (S.time.divisibleBy(S.dt_save)  && (double(S.time) >= 0))
+        if (S.time.divisibleBy(S.dt_save) && (double(S.time) > 0))
         {
             char tmp_filename[256];
             snprintf(tmp_filename, 256, "%s/%%06d.h5", f_results);
