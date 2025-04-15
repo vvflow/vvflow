@@ -40,6 +40,13 @@ def parse_args():
         help='Print debug logs'
     )
 
+    parser.add_argument(
+        '-A, --all-columns',
+        dest='all_columns',
+        action='store_true',
+        help='Output all columns'
+    )
+
     return parser.parse_args()
 
 
@@ -133,7 +140,7 @@ class UnixConnection():
                 self.ev_updated.set()
                 await asyncio.sleep(1)
 
-    def render(self):
+    def stat(self):
         lp = self.last_progress
         if self.state == UnixConnection.State.finished:
             led = '[green]●[/]'
@@ -149,23 +156,50 @@ class UnixConnection():
             state_info = 'Finished ' + lp.wallclock_time.strftime('%Y-%m-%d %H:%M:%S')
         if self.last_error:
             state_info = self.last_error.strerror
+            if lp and lp.wallclock_time:
+                state_info += ' since ' + lp.wallclock_time.strftime('%Y-%m-%d %H:%M:%S')
 
-        return (
-            str(lp and lp.simulation_percent or ''),
-            str(lp and lp.simulation_time or ''),
-            led,
-            str(lp and lp.caption or self.sock_path),
-            str(lp and lp.vortex_count or ''),
-            str(lp and lp.step_duration or ''),
-            str(lp and lp.elapsed or ''),
-            str(lp and lp.remains or ''),
-            str(lp and lp.eta or ''),
-            state_info,
+        return dict(
+            percent=lp and lp.simulation_percent,
+            time=lp and lp.simulation_time,
+            led=led,
+            caption=lp and lp.caption or self.sock_path,
+            vortex_count=lp and lp.vortex_count,
+            step_duration=lp and lp.step_duration,
+            elapsed=lp and lp.elapsed,
+            remains=lp and lp.remains,
+            eta=lp and lp.eta,
+            state=state_info,
         )
 
 
 class LiveTable():
-    def __init__(self, console):
+    all_columns = dict(
+        percent='%',
+        time='Time  ',
+        led='○',
+        caption='Caption',
+        vortex_count='Vortex count',
+        step_duration='Step duration',
+        elapsed='Time elapsed',
+        remains='Time remains',
+        eta='ETA',
+        state='State'
+    )
+
+    def __init__(self, console, all_columns: bool = False):
+        self.columns = [x for x in [
+            'percent',
+            'time',
+            'led',
+            'caption',
+            'vortex_count' if all_columns else None,
+            'step_duration' if all_columns else None,
+            'elapsed',
+            'remains',
+            'eta',
+            'state'
+        ] if x is not None]
         self.ev_updated = asyncio.Event()
         self.conn_pool = {}
         self.console = console
@@ -199,22 +233,16 @@ class LiveTable():
 
     def render(self):
         table = Table(box=box.SIMPLE)
-        table.add_column("%")
-        table.add_column("Time  ")
-        table.add_column("○")
-        table.add_column("Caption")
-        table.add_column("Vortex count")
-        table.add_column("Step duration")
-        table.add_column("Elapsed")
-        table.add_column("Remains")
-        table.add_column("ETA")
-        table.add_column("State")
+        for col in self.columns:
+            table.add_column(LiveTable.all_columns.get(col))
 
         sim_running = 0
         sim_total = len(self.conn_pool)
         for sock_path in sorted(self.conn_pool):
             conn = self.conn_pool[sock_path]
-            table.add_row(*conn.render())
+            conn_stat = conn.stat()
+            fields = [str(conn_stat.get(col) or '') for col in self.columns]
+            table.add_row(*fields)
             if conn.state == UnixConnection.State.connected:
                 sim_running += 1
 
@@ -248,7 +276,7 @@ async def main():
     log = logging.getLogger()
     log.setLevel(logging.DEBUG if args.debug else logging.INFO)
 
-    live_table = LiveTable(console=console)
+    live_table = LiveTable(console=console, all_columns=args.all_columns)
     asyncio.create_task(live_table.watch_dir(args.workdir))
 
     with Live(live_table.render(), auto_refresh=False, console=console) as live:
