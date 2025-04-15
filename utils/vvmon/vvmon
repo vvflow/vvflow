@@ -51,6 +51,8 @@ class SimulationProgress():
     simulation_percent: str | None
     vortex_count: str | None
     elapsed: str | None
+    remains: str | None
+    eta: str | None
     step_duration: str | None
 
 
@@ -107,9 +109,10 @@ class UnixConnection():
                         simulation_percent=keyval.get('percent'),
                         vortex_count=keyval.get('vortex_count'),
                         elapsed=keyval.get('elapsed'),
+                        remains=keyval.get('remains'),
+                        eta=keyval.get('eta'),
                         step_duration=keyval.get('step_duration'),
                     )
-                    log.debug(f"{self.last_progress.elapsed}")
                     self.ev_updated.set()
             except FileNotFoundError as e:
                 log.debug(f'{self.sock_path}: {e.strerror} (Error {e.errno})')
@@ -155,6 +158,8 @@ class UnixConnection():
             str(lp and lp.vortex_count or ''),
             str(lp and lp.step_duration or ''),
             str(lp and lp.elapsed or ''),
+            str(lp and lp.remains or ''),
+            str(lp and lp.eta or ''),
             state_info,
         )
 
@@ -201,6 +206,8 @@ class LiveTable():
         table.add_column("Vortex count")
         table.add_column("Step duration")
         table.add_column("Elapsed")
+        table.add_column("Remains")
+        table.add_column("ETA")
         table.add_column("State")
 
         sim_running = 0

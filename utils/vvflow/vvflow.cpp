@@ -198,8 +198,7 @@ int simulate (lua_State *L) {
     mkdir(f_results, 0777);
 
     Stepdata stepdata = {&S, f_stepdata, !!opt::save_profile};
-    Monitoring monitoring = {};
-    monitoring.setFinish(S.finish);
+    Monitoring monitoring(S.finish, S.dt);
 
     double dl = S.average_segment_length();
     double min_node_size = dl>0 ? dl*5 : 0;
@@ -267,6 +266,7 @@ int simulate (lua_State *L) {
 
         monitoring.process(Monitoring::Event {
             .simulation_time = S.time,
+            .simulation_step = S.step_number(),
             .vortex_count = S.VortexList.size(),
         });
 
