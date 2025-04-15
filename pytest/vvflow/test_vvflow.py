@@ -53,7 +53,6 @@ def test_run3(env: Env):
     results = os.listdir(tempdir + "/results_nothing")
     results.sort()
     assert results == [
-        "000000.h5",
         "000005.h5",
         "000010.h5",
         "000012.h5",

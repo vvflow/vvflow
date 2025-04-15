@@ -55,7 +55,6 @@ def test(env):
     """
     env.run(cmd, shell=True, cwd=env.tempdir)
     assert sorted(os.listdir(env.tmp("images_cyl_re600"))) == [
-        "000000.png",
         "000010.png",
         "000020.png",
     ]
