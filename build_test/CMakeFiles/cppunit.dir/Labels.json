@@ -1,0 +1,43 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/runner/work/vvflow/vvflow/build_test/CMakeFiles/cppunit"
+		},
+		{
+			"file" : "/home/runner/work/vvflow/vvflow/build_test/CMakeFiles/cppunit.rule"
+		},
+		{
+			"file" : "/home/runner/work/vvflow/vvflow/build_test/CMakeFiles/cppunit-complete.rule"
+		},
+		{
+			"file" : "/home/runner/work/vvflow/vvflow/build_test/cppunit-prefix/src/cppunit-stamp/cppunit-build.rule"
+		},
+		{
+			"file" : "/home/runner/work/vvflow/vvflow/build_test/cppunit-prefix/src/cppunit-stamp/cppunit-configure.rule"
+		},
+		{
+			"file" : "/home/runner/work/vvflow/vvflow/build_test/cppunit-prefix/src/cppunit-stamp/cppunit-download.rule"
+		},
+		{
+			"file" : "/home/runner/work/vvflow/vvflow/build_test/cppunit-prefix/src/cppunit-stamp/cppunit-install.rule"
+		},
+		{
+			"file" : "/home/runner/work/vvflow/vvflow/build_test/cppunit-prefix/src/cppunit-stamp/cppunit-mkdir.rule"
+		},
+		{
+			"file" : "/home/runner/work/vvflow/vvflow/build_test/cppunit-prefix/src/cppunit-stamp/cppunit-patch.rule"
+		},
+		{
+			"file" : "/home/runner/work/vvflow/vvflow/build_test/cppunit-prefix/src/cppunit-stamp/cppunit-update.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"cppunit"
+		],
+		"name" : "cppunit"
+	}
+}

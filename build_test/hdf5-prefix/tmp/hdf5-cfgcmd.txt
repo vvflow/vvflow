@@ -1,0 +1,1 @@
+cmd='<SOURCE_DIR>/configure;--prefix=<INSTALL_DIR>;--disable-shared;--disable-cxx;--disable-hl;--disable-tests;--disable-tools;--with-zlib=/home/runner/work/vvflow/vvflow/build_test/zlib-prefix;--enable-static;--with-pic'

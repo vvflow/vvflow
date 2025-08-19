@@ -1,0 +1,12 @@
+# This is a generated file and its contents are an internal implementation detail.
+# The download step will be re-executed if anything in this file changes.
+# No other meaning or use of this file is supported.
+
+method=url
+command=/usr/local/bin/cmake;-DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE;-P;/home/runner/work/vvflow/vvflow/build_make/hdf5-prefix/src/hdf5-stamp/download-hdf5.cmake;COMMAND;/usr/local/bin/cmake;-DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE;-P;/home/runner/work/vvflow/vvflow/build_make/hdf5-prefix/src/hdf5-stamp/verify-hdf5.cmake;COMMAND;/usr/local/bin/cmake;-DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE;-P;/home/runner/work/vvflow/vvflow/build_make/hdf5-prefix/src/hdf5-stamp/extract-hdf5.cmake
+source_dir=/home/runner/work/vvflow/vvflow/build_make/hdf5-prefix/src/hdf5
+work_dir=/home/runner/work/vvflow/vvflow/build_make/hdf5-prefix/src
+url(s)=https://vvflow.github.io/vvflow-deps/hdf5-1.10.6.tar.gz;https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.10/hdf5-1.10.6/src/hdf5-1.10.6.tar.gz
+hash=MD5=37f3089e7487daf0890baf3d3328e54a
+      no_extract=
+

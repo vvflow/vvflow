@@ -1,0 +1,12 @@
+# This is a generated file and its contents are an internal implementation detail.
+# The download step will be re-executed if anything in this file changes.
+# No other meaning or use of this file is supported.
+
+method=url
+command=/usr/local/bin/cmake;-DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE;-P;/home/runner/work/vvflow/vvflow/build_test/libarchive-prefix/src/libarchive-stamp/download-libarchive.cmake;COMMAND;/usr/local/bin/cmake;-DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE;-P;/home/runner/work/vvflow/vvflow/build_test/libarchive-prefix/src/libarchive-stamp/verify-libarchive.cmake;COMMAND;/usr/local/bin/cmake;-DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE;-P;/home/runner/work/vvflow/vvflow/build_test/libarchive-prefix/src/libarchive-stamp/extract-libarchive.cmake
+source_dir=/home/runner/work/vvflow/vvflow/build_test/libarchive-prefix/src/libarchive
+work_dir=/home/runner/work/vvflow/vvflow/build_test/libarchive-prefix/src
+url(s)=https://vvflow.github.io/vvflow-deps/libarchive-3.4.3.tar.gz;https://www.libarchive.org/downloads/libarchive-3.4.3.tar.gz
+hash=MD5=2c5f01b65e74c5a5a6ce45cc01647a53
+      no_extract=
+

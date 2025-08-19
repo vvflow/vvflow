@@ -1,0 +1,12 @@
+# This is a generated file and its contents are an internal implementation detail.
+# The download step will be re-executed if anything in this file changes.
+# No other meaning or use of this file is supported.
+
+method=url
+command=/usr/local/bin/cmake;-DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE;-P;/home/runner/work/vvflow/vvflow/build_test/lua-prefix/src/lua-stamp/download-lua.cmake;COMMAND;/usr/local/bin/cmake;-DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE;-P;/home/runner/work/vvflow/vvflow/build_test/lua-prefix/src/lua-stamp/verify-lua.cmake;COMMAND;/usr/local/bin/cmake;-DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE;-P;/home/runner/work/vvflow/vvflow/build_test/lua-prefix/src/lua-stamp/extract-lua.cmake
+source_dir=/home/runner/work/vvflow/vvflow/build_test/lua-prefix/src/lua
+work_dir=/home/runner/work/vvflow/vvflow/build_test/lua-prefix/src
+url(s)=https://vvflow.github.io/vvflow-deps/lua-5.2.4.tar.gz;https://www.lua.org/ftp/lua-5.2.4.tar.gz
+hash=MD5=913fdb32207046b273fdb17aad70be13
+      no_extract=
+

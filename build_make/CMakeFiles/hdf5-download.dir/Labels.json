@@ -1,0 +1,25 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/runner/work/vvflow/vvflow/build_make/CMakeFiles/hdf5-download"
+		},
+		{
+			"file" : "/home/runner/work/vvflow/vvflow/build_make/CMakeFiles/hdf5-download.rule"
+		},
+		{
+			"file" : "/home/runner/work/vvflow/vvflow/build_make/hdf5-prefix/src/hdf5-stamp/hdf5-download.rule"
+		},
+		{
+			"file" : "/home/runner/work/vvflow/vvflow/build_make/hdf5-prefix/src/hdf5-stamp/hdf5-mkdir.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"hdf5"
+		],
+		"name" : "hdf5-download"
+	}
+}

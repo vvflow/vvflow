@@ -1,0 +1,43 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/runner/work/vvflow/vvflow/build_make/CMakeFiles/libarchive"
+		},
+		{
+			"file" : "/home/runner/work/vvflow/vvflow/build_make/CMakeFiles/libarchive.rule"
+		},
+		{
+			"file" : "/home/runner/work/vvflow/vvflow/build_make/CMakeFiles/libarchive-complete.rule"
+		},
+		{
+			"file" : "/home/runner/work/vvflow/vvflow/build_make/libarchive-prefix/src/libarchive-stamp/libarchive-build.rule"
+		},
+		{
+			"file" : "/home/runner/work/vvflow/vvflow/build_make/libarchive-prefix/src/libarchive-stamp/libarchive-configure.rule"
+		},
+		{
+			"file" : "/home/runner/work/vvflow/vvflow/build_make/libarchive-prefix/src/libarchive-stamp/libarchive-download.rule"
+		},
+		{
+			"file" : "/home/runner/work/vvflow/vvflow/build_make/libarchive-prefix/src/libarchive-stamp/libarchive-install.rule"
+		},
+		{
+			"file" : "/home/runner/work/vvflow/vvflow/build_make/libarchive-prefix/src/libarchive-stamp/libarchive-mkdir.rule"
+		},
+		{
+			"file" : "/home/runner/work/vvflow/vvflow/build_make/libarchive-prefix/src/libarchive-stamp/libarchive-patch.rule"
+		},
+		{
+			"file" : "/home/runner/work/vvflow/vvflow/build_make/libarchive-prefix/src/libarchive-stamp/libarchive-update.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"libarchive"
+		],
+		"name" : "libarchive"
+	}
+}

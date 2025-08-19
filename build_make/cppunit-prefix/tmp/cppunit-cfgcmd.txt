@@ -1,0 +1,1 @@
+cmd='<SOURCE_DIR>/configure;--prefix=<INSTALL_DIR>;--disable-doxygen;--disable-docs;--enable-shared;--disable-static'
