@@ -3,7 +3,6 @@ project (vvplot)
 
 include_directories(
     ${LIBVVHD_INCLUDE_DIRS}
-    ${LIBARCHIVE_INCLUDE_DIRS}
 )
 
 add_executable(vvplot
@@ -11,8 +10,8 @@ add_executable(vvplot
     optparse.cpp
     gnuplotter.cpp
 )
-add_dependencies(vvplot libarchive)
-target_link_libraries(vvplot vvhd ${LIBARCHIVE_LIBRARIES})
+add_dependencies(vvplot libarchive_external)
+target_link_libraries(vvplot vvhd libarchive_external)
 
 if(WITH_MANPAGES)
 set(MAN_MD ${CMAKE_CURRENT_SOURCE_DIR}/vvplot.1.md)
