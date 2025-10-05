@@ -34,7 +34,7 @@ sudo apt-get update
 sudo apt-get install build-essential cmake make git liblapack-dev gnuplot
 ```
 
-### Build Process (⚠️ NEVER CANCEL - can take 60+ minutes due to external downloads)
+### Build Process (⚠️ NEVER CANCEL - can take 20+ minutes due to external downloads)
 ```bash
 git clone https://github.com/vvflow/vvflow.git
 cd vvflow
@@ -55,8 +55,8 @@ source ~/.bashrc
 ## Critical Timeout Information
 
 - **CMake configuration**: ~3-5 seconds
-- **Full build**: **60+ minutes** (external downloads are unpredictable)
-- **Test suite**: **30+ minutes** 
+- **Full build**: **20+ minutes** (external downloads are unpredictable)
+- **Test suite**: **2 minutes**
 
 **NEVER CANCEL** long-running builds - external dependency downloads can be very slow.
 
@@ -115,10 +115,10 @@ After successful build and install:
 1. **`vvflow`** - Main simulation engine with Lua scripting
 2. **`vvxtract`** - Extract data from HDF5 files
 3. **`vvplot`** - Create visualizations (requires gnuplot)
-4. **`gpquick`** - Quick plotting utility 
+4. **`gpquick`** - Quick plotting utility
 5. **`vvawk.*`** - Family of awk-based data processing tools:
    - `vvawk.mavg` - Moving averages
-   - `vvawk.avg` - Simple averages  
+   - `vvawk.avg` - Simple averages
    - `vvawk.drv` - Derivatives
    - `vvawk.ampl` - Amplitude analysis
 
@@ -143,7 +143,7 @@ After successful build and install:
 - **Long build times**: External downloads can be very slow, **DO NOT CANCEL**
 - **Missing dependencies**: Install system packages as workaround
 
-### Test Failures  
+### Test Failures
 - **Python tests fail**: Ensure binaries are built and installed correctly
 - **Visualization tests fail**: Requires gnuplot installation
 - **Integration tests timeout**: Allow 30+ minutes for full test suite
@@ -156,7 +156,7 @@ After successful build and install:
 ## Development Guidelines
 
 1. **Always test with example simulations** before submitting changes
-2. **Run both Python linting and integration tests** 
+2. **Run both Python linting and integration tests**
 3. **Validate visualization pipeline** if modifying output formats
 4. **Consider network restrictions** when modifying build system
 5. **Document any new dependencies** or build requirements
@@ -164,7 +164,7 @@ After successful build and install:
 ## External Dependencies (Downloaded During Build)
 
 - HDF5 1.10.6 - Data storage format
-- Lua 5.2.4 - Embedded scripting engine  
+- Lua 5.2.4 - Embedded scripting engine
 - zlib 1.2.11 - Compression library
 - libarchive 3.4.3 - Archive handling
 - CppUnit 1.15.1 - Unit testing framework
