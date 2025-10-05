@@ -1,4 +1,6 @@
+# Hidden files except .github
 .*
+!.github
 *~
 *.pyc
 bin/
