@@ -33,8 +33,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fopenmp")
 
 include_directories(
     headers/
-    ${LUA_INCLUDE_DIRS}
-    ${HDF5_INCLUDE_DIRS}
 )
 add_library(vvhd SHARED
     ${PROJECT_BINARY_DIR}/gitinfo.cpp
@@ -60,12 +58,13 @@ add_library(vvhd SHARED
     src/XStreamfunction.cpp
     src/XVelocity.cpp
 )
-add_dependencies(vvhd lua hdf5)
+add_dependencies(vvhd hdf5_external lua_external)
 target_link_libraries(vvhd
     ${LAPACK_LIBRARIES}
-    ${HDF5_LIBRARIES}
-    ${LUA_LIBRARIES}
+    hdf5_external
+    lua_external
 )
+target_include_directories(vvhd PRIVATE ${LUA_INCLUDE_DIRS} ${HDF5_INCLUDE_DIRS})
 
 install (TARGETS vvhd DESTINATION lib)
 set(LIBVVHD_INCLUDE_DIRS

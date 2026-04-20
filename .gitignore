@@ -8,4 +8,5 @@ gitinfo.cpp
 *.sublime-*
 doc/images/
 build/
+build_*/
 example/

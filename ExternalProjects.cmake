@@ -28,9 +28,22 @@ ExternalProject_Add(zlib
     TEST_COMMAND ${CMAKE_MAKE_PROGRAM} check
 )
 ExternalProject_Get_Property(zlib install_dir)
-set(ZLIB_DIR ${install_dir})
-set(ZLIB_LIBRARIES ${install_dir}/lib/libz.a)
-set(ZLIB_INCLUDE_DIRS ${install_dir}/include)
+if(IS_ABSOLUTE "${install_dir}")
+    set(ZLIB_DIR ${install_dir})
+    set(ZLIB_LIB_DIR ${install_dir}/lib)
+    set(ZLIB_INCLUDE_DIRS ${install_dir}/include)
+else()
+    set(ZLIB_DIR ${CMAKE_CURRENT_BINARY_DIR}/${install_dir})
+    set(ZLIB_LIB_DIR ${CMAKE_CURRENT_BINARY_DIR}/${install_dir}/lib)
+    set(ZLIB_INCLUDE_DIRS ${CMAKE_CURRENT_BINARY_DIR}/${install_dir}/include)
+endif()
+
+# Create an INTERFACE library for ZLIB using link directories instead of file paths
+add_library(zlib_external INTERFACE)
+add_dependencies(zlib_external zlib)
+target_link_directories(zlib_external INTERFACE ${ZLIB_LIB_DIR})
+target_link_libraries(zlib_external INTERFACE z)
+target_include_directories(zlib_external INTERFACE ${ZLIB_INCLUDE_DIRS})
 
 #
 # HDF5
@@ -53,8 +66,20 @@ ExternalProject_Add(hdf5
     STEP_TARGETS download
 )
 ExternalProject_Get_Property(hdf5 install_dir)
-set(HDF5_INCLUDE_DIRS ${install_dir}/include)
-set(HDF5_LIBRARIES ${install_dir}/lib/libhdf5.a ${ZLIB_LIBRARIES})
+if(IS_ABSOLUTE "${install_dir}")
+    set(HDF5_INCLUDE_DIRS ${install_dir}/include)
+    set(HDF5_LIB_DIR ${install_dir}/lib)
+else()
+    set(HDF5_INCLUDE_DIRS ${CMAKE_CURRENT_BINARY_DIR}/${install_dir}/include)
+    set(HDF5_LIB_DIR ${CMAKE_CURRENT_BINARY_DIR}/${install_dir}/lib)
+endif()
+
+# Create an INTERFACE library for HDF5 using link directories instead of file paths
+add_library(hdf5_external INTERFACE)
+add_dependencies(hdf5_external hdf5)
+target_link_directories(hdf5_external INTERFACE ${HDF5_LIB_DIR})
+target_link_libraries(hdf5_external INTERFACE hdf5 zlib_external)
+target_include_directories(hdf5_external INTERFACE ${HDF5_INCLUDE_DIRS})
 
 #
 # Lua
@@ -69,8 +94,20 @@ ExternalProject_Add(lua
 )
 
 ExternalProject_Get_Property(lua source_dir)
-set(LUA_INCLUDE_DIRS ${source_dir}/src)
-set(LUA_LIBRARIES ${source_dir}/src/liblua.a)
+if(IS_ABSOLUTE "${source_dir}")
+    set(LUA_INCLUDE_DIRS ${source_dir}/src)
+    set(LUA_LIB_DIR ${source_dir}/src)
+else()
+    set(LUA_INCLUDE_DIRS ${CMAKE_CURRENT_BINARY_DIR}/${source_dir}/src)
+    set(LUA_LIB_DIR ${CMAKE_CURRENT_BINARY_DIR}/${source_dir}/src)
+endif()
+
+# Create an INTERFACE library for Lua using link directories instead of file paths
+add_library(lua_external INTERFACE)
+add_dependencies(lua_external lua)
+target_link_directories(lua_external INTERFACE ${LUA_LIB_DIR})
+target_link_libraries(lua_external INTERFACE lua)
+target_include_directories(lua_external INTERFACE ${LUA_INCLUDE_DIRS})
 
 #
 # LibArchive
@@ -100,8 +137,20 @@ ExternalProject_Add(libarchive
 )
 
 ExternalProject_Get_Property(libarchive install_dir)
-set(LIBARCHIVE_INCLUDE_DIRS ${install_dir}/include)
-set(LIBARCHIVE_LIBRARIES ${install_dir}/lib/libarchive.a)
+if(IS_ABSOLUTE "${install_dir}")
+    set(LIBARCHIVE_INCLUDE_DIRS ${install_dir}/include)
+    set(LIBARCHIVE_LIB_DIR ${install_dir}/lib)
+else()
+    set(LIBARCHIVE_INCLUDE_DIRS ${CMAKE_CURRENT_BINARY_DIR}/${install_dir}/include)
+    set(LIBARCHIVE_LIB_DIR ${CMAKE_CURRENT_BINARY_DIR}/${install_dir}/lib)
+endif()
+
+# Create an INTERFACE library for LibArchive using link directories instead of file paths
+add_library(libarchive_external INTERFACE)
+add_dependencies(libarchive_external libarchive)
+target_link_directories(libarchive_external INTERFACE ${LIBARCHIVE_LIB_DIR})
+target_link_libraries(libarchive_external INTERFACE archive)
+target_include_directories(libarchive_external INTERFACE ${LIBARCHIVE_INCLUDE_DIRS})
 
 #
 # CppUnit
@@ -119,5 +168,17 @@ ExternalProject_Add(cppunit
         --disable-static
 )
 ExternalProject_Get_Property(cppunit install_dir)
-set(CPPUNIT_INCLUDE_DIRS ${install_dir}/include)
-set(CPPUNIT_LIBRARIES ${install_dir}/lib/libcppunit.so)
+if(IS_ABSOLUTE "${install_dir}")
+    set(CPPUNIT_INCLUDE_DIRS ${install_dir}/include)
+    set(CPPUNIT_LIB_DIR ${install_dir}/lib)
+else()
+    set(CPPUNIT_INCLUDE_DIRS ${CMAKE_CURRENT_BINARY_DIR}/${install_dir}/include)
+    set(CPPUNIT_LIB_DIR ${CMAKE_CURRENT_BINARY_DIR}/${install_dir}/lib)
+endif()
+
+# Create an INTERFACE library for CppUnit using link directories instead of file paths
+add_library(cppunit_external INTERFACE)
+add_dependencies(cppunit_external cppunit)
+target_link_directories(cppunit_external INTERFACE ${CPPUNIT_LIB_DIR})
+target_link_libraries(cppunit_external INTERFACE cppunit)
+target_include_directories(cppunit_external INTERFACE ${CPPUNIT_INCLUDE_DIRS})
